@@ -1,0 +1,30 @@
+{
+  "$comment": "Base configuration. For secrets (API keys), use .env.local with VITE_APP_CFG_* variables",
+  "featureFlags": {
+    "analytics_enabled": true
+  },
+  "rpcEndpoints": {},
+  "indexerEndpoints": {},
+  "globalServiceConfigs": {
+    "walletui": {
+      "stellar": {
+        "kitName": "custom",
+        "kitConfig": {
+          "appName": "RWA Wizard"
+        }
+      },
+      "evm": {
+        "kitName": "custom",
+        "kitConfig": {
+          "components": {
+            "exclude": ["NetworkSwitcher"]
+          }
+        }
+      },
+      "default": {
+        "kitName": "custom",
+        "kitConfig": {}
+      }
+    }
+  }
+}

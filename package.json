@@ -1,0 +1,89 @@
+{
+  "name": "rwa-wizard-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ]
+  },
+  "scripts": {
+    "clean": "pnpm -r clean",
+    "install-deps": "pnpm install --frozen-lockfile --ignore-scripts --prefer-offline",
+    "dev": "pnpm --filter @openzeppelin/rwa-wizard-app dev",
+    "dev:all": "pnpm -r --parallel dev",
+    "build:ui-builder": "./scripts/pack-ui-builder.sh",
+    "build": "pnpm -r build",
+    "build:packages": "pnpm --filter \"./packages/*\" build",
+    "build:app": "pnpm --filter @openzeppelin/rwa-wizard-app build",
+    "test": "pnpm -r test",
+    "test:all": "pnpm -r --parallel test",
+    "test:coverage": "pnpm -r test:coverage",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "format": "pnpm -r format",
+    "format:check": "pnpm -r format:check",
+    "fix-all": "pnpm format && pnpm lint:fix",
+    "prepare": "husky",
+    "commit": "git-cz",
+    "changeset": "changeset",
+    "dev:local": "LOCAL_UI_PATH=${LOCAL_UI_PATH:-../openzeppelin-ui} && echo '🔨 Building local openzeppelin-ui packages...' && (cd \"$LOCAL_UI_PATH\" && pnpm build) && LOCAL_UI=true pnpm install --force && echo \"✅ Using local @openzeppelin/ui-* packages from $LOCAL_UI_PATH\"",
+    "dev:npm": "pnpm install --force && echo '✅ Using npm @openzeppelin/ui-* packages'",
+    "docker:dev": "docker-compose up --build"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,cjs,mjs}": "pnpm fix-all"
+  },
+  "config": {
+    "commitizen": {
+      "path": "@commitlint/cz-commitlint"
+    }
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@commitlint/cz-commitlint": "^19.8.1",
+    "@ianvs/prettier-plugin-sort-imports": "4.5.1",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@types/node": "^24.10.4",
+    "@types/react": "^19.2.8",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "commitizen": "^4.3.1",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-import-resolver-typescript": "^3.10.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsdoc": "^50.8.0",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "happy-dom": "^20.0.11",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "postcss": "^8.5.6",
+    "prettier": "3.6.2",
+    "prettier-linter-helpers": "^1.0.0",
+    "prettier-plugin-tailwindcss": "0.7.2",
+    "tailwindcss": "^3.4.19",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "pnpm@10.22.0"
+}

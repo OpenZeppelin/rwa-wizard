@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Skip validation in CI environments
+# CI is the standard convention used by virtually all CI systems
+if [ -n "$CI" ]; then
+  exit 0
+fi
+
+echo "🔍 Validating commit message format..."
+
+# Try to use NVM's Node.js if available
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # Load NVM
+  export NVM_DIR="$HOME/.nvm"
+  \. "$NVM_DIR/nvm.sh" # This loads nvm
+  
+  # Use Node.js 20+
+  nvm use 20 >/dev/null 2>&1
+  
+  echo "✅ Using Node.js $(node -v) from NVM"
+fi
+
+# Require Node.js 20+ as specified in package.json
+node_version=$(node -v | cut -d. -f1 | sed 's/v//')
+if [ "$node_version" -lt 20 ]; then
+  echo "❌ Error: Node.js version $(node -v) is incompatible. This project requires Node.js 20.19.0+."
+  echo "❌ Commit validation aborted. Please use Node.js 20+ for development."
+  exit 1
+fi
+
+# Run commitlint on the commit message
+# The $1 argument is the path to the file containing the commit message
+if ! npx --no -- commitlint --edit "$1"; then
+  echo ""
+  echo "❌ Commit message format is invalid!"
+  echo ""
+  echo "📋 Allowed scopes: role-manager, components, hooks, deps, config, ci, docs, spec, tests, release, ui, utils, types"
+  echo "📋 Allowed types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test, wip"
+  echo ""
+  echo "Example: feat(role-manager): add new feature"
+  echo ""
+  exit 1
+fi
+
+echo "✅ Commit message format is valid"
