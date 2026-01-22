@@ -140,11 +140,11 @@ rwa-wizard/
 ├── packages/
 │   ├── components/          # Shared UI components
 │   │   ├── src/
-│   │   ├── tsup.config.ts   # Build configuration
+│   │   ├── tsdown.config.ts # Build configuration
 │   │   └── package.json
 │   └── hooks/               # Shared React hooks
 │       ├── src/
-│       ├── tsup.config.ts   # Build configuration
+│       ├── tsdown.config.ts # Build configuration
 │       └── package.json
 ├── scripts/                 # Development helper scripts
 ├── specs/                   # Feature specifications
@@ -167,7 +167,7 @@ rwa-wizard/
 - **Vite 7**: Fast development server and build tool
 - **Tailwind CSS**: Utility-first CSS framework
 - **Vitest**: Fast unit testing framework
-- **tsup**: TypeScript library bundler
+- **tsdown**: TypeScript library bundler
 - **pnpm**: Fast, disk-efficient package manager
 - **ESLint + Prettier**: Code quality and formatting
 - **Husky + lint-staged**: Git hooks for quality gates
