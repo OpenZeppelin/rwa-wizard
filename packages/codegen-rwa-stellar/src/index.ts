@@ -1,7 +1,13 @@
-import type { GenerateOptions, GenerationResult } from '@openzeppelin/codegen-core';
+import type {
+  GenerateOptions,
+  GenerationResult,
+  ProgressCallback,
+  ZipResult,
+} from '@openzeppelin/codegen-core';
+import { generateZip as coreGenerateZip } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { StellarRwaGenerator } from './stellar-rwa-generator';
+import { sanitizeDirectoryName, StellarRwaGenerator } from './stellar-rwa-generator';
 
 export { STELLAR_VALIDATION_CONSTANTS, generateRoleSymbol } from './constants';
 
@@ -34,4 +40,21 @@ export function generate(config: RWAConfig, options?: GenerateOptions): Generati
  */
 export function validate(config: RWAConfig) {
   return generator.validate(config);
+}
+
+/**
+ * Generate a Stellar/Soroban RWA token project as a ZIP archive.
+ *
+ * Convenience wrapper: calls generate() internally, then delegates to
+ * codegen-core's generateZip() for ZIP assembly. The root directory
+ * is derived from the token symbol (sanitized + `-rwa` suffix).
+ */
+export async function generateZip(
+  config: RWAConfig,
+  options?: { onProgress?: ProgressCallback }
+): Promise<ZipResult> {
+  const result = generate(config);
+  const dirName = sanitizeDirectoryName(config.token.symbol);
+
+  return coreGenerateZip(result, dirName, options);
 }

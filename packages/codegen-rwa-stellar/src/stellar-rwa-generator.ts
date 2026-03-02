@@ -23,6 +23,22 @@ import { generateDeploySh } from './templates/scripts/deploy-sh';
 
 import { CRATE_NAMES } from './constants';
 
+/**
+ * Sanitize a token symbol into a valid directory name for the ZIP root.
+ *
+ * Algorithm: lowercase → replace non-alphanumeric with hyphens →
+ * collapse consecutive hyphens → trim leading/trailing hyphens → append `-rwa`.
+ */
+export function sanitizeDirectoryName(symbol: string): string {
+  const sanitized = symbol
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return `${sanitized}-rwa`;
+}
+
 const GENERATOR_NAME = 'codegen-rwa-stellar';
 const GENERATOR_VERSION = '0.1.0';
 

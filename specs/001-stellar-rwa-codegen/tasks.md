@@ -124,12 +124,12 @@
 
 ### Tests for User Story 3
 
-- [ ] T045 [US3] Write ZIP output tests in `packages/codegen-rwa-stellar/__tests__/generate-zip.test.ts`: root directory naming, content determinism (same config → same files), omitted `contracts/modules/` when no modules, structural match against quickstart layout
+- [x] T045 [US3] Write ZIP output tests in `packages/codegen-rwa-stellar/__tests__/generate-zip.test.ts`: root directory naming, content determinism (same config → same files), omitted `contracts/modules/` when no modules, structural match against quickstart layout
 
 ### Implementation for User Story 3
 
-- [ ] T046 [US3] Implement directory name sanitization in `packages/codegen-rwa-stellar/src/stellar-rwa-generator.ts`: lowercase symbol, replace non-alphanumeric with hyphens, collapse/trim, append `-rwa`
-- [ ] T047 [US3] Implement `generateZip()` convenience wrapper in `packages/codegen-rwa-stellar/src/index.ts`: call `generate()` then delegate to codegen-core's `generateZip()` per `contracts/codegen-rwa-stellar-api.ts`
+- [x] T046 [US3] Implement directory name sanitization in `packages/codegen-rwa-stellar/src/stellar-rwa-generator.ts`: lowercase symbol, replace non-alphanumeric with hyphens, collapse/trim, append `-rwa`
+- [x] T047 [US3] Implement `generateZip()` convenience wrapper in `packages/codegen-rwa-stellar/src/index.ts`: call `generate()` then delegate to codegen-core's `generateZip()` per `contracts/codegen-rwa-stellar-api.ts`
 
 **Checkpoint**: `generateZip(config)` returns a valid ZIP with the complete project. Determinism verified. US3 is independently testable.
 
