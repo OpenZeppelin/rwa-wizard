@@ -6,9 +6,10 @@
  * and re-exports the RWAConfig type.
  *
  * Primary exports (counted toward SC-007 ≤10 target):
- *   Functions: generate, generateZip, validate, getAvailableModules
- *   Types:     ComplianceModuleRegistryEntry
- *   Total: 5 primary exports
+ *   Functions:  generate, generateZip, validate, getAvailableModules, generateRoleSymbol
+ *   Types:      ComplianceModuleRegistryEntry
+ *   Constants:  STELLAR_VALIDATION_CONSTANTS
+ *   Total: 7 primary exports
  *
  * Re-exports (not counted — passthrough from upstream packages):
  *   RWAConfig from @openzeppelin/rwa-config
@@ -77,6 +78,36 @@ export declare function generateZip(
  * Only returns modules with concrete implementations.
  */
 export declare function getAvailableModules(): ComplianceModuleRegistryEntry[];
+
+// ---------------------------------------------------------------------------
+// Stellar-Specific Validation Constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Validation constraints specific to the Stellar/Soroban runtime.
+ *
+ * Each generator package defines its own validation constants reflecting
+ * chain-specific limits (e.g., Soroban's symbol_short! 9-char limit,
+ * i128 numeric range). The config package (@openzeppelin/rwa-config)
+ * intentionally does NOT define these — it stays chain-agnostic.
+ */
+export declare const STELLAR_VALIDATION_CONSTANTS: {
+  TOKEN_NAME_MAX_LENGTH: 32;
+  TOKEN_SYMBOL_MAX_LENGTH: 12;
+  DECIMALS_MIN: 0;
+  DECIMALS_MAX: 18;
+  /** Soroban `symbol_short!` macro limit */
+  ROLE_SYMBOL_MAX_LENGTH: 9;
+  /** Soroban i128 max value */
+  I128_MAX: bigint;
+};
+
+/**
+ * Auto-generate a Soroban-compatible role symbol from a role name.
+ * Uses well-known RWA role mappings, then falls back to lowercase +
+ * strip non-alphanumeric + truncate to Soroban's 9-char limit.
+ */
+export declare function generateRoleSymbol(name: string): string;
 
 // ---------------------------------------------------------------------------
 // Re-exports for consumer convenience

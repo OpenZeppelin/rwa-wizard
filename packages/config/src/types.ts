@@ -1,27 +1,3 @@
-/**
- * @openzeppelin/rwa-config — Public API Contract
- *
- * This file defines the public interface surface of the RWA configuration
- * package. It owns the canonical RWAConfig type consumed by all RWA
- * generators across chains.
- *
- * IMPORTANT: This package is strictly chain-agnostic and consumer-agnostic.
- * It defines ONLY the type shape of an RWA configuration. Validation
- * constraints (max lengths, numeric ranges, etc.) are chain-specific and
- * belong in each generator package (e.g., STELLAR_VALIDATION_CONSTANTS
- * in @openzeppelin/codegen-rwa-stellar).
- *
- * Primary exports (counted toward SC-007 ≤10 target):
- *   Types:     RWAConfig, ComplianceHook, OwnershipModel
- *   Constants: DEFAULT_ROLE_SYMBOLS
- *   Total: 4 primary exports
- *
- * Supporting types (not counted individually — sub-types of RWAConfig):
- *   TokenConfig, IdentityVerificationConfig, ComplianceConfig,
- *   AccessControlConfig, DeploymentConfig, ClaimTopic, TrustedIssuer,
- *   ComplianceModuleSelection, OperatorRole
- */
-
 // ---------------------------------------------------------------------------
 // Token Configuration
 // ---------------------------------------------------------------------------
@@ -95,7 +71,7 @@ export type OwnershipModel =
 export interface OperatorRole {
   /** Human-readable role name */
   name: string;
-  /** Chain-specific symbol. Max length is defined by each generator. Auto-generated from name if omitted. */
+  /** Chain-specific symbol. Max length defined by each generator. Auto-generated from name if omitted. */
   symbol?: string;
   /** Accounts granted this role at deploy time */
   addresses: string[];
@@ -128,13 +104,3 @@ export interface RWAConfig {
   accessControl: AccessControlConfig;
   deployment: DeploymentConfig;
 }
-
-// ---------------------------------------------------------------------------
-// Defaults
-// ---------------------------------------------------------------------------
-
-/**
- * Well-known RWA role name → symbol mappings.
- * Chain-agnostic conventions used across all RWA systems.
- */
-export declare const DEFAULT_ROLE_SYMBOLS: Record<string, string>;

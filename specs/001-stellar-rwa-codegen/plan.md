@@ -92,10 +92,9 @@ packages/
 │   ├── src/
 │   │   ├── index.ts                 # Public API exports
 │   │   ├── types.ts                 # RWAConfig, ClaimTopic, TrustedIssuer, ComplianceHook, OperatorRole, etc.
-│   │   ├── defaults.ts              # Default values, role symbol mapping
-│   │   └── constants.ts             # Validation constants (max lengths, ranges, role symbols)
+│   │   └── defaults.ts              # Default role symbol mapping (chain-agnostic conventions)
 │   ├── __tests__/
-│   │   └── types.test.ts            # Type guard and constant tests
+│   │   └── types.test.ts            # Default role symbol tests
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── tsdown.config.ts
@@ -124,8 +123,9 @@ packages/
 │   │   │   └── lib-rs.ts           # lib.rs template (shared across crates)
 │   │   ├── modules/
 │   │   │   └── registry.ts         # ComplianceModuleRegistry (available modules)
-│   │   └── constants.ts            # Pinned commit hash, role symbol map, crate versions
+│   │   └── constants.ts            # Pinned commit hash, crate versions, STELLAR_VALIDATION_CONSTANTS, generateRoleSymbol
 │   ├── __tests__/
+│   │   ├── constants.test.ts       # STELLAR_VALIDATION_CONSTANTS + generateRoleSymbol tests
 │   │   ├── generate.test.ts        # End-to-end generation tests + progress callback tests
 │   │   ├── generate-zip.test.ts    # ZIP output tests
 │   │   ├── validation.test.ts      # RWA validation rule tests (all edge cases from spec)
@@ -148,6 +148,8 @@ packages/
 ```
 
 **Structure Decision**: Three packages under `packages/` following the existing monorepo convention. `codegen-core` is the lowest layer (no internal deps), `config` depends on nothing, and `codegen-rwa-stellar` depends on both. Each package builds with tsdown (ESM + CJS + DTS), matching `packages/components` and `packages/hooks`.
+
+**Chain-Agnostic Boundary**: The `config` package defines ONLY type shapes — no validation constraints, numeric limits, or chain-specific constants. All validation constants (max lengths, numeric ranges, symbol limits) are owned by each generator package (e.g., `STELLAR_VALIDATION_CONSTANTS` in `codegen-rwa-stellar`). This ensures the config package stays chain-agnostic and consumer-agnostic as new ecosystems are added.
 
 ## Complexity Tracking
 

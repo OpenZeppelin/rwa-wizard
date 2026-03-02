@@ -108,7 +108,7 @@
 
 - [x] CHK025 - `rwa-config` exports 12+ types. Does this exceed SC-007's target? [Consistency, rwa-config-api.ts vs. Spec §SC-007]
 
-  > **Fixed**: API contract header updated: 4 primary exports (RWAConfig, ComplianceHook, OwnershipModel, VALIDATION_CONSTANTS). Sub-types of RWAConfig (TokenConfig, etc.) not counted individually.
+  > **Fixed**: API contract header updated: 4 primary exports (RWAConfig, ComplianceHook, OwnershipModel, DEFAULT_ROLE_SYMBOLS). Sub-types of RWAConfig (TokenConfig, etc.) not counted individually. Note: VALIDATION_CONSTANTS moved to `@openzeppelin/codegen-rwa-stellar` as `STELLAR_VALIDATION_CONSTANTS` to maintain chain-agnostic boundary.
 
 - [x] CHK026 - The `codegen-core` `generateZip()` takes `(result, fileName, options)` while `codegen-rwa-stellar` `generateZip()` takes `(config, options)`. Is the wrapper relationship documented? [Consistency, codegen-core-api.ts vs. codegen-rwa-stellar-api.ts]
   > **Fixed**: Both API contracts now include documentation explaining the wrapper pattern. Core's `generateZip()` JSDoc notes that generator packages wrap it. Stellar's `generateZip()` JSDoc explains it calls `generate()` internally then delegates to core.

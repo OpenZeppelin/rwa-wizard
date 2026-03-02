@@ -42,24 +42,24 @@
 
 ### Core Engine Types & Infrastructure
 
-- [ ] T011 [P] Define core types in `packages/codegen-core/src/types.ts`: `Generator<TConfig>` interface, `FileTree`, `ValidationResult`, `ValidationError`, `ValidationWarning`, `GenerationResult`, `GenerationMetadata`, `ZipResult`, `ProgressCallback`, `ProgressEvent`, `GenerateOptions`
-- [ ] T012 [P] Implement file-tree builder utilities in `packages/codegen-core/src/file-tree.ts`: helper functions for creating and merging `FileTree` records
-- [ ] T013 [P] Implement progress types and helpers in `packages/codegen-core/src/progress.ts`: progress event factory, no-op callback default
-- [ ] T014 Write validation framework tests in `packages/codegen-core/__tests__/validation.test.ts`: rule composition, field paths, error codes (uppercase snake_case), error vs warning separation
-- [ ] T015 Implement validation framework in `packages/codegen-core/src/validation.ts`: rule aggregation, field path tracking, error/warning separation, structured `ValidationResult` assembly
-- [ ] T016 [P] Implement zipInspector test utility in `packages/codegen-core/__tests__/utils/zip-inspector.ts`: `extractFilesFromZip()` and `validateProjectStructure()` (adapted from UI Builder)
-- [ ] T017 Write ZipGenerator tests in `packages/codegen-core/__tests__/zip-generator.test.ts`: determinism (same FileTree → same contents), progress callbacks, browser/Node compat
-- [ ] T018 Implement ZipGenerator in `packages/codegen-core/src/zip-generator.ts`: JSZip wrapper with browser/Node detection, content-deterministic output, progress reporting (adapted from UI Builder pattern)
-- [ ] T019 Implement generation pipeline orchestrator in `packages/codegen-core/src/generator.ts`: `generateZip()` function that packages a `GenerationResult` into a `ZipResult`
-- [ ] T020 Create codegen-core public API in `packages/codegen-core/src/index.ts`: export all types and `generateZip` function per `contracts/codegen-core-api.ts`
+- [x] T011 [P] Define core types in `packages/codegen-core/src/types.ts`: `Generator<TConfig>` interface, `FileTree`, `ValidationResult`, `ValidationError`, `ValidationWarning`, `GenerationResult`, `GenerationMetadata`, `ZipResult`, `ProgressCallback`, `ProgressEvent`, `GenerateOptions`
+- [x] T012 [P] Implement file-tree builder utilities in `packages/codegen-core/src/file-tree.ts`: helper functions for creating and merging `FileTree` records
+- [x] T013 [P] Implement progress types and helpers in `packages/codegen-core/src/progress.ts`: progress event factory, no-op callback default
+- [x] T014 Write validation framework tests in `packages/codegen-core/__tests__/validation.test.ts`: rule composition, field paths, error codes (uppercase snake_case), error vs warning separation
+- [x] T015 Implement validation framework in `packages/codegen-core/src/validation.ts`: rule aggregation, field path tracking, error/warning separation, structured `ValidationResult` assembly
+- [x] T016 [P] Implement zipInspector test utility in `packages/codegen-core/__tests__/utils/zip-inspector.ts`: `extractFilesFromZip()` and `validateProjectStructure()` (adapted from UI Builder)
+- [x] T017 Write ZipGenerator tests in `packages/codegen-core/__tests__/zip-generator.test.ts`: determinism (same FileTree → same contents), progress callbacks, browser/Node compat
+- [x] T018 Implement ZipGenerator in `packages/codegen-core/src/zip-generator.ts`: JSZip wrapper with browser/Node detection, content-deterministic output, progress reporting (adapted from UI Builder pattern)
+- [x] T019 Implement generation pipeline orchestrator in `packages/codegen-core/src/generator.ts`: `generateZip()` function that packages a `GenerationResult` into a `ZipResult`
+- [x] T020 Create codegen-core public API in `packages/codegen-core/src/index.ts`: export all types and `generateZip` function per `contracts/codegen-core-api.ts`
 
 ### RWA Config Types
 
-- [ ] T021 [P] Define all RWAConfig types in `packages/config/src/types.ts`: `RWAConfig`, `TokenConfig`, `IdentityVerificationConfig`, `ComplianceConfig`, `AccessControlConfig`, `DeploymentConfig`, `ClaimTopic`, `TrustedIssuer`, `ComplianceModuleSelection`, `ComplianceHook`, `OperatorRole`, `OwnershipModel` per `contracts/rwa-config-api.ts`
-- [ ] T022 [P] Define validation constants in `packages/config/src/constants.ts`: `TOKEN_NAME_MAX_LENGTH` (32), `TOKEN_SYMBOL_MAX_LENGTH` (12), `DECIMALS_MIN` (0), `DECIMALS_MAX` (18), `ROLE_SYMBOL_MAX_LENGTH` (9), `I128_MAX`
-- [ ] T023 [P] Define defaults and role symbol auto-generation in `packages/config/src/defaults.ts`: default role symbol mapping (`manager`, `agent`, `operator`), auto-generate symbol from name (lowercase, truncate to 9 chars)
-- [ ] T024 Create rwa-config public API in `packages/config/src/index.ts`: export types and `VALIDATION_CONSTANTS` per `contracts/rwa-config-api.ts`
-- [ ] T025 Write config type and constant tests in `packages/config/__tests__/types.test.ts`: role symbol auto-generation, constant values, type guard checks
+- [x] T021 [P] Define all RWAConfig types in `packages/config/src/types.ts`: `RWAConfig`, `TokenConfig`, `IdentityVerificationConfig`, `ComplianceConfig`, `AccessControlConfig`, `DeploymentConfig`, `ClaimTopic`, `TrustedIssuer`, `ComplianceModuleSelection`, `ComplianceHook`, `OperatorRole`, `OwnershipModel` per `contracts/rwa-config-api.ts`
+- [x] T022 [P] ~~Define validation constants in `packages/config/src/constants.ts`~~ **MOVED**: Validation constants (`STELLAR_VALIDATION_CONSTANTS`) are chain-specific and now live in `packages/codegen-rwa-stellar/src/constants.ts`. The config package stays chain-agnostic (types only).
+- [x] T023 [P] Define defaults in `packages/config/src/defaults.ts`: `DEFAULT_ROLE_SYMBOLS` mapping (`manager`, `agent`, `operator`). `generateRoleSymbol()` moved to `packages/codegen-rwa-stellar/src/constants.ts` (Soroban-specific truncation logic).
+- [x] T024 Create rwa-config public API in `packages/config/src/index.ts`: export types and `DEFAULT_ROLE_SYMBOLS` per `contracts/rwa-config-api.ts`
+- [x] T025 Write config tests in `packages/config/__tests__/types.test.ts`: `DEFAULT_ROLE_SYMBOLS` validation. Constant and `generateRoleSymbol` tests moved to `packages/codegen-rwa-stellar/__tests__/constants.test.ts`.
 
 **Checkpoint**: Foundation ready — all core types, validation framework, ZIP packaging, and config types are built and tested. User story implementation can now begin.
 
@@ -78,7 +78,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T028 [P] [US1] Define Stellar constants in `packages/codegen-rwa-stellar/src/constants.ts`: pinned `stellar-contracts` commit hash, `soroban-sdk` version, crate names, role symbol defaults
+- [ ] T028 [P] [US1] Extend Stellar constants in `packages/codegen-rwa-stellar/src/constants.ts` (already contains `STELLAR_VALIDATION_CONSTANTS` and `generateRoleSymbol` from Phase 2): add pinned `stellar-contracts` commit hash, `soroban-sdk` version, crate names
 - [ ] T029 [P] [US1] Create lib.rs template in `packages/codegen-rwa-stellar/src/templates/lib-rs.ts`: `#![no_std]`, `mod contract;`, `pub use contract::*;` per SR-015
 - [ ] T030 [P] [US1] Create per-crate Cargo.toml template in `packages/codegen-rwa-stellar/src/templates/cargo/crate-toml.ts`: crate name, `crate-type = ["cdylib"]`, dependencies from config
 - [ ] T031 [P] [US1] Create workspace Cargo.toml template in `packages/codegen-rwa-stellar/src/templates/cargo/workspace-toml.ts`: workspace members, git deps with pinned rev, soroban-sdk version, edition 2021 per SR-008
