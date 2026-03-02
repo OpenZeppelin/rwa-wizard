@@ -17,6 +17,7 @@ import { generateCrateToml } from './templates/cargo/crate-toml';
 import { generateWorkspaceToml } from './templates/cargo/workspace-toml';
 import { generateClaimTopicsIssuersContract } from './templates/contracts/claim-topics-issuers';
 import { generateComplianceContract } from './templates/contracts/compliance';
+import { generateComplianceModuleContract } from './templates/contracts/compliance-module';
 import { generateIdentityRegistryStorageContract } from './templates/contracts/identity-registry-storage';
 import { generateIdentityVerifierContract } from './templates/contracts/identity-verifier';
 import { generateRwaTokenContract } from './templates/contracts/rwa-token';
@@ -150,6 +151,27 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
 
     for (const crate of crates) {
       files = mergeFileTrees(files, generateContractCrateFiles(crate, config));
+    }
+
+    if (config.compliance.modules.length > 0) {
+      for (const mod of config.compliance.modules) {
+        const moduleDirPath = `contracts/modules/${mod.moduleId}`;
+        members.push(moduleDirPath);
+
+        const contractRs = generateComplianceModuleContract(mod);
+        const libRs = generateLibRs();
+        const cargoToml = generateCrateToml({
+          name: mod.moduleId,
+          dependencies: ['soroban-sdk', 'stellar-tokens'],
+        });
+
+        files = mergeFileTrees(
+          files,
+          createFile(`${moduleDirPath}/src/contract.rs`, contractRs),
+          createFile(`${moduleDirPath}/src/lib.rs`, libRs),
+          createFile(`${moduleDirPath}/Cargo.toml`, cargoToml)
+        );
+      }
     }
 
     const workspaceToml = generateWorkspaceToml({ members });

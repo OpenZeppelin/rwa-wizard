@@ -218,7 +218,14 @@ export function generateDeploySh(config: RWAConfig): string {
     sections.push('# 5. Deploy compliance modules');
     for (const mod of config.compliance.modules) {
       const modVarName = `MODULE_${mod.moduleId.toUpperCase().replace(/-/g, '_')}_ADDRESS`;
-      sections.push(buildDeploySection(modVarName, mod.moduleId, `--admin "$ADMIN"`, networkFlag));
+      sections.push(
+        buildDeploySection(
+          modVarName,
+          mod.moduleId,
+          `--compliance "$COMPLIANCE_ADDRESS"`,
+          networkFlag
+        )
+      );
     }
     sections.push('');
   }

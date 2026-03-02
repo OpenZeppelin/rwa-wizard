@@ -8,11 +8,16 @@ import type {
 import { generateZip as coreGenerateZip } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import type { ComplianceModuleRegistryEntry } from './modules/registry';
+import { getAvailableModules as getModules } from './modules/registry';
+
 import { sanitizeDirectoryName, StellarRwaGenerator } from './stellar-rwa-generator';
 
 export { STELLAR_VALIDATION_CONSTANTS, generateRoleSymbol } from './constants';
 
 export { StellarRwaGenerator } from './stellar-rwa-generator';
+
+export type { ComplianceModuleRegistryEntry } from './modules/registry';
 
 export type { RWAConfig } from '@openzeppelin/rwa-config';
 
@@ -59,4 +64,12 @@ export async function generateZip(
   const dirName = sanitizeDirectoryName(config.token.symbol);
 
   return coreGenerateZip(result, dirName, options);
+}
+
+/**
+ * Get the registry of available compliance modules for Stellar.
+ * Only returns modules with concrete implementations.
+ */
+export function getAvailableModules(): ComplianceModuleRegistryEntry[] {
+  return getModules();
 }

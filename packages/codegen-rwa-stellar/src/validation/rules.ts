@@ -2,6 +2,7 @@ import type { ValidationRule } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../constants';
+import { getRegisteredModuleIds } from '../modules/registry';
 
 const I128_MAX = BigInt('170141183460469231731687303715884105727');
 
@@ -271,9 +272,7 @@ export const validateDeployment: ValidationRule<RWAConfig> = (config) => {
 export const validateComplianceModules: ValidationRule<RWAConfig> = (config) => {
   const errors = [];
   const { modules } = config.compliance;
-
-  // No modules registered yet — any moduleId is unsupported until Phase 7
-  const availableModuleIds = new Set<string>();
+  const availableModuleIds = getRegisteredModuleIds();
 
   for (let i = 0; i < modules.length; i++) {
     const mod = modules[i];
@@ -282,7 +281,7 @@ export const validateComplianceModules: ValidationRule<RWAConfig> = (config) => 
       errors.push({
         field: `compliance.modules[${i}].moduleId`,
         code: 'UNSUPPORTED_MODULE',
-        message: `Compliance module "${mod.moduleId}" is not available. No modules are currently implemented.`,
+        message: `Compliance module "${mod.moduleId}" is not available. Supported modules: ${[...availableModuleIds].join(', ')}`,
       });
     }
   }
