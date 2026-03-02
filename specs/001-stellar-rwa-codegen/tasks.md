@@ -205,9 +205,9 @@
 
 ### Implementation for User Story 4
 
-- [ ] T063 [US4] Finalize public API with JSDoc in `packages/codegen-rwa-stellar/src/index.ts`: `generate()`, `generateZip()`, `validate()`, `getAvailableModules()`, re-export `RWAConfig` — all with JSDoc per SR-014
-- [ ] T064 [US4] Write standalone Node.js integration test in `packages/codegen-rwa-stellar/__tests__/standalone.test.ts`: import package in Node.js, construct config, invoke generate/validate/generateZip, verify no runtime errors from missing browser/UI deps per SC-004
-- [ ] T065 [US4] Verify no React/browser-only dependencies in all 3 package builds — check `package.json` deps and `tsdown` output for browser-only imports
+- [x] T063 [US4] Finalize public API with JSDoc in `packages/codegen-rwa-stellar/src/index.ts`: `generate()`, `generateZip()`, `validate()`, `getAvailableModules()`, re-export `RWAConfig` — all with JSDoc per SR-014
+- [x] T064 [US4] Write standalone Node.js integration test in `packages/codegen-rwa-stellar/__tests__/standalone.test.ts`: import package in Node.js, construct config, invoke generate/validate/generateZip, verify no runtime errors from missing browser/UI deps per SC-004
+- [x] T065 [US4] Verify no React/browser-only dependencies in all 3 package builds — check `package.json` deps and `tsdown` output for browser-only imports
 
 **Checkpoint**: All packages work standalone in Node.js. Public API is minimal (<10 primary exports per SC-007), well-documented, and independently importable.
 
