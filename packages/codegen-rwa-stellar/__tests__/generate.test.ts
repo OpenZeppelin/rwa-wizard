@@ -1,0 +1,332 @@
+import { describe, expect, it } from 'vitest';
+
+import type { RWAConfig } from '@openzeppelin/rwa-config';
+
+import { CRATE_NAMES } from '../src/constants';
+import { StellarRwaGenerator } from '../src/stellar-rwa-generator';
+
+function createValidConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
+  return {
+    token: {
+      name: 'Acme Real Estate Token',
+      symbol: 'ACME',
+      decimals: 18,
+      initialSupply: '1000000000000000000000000',
+      documentManager: { enabled: true },
+      ...overrides.token,
+    },
+    identityVerification: {
+      claimTopics: [
+        { id: 1, name: 'KYC' },
+        { id: 2, name: 'AML' },
+      ],
+      trustedIssuers: [
+        {
+          address: 'GCEXAMPLEISSUER1',
+          claimTopics: [1, 2],
+        },
+      ],
+      ...overrides.identityVerification,
+    },
+    compliance: {
+      modules: [],
+      ...overrides.compliance,
+    },
+    accessControl: {
+      ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
+      roles: [
+        { name: 'Manager', symbol: 'manager', addresses: ['GCEXAMPLEMGR'] },
+        { name: 'Agent', symbol: 'agent', addresses: ['GCEXAMPLEAGNT'] },
+      ],
+      ...overrides.accessControl,
+    },
+    deployment: {
+      network: 'testnet',
+      ...overrides.deployment,
+    },
+  };
+}
+
+describe('StellarRwaGenerator', () => {
+  const generator = new StellarRwaGenerator();
+
+  describe('generator metadata', () => {
+    it('should have correct name and version', () => {
+      expect(generator.name).toBe('codegen-rwa-stellar');
+      expect(generator.version).toBeDefined();
+    });
+  });
+
+  describe('generate()', () => {
+    it('should return a GenerationResult with files and metadata', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+
+      expect(result).toHaveProperty('files');
+      expect(result).toHaveProperty('metadata');
+      expect(result.metadata.generatorName).toBe('codegen-rwa-stellar');
+      expect(result.metadata.generatedAt).toBeDefined();
+      expect(result.metadata.fileCount).toBeGreaterThan(0);
+      expect(result.metadata.configHash).toBeDefined();
+    });
+
+    it('should produce all 5 core contracts', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+      const paths = Object.keys(result.files);
+
+      const expectedContracts = [
+        CRATE_NAMES.rwaTtoken,
+        CRATE_NAMES.compliance,
+        CRATE_NAMES.identityVerifier,
+        CRATE_NAMES.claimTopicsIssuers,
+        CRATE_NAMES.identityRegistryStorage,
+      ];
+
+      for (const contractName of expectedContracts) {
+        const contractRsPath = `contracts/${contractName}/src/contract.rs`;
+        const libRsPath = `contracts/${contractName}/src/lib.rs`;
+        const cargoTomlPath = `contracts/${contractName}/Cargo.toml`;
+
+        expect(paths).toContain(contractRsPath);
+        expect(paths).toContain(libRsPath);
+        expect(paths).toContain(cargoTomlPath);
+      }
+    });
+
+    it('should produce workspace Cargo.toml', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+
+      expect(result.files).toHaveProperty('Cargo.toml');
+      const cargoToml = result.files['Cargo.toml'] as string;
+      expect(cargoToml).toContain('[workspace]');
+      expect(cargoToml).toContain('resolver = "2"');
+    });
+
+    it('should include correct file paths per quickstart layout', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+      const paths = Object.keys(result.files);
+
+      expect(paths).toContain('Cargo.toml');
+      expect(paths).toContain('rustfmt.toml');
+      expect(paths).toContain('contracts/rwa-token/src/contract.rs');
+      expect(paths).toContain('contracts/rwa-token/src/lib.rs');
+      expect(paths).toContain('contracts/rwa-token/Cargo.toml');
+      expect(paths).toContain('contracts/compliance/src/contract.rs');
+      expect(paths).toContain('contracts/identity-verifier/src/contract.rs');
+      expect(paths).toContain('contracts/claim-topics-issuers/src/contract.rs');
+      expect(paths).toContain('contracts/identity-registry-storage/src/contract.rs');
+    });
+
+    it('should produce rustfmt.toml with edition 2021 per SR-018', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+
+      expect(result.files).toHaveProperty('rustfmt.toml');
+      const rustfmtToml = result.files['rustfmt.toml'] as string;
+      expect(rustfmtToml).toContain('edition = "2021"');
+    });
+
+    it('should produce lib.rs with #![no_std] for each contract', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+
+      const libRsPath = 'contracts/rwa-token/src/lib.rs';
+      const libRs = result.files[libRsPath] as string;
+
+      expect(libRs).toContain('#![no_std]');
+      expect(libRs).toContain('mod contract;');
+      expect(libRs).toContain('pub use contract::*;');
+    });
+  });
+
+  describe('trait implementations per SR-002', () => {
+    const config = createValidConfig();
+    const result = generator.generate(config);
+
+    it('RWA Token should implement FungibleToken, AccessControl, Pausable', () => {
+      const contract = result.files['contracts/rwa-token/src/contract.rs'] as string;
+
+      expect(contract).toContain('impl FungibleToken for RwaTokenContract');
+      expect(contract).toContain('type ContractType = RWA;');
+      expect(contract).toContain('impl AccessControl for RwaTokenContract');
+      expect(contract).toContain('impl Pausable for RwaTokenContract');
+    });
+
+    it('RWA Token should include DocumentManager when enabled', () => {
+      const contract = result.files['contracts/rwa-token/src/contract.rs'] as string;
+
+      expect(contract).toContain('impl DocumentManager for RwaTokenContract');
+    });
+
+    it('Compliance should implement Compliance, TokenBinder, AccessControl', () => {
+      const contract = result.files['contracts/compliance/src/contract.rs'] as string;
+
+      expect(contract).toContain('impl Compliance for ComplianceContract');
+      expect(contract).toContain('impl TokenBinder for ComplianceContract');
+      expect(contract).toContain('impl AccessControl for ComplianceContract');
+    });
+
+    it('Identity Verifier should implement IdentityVerifier, AccessControl', () => {
+      const contract = result.files['contracts/identity-verifier/src/contract.rs'] as string;
+
+      expect(contract).toContain('impl IdentityVerifier for IdentityVerifierContract');
+      expect(contract).toContain('impl AccessControl for IdentityVerifierContract');
+    });
+
+    it('CTI should implement ClaimTopicsAndIssuers, AccessControl', () => {
+      const contract = result.files['contracts/claim-topics-issuers/src/contract.rs'] as string;
+
+      expect(contract).toContain('impl ClaimTopicsAndIssuers for ClaimTopicsIssuersContract');
+      expect(contract).toContain('impl AccessControl for ClaimTopicsIssuersContract');
+    });
+
+    it('IRS should implement IdentityRegistryStorage, CountryDataManager, TokenBinder, AccessControl', () => {
+      const contract = result.files[
+        'contracts/identity-registry-storage/src/contract.rs'
+      ] as string;
+
+      expect(contract).toContain('impl IdentityRegistryStorage for IdentityRegistryContract');
+      expect(contract).toContain('impl CountryDataManager for IdentityRegistryContract');
+      expect(contract).toContain('impl TokenBinder for IdentityRegistryContract');
+      expect(contract).toContain('impl AccessControl for IdentityRegistryContract');
+    });
+  });
+
+  describe('constructor args per SR-016', () => {
+    const config = createValidConfig();
+    const result = generator.generate(config);
+
+    it('RWA Token: e, name, symbol, admin, initial_supply + role params', () => {
+      const contract = result.files['contracts/rwa-token/src/contract.rs'] as string;
+
+      expect(contract).toContain('pub fn __constructor(');
+      expect(contract).toContain('e: &Env,');
+      expect(contract).toContain('name: String,');
+      expect(contract).toContain('symbol: String,');
+      expect(contract).toContain('admin: Address,');
+      expect(contract).toContain('initial_supply: i128,');
+    });
+
+    it('Compliance: e, admin', () => {
+      const contract = result.files['contracts/compliance/src/contract.rs'] as string;
+
+      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
+    });
+
+    it('Identity Verifier: e, admin, cti_address', () => {
+      const contract = result.files['contracts/identity-verifier/src/contract.rs'] as string;
+
+      expect(contract).toContain(
+        'pub fn __constructor(e: &Env, admin: Address, cti_address: Address)'
+      );
+    });
+
+    it('CTI: e, admin', () => {
+      const contract = result.files['contracts/claim-topics-issuers/src/contract.rs'] as string;
+
+      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
+    });
+
+    it('IRS: e, admin', () => {
+      const contract = result.files[
+        'contracts/identity-registry-storage/src/contract.rs'
+      ] as string;
+
+      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
+    });
+  });
+
+  describe('metadata', () => {
+    it('should produce deterministic configHash for same config', () => {
+      const config = createValidConfig();
+      const result1 = generator.generate(config);
+      const result2 = generator.generate(config);
+
+      expect(result1.metadata.configHash).toBe(result2.metadata.configHash);
+    });
+
+    it('should produce different configHash for different configs', () => {
+      const config1 = createValidConfig();
+      const config2 = createValidConfig({
+        token: {
+          name: 'Different Token',
+          symbol: 'DIFF',
+          decimals: 8,
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result1 = generator.generate(config1);
+      const result2 = generator.generate(config2);
+
+      expect(result1.metadata.configHash).not.toBe(result2.metadata.configHash);
+    });
+
+    it('should count correct number of files', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+
+      expect(result.metadata.fileCount).toBe(Object.keys(result.files).length);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should generate valid output with no roles', () => {
+      const config = createValidConfig({
+        accessControl: {
+          ownership: { type: 'single-owner', ownerAddress: 'GCOWNER' },
+          roles: [],
+        },
+      });
+
+      const result = generator.generate(config);
+      const tokenContract = result.files['contracts/rwa-token/src/contract.rs'] as string;
+
+      expect(tokenContract).not.toContain('grant_role_no_auth');
+      expect(result.metadata.fileCount).toBeGreaterThan(0);
+    });
+
+    it('should generate valid output with DocumentManager disabled', () => {
+      const config = createValidConfig({
+        token: {
+          name: 'Test',
+          symbol: 'TST',
+          decimals: 18,
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result = generator.generate(config);
+      const tokenContract = result.files['contracts/rwa-token/src/contract.rs'] as string;
+
+      expect(tokenContract).not.toContain('DocumentManager');
+    });
+
+    it('should generate valid output with zero claim topics', () => {
+      const config = createValidConfig({
+        identityVerification: {
+          claimTopics: [],
+          trustedIssuers: [],
+        },
+      });
+
+      const result = generator.generate(config);
+      expect(result.metadata.fileCount).toBeGreaterThan(0);
+    });
+
+    it('should generate valid output with multi-sig ownership', () => {
+      const config = createValidConfig({
+        accessControl: {
+          ownership: { type: 'multi-sig', address: 'GCMULTISIG' },
+          roles: [],
+        },
+      });
+
+      const result = generator.generate(config);
+      expect(result.metadata.fileCount).toBeGreaterThan(0);
+    });
+  });
+});

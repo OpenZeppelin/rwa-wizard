@@ -1,0 +1,172 @@
+import type {
+  FileTree,
+  GenerateOptions,
+  GenerationResult,
+  Generator,
+  ValidationResult,
+} from '@openzeppelin/codegen-core';
+import { createFile, getFileCount, mergeFileTrees } from '@openzeppelin/codegen-core';
+import type { RWAConfig } from '@openzeppelin/rwa-config';
+
+import { generateCrateToml } from './templates/cargo/crate-toml';
+import { generateWorkspaceToml } from './templates/cargo/workspace-toml';
+import { generateClaimTopicsIssuersContract } from './templates/contracts/claim-topics-issuers';
+import { generateComplianceContract } from './templates/contracts/compliance';
+import { generateIdentityRegistryStorageContract } from './templates/contracts/identity-registry-storage';
+import { generateIdentityVerifierContract } from './templates/contracts/identity-verifier';
+import { generateRwaTokenContract } from './templates/contracts/rwa-token';
+import { generateLibRs } from './templates/lib-rs';
+import { generateRustfmtToml } from './templates/rustfmt-toml';
+
+import { CRATE_NAMES } from './constants';
+
+const GENERATOR_NAME = 'codegen-rwa-stellar';
+const GENERATOR_VERSION = '0.1.0';
+
+interface ContractCrate {
+  name: string;
+  dirPath: string;
+  dependencies: string[];
+  generateContract: (config: RWAConfig) => string;
+}
+
+function getCoreContractCrates(): ContractCrate[] {
+  return [
+    {
+      name: CRATE_NAMES.rwaTtoken,
+      dirPath: `contracts/${CRATE_NAMES.rwaTtoken}`,
+      dependencies: [
+        'soroban-sdk',
+        'stellar-access',
+        'stellar-contract-utils',
+        'stellar-macros',
+        'stellar-tokens',
+      ],
+      generateContract: generateRwaTokenContract,
+    },
+    {
+      name: CRATE_NAMES.compliance,
+      dirPath: `contracts/${CRATE_NAMES.compliance}`,
+      dependencies: ['soroban-sdk', 'stellar-access', 'stellar-macros', 'stellar-tokens'],
+      generateContract: generateComplianceContract,
+    },
+    {
+      name: CRATE_NAMES.identityVerifier,
+      dirPath: `contracts/${CRATE_NAMES.identityVerifier}`,
+      dependencies: ['soroban-sdk', 'stellar-access', 'stellar-macros', 'stellar-tokens'],
+      generateContract: generateIdentityVerifierContract,
+    },
+    {
+      name: CRATE_NAMES.claimTopicsIssuers,
+      dirPath: `contracts/${CRATE_NAMES.claimTopicsIssuers}`,
+      dependencies: ['soroban-sdk', 'stellar-access', 'stellar-macros', 'stellar-tokens'],
+      generateContract: generateClaimTopicsIssuersContract,
+    },
+    {
+      name: CRATE_NAMES.identityRegistryStorage,
+      dirPath: `contracts/${CRATE_NAMES.identityRegistryStorage}`,
+      dependencies: ['soroban-sdk', 'stellar-access', 'stellar-macros', 'stellar-tokens'],
+      generateContract: generateIdentityRegistryStorageContract,
+    },
+  ];
+}
+
+function generateContractCrateFiles(crate: ContractCrate, config: RWAConfig): FileTree {
+  const contractRs = crate.generateContract(config);
+  const libRs = generateLibRs();
+  const cargoToml = generateCrateToml({
+    name: crate.name,
+    dependencies: crate.dependencies,
+  });
+
+  return mergeFileTrees(
+    createFile(`${crate.dirPath}/src/contract.rs`, contractRs),
+    createFile(`${crate.dirPath}/src/lib.rs`, libRs),
+    createFile(`${crate.dirPath}/Cargo.toml`, cargoToml)
+  );
+}
+
+function sortObjectKeys(obj: unknown): unknown {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(sortObjectKeys);
+  const sorted: Record<string, unknown> = {};
+  for (const key of Object.keys(obj as Record<string, unknown>).sort()) {
+    sorted[key] = sortObjectKeys((obj as Record<string, unknown>)[key]);
+  }
+  return sorted;
+}
+
+/**
+ * Stellar RWA Generator — implements Generator<RWAConfig> from codegen-core.
+ *
+ * Produces a complete multi-contract Stellar/Soroban project from
+ * a declarative RWAConfig object.
+ */
+export class StellarRwaGenerator implements Generator<RWAConfig> {
+  readonly name = GENERATOR_NAME;
+  readonly version = GENERATOR_VERSION;
+
+  validate(_config: RWAConfig): ValidationResult {
+    return { valid: true, errors: [], warnings: [] };
+  }
+
+  generate(config: RWAConfig, _options?: GenerateOptions): GenerationResult {
+    const validation = this.validate(config);
+    if (!validation.valid) {
+      throw new Error(
+        `Invalid configuration: ${validation.errors.map((e) => e.message).join('; ')}`
+      );
+    }
+
+    const crates = getCoreContractCrates();
+    const members = crates.map((c) => c.dirPath);
+
+    let files: FileTree = {};
+
+    for (const crate of crates) {
+      files = mergeFileTrees(files, generateContractCrateFiles(crate, config));
+    }
+
+    const workspaceToml = generateWorkspaceToml({ members });
+    files = mergeFileTrees(files, createFile('Cargo.toml', workspaceToml));
+
+    const rustfmtToml = generateRustfmtToml();
+    files = mergeFileTrees(files, createFile('rustfmt.toml', rustfmtToml));
+
+    const configHash = computeConfigHashSync(config);
+
+    return {
+      files,
+      metadata: {
+        generatorName: this.name,
+        generatorVersion: this.version,
+        generatedAt: new Date().toISOString(),
+        fileCount: getFileCount(files),
+        configHash,
+      },
+    };
+  }
+}
+
+function computeConfigHashSync(config: RWAConfig): string {
+  const sorted = sortObjectKeys(config);
+  const json = JSON.stringify(sorted);
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const crypto = require('node:crypto');
+    return crypto.createHash('sha256').update(json).digest('hex');
+  } catch {
+    return hashFallback(json);
+  }
+}
+
+function hashFallback(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16).padStart(8, '0');
+}

@@ -98,8 +98,10 @@ export declare const STELLAR_VALIDATION_CONSTANTS: {
   DECIMALS_MAX: 18;
   /** Soroban `symbol_short!` macro limit */
   ROLE_SYMBOL_MAX_LENGTH: 9;
-  /** Soroban i128 max value */
-  I128_MAX: bigint;
+  // NOTE: I128_MAX is intentionally NOT here. It should be defined locally
+  // inside the validation module (e.g. stellar-rwa-validator.ts) where it's
+  // used, not as a shared constant. This avoids exporting an implementation
+  // detail that only matters during config validation.
 };
 
 /**

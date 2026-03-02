@@ -73,22 +73,22 @@
 
 ### Tests for User Story 1
 
-- [ ] T026 [P] [US1] Write RWA Token template tests in `packages/codegen-rwa-stellar/__tests__/templates/rwa-token.test.ts`: correct traits (FungibleToken, AccessControl, Pausable), `__constructor` args, conditional DocumentManager, role grants
-- [ ] T027 [P] [US1] Write Cargo.toml template tests in `packages/codegen-rwa-stellar/__tests__/templates/cargo.test.ts`: workspace-level git deps pinned to commit hash, soroban-sdk version, per-crate deps, Rust edition 2021
+- [x] T026 [P] [US1] Write RWA Token template tests in `packages/codegen-rwa-stellar/__tests__/templates/rwa-token.test.ts`: correct traits (FungibleToken, AccessControl, Pausable), `__constructor` args, conditional DocumentManager, role grants
+- [x] T027 [P] [US1] Write Cargo.toml template tests in `packages/codegen-rwa-stellar/__tests__/templates/cargo.test.ts`: workspace-level git deps pinned to commit hash, soroban-sdk version, per-crate deps, Rust edition 2021
 
 ### Implementation for User Story 1
 
-- [ ] T028 [P] [US1] Extend Stellar constants in `packages/codegen-rwa-stellar/src/constants.ts` (already contains `STELLAR_VALIDATION_CONSTANTS` and `generateRoleSymbol` from Phase 2): add pinned `stellar-contracts` commit hash, `soroban-sdk` version, crate names
-- [ ] T029 [P] [US1] Create lib.rs template in `packages/codegen-rwa-stellar/src/templates/lib-rs.ts`: `#![no_std]`, `mod contract;`, `pub use contract::*;` per SR-015
-- [ ] T030 [P] [US1] Create per-crate Cargo.toml template in `packages/codegen-rwa-stellar/src/templates/cargo/crate-toml.ts`: crate name, `crate-type = ["cdylib"]`, dependencies from config
-- [ ] T031 [P] [US1] Create workspace Cargo.toml template in `packages/codegen-rwa-stellar/src/templates/cargo/workspace-toml.ts`: workspace members, git deps with pinned rev, soroban-sdk version, edition 2021 per SR-008
-- [ ] T032 [US1] Implement RWA Token contract template in `packages/codegen-rwa-stellar/src/templates/contracts/rwa-token.ts`: empty struct, `__constructor` per SR-016, FungibleToken/AccessControl/Pausable impls, conditional DocumentManager per SR-004, role grants per SR-005, default token version per SR-012
-- [ ] T033 [P] [US1] Implement Compliance contract template in `packages/codegen-rwa-stellar/src/templates/contracts/compliance.ts`: Compliance + TokenBinder + AccessControl traits, `__constructor(e, admin)` per SR-016
-- [ ] T034 [P] [US1] Implement Identity Verifier contract template in `packages/codegen-rwa-stellar/src/templates/contracts/identity-verifier.ts`: IdentityVerifier + AccessControl traits, `__constructor(e, admin, cti_address)` per SR-016
-- [ ] T035 [P] [US1] Implement CTI contract template in `packages/codegen-rwa-stellar/src/templates/contracts/claim-topics-issuers.ts`: ClaimTopicsAndIssuers + AccessControl traits, `__constructor(e, admin)` per SR-016
-- [ ] T036 [P] [US1] Implement IRS contract template in `packages/codegen-rwa-stellar/src/templates/contracts/identity-registry-storage.ts`: IdentityRegistryStorage + CountryDataManager + TokenBinder + AccessControl traits, `__constructor(e, admin)` per SR-016
-- [ ] T037 [US1] Create StellarRwaGenerator class in `packages/codegen-rwa-stellar/src/stellar-rwa-generator.ts`: implement `Generator<RWAConfig>` interface, wire all contract templates into `generate()` method, produce `GenerationResult` with `FileTree` and `GenerationMetadata` (including configHash via sorted-key SHA-256)
-- [ ] T038 [US1] Write end-to-end generation test in `packages/codegen-rwa-stellar/__tests__/generate.test.ts`: pass valid config → verify all 5 contracts present, correct file paths, trait impls match SR-002, constructor args match SR-016
+- [x] T028 [P] [US1] Extend Stellar constants in `packages/codegen-rwa-stellar/src/constants.ts` (already contains `STELLAR_VALIDATION_CONSTANTS` and `generateRoleSymbol` from Phase 2): add pinned `stellar-contracts` commit hash, `soroban-sdk` version, crate names
+- [x] T029 [P] [US1] Create lib.rs template in `packages/codegen-rwa-stellar/src/templates/lib-rs.ts`: `#![no_std]`, `mod contract;`, `pub use contract::*;` per SR-015
+- [x] T030 [P] [US1] Create per-crate Cargo.toml template in `packages/codegen-rwa-stellar/src/templates/cargo/crate-toml.ts`: crate name, `crate-type = ["cdylib"]`, dependencies from config
+- [x] T031 [P] [US1] Create workspace Cargo.toml template in `packages/codegen-rwa-stellar/src/templates/cargo/workspace-toml.ts`: workspace members, git deps with pinned rev, soroban-sdk version, edition 2021 per SR-008
+- [x] T032 [US1] Implement RWA Token contract template in `packages/codegen-rwa-stellar/src/templates/contracts/rwa-token.ts`: empty struct, `__constructor` per SR-016, FungibleToken/AccessControl/Pausable impls, conditional DocumentManager per SR-004, role grants per SR-005, default token version per SR-012
+- [x] T033 [P] [US1] Implement Compliance contract template in `packages/codegen-rwa-stellar/src/templates/contracts/compliance.ts`: Compliance + TokenBinder + AccessControl traits, `__constructor(e, admin)` per SR-016
+- [x] T034 [P] [US1] Implement Identity Verifier contract template in `packages/codegen-rwa-stellar/src/templates/contracts/identity-verifier.ts`: IdentityVerifier + AccessControl traits, `__constructor(e, admin, cti_address)` per SR-016
+- [x] T035 [P] [US1] Implement CTI contract template in `packages/codegen-rwa-stellar/src/templates/contracts/claim-topics-issuers.ts`: ClaimTopicsAndIssuers + AccessControl traits, `__constructor(e, admin)` per SR-016
+- [x] T036 [P] [US1] Implement IRS contract template in `packages/codegen-rwa-stellar/src/templates/contracts/identity-registry-storage.ts`: IdentityRegistryStorage + CountryDataManager + TokenBinder + AccessControl traits, `__constructor(e, admin)` per SR-016
+- [x] T037 [US1] Create StellarRwaGenerator class in `packages/codegen-rwa-stellar/src/stellar-rwa-generator.ts`: implement `Generator<RWAConfig>` interface, wire all contract templates into `generate()` method, produce `GenerationResult` with `FileTree` and `GenerationMetadata` (including configHash via sorted-key SHA-256)
+- [x] T038 [US1] Write end-to-end generation test in `packages/codegen-rwa-stellar/__tests__/generate.test.ts`: pass valid config → verify all 5 contracts present, correct file paths, trait impls match SR-002, constructor args match SR-016
 
 **Checkpoint**: `generate(config)` returns a `GenerationResult` with all 5 core contracts, workspace Cargo.toml, and lib.rs files. US1 is independently testable.
 
