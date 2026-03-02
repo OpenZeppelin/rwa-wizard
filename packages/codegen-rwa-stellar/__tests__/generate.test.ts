@@ -111,6 +111,10 @@ describe('StellarRwaGenerator', () => {
 
       expect(paths).toContain('Cargo.toml');
       expect(paths).toContain('rustfmt.toml');
+      expect(paths).toContain('README.md');
+      expect(paths).toContain('config.json');
+      expect(paths).toContain('scripts/build.sh');
+      expect(paths).toContain('scripts/deploy.sh');
       expect(paths).toContain('contracts/rwa-token/src/contract.rs');
       expect(paths).toContain('contracts/rwa-token/src/lib.rs');
       expect(paths).toContain('contracts/rwa-token/Cargo.toml');
@@ -270,6 +274,59 @@ describe('StellarRwaGenerator', () => {
       const result = generator.generate(config);
 
       expect(result.metadata.fileCount).toBe(Object.keys(result.files).length);
+    });
+  });
+
+  describe('scripts, config.json, and README (US2)', () => {
+    it('should produce build.sh with stellar contract build', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+      const buildSh = result.files['scripts/build.sh'] as string;
+
+      expect(buildSh).toContain('#!/bin/bash');
+      expect(buildSh).toContain('stellar contract build');
+    });
+
+    it('should produce deploy.sh with correct deployment order', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+      const deploySh = result.files['scripts/deploy.sh'] as string;
+
+      expect(deploySh).toContain('#!/bin/bash');
+      const ctiPos = deploySh.indexOf('CTI_ADDRESS=$(');
+      const irsPos = deploySh.indexOf('IRS_ADDRESS=$(');
+      const tokenPos = deploySh.indexOf('RWA_TOKEN_ADDRESS=$(');
+
+      expect(ctiPos).toBeLessThan(irsPos);
+      expect(irsPos).toBeLessThan(tokenPos);
+    });
+
+    it('should produce config.json mirroring RWAConfig structure per SR-007', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+      const configJson = JSON.parse(result.files['config.json'] as string);
+
+      expect(configJson).toHaveProperty('token');
+      expect(configJson).toHaveProperty('identityVerification');
+      expect(configJson).toHaveProperty('compliance');
+      expect(configJson).toHaveProperty('accessControl');
+      expect(configJson).toHaveProperty('deployment');
+      expect(configJson.token.name).toBe('Acme Real Estate Token');
+      expect(configJson.token.symbol).toBe('ACME');
+    });
+
+    it('should produce README.md with required sections per SR-009', () => {
+      const config = createValidConfig();
+      const result = generator.generate(config);
+      const readme = result.files['README.md'] as string;
+
+      expect(readme).toContain('Acme Real Estate Token');
+      expect(readme).toContain('Prerequisites');
+      expect(readme).toContain('Build');
+      expect(readme).toContain('Deploy');
+      expect(readme).toContain('Architecture');
+      expect(readme).toContain('Contracts');
+      expect(readme).toContain('Unix');
     });
   });
 

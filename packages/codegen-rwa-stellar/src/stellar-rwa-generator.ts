@@ -16,7 +16,10 @@ import { generateIdentityRegistryStorageContract } from './templates/contracts/i
 import { generateIdentityVerifierContract } from './templates/contracts/identity-verifier';
 import { generateRwaTokenContract } from './templates/contracts/rwa-token';
 import { generateLibRs } from './templates/lib-rs';
+import { generateReadme } from './templates/readme';
 import { generateRustfmtToml } from './templates/rustfmt-toml';
+import { generateBuildSh } from './templates/scripts/build-sh';
+import { generateDeploySh } from './templates/scripts/deploy-sh';
 
 import { CRATE_NAMES } from './constants';
 
@@ -133,6 +136,11 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     const rustfmtToml = generateRustfmtToml();
     files = mergeFileTrees(files, createFile('rustfmt.toml', rustfmtToml));
 
+    files = mergeFileTrees(files, createFile('scripts/build.sh', generateBuildSh(config)));
+    files = mergeFileTrees(files, createFile('scripts/deploy.sh', generateDeploySh(config)));
+    files = mergeFileTrees(files, createFile('config.json', generateConfigJson(config)));
+    files = mergeFileTrees(files, createFile('README.md', generateReadme(config)));
+
     const configHash = computeConfigHashSync(config);
 
     return {
@@ -146,6 +154,11 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
       },
     };
   }
+}
+
+/** Serialize RWAConfig as config.json mirroring the type structure per SR-007. */
+function generateConfigJson(config: RWAConfig): string {
+  return JSON.stringify(config, null, 2) + '\n';
 }
 
 function computeConfigHashSync(config: RWAConfig): string {
