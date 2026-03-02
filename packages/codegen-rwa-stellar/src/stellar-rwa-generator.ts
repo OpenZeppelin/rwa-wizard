@@ -5,7 +5,12 @@ import type {
   Generator,
   ValidationResult,
 } from '@openzeppelin/codegen-core';
-import { createFile, getFileCount, mergeFileTrees } from '@openzeppelin/codegen-core';
+import {
+  createFile,
+  getFileCount,
+  mergeFileTrees,
+  validateWithRules,
+} from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateCrateToml } from './templates/cargo/crate-toml';
@@ -20,6 +25,7 @@ import { generateReadme } from './templates/readme';
 import { generateRustfmtToml } from './templates/rustfmt-toml';
 import { generateBuildSh } from './templates/scripts/build-sh';
 import { generateDeploySh } from './templates/scripts/deploy-sh';
+import { rwaValidationRules } from './validation/rules';
 
 import { CRATE_NAMES } from './constants';
 
@@ -125,8 +131,8 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
   readonly name = GENERATOR_NAME;
   readonly version = GENERATOR_VERSION;
 
-  validate(_config: RWAConfig): ValidationResult {
-    return { valid: true, errors: [], warnings: [] };
+  validate(config: RWAConfig): ValidationResult {
+    return validateWithRules(config, rwaValidationRules);
   }
 
   generate(config: RWAConfig, _options?: GenerateOptions): GenerationResult {

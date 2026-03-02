@@ -2,6 +2,7 @@ import type {
   GenerateOptions,
   GenerationResult,
   ProgressCallback,
+  ValidationResult,
   ZipResult,
 } from '@openzeppelin/codegen-core';
 import { generateZip as coreGenerateZip } from '@openzeppelin/codegen-core';
@@ -36,9 +37,10 @@ export function generate(config: RWAConfig, options?: GenerateOptions): Generati
 
 /**
  * Validate an RWA configuration without generating output.
- * Returns structured, machine-readable validation results.
+ * Returns structured, machine-readable validation results per SR-017.
+ * Never throws — always returns a ValidationResult.
  */
-export function validate(config: RWAConfig) {
+export function validate(config: RWAConfig): ValidationResult {
   return generator.validate(config);
 }
 
