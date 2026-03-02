@@ -189,9 +189,9 @@
 
 ### Implementation for User Story 7
 
-- [ ] T060 [US7] Write dummy generator extensibility test in `packages/codegen-core/__tests__/generator.test.ts`: implement `Generator<{ message: string }>` per SC-008, verify validate → generate → generateZip pipeline, confirm no chain-specific assumptions in core
-- [ ] T061 [US7] Write file-tree builder tests in `packages/codegen-core/__tests__/file-tree.test.ts`: create, merge, path handling
-- [ ] T062 [US7] Write concurrent invocation safety test in `packages/codegen-core/__tests__/generator.test.ts`: invoke `generate()` concurrently with different configs via `Promise.all()`, verify no shared mutable state interference per CR-009
+- [x] T060 [US7] Write dummy generator extensibility test in `packages/codegen-core/__tests__/generator.test.ts`: implement `Generator<{ message: string }>` per SC-008, verify validate → generate → generateZip pipeline, confirm no chain-specific assumptions in core
+- [x] T061 [US7] Write file-tree builder tests in `packages/codegen-core/__tests__/file-tree.test.ts`: create, merge, path handling
+- [x] T062 [US7] Write concurrent invocation safety test in `packages/codegen-core/__tests__/generator.test.ts`: invoke `generate()` concurrently with different configs via `Promise.all()`, verify no shared mutable state interference per CR-009
 
 **Checkpoint**: Core engine is proven extensible and concurrency-safe. No Stellar/RWA leakage. SC-008 and CR-009 satisfied.
 
