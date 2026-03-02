@@ -19,16 +19,16 @@
 
 **Purpose**: Scaffold all three packages in the monorepo with build tooling
 
-- [ ] T001 Create `packages/codegen-core/` directory structure with `src/`, `__tests__/`, `__tests__/utils/`
-- [ ] T002 [P] Create `packages/config/` directory structure with `src/`, `__tests__/`
-- [ ] T003 [P] Create `packages/codegen-rwa-stellar/` directory structure with `src/`, `src/templates/contracts/`, `src/templates/scripts/`, `src/templates/cargo/`, `src/validation/`, `src/modules/`, `__tests__/`, `__tests__/templates/`, `__tests__/modules/`
-- [ ] T004 Configure pnpm workspace to include new packages in `pnpm-workspace.yaml`
-- [ ] T005 [P] Create `packages/codegen-core/package.json` with name `@openzeppelin/codegen-core`, JSZip dependency, tsdown build config, Vitest test config, `engines: { node: ">=20.0.0" }`
-- [ ] T006 [P] Create `packages/config/package.json` with name `@openzeppelin/rwa-config`, tsdown build config, Vitest test config, `engines: { node: ">=20.0.0" }`
-- [ ] T007 [P] Create `packages/codegen-rwa-stellar/package.json` with name `@openzeppelin/codegen-rwa-stellar`, dependencies on `@openzeppelin/codegen-core` and `@openzeppelin/rwa-config`, tsdown build config, Vitest test config, `engines: { node: ">=20.0.0" }`
-- [ ] T008 [P] Create `tsconfig.json` for each package extending the root TypeScript config with strict mode
-- [ ] T009 [P] Create `tsdown.config.ts` for each package (ESM + CJS + DTS output)
-- [ ] T010 Run `pnpm install` and verify all three packages build with empty `src/index.ts` stubs
+- [x] T001 Create `packages/codegen-core/` directory structure with `src/`, `__tests__/`, `__tests__/utils/`
+- [x] T002 [P] Create `packages/config/` directory structure with `src/`, `__tests__/`
+- [x] T003 [P] Create `packages/codegen-rwa-stellar/` directory structure with `src/`, `src/templates/contracts/`, `src/templates/scripts/`, `src/templates/cargo/`, `src/validation/`, `src/modules/`, `__tests__/`, `__tests__/templates/`, `__tests__/modules/`
+- [x] T004 Configure pnpm workspace to include new packages in `pnpm-workspace.yaml`
+- [x] T005 [P] Create `packages/codegen-core/package.json` with name `@openzeppelin/codegen-core`, JSZip dependency, tsdown build config, Vitest test config, `engines: { node: ">=20.0.0" }`
+- [x] T006 [P] Create `packages/config/package.json` with name `@openzeppelin/rwa-config`, tsdown build config, Vitest test config, `engines: { node: ">=20.0.0" }`
+- [x] T007 [P] Create `packages/codegen-rwa-stellar/package.json` with name `@openzeppelin/codegen-rwa-stellar`, dependencies on `@openzeppelin/codegen-core` and `@openzeppelin/rwa-config`, tsdown build config, Vitest test config, `engines: { node: ">=20.0.0" }`
+- [x] T008 [P] Create `tsconfig.json` for each package extending the root TypeScript config with strict mode
+- [x] T009 [P] Create `tsdown.config.ts` for each package (ESM + CJS + DTS output)
+- [x] T010 Run `pnpm install` and verify all three packages build with empty `src/index.ts` stubs
 
 **Checkpoint**: All three packages scaffold, build, and are recognized by the monorepo.
 
