@@ -1,15 +1,13 @@
 <!--
 Sync Impact Report
-Version: 0.0.0 → 1.0.0
-Modified Principles: Initial ratification — all principles are new
-- Section I: Adapter-Led, Chain-Agnostic Architecture
-- Section II: Reuse-First & Monorepo Integration
-- Section III: Type Safety, Linting, and Code Quality
-- Section IV: UI/Design System Consistency
-- Section V: Testing and TDD for Business Logic
-- Section VI: Tooling, Persistence, and Autonomy
-- Additional Constraints: ZIP generation, security, forms, storage
-- Development Workflow: pnpmfile-based local dev, docker, conventional commits
+Version: 1.0.0 → 1.1.0
+Modified Principles:
+- Section I: Renamed from "Adapter-Led" to "Codegen-Led, Chain-Agnostic Architecture" — generation now owned by codegen packages, adapters reserved for on-chain interaction
+- Section II: Added three publicly published codegen packages (@openzeppelin/codegen-core, @openzeppelin/rwa-config, @openzeppelin/codegen-rwa-stellar)
+- Section III: Renamed RwaWizardConfig → RWAConfig, owned by @openzeppelin/rwa-config
+- Section VI: ZIP generation now via @openzeppelin/codegen-core (wraps JSZip)
+- Additional Constraints: ZIP generation references codegen-core, dual API surface (generate + generateZip)
+- Governance: Added coordination rule for codegen-core and rwa-config breaking changes
 Templates:
 - ✅ .specify/templates/plan-template.md (Constitution Check section aligns)
 - ✅ .specify/templates/spec-template.md (requirements and user stories align)
@@ -21,31 +19,37 @@ Follow-up TODOs: none
 
 ## Core Principles
 
-### I. Adapter-Led, Chain-Agnostic Architecture (NON-NEGOTIABLE)
+### I. Codegen-Led, Chain-Agnostic Architecture (NON-NEGOTIABLE)
 
-- The RWA Wizard app MUST remain chain-agnostic; all blockchain interactions, contract template generation, and chain-specific logic reside exclusively in chain-specific adapters (e.g., `@openzeppelin/ui-builder-adapter-evm`, `@openzeppelin/ui-builder-adapter-stellar`).
-- The UI MUST NOT contain chain-specific parsing, formatting, contract scaffolding, or template logic; it consumes generic interfaces and delegates generation to adapter-led boundaries.
-- Feature detection drives the UI: the app MUST query adapter capabilities and ecosystem registry to enable/disable wizard steps, validation rules, and ecosystem-specific hints dynamically.
-- Adapters are instantiated via `NetworkConfig`; the app supports multi-chain operations by switching adapters based on user ecosystem/network selection.
-- ZIP generation of chain-specific artifacts (contracts, scripts, docs) MUST be delegated to adapter-led generator entrypoints (e.g., exported functions from adapter packages), not embedded in the wizard UI.
-- Rationale: Ensures the wizard is scalable to new chains without UI code changes and strictly separates presentation from protocol and generation logic.
+- The RWA Wizard app MUST remain chain-agnostic; all contract code generation, template rendering, and chain-specific logic reside exclusively in codegen generator packages (e.g., `@openzeppelin/codegen-rwa-stellar`, future `@openzeppelin/codegen-rwa-evm`).
+- The UI MUST NOT contain chain-specific parsing, formatting, contract scaffolding, or template logic; it consumes generic interfaces and delegates generation to codegen package boundaries.
+- Feature detection drives the UI: the app MUST query generator capabilities and the compliance module registry to enable/disable wizard steps, validation rules, and ecosystem-specific hints dynamically.
+- ZIP generation of chain-specific artifacts (contracts, scripts, docs) MUST be delegated to codegen generator packages, not embedded in the wizard UI. The core generation pipeline infrastructure (`@openzeppelin/codegen-core`) provides file tree assembly, ZIP packaging, validation framework, and progress reporting — all chain-agnostic and contract-agnostic.
+- The shared `RWAConfig` type (`@openzeppelin/rwa-config`) describes _what_ the user wants; chain-specific generators decide _how_ to produce it. The config package is the single source of truth for the configuration schema.
+- Adapter packages (`@openzeppelin/ui-builder-adapter-*`) remain for on-chain interaction (wallet connection, transaction formatting, contract queries) and ecosystem metadata (chain names, icons, networks). They are NOT responsible for code generation.
+- Rationale: Ensures the wizard is scalable to new chains without UI code changes, strictly separates presentation from generation logic, and enables headless usage of codegen packages by CLI tools and AI agents.
 
 ### II. Reuse-First & Monorepo Integration (NON-NEGOTIABLE)
 
 - The application MUST reuse `@openzeppelin/ui-*` packages (types, utils, renderer, storage, components, react, styles) rather than re-implementing core functionality.
-- Adapter packages remain in the `@openzeppelin/ui-builder-adapter-*` namespace (e.g., `adapter-evm`, `adapter-stellar`).
+- Adapter packages remain in the `@openzeppelin/ui-builder-adapter-*` namespace (e.g., `adapter-evm`, `adapter-stellar`) for on-chain interaction and ecosystem metadata.
+- The monorepo produces three publicly published codegen packages:
+  - `@openzeppelin/codegen-core` — chain-agnostic generation pipeline (file tree, ZIP, validation framework, progress)
+  - `@openzeppelin/rwa-config` — shared `RWAConfig` type and validation schema (chain-agnostic)
+  - `@openzeppelin/codegen-rwa-stellar` — Stellar/Soroban RWA contract generator (first ecosystem implementation)
+- These codegen packages are standalone and headless — usable by the wizard app, CLI tools, and AI agents without React or browser dependencies.
 - Local development against the `openzeppelin-ui` monorepo MUST use the pnpmfile hook workflow: run `pnpm dev:local` to resolve `@openzeppelin/ui-*` packages to local paths via `.pnpmfile.cjs`. This approach keeps `package.json` unchanged while enabling seamless switching between local and npm packages.
-- New shared utilities, types, or generation interfaces required by RWA Wizard should ideally be contributed upstream to `openzeppelin-ui` packages or adapter packages first, then consumed here.
+- New shared utilities, types, or generation interfaces required by RWA Wizard should ideally be contributed upstream to `openzeppelin-ui` packages or adapter packages first, then consumed here. Codegen-specific infrastructure belongs in `@openzeppelin/codegen-core`.
 - Patterns for provider hierarchy, ecosystem management, config services, and storage MUST follow those established by the UI Builder and Role Manager applications.
-- Rationale: Guarantees consistency with the broader OpenZeppelin tool ecosystem and validates the standalone usability of UI Kit packages.
+- Rationale: Guarantees consistency with the broader OpenZeppelin tool ecosystem, validates the standalone usability of UI Kit packages, and enables headless code generation across multiple consumption channels.
 
 ### III. Type Safety, Linting, and Code Quality (NON-NEGOTIABLE)
 
 - TypeScript strictness, shared linting, and formatting rules apply throughout the repository.
-- `console` usage in source code is prohibited; use `logger` from `@openzeppelin/ui-utils` (exceptions only in tests/scripts).
+- `console` usage in source code is prohibited; use `logger` from `@openzeppelin/ui-utils` (exceptions only in tests/scripts). Headless library packages (`codegen-core`, `rwa-config`, `codegen-rwa-stellar`) MAY use `@openzeppelin/ui-utils` for `logger` — the package has no React or heavy UI dependencies. However, since `ui-utils` currently uses a barrel export with no subpath imports, codegen packages MUST verify that tree-shaking (via tsdown) eliminates browser-only modules (`RouterService`, `AnalyticsService`, `deepLink`) from the output bundle to ensure standalone Node.js compatibility. Public API diagnostic output SHOULD prefer structured return values (`ValidationResult`, `ProgressEvent`) over logging where possible.
 - `any` types are disallowed without explicit justification.
 - React components MUST be typed with `React.FC` or explicit props interfaces; hooks must have explicit return types.
-- The canonical `RwaWizardConfig` data model MUST be fully typed with no implicit `any` fields; chain-specific extensions use discriminated unions or generics.
+- The canonical `RWAConfig` data model (owned by `@openzeppelin/rwa-config`) MUST be fully typed with no implicit `any` fields; chain-specific extensions use discriminated unions or generics. The wizard app consumes this type; it does not define its own configuration shape.
 - Rationale: Enforces consistent quality gates and prevents regressions in the client-side logic.
 
 ### IV. UI/Design System Consistency (NON-NEGOTIABLE)
@@ -68,7 +72,7 @@ Follow-up TODOs: none
 
 - The application MUST function as a standalone client-side SPA (Single Page Application) with no mandatory backend dependencies.
 - Local persistence MUST use `@openzeppelin/ui-storage` (Dexie/IndexedDB) for user data (draft wizard configs, templates/presets, recent projects, user preferences).
-- ZIP generation MUST be performed entirely in-browser using JSZip (following the same proven approach as UI Builder export); no server-side build or generation service is required.
+- ZIP generation MUST be performed entirely in-browser via `@openzeppelin/codegen-core` (which wraps JSZip internally); no server-side build or generation service is required.
 - Build outputs utilize Vite; releases are managed via Changesets.
 - Rationale: Ensures the tool is privacy-preserving, works offline (for cached data), and is easy to host.
 
@@ -77,7 +81,7 @@ Follow-up TODOs: none
 - **Storage**: Do not use `localStorage` for complex data; use the typed IndexedDB layer via `@openzeppelin/ui-storage`.
 - **Security**: Do not hardcode chain secrets; rely on wallet connections or user input. Generated scaffolding MUST avoid privileged functions with missing auth checks.
 - **Forms**: Use `@openzeppelin/ui-renderer` for transaction forms where applicable to inherit validation and schema logic from adapters.
-- **ZIP Generation**: ZIP output MUST be deterministic from a given `RwaWizardConfig`. The generation pipeline MUST support progress callbacks for UI feedback.
+- **ZIP Generation**: ZIP output MUST be deterministic from a given `RWAConfig`. The generation pipeline (`@openzeppelin/codegen-core`) MUST support progress callbacks for UI feedback. The public API exposes both raw file tree output (`generate()`) and ZIP output (`generateZip()`).
 - **Privacy**: When wizard configuration involves identity data (e.g., plaintext identity registry storage), the UI MUST surface explicit privacy warnings.
 - **Wizard State**: The wizard MUST support draft persistence (auto-save) and resumption across sessions via storage.
 
@@ -97,5 +101,6 @@ Follow-up TODOs: none
 - Amendments require a documented proposal and PR review.
 - Breaking changes to upstream `openzeppelin-ui` interfaces require coordination with the UI Kit repository maintainers.
 - Breaking changes to adapter interfaces or generator boundaries require coordination with the UI Builder repository maintainers.
+- Breaking changes to `@openzeppelin/codegen-core` or `@openzeppelin/rwa-config` public APIs require coordination across all consuming generator packages and the wizard app.
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-26 | **Last Amended**: 2026-02-26
+**Version**: 1.1.0 | **Ratified**: 2026-02-26 | **Last Amended**: 2026-03-01

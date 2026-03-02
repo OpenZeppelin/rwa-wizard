@@ -1,0 +1,364 @@
+# Data Model: Stellar RWA Codegen
+
+**Branch**: `001-stellar-rwa-codegen` | **Date**: 2026-03-01
+
+## Package: `@openzeppelin/rwa-config`
+
+### RWAConfig
+
+The canonical configuration object describing the desired RWA token system. Chain-agnostic by design.
+
+```typescript
+interface RWAConfig {
+  token: TokenConfig;
+  identityVerification: IdentityVerificationConfig;
+  compliance: ComplianceConfig;
+  accessControl: AccessControlConfig;
+  deployment: DeploymentConfig;
+}
+```
+
+**Relationships**: Consumed by all generators. Owned by `@openzeppelin/rwa-config`.
+
+---
+
+### TokenConfig
+
+```typescript
+interface TokenConfig {
+  name: string; // max 32 chars
+  symbol: string; // max 12 chars
+  decimals: number; // 0–18
+  initialSupply?: string; // bigint-compatible string, optional
+  documentManager: {
+    enabled: boolean;
+  };
+}
+```
+
+**Validation rules**:
+
+- `name`: required, 1–32 chars
+- `symbol`: required, 1–12 chars, alphanumeric + hyphens
+- `decimals`: required, integer 0–18
+- `initialSupply`: optional, must be non-negative if provided
+
+---
+
+### IdentityVerificationConfig
+
+```typescript
+interface IdentityVerificationConfig {
+  claimTopics: ClaimTopic[];
+  trustedIssuers: TrustedIssuer[];
+}
+
+interface ClaimTopic {
+  id: number; // unique positive integer
+  name: string; // human-readable label
+}
+
+interface TrustedIssuer {
+  address: string; // blockchain address
+  claimTopics: number[]; // references to ClaimTopic.id
+}
+```
+
+**Validation rules**:
+
+- `claimTopics`: no duplicate `id` values
+- `trustedIssuers[].claimTopics`: each must reference an existing `ClaimTopic.id`
+- `trustedIssuers[].address`: non-empty string
+
+---
+
+### ComplianceConfig
+
+```typescript
+interface ComplianceConfig {
+  modules: ComplianceModuleSelection[];
+}
+
+interface ComplianceModuleSelection {
+  moduleId: string; // registry identifier
+  hook: ComplianceHook; // which hook to attach to
+  config?: Record<string, unknown>; // module-specific params
+}
+
+type ComplianceHook = 'transfer' | 'creation' | 'destruction';
+```
+
+**Hook-to-trait method mapping** (Stellar-specific): `'transfer'` → `on_transfer`/`can_transfer`, `'creation'` → `on_created`/`can_create`, `'destruction'` → `on_destroyed`. This mapping is hardcoded in the Stellar generator.
+
+**Validation rules**:
+
+- `modules[].moduleId`: must be a registered module in the generator's registry
+- `modules[].hook`: must be a valid ComplianceHook value
+- No duplicate module+hook combinations
+
+---
+
+### AccessControlConfig
+
+```typescript
+interface AccessControlConfig {
+  ownership: OwnershipModel;
+  roles: OperatorRole[];
+}
+
+type OwnershipModel =
+  | { type: 'single-owner'; ownerAddress: string }
+  | { type: 'multi-sig'; address: string }
+  | { type: 'dao'; address: string };
+
+interface OperatorRole {
+  name: string; // human-readable role name
+  symbol?: string; // Soroban symbol, max 9 chars. Auto-generated from name if omitted.
+  addresses: string[]; // accounts granted this role at deploy time
+}
+```
+
+**Validation rules**:
+
+- `ownership`: required, must have valid type discriminant
+- `ownership.ownerAddress / address`: non-empty string
+- `roles[].symbol`: optional; if provided, max 9 chars (Soroban `symbol_short!` limit), alphanumeric only. If omitted, auto-generated from `name` by lowercasing and truncating to 9 chars.
+- `roles[].name`: required, non-empty
+- No duplicate role symbols (including auto-generated ones)
+
+---
+
+### DeploymentConfig
+
+```typescript
+interface DeploymentConfig {
+  network: string; // e.g., "testnet", "mainnet", custom RPC
+  sourceAccount?: string; // deployer account (optional, defaults to CLI signer)
+}
+```
+
+**Validation rules**:
+
+- `network`: required, non-empty string
+
+---
+
+## Package: `@openzeppelin/codegen-core`
+
+### Generator (Interface)
+
+The extensibility contract that all generators implement.
+
+```typescript
+interface Generator<TConfig = unknown> {
+  readonly name: string;
+  readonly version: string;
+
+  validate(config: TConfig): ValidationResult;
+  generate(config: TConfig, options?: GenerateOptions): GenerationResult;
+}
+
+interface GenerateOptions {
+  onProgress?: ProgressCallback;
+}
+```
+
+**Extension points**: `validate()` for domain-specific rules, `generate()` for file tree production. The core engine orchestrates by calling these methods.
+
+---
+
+### FileTree
+
+In-memory representation of a project's directory structure.
+
+```typescript
+type FileTree = Record<string, string | Uint8Array>;
+```
+
+**Notes**: Keys are relative paths (e.g., `"contracts/token/src/contract.rs"`). Values are UTF-8 text content or binary data. JSZip creates intermediate directories automatically.
+
+---
+
+### ValidationResult
+
+Structured output from validation.
+
+```typescript
+interface ValidationResult {
+  valid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+}
+
+interface ValidationError {
+  field: string; // dot-path, e.g., "token.decimals", "compliance.modules[0].moduleId"
+  code: string; // machine-readable, e.g., "INVALID_RANGE", "DUPLICATE_ENTRY"
+  message: string; // human-readable description
+}
+
+interface ValidationWarning {
+  field: string;
+  code: string;
+  message: string;
+}
+```
+
+---
+
+### GenerationResult
+
+Output of the generation pipeline. Returned by `generate()` on success. If validation fails, `generate()` throws an `Error` rather than returning a partial result — callers should use `validate()` first for graceful pre-flight checks.
+
+```typescript
+interface GenerationResult {
+  files: FileTree;
+  metadata: GenerationMetadata;
+}
+
+interface GenerationMetadata {
+  generatorName: string; // populated by the generator (e.g., "codegen-rwa-stellar")
+  generatorVersion: string; // populated by the generator (e.g., "1.0.0")
+  generatedAt: string; // ISO 8601 timestamp, set by the generator at generation time
+  fileCount: number; // count of entries in the FileTree
+  configHash: string; // SHA-256 of JSON.stringify(config) with keys sorted alphabetically
+}
+```
+
+**Notes**: All `GenerationMetadata` fields are populated by the generator implementation, not the core engine. The `configHash` uses deterministic serialization (sorted keys) to ensure the same logical config always produces the same hash regardless of property insertion order.
+
+---
+
+### ZipResult
+
+Output from ZIP generation.
+
+```typescript
+interface ZipResult {
+  data: Blob; // browser: Blob, Node: Buffer-backed Blob
+  fileName: string;
+  metadata: GenerationMetadata;
+}
+```
+
+---
+
+### ProgressCallback
+
+```typescript
+type ProgressCallback = (event: ProgressEvent) => void;
+
+interface ProgressEvent {
+  phase: string; // e.g., "validating", "generating-contracts", "assembling-zip"
+  percentage: number; // 0–100
+  message?: string; // optional detail
+}
+```
+
+---
+
+## Package: `@openzeppelin/codegen-rwa-stellar`
+
+### ComplianceModuleRegistryEntry
+
+Metadata for an available compliance module.
+
+```typescript
+interface ComplianceModuleRegistryEntry {
+  id: string; // unique identifier, e.g., "supply-cap"
+  name: string; // human-readable, e.g., "Supply Cap"
+  description: string; // short description
+  supportedHooks: ComplianceHook[]; // which hooks this module can attach to
+}
+```
+
+**Notes**: `getAvailableModules()` only returns entries with concrete implementations in the `stellar-contracts` library. Unimplemented modules are never exposed — no `implemented` flag is needed.
+
+---
+
+### ContractTemplate (internal)
+
+Internal representation of a generatable contract unit.
+
+```typescript
+interface ContractTemplate {
+  crateName: string; // Rust crate name, e.g., "rwa-token"
+  contractName: string; // Rust struct name, e.g., "RwaTokenContract"
+  traits: string[]; // traits to implement, e.g., ["FungibleToken", "AccessControl"]
+  constructorArgs: ConstructorArg[];
+  roleAnnotations: RoleAnnotation[];
+  dependencies: CargoDependency[];
+}
+
+interface ConstructorArg {
+  name: string;
+  rustType: string;
+  source: string; // field path in RWAConfig to resolve the value
+}
+
+interface RoleAnnotation {
+  method: string; // method name this annotation applies to
+  macroName: string; // e.g., "only_role", "only_admin"
+  roleSymbol?: string; // required for only_role, max 9 chars
+  paramName?: string; // parameter name used in the macro, e.g., "operator"
+}
+
+interface CargoDependency {
+  name: string;
+  source: 'git' | 'workspace' | 'registry';
+  version?: string;
+  gitUrl?: string;
+  rev?: string;
+  features?: string[];
+}
+```
+
+---
+
+## Entity Relationship Summary
+
+```
+RWAConfig
+├── TokenConfig
+├── IdentityVerificationConfig
+│   ├── ClaimTopic[]
+│   └── TrustedIssuer[]
+├── ComplianceConfig
+│   └── ComplianceModuleSelection[]
+├── AccessControlConfig
+│   ├── OwnershipModel
+│   └── OperatorRole[]
+└── DeploymentConfig
+
+Generator<RWAConfig>
+├── validate(config) → ValidationResult
+│   └── ValidationError[]
+└── generate(config) → GenerationResult
+    ├── FileTree
+    └── GenerationMetadata
+
+ComplianceModuleRegistry → ComplianceModuleRegistryEntry[]
+```
+
+## State Transitions
+
+### Configuration Lifecycle
+
+```
+EMPTY → PARTIAL → VALID → GENERATED
+                        ↗
+        INVALID → (fix) → VALID
+```
+
+1. **EMPTY**: No config provided
+2. **PARTIAL**: Some fields filled, not yet validated
+3. **VALID**: `validate()` returns `{ valid: true }`
+4. **INVALID**: `validate()` returns `{ valid: false, errors: [...] }`
+5. **GENERATED**: `generate()` succeeds, returns `GenerationResult`
+
+### Generation Pipeline Flow
+
+```
+Config → validate() → generate() → FileTree → [optional] generateZip() → ZipResult
+                ↓
+          ValidationResult (if invalid, pipeline stops)
+```
