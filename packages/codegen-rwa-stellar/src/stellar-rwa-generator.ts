@@ -7,8 +7,10 @@ import type {
 } from '@openzeppelin/codegen-core';
 import {
   createFile,
+  createProgressEvent,
   getFileCount,
   mergeFileTrees,
+  resolveProgressCallback,
   validateWithRules,
 } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
@@ -136,13 +138,19 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     return validateWithRules(config, rwaValidationRules);
   }
 
-  generate(config: RWAConfig, _options?: GenerateOptions): GenerationResult {
+  generate(config: RWAConfig, options?: GenerateOptions): GenerationResult {
+    const progress = resolveProgressCallback(options?.onProgress);
+
+    progress(createProgressEvent('validating', 10));
+
     const validation = this.validate(config);
     if (!validation.valid) {
       throw new Error(
         `Invalid configuration: ${validation.errors.map((e) => e.message).join('; ')}`
       );
     }
+
+    progress(createProgressEvent('generating-contracts', 30));
 
     const crates = getCoreContractCrates();
     const members = crates.map((c) => c.dirPath);
@@ -174,6 +182,8 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
       }
     }
 
+    progress(createProgressEvent('generating-scripts', 60));
+
     const workspaceToml = generateWorkspaceToml({ members });
     files = mergeFileTrees(files, createFile('Cargo.toml', workspaceToml));
 
@@ -186,6 +196,8 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     files = mergeFileTrees(files, createFile('README.md', generateReadme(config)));
 
     const configHash = computeConfigHashSync(config);
+
+    progress(createProgressEvent('complete', 100));
 
     return {
       files,

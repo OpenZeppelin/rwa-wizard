@@ -221,11 +221,11 @@
 
 ### Tests for User Story 8
 
-- [ ] T066 [US8] Write progress callback tests in `packages/codegen-rwa-stellar/__tests__/generate.test.ts`: callback receives sequential phases with increasing percentages, no callback → no error
+- [x] T066 [US8] Write progress callback tests in `packages/codegen-rwa-stellar/__tests__/generate.test.ts`: callback receives sequential phases with increasing percentages, no callback → no error
 
 ### Implementation for User Story 8
 
-- [ ] T067 [US8] Integrate progress callbacks into StellarRwaGenerator.generate() in `packages/codegen-rwa-stellar/src/stellar-rwa-generator.ts`: report phases (validating, generating-contracts, generating-scripts, assembling-zip) with percentages
+- [x] T067 [US8] Integrate progress callbacks into StellarRwaGenerator.generate() in `packages/codegen-rwa-stellar/src/stellar-rwa-generator.ts`: report phases (validating, generating-contracts, generating-scripts, assembling-zip) with percentages
 
 **Checkpoint**: Progress callbacks work when provided, are silently skipped when omitted. CR-006 satisfied.
 

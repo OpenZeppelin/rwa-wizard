@@ -330,6 +330,96 @@ describe('StellarRwaGenerator', () => {
     });
   });
 
+  describe('progress callbacks (US8)', () => {
+    it('should invoke callback with sequential phases and increasing percentages', () => {
+      const config = createValidConfig();
+      const events: Array<{ phase: string; percentage: number }> = [];
+
+      generator.generate(config, {
+        onProgress: (event) => events.push({ phase: event.phase, percentage: event.percentage }),
+      });
+
+      expect(events.length).toBeGreaterThanOrEqual(3);
+
+      const phases = events.map((e) => e.phase);
+      expect(phases).toContain('validating');
+      expect(phases).toContain('generating-contracts');
+      expect(phases).toContain('generating-scripts');
+
+      const validatingIdx = phases.indexOf('validating');
+      const contractsIdx = phases.indexOf('generating-contracts');
+      const scriptsIdx = phases.indexOf('generating-scripts');
+      expect(validatingIdx).toBeLessThan(contractsIdx);
+      expect(contractsIdx).toBeLessThan(scriptsIdx);
+
+      for (let i = 1; i < events.length; i++) {
+        expect(events[i].percentage).toBeGreaterThanOrEqual(events[i - 1].percentage);
+      }
+
+      expect(events[0].percentage).toBeGreaterThanOrEqual(0);
+      expect(events[events.length - 1].percentage).toBe(100);
+    });
+
+    it('should not error when no callback is provided', () => {
+      const config = createValidConfig();
+      expect(() => generator.generate(config)).not.toThrow();
+      expect(() => generator.generate(config, {})).not.toThrow();
+      expect(() => generator.generate(config, { onProgress: undefined })).not.toThrow();
+    });
+
+    it('should report generating-contracts before generating-scripts', () => {
+      const config = createValidConfig();
+      const phases: string[] = [];
+
+      generator.generate(config, {
+        onProgress: (event) => phases.push(event.phase),
+      });
+
+      const contractsIdx = phases.indexOf('generating-contracts');
+      const scriptsIdx = phases.indexOf('generating-scripts');
+
+      expect(contractsIdx).toBeGreaterThan(-1);
+      expect(scriptsIdx).toBeGreaterThan(-1);
+      expect(contractsIdx).toBeLessThan(scriptsIdx);
+    });
+
+    it('should include a complete phase at 100%', () => {
+      const config = createValidConfig();
+      const events: Array<{ phase: string; percentage: number }> = [];
+
+      generator.generate(config, {
+        onProgress: (event) => events.push({ phase: event.phase, percentage: event.percentage }),
+      });
+
+      const last = events[events.length - 1];
+      expect(last.phase).toBe('complete');
+      expect(last.percentage).toBe(100);
+    });
+
+    it('should work with compliance modules and still report progress', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [
+            {
+              moduleId: 'supply-cap',
+              hook: 'transfer',
+            },
+          ],
+        },
+      });
+
+      const phases: string[] = [];
+      generator.generate(config, {
+        onProgress: (event) => phases.push(event.phase),
+      });
+
+      expect(phases).toContain('validating');
+      expect(phases).toContain('generating-contracts');
+      expect(phases).toContain('generating-scripts');
+      expect(phases).toContain('complete');
+    });
+  });
+
   describe('edge cases', () => {
     it('should generate valid output with no roles', () => {
       const config = createValidConfig({
