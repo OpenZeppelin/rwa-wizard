@@ -1,7 +1,20 @@
 {
   "name": "@openzeppelin/rwa-config",
+  "private": false,
   "version": "0.0.0",
   "description": "Shared RWA configuration types and validation constants for OpenZeppelin RWA code generators.",
+  "keywords": [
+    "openzeppelin",
+    "rwa",
+    "real-world-assets",
+    "configuration",
+    "typescript"
+  ],
+  "author": "OpenZeppelin",
+  "homepage": "https://github.com/OpenZeppelin/rwa-wizard#readme",
+  "bugs": {
+    "url": "https://github.com/OpenZeppelin/rwa-wizard/issues"
+  },
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -21,8 +34,17 @@
     "dist",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenZeppelin/rwa-wizard.git",
+    "directory": "packages/config"
+  },
   "scripts": {
     "build": "tsdown",
+    "prepublishOnly": "[ \"$SKIP_PUBLISH_BUILD\" = \"true\" ] || pnpm build",
     "dev": "tsdown --watch",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",

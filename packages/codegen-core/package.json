@@ -1,7 +1,20 @@
 {
   "name": "@openzeppelin/codegen-core",
+  "private": false,
   "version": "0.0.0",
   "description": "Chain-agnostic code generation pipeline engine with file tree assembly, ZIP packaging, validation framework, and progress reporting.",
+  "keywords": [
+    "openzeppelin",
+    "codegen",
+    "code-generation",
+    "blockchain",
+    "typescript"
+  ],
+  "author": "OpenZeppelin",
+  "homepage": "https://github.com/OpenZeppelin/rwa-wizard#readme",
+  "bugs": {
+    "url": "https://github.com/OpenZeppelin/rwa-wizard/issues"
+  },
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -21,8 +34,17 @@
     "dist",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenZeppelin/rwa-wizard.git",
+    "directory": "packages/codegen-core"
+  },
   "scripts": {
     "build": "tsdown",
+    "prepublishOnly": "[ \"$SKIP_PUBLISH_BUILD\" = \"true\" ] || pnpm build",
     "dev": "tsdown --watch",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",

@@ -28,7 +28,10 @@
     "fix-all": "pnpm format && pnpm lint:fix",
     "prepare": "husky",
     "commit": "git-cz",
+    "install-pnpm": "npm install -g pnpm@10.22.0",
     "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish",
     "dev:local": "LOCAL_UI_PATH=${LOCAL_UI_PATH:-../openzeppelin-ui} && LOCAL_UI_BUILDER_PATH=${LOCAL_UI_BUILDER_PATH:-../ui-builder} && echo '🔨 Building local openzeppelin-ui packages...' && (cd \"$LOCAL_UI_PATH\" && pnpm --filter='./packages/*' build) && echo '🔨 Building local ui-builder adapter packages...' && (cd \"$LOCAL_UI_BUILDER_PATH\" && pnpm --filter='./packages/adapter-*' build) && LOCAL_UI=true pnpm install --force && echo \"✅ Using local @openzeppelin/ui-* packages from $LOCAL_UI_PATH\" && echo \"✅ Using local @openzeppelin/ui-builder-adapter-* packages from $LOCAL_UI_BUILDER_PATH\"",
     "dev:npm": "pnpm install --force && echo '✅ Using npm @openzeppelin/ui-* and @openzeppelin/ui-builder-adapter-* packages'",
     "docker:dev": "docker-compose up --build"

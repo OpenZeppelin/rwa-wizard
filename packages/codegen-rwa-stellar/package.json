@@ -1,7 +1,21 @@
 {
   "name": "@openzeppelin/codegen-rwa-stellar",
+  "private": false,
   "version": "0.0.0",
   "description": "Stellar/Soroban RWA token project generator. Produces complete multi-contract Rust projects from declarative configuration.",
+  "keywords": [
+    "openzeppelin",
+    "stellar",
+    "soroban",
+    "rwa",
+    "codegen",
+    "rust"
+  ],
+  "author": "OpenZeppelin",
+  "homepage": "https://github.com/OpenZeppelin/rwa-wizard#readme",
+  "bugs": {
+    "url": "https://github.com/OpenZeppelin/rwa-wizard/issues"
+  },
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -21,8 +35,17 @@
     "dist",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenZeppelin/rwa-wizard.git",
+    "directory": "packages/codegen-rwa-stellar"
+  },
   "scripts": {
     "build": "tsdown",
+    "prepublishOnly": "[ \"$SKIP_PUBLISH_BUILD\" = \"true\" ] || pnpm build",
     "dev": "tsdown --watch",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",
