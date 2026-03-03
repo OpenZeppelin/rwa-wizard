@@ -7,7 +7,7 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
  * Constructor: `__constructor(e, admin)` per SR-016.
  */
 export function generateComplianceContract(_config: RWAConfig): string {
-  return `use soroban_sdk::{contract, contractimpl, Address, Env, Vec};
+  return `use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, Vec};
 use stellar_access::access_control::{self as access_control, AccessControl};
 use stellar_macros::only_role;
 use stellar_tokens::rwa::{

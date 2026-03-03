@@ -19,7 +19,7 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
  *   - claim_topics_and_issuers(e) -> Address
  */
 export function generateIdentityVerifierContract(_config: RWAConfig): string {
-  return `use soroban_sdk::{contract, contractimpl, Address, Env};
+  return `use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, Vec};
 use stellar_access::access_control::{self as access_control, AccessControl};
 use stellar_macros::only_role;
 use stellar_tokens::rwa::identity_verifier::{
