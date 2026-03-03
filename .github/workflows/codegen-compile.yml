@@ -61,8 +61,8 @@ jobs:
         with:
           token: ${{ github.token }}
 
-      - name: Build codegen package
-        run: pnpm --filter @openzeppelin/codegen-rwa-stellar build
+      - name: Build codegen packages
+        run: pnpm --filter @openzeppelin/codegen-rwa-stellar... build
 
       - name: Run compilation e2e test
         run: pnpm --filter @openzeppelin/codegen-rwa-stellar test -- --run __tests__/compile.test.ts
