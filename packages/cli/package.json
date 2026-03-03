@@ -1,0 +1,76 @@
+{
+  "name": "@openzeppelin/rwa-wizard-cli",
+  "private": false,
+  "version": "0.0.0",
+  "description": "CLI tool for generating RWA token projects. Interactive wizard and headless JSON config modes with file tree or ZIP output.",
+  "keywords": [
+    "openzeppelin",
+    "rwa",
+    "codegen",
+    "cli",
+    "stellar",
+    "soroban",
+    "wizard"
+  ],
+  "author": "OpenZeppelin",
+  "homepage": "https://github.com/OpenZeppelin/rwa-wizard#readme",
+  "bugs": {
+    "url": "https://github.com/OpenZeppelin/rwa-wizard/issues"
+  },
+  "type": "module",
+  "bin": {
+    "rwa-wizard": "dist/index.mjs"
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": {
+        "import": "./dist/index.d.mts",
+        "require": "./dist/index.d.cts"
+      },
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenZeppelin/rwa-wizard.git",
+    "directory": "packages/cli"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "[ \"$SKIP_PUBLISH_BUILD\" = \"true\" ] || pnpm build",
+    "dev": "tsdown --watch",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "lint": "eslint \"src/**/*.ts\" --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\" --config ../../.prettierrc.cjs",
+    "format:check": "prettier --check \"src/**/*.ts\" --config ../../.prettierrc.cjs"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.0",
+    "@openzeppelin/codegen-core": "workspace:*",
+    "@openzeppelin/codegen-rwa-stellar": "workspace:*",
+    "@openzeppelin/rwa-config": "workspace:*",
+    "commander": "^13.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "license": "AGPL-3.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

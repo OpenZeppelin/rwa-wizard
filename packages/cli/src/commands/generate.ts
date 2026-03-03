@@ -1,0 +1,150 @@
+import { writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import * as p from '@clack/prompts';
+import pc from 'picocolors';
+
+import type { RWAConfig } from '@openzeppelin/rwa-config';
+
+import type { GeneratorAdapter } from '../generators/registry';
+import { getGenerator } from '../generators/registry';
+import { runWizard } from '../interactive/wizard';
+import { loadConfig } from '../utils/config-loader';
+import { logger } from '../utils/logger';
+import { writeFileTree, writeZip } from '../utils/output-writer';
+
+export interface GenerateOptions {
+  config?: string;
+  output: string;
+  zip?: boolean;
+  chain: string;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export async function generateCommand(opts: GenerateOptions): Promise<void> {
+  let adapter: GeneratorAdapter;
+  try {
+    adapter = getGenerator(opts.chain);
+  } catch (err) {
+    logger.error((err as Error).message);
+    process.exit(1);
+  }
+
+  let config: RWAConfig;
+  let useZip = opts.zip ?? false;
+  let isInteractive = false;
+
+  if (opts.config) {
+    try {
+      config = loadConfig(opts.config);
+    } catch (err) {
+      logger.error((err as Error).message);
+      process.exit(1);
+    }
+  } else {
+    isInteractive = true;
+    const result = await runWizard(adapter);
+    if (!result) process.exit(0);
+    config = result.config;
+    useZip = result.outputFormat === 'zip';
+  }
+
+  const validation = adapter.validate(config);
+
+  if (validation.warnings.length > 0) {
+    logger.warn('Validation warnings:');
+    for (const w of validation.warnings) {
+      logger.validationWarning(w.field, w.code, w.message);
+    }
+  }
+
+  if (!validation.valid) {
+    logger.error('Configuration is invalid:');
+    for (const e of validation.errors) {
+      logger.validationError(e.field, e.code, e.message);
+    }
+    process.exit(1);
+  }
+
+  const s = p.spinner();
+
+  if (useZip) {
+    s.start('Generating ZIP archive...');
+    try {
+      const zipResult = await adapter.generateZip(config);
+      const writeResult = await writeZip(zipResult, opts.output);
+      s.stop('ZIP archive generated');
+
+      const sizeBytes = (await zipResult.data.arrayBuffer()).byteLength;
+      logger.blank();
+      logger.success('Generation complete');
+      logger.summary([
+        ['Output', writeResult.outputPath],
+        ['Format', 'ZIP archive'],
+        ['Files', String(writeResult.fileCount)],
+        ['Size', formatBytes(sizeBytes)],
+        ['Generator', adapter.name],
+        ['Config hash', zipResult.metadata.configHash],
+      ]);
+    } catch (err) {
+      s.stop('Generation failed');
+      logger.error((err as Error).message);
+      process.exit(1);
+    }
+  } else {
+    s.start('Generating project files...');
+    try {
+      const result = adapter.generate(config);
+      const writeResult = writeFileTree(result, opts.output);
+      s.stop('Project files generated');
+
+      logger.blank();
+      logger.success('Generation complete');
+      logger.summary([
+        ['Output', writeResult.outputPath],
+        ['Format', 'File tree'],
+        ['Files', String(writeResult.fileCount)],
+        ['Generator', adapter.name],
+        ['Config hash', result.metadata.configHash],
+      ]);
+    } catch (err) {
+      s.stop('Generation failed');
+      logger.error((err as Error).message);
+      process.exit(1);
+    }
+  }
+
+  if (isInteractive) {
+    await offerConfigExport(config);
+  }
+
+  logger.blank();
+  p.outro(pc.green('Done!'));
+}
+
+async function offerConfigExport(config: RWAConfig): Promise<void> {
+  const exportConfig = await p.confirm({
+    message: 'Export configuration as JSON? (useful for re-running without the wizard)',
+    initialValue: false,
+  });
+
+  if (p.isCancel(exportConfig) || !exportConfig) return;
+
+  const exportPath = await p.text({
+    message: 'Config export path',
+    defaultValue: 'rwa-config.json',
+    validate: (v) => {
+      if (!v.trim()) return 'Path is required';
+    },
+  });
+
+  if (p.isCancel(exportPath)) return;
+
+  const absolutePath = resolve(exportPath as string);
+  writeFileSync(absolutePath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+  logger.success(`Configuration exported to ${absolutePath}`);
+}

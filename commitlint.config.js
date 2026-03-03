@@ -36,6 +36,7 @@ export default {
         // App scopes
         'rwa-wizard',
         // Package scopes
+        'cli',
         'components',
         'hooks',
         // Infrastructure scopes
