@@ -235,15 +235,15 @@
 
 **Purpose**: Documentation, API consistency, build verification, and final quality checks
 
-- [ ] T068 [P] Create package README.md for `packages/codegen-core/README.md` with package description, API reference, and usage example
-- [ ] T069 [P] Create package README.md for `packages/config/README.md` with RWAConfig type reference and example config object
-- [ ] T070 [P] Create package README.md for `packages/codegen-rwa-stellar/README.md` with quickstart example (from `quickstart.md`), API reference, and available modules listing
-- [ ] T071 Verify SC-007 export count: codegen-core ≤10, rwa-config ≤10, codegen-rwa-stellar ≤10 primary exports
-- [ ] T072 Run full build for all 3 packages (`pnpm -r --filter './packages/codegen-*' --filter './packages/config' build`) and verify ESM + CJS + DTS output
-- [ ] T073 Run full test suite for all 3 packages and verify all pass
-- [ ] T074 Run quickstart.md validation: execute the quickstart code sample against the built packages and verify expected output structure
-- [ ] T075 Write SC-001 performance benchmark in `packages/codegen-rwa-stellar/__tests__/benchmark.test.ts`: generate a typical config (5 contracts, 2 modules, 3 roles) and assert completion in <5 seconds on Node.js >=20.x per SC-001
-- [ ] T076 Write SC-002 Rust syntax validation test in `packages/codegen-rwa-stellar/__tests__/syntax-validation.test.ts`: generate all contract `.rs` files, verify syntactic validity by parsing with `syn` crate via a helper script or `cargo check` against pinned `soroban-sdk` per SC-002
+- [x] T068 [P] Create package README.md for `packages/codegen-core/README.md` with package description, API reference, and usage example
+- [x] T069 [P] Create package README.md for `packages/config/README.md` with RWAConfig type reference and example config object
+- [x] T070 [P] Create package README.md for `packages/codegen-rwa-stellar/README.md` with quickstart example (from `quickstart.md`), API reference, and available modules listing
+- [x] T071 Verify SC-007 export count: codegen-core ≤10, rwa-config ≤10, codegen-rwa-stellar ≤10 primary exports
+- [x] T072 Run full build for all 3 packages (`pnpm -r --filter './packages/codegen-*' --filter './packages/config' build`) and verify ESM + CJS + DTS output
+- [x] T073 Run full test suite for all 3 packages and verify all pass
+- [x] T074 Run quickstart.md validation: execute the quickstart code sample against the built packages and verify expected output structure
+- [x] T075 Write SC-001 performance benchmark in `packages/codegen-rwa-stellar/__tests__/benchmark.test.ts`: generate a typical config (5 contracts, 2 modules, 3 roles) and assert completion in <5 seconds on Node.js >=20.x per SC-001
+- [x] T076 Write SC-002 Rust syntax validation test in `packages/codegen-rwa-stellar/__tests__/syntax-validation.test.ts`: generate all contract `.rs` files, verify syntactic validity by parsing with `syn` crate via a helper script or `cargo check` against pinned `soroban-sdk` per SC-002
 
 ---
 
