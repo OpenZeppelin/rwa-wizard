@@ -68,6 +68,50 @@ describe('RWA Token Contract Template', () => {
       expect(output).toContain('use stellar_access::access_control');
       expect(output).toContain('use stellar_contract_utils::pausable');
     });
+
+    it('should include MuxedAddress and Symbol imports for contracttrait macros', () => {
+      const config = createMinimalConfig();
+      const output = generateRwaTokenContract(config);
+
+      expect(output).toContain('MuxedAddress');
+      expect(output).toContain('Symbol');
+    });
+
+    it('should include RWAToken trait import and implementation', () => {
+      const config = createMinimalConfig();
+      const output = generateRwaTokenContract(config);
+
+      expect(output).toContain('RWAToken');
+      expect(output).toContain('impl RWAToken for RwaTokenContract');
+    });
+
+    it('should include all RWAToken trait methods', () => {
+      const config = createMinimalConfig();
+      const output = generateRwaTokenContract(config);
+
+      expect(output).toContain('fn forced_transfer(');
+      expect(output).toContain('fn mint(');
+      expect(output).toContain('fn burn(');
+      expect(output).toContain('fn recover_balance(');
+      expect(output).toContain('fn set_address_frozen(');
+      expect(output).toContain('fn freeze_partial_tokens(');
+      expect(output).toContain('fn unfreeze_partial_tokens(');
+      expect(output).toContain('fn is_frozen(');
+      expect(output).toContain('fn get_frozen_tokens(');
+      expect(output).toContain('fn version(');
+      expect(output).toContain('fn onchain_id(');
+      expect(output).toContain('fn set_compliance(');
+      expect(output).toContain('fn compliance(');
+      expect(output).toContain('fn set_identity_verifier(');
+      expect(output).toContain('fn identity_verifier(');
+    });
+
+    it('should not import unused stellar_macros::only_role', () => {
+      const config = createMinimalConfig();
+      const output = generateRwaTokenContract(config);
+
+      expect(output).not.toContain('stellar_macros::only_role');
+    });
   });
 
   describe('constructor (__constructor)', () => {
@@ -80,7 +124,22 @@ describe('RWA Token Contract Template', () => {
       expect(output).toContain('name: String,');
       expect(output).toContain('symbol: String,');
       expect(output).toContain('admin: Address,');
-      expect(output).toContain('initial_supply: i128,');
+    });
+
+    it('should include initial_supply parameter only when initialSupply is defined', () => {
+      const withSupply = createMinimalConfig({
+        token: {
+          name: 'Test',
+          symbol: 'TST',
+          decimals: 18,
+          initialSupply: '1000',
+          documentManager: { enabled: false },
+        },
+      });
+      expect(generateRwaTokenContract(withSupply)).toContain('initial_supply: i128,');
+
+      const withoutSupply = createMinimalConfig();
+      expect(generateRwaTokenContract(withoutSupply)).not.toContain('initial_supply: i128,');
     });
 
     it('should call Base::set_metadata with configured decimals', () => {
@@ -183,6 +242,20 @@ describe('RWA Token Contract Template', () => {
       expect(output).toContain('symbol_short!("manager")');
       expect(output).toContain('symbol_short!("agent")');
       expect(output).toContain('grant_role_no_auth');
+    });
+
+    it('should use correct argument order for grant_role_no_auth (account, role, caller)', () => {
+      const config = createMinimalConfig({
+        accessControl: {
+          ownership: { type: 'single-owner', ownerAddress: 'GCOWNER...' },
+          roles: [{ name: 'Manager', symbol: 'manager', addresses: ['GCMGR...'] }],
+        },
+      });
+      const output = generateRwaTokenContract(config);
+
+      expect(output).toContain(
+        'grant_role_no_auth(e, &manager, &symbol_short!("manager"), &admin)'
+      );
     });
 
     it('should add role address parameters to constructor', () => {
