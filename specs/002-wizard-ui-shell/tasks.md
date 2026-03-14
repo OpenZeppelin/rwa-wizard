@@ -31,19 +31,19 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 [P] Define app-local domain types in `apps/rwa-wizard/src/types/wizard.ts` for drafts, target catalog entries, generation status, component inventory items, and mock gap records
-- [ ] T007 [P] Implement IndexedDB setup in `apps/rwa-wizard/src/storage/database.ts` using `@openzeppelin/ui-storage`
-- [ ] T008 [P] Implement the draft repository in `apps/rwa-wizard/src/storage/WizardDraftStorage.ts`
-- [ ] T009 [P] Create the draft storage hook/context in `apps/rwa-wizard/src/storage/useWizardDraftStorage.ts`
-- [ ] T010 [P] Create the ordered target registry and feature overrides in `apps/rwa-wizard/src/registry/targets.ts`
-- [ ] T011 [P] Implement lazy target runtime loading and caching in `apps/rwa-wizard/src/registry/targetManager.ts`
-- [ ] T012 [P] Define codegen service interfaces and normalized DTOs in `apps/rwa-wizard/src/services/codegen/types.ts`
-- [ ] T013 [P] Implement the real Stellar-backed codegen service in `apps/rwa-wizard/src/services/codegen/stellarCodegenService.ts`
-- [ ] T014 [P] Implement the mock-backed codegen service and gap registry in `apps/rwa-wizard/src/services/codegen/mockCodegenService.ts` and `apps/rwa-wizard/src/services/codegen/mockGapRegistry.ts`
-- [ ] T015 Implement the codegen service resolver in `apps/rwa-wizard/src/services/codegen/index.ts`
-- [ ] T016 [P] Implement ZIP browser download orchestration in `apps/rwa-wizard/src/services/download/downloadZip.ts`
-- [ ] T017 [P] Create a field-path normalization helper for validation results in `apps/rwa-wizard/src/services/validation/normalizeValidation.ts`
-- [ ] T018 Create the shared wizard state container in `apps/rwa-wizard/src/app/state/wizardStore.ts`
+- [x] T006 [P] Define app-local domain types in `apps/rwa-wizard/src/types/wizard.ts` for drafts, target catalog entries, generation status, component inventory items, and mock gap records
+- [x] T007 [P] Implement IndexedDB setup in `apps/rwa-wizard/src/storage/database.ts` using `@openzeppelin/ui-storage`
+- [x] T008 [P] Implement the draft repository in `apps/rwa-wizard/src/storage/WizardDraftStorage.ts`
+- [x] T009 [P] Create the draft storage hook/context in `apps/rwa-wizard/src/storage/useWizardDraftStorage.tsx`
+- [x] T010 [P] Create the ordered target registry and feature overrides in `apps/rwa-wizard/src/registry/targets.ts`
+- [x] T011 [P] Implement lazy target runtime loading and caching in `apps/rwa-wizard/src/registry/targetManager.ts`
+- [x] T012 [P] Define codegen service interfaces and normalized DTOs in `apps/rwa-wizard/src/services/codegen/types.ts`
+- [x] T013 [P] Implement the real Stellar-backed codegen service in `apps/rwa-wizard/src/services/codegen/stellarCodegenService.ts`
+- [x] T014 [P] Implement the mock-backed codegen service and gap registry in `apps/rwa-wizard/src/services/codegen/mockCodegenService.ts` and `apps/rwa-wizard/src/services/codegen/mockGapRegistry.ts`
+- [x] T015 Implement the codegen service resolver in `apps/rwa-wizard/src/services/codegen/index.ts`
+- [x] T016 [P] Implement ZIP browser download orchestration in `apps/rwa-wizard/src/services/download/downloadZip.ts`
+- [x] T017 [P] Create a field-path normalization helper for validation results in `apps/rwa-wizard/src/services/validation/normalizeValidation.ts`
+- [x] T018 Create the shared wizard state container in `apps/rwa-wizard/src/app/state/wizardStore.ts`
 
 **Checkpoint**: Foundation ready. Draft persistence, target registry, codegen boundaries, and app composition seams are in place.
 

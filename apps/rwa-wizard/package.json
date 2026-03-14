@@ -18,6 +18,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@openzeppelin/codegen-core": "workspace:*",
+    "@openzeppelin/codegen-rwa-stellar": "workspace:*",
+    "@openzeppelin/rwa-config": "workspace:*",
     "@openzeppelin/ui-builder-adapter-evm": "^1.2.0",
     "@openzeppelin/ui-builder-adapter-stellar": "^1.0.0",
     "@openzeppelin/ui-components": "^1.0.4",

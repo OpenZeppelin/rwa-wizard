@@ -6,12 +6,15 @@ export type {
   ValidationResult,
   ProgressEvent,
   ProgressCallback,
+  ProgressPhase,
+  SummaryPhase,
   GenerateOptions,
   GenerationMetadata,
   GenerationResult,
   ZipResult,
   Generator,
 } from './types';
+export { PROGRESS_PHASES } from './types';
 
 // Validation framework
 export { createValidationRule, composeValidationRules, validateWithRules } from './validation';
@@ -28,7 +31,12 @@ export {
 } from './file-tree';
 
 // Progress utilities
-export { noopProgress, createProgressEvent, resolveProgressCallback } from './progress';
+export {
+  noopProgress,
+  createProgressEvent,
+  resolveProgressCallback,
+  toSummaryPhase,
+} from './progress';
 
 // ZIP generation
 export { generateZipFromFileTree } from './zip-generator';

@@ -127,6 +127,15 @@ importers:
 
   apps/rwa-wizard:
     dependencies:
+      '@openzeppelin/codegen-core':
+        specifier: workspace:*
+        version: link:../../packages/codegen-core
+      '@openzeppelin/codegen-rwa-stellar':
+        specifier: workspace:*
+        version: link:../../packages/codegen-rwa-stellar
+      '@openzeppelin/rwa-config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@openzeppelin/ui-builder-adapter-evm':
         specifier: ^1.2.0
         version: 1.2.0(a7f632d5cdffa225c1ebe9cf5cf979a2)
