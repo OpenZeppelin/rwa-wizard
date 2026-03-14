@@ -17,11 +17,11 @@
 
 **Purpose**: Create the application skeleton and test harness expected by the plan
 
-- [ ] T001 Create the planned app directory skeleton under `apps/rwa-wizard/src/app`, `apps/rwa-wizard/src/components`, `apps/rwa-wizard/src/features`, `apps/rwa-wizard/src/hooks`, `apps/rwa-wizard/src/registry`, `apps/rwa-wizard/src/services`, `apps/rwa-wizard/src/storage`, `apps/rwa-wizard/src/types`, and `apps/rwa-wizard/src/utils`
-- [ ] T002 Update `apps/rwa-wizard/src/App.tsx` to mount an application shell root instead of the current placeholder
-- [ ] T003 [P] Create `apps/rwa-wizard/src/app/providers/AppProviders.tsx` for shared providers, `AppConfigService` initialization, and client-side app composition
-- [ ] T004 [P] Create `apps/rwa-wizard/src/app/routes/AppRouter.tsx` for first-iteration app routing/state entry
-- [ ] T005 [P] Create `apps/rwa-wizard/vitest.config.ts` and `apps/rwa-wizard/src/test/setup.ts` for Vitest + `fake-indexeddb` test support
+- [x] T001 Create the planned app directory skeleton under `apps/rwa-wizard/src/app`, `apps/rwa-wizard/src/components`, `apps/rwa-wizard/src/features`, `apps/rwa-wizard/src/hooks`, `apps/rwa-wizard/src/registry`, `apps/rwa-wizard/src/services`, `apps/rwa-wizard/src/storage`, `apps/rwa-wizard/src/types`, and `apps/rwa-wizard/src/utils`
+- [x] T002 Update `apps/rwa-wizard/src/App.tsx` to mount an application shell root instead of the current placeholder
+- [x] T003 [P] Create `apps/rwa-wizard/src/app/providers/AppProviders.tsx` for shared providers, `AppConfigService` initialization, and client-side app composition
+- [x] T004 [P] Create `apps/rwa-wizard/src/app/routes/AppRouter.tsx` for first-iteration app routing/state entry
+- [x] T005 [P] Create `apps/rwa-wizard/vitest.config.ts` and `apps/rwa-wizard/src/test/setup.ts` for Vitest + `fake-indexeddb` test support
 
 ---
 
