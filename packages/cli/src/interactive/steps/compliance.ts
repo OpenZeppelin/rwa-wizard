@@ -1,10 +1,6 @@
 import * as p from '@clack/prompts';
 
-import type {
-  ComplianceConfig,
-  ComplianceHook,
-  ComplianceModuleSelection,
-} from '@openzeppelin/rwa-config';
+import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 
 import type { ComplianceModuleInfo } from '../../generators/registry';
 
@@ -45,9 +41,9 @@ export async function complianceStep(
   for (const moduleId of selectedIds) {
     const mod = availableModules.find((m) => m.id === moduleId)!;
 
-    let hook: ComplianceHook;
+    let hook: string;
     if (mod.supportedHooks.length === 1) {
-      hook = mod.supportedHooks[0] as ComplianceHook;
+      hook = mod.supportedHooks[0];
       p.log.info(`${mod.name}: auto-assigned to "${hook}" hook`);
     } else {
       const chosen = await p.select({
@@ -55,7 +51,7 @@ export async function complianceStep(
         options: mod.supportedHooks.map((h) => ({ value: h, label: h })),
       });
       handleCancel(chosen);
-      hook = chosen as ComplianceHook;
+      hook = chosen as string;
     }
 
     modules.push({ moduleId, hook });

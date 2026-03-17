@@ -108,7 +108,7 @@
 
 - [x] CHK025 - `rwa-config` exports 12+ types. Does this exceed SC-007's target? [Consistency, rwa-config-api.ts vs. Spec §SC-007]
 
-  > **Fixed**: API contract header updated: 4 primary exports (RWAConfig, ComplianceHook, OwnershipModel, DEFAULT_ROLE_SYMBOLS). Sub-types of RWAConfig (TokenConfig, etc.) not counted individually. Note: VALIDATION_CONSTANTS moved to `@openzeppelin/codegen-rwa-stellar` as `STELLAR_VALIDATION_CONSTANTS` to maintain chain-agnostic boundary.
+  > **Fixed**: API contract header updated: 4 primary exports (RWAConfig, ComplianceHook (string alias), OwnershipModel, DEFAULT_ROLE_SYMBOLS). Sub-types of RWAConfig (TokenConfig, etc.) not counted individually. Note: VALIDATION_CONSTANTS moved to `@openzeppelin/codegen-rwa-stellar` as `STELLAR_VALIDATION_CONSTANTS` to maintain chain-agnostic boundary. ComplianceHook changed from fixed union to `string` — each ecosystem defines its own valid values.
 
 - [x] CHK026 - The `codegen-core` `generateZip()` takes `(result, fileName, options)` while `codegen-rwa-stellar` `generateZip()` takes `(config, options)`. Is the wrapper relationship documented? [Consistency, codegen-core-api.ts vs. codegen-rwa-stellar-api.ts]
   > **Fixed**: Both API contracts now include documentation explaining the wrapper pattern. Core's `generateZip()` JSDoc notes that generator packages wrap it. Stellar's `generateZip()` JSDoc explains it calls `generate()` internally then delegates to core.
@@ -121,7 +121,7 @@
 
 - [x] CHK028 - Is the `ComplianceHook` type defined in `rwa-config` consistent with the hooks used by the `ComplianceModule` trait in `stellar-contracts`? [Consistency, rwa-config-api.ts vs. stellar-contracts §ComplianceModule]
 
-  > **Fixed**: Data model now includes a "Hook-to-trait method mapping" note documenting the Stellar-specific mapping: `'transfer'` → `on_transfer`/`can_transfer`, `'creation'` → `on_created`/`can_create`, `'destruction'` → `on_destroyed`. Assumptions section also documents this mapping.
+  > **Fixed**: `ComplianceHook` in `rwa-config` is now an opaque `string`. The Stellar codegen package defines `StellarComplianceHook` with 5 values (`canTransfer`, `canCreate`, `transferred`, `created`, `destroyed`) mapping 1:1 to the Rust `ComplianceHook` enum in `stellar-contracts`. Data model documents the ecosystem-specific hook mapping. EVM T-REX uses 4 hooks (no `canCreate`). Each generator validates hook values against its own set.
 
 - [x] CHK029 - Are the `GenerationMetadata` fields requirements defined consistently between core and stellar? Who populates these fields? [Consistency, Data Model §GenerationMetadata]
 

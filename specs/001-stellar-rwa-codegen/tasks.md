@@ -55,7 +55,7 @@
 
 ### RWA Config Types
 
-- [x] T021 [P] Define all RWAConfig types in `packages/config/src/types.ts`: `RWAConfig`, `TokenConfig`, `IdentityVerificationConfig`, `ComplianceConfig`, `AccessControlConfig`, `DeploymentConfig`, `ClaimTopic`, `TrustedIssuer`, `ComplianceModuleSelection`, `ComplianceHook`, `OperatorRole`, `OwnershipModel` per `contracts/rwa-config-api.ts`
+- [x] T021 [P] Define all RWAConfig types in `packages/config/src/types.ts`: `RWAConfig`, `TokenConfig`, `IdentityVerificationConfig`, `ComplianceConfig`, `AccessControlConfig`, `DeploymentConfig`, `ClaimTopic`, `TrustedIssuer`, `ComplianceModuleSelection`, `ComplianceHook` (opaque `string` — each ecosystem defines valid values), `OperatorRole`, `OwnershipModel` per `contracts/rwa-config-api.ts`
 - [x] T022 [P] ~~Define validation constants in `packages/config/src/constants.ts`~~ **MOVED**: Validation constants (`STELLAR_VALIDATION_CONSTANTS`) are chain-specific and now live in `packages/codegen-rwa-stellar/src/constants.ts`. The config package stays chain-agnostic (types only).
 - [x] T023 [P] Define defaults in `packages/config/src/defaults.ts`: `DEFAULT_ROLE_SYMBOLS` mapping (`manager`, `agent`, `operator`). `generateRoleSymbol()` moved to `packages/codegen-rwa-stellar/src/constants.ts` (Soroban-specific truncation logic).
 - [x] T024 Create rwa-config public API in `packages/config/src/index.ts`: export types and `DEFAULT_ROLE_SYMBOLS` per `contracts/rwa-config-api.ts`

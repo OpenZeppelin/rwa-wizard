@@ -100,7 +100,7 @@ describe('deploy.sh template', () => {
     it('should deploy modules after Compliance and before RWA Token when modules are present', () => {
       const config = createValidConfig({
         compliance: {
-          modules: [{ moduleId: 'supply-cap', hook: 'creation' }],
+          modules: [{ moduleId: 'supply-cap', hook: 'canCreate' }],
         },
       });
       const script = generateDeploySh(config);
@@ -217,7 +217,7 @@ describe('deploy.sh template', () => {
     it('should register modules on Compliance when modules are selected', () => {
       const config = createValidConfig({
         compliance: {
-          modules: [{ moduleId: 'supply-cap', hook: 'creation' }],
+          modules: [{ moduleId: 'supply-cap', hook: 'canCreate' }],
         },
       });
       const script = generateDeploySh(config);
@@ -228,7 +228,7 @@ describe('deploy.sh template', () => {
     it('should have correct post-deploy order: bind token → register modules → add claim topics → add trusted issuers → optional mint', () => {
       const config = createValidConfig({
         compliance: {
-          modules: [{ moduleId: 'supply-cap', hook: 'creation' }],
+          modules: [{ moduleId: 'supply-cap', hook: 'canCreate' }],
         },
       });
       const script = generateDeploySh(config);

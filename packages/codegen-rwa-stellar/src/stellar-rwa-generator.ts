@@ -220,14 +220,7 @@ function generateConfigJson(config: RWAConfig): string {
 function computeConfigHashSync(config: RWAConfig): string {
   const sorted = sortObjectKeys(config);
   const json = JSON.stringify(sorted);
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const crypto = require('node:crypto');
-    return crypto.createHash('sha256').update(json).digest('hex');
-  } catch {
-    return hashFallback(json);
-  }
+  return hashFallback(json);
 }
 
 function hashFallback(str: string): string {

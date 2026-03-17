@@ -402,7 +402,7 @@ describe('StellarRwaGenerator', () => {
           modules: [
             {
               moduleId: 'supply-cap',
-              hook: 'transfer',
+              hook: 'canTransfer',
             },
           ],
         },

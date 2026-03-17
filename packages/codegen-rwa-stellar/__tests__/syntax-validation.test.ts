@@ -22,9 +22,9 @@ function createFullConfig(): RWAConfig {
     },
     compliance: {
       modules: [
-        { moduleId: 'supply-cap', hook: 'creation' },
-        { moduleId: 'max-balance', hook: 'transfer' },
-        { moduleId: 'country-restrict', hook: 'transfer' },
+        { moduleId: 'supply-cap', hook: 'canCreate' },
+        { moduleId: 'max-balance', hook: 'canTransfer' },
+        { moduleId: 'country-restrict', hook: 'canTransfer' },
       ],
     },
     accessControl: {

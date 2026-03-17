@@ -64,9 +64,36 @@ export { StellarRwaGenerator } from './stellar-rwa-generator';
  * Metadata describing an available compliance module in the Stellar registry.
  *
  * Includes the module's unique ID, human-readable name, description,
- * and the set of compliance hooks it supports (`transfer`, `creation`, `destruction`).
+ * and the set of compliance hooks it supports (Stellar: `canTransfer`, `canCreate`, etc.).
  */
 export type { ComplianceModuleRegistryEntry } from './modules/registry';
+
+/**
+ * Ecosystem metadata for Stellar/Soroban — operator roles, compliance hooks, and limits.
+ *
+ * Each codegen package exposes its own `getEcosystemMetadata()` so the wizard
+ * UI can load ecosystem-specific constants through the service boundary
+ * instead of importing them from the chain-agnostic config package.
+ *
+ * @example
+ * ```ts
+ * import { getEcosystemMetadata } from '@openzeppelin/codegen-rwa-stellar';
+ *
+ * const meta = getEcosystemMetadata();
+ * console.log(meta.operatorRoles);   // Stellar operator roles
+ * console.log(meta.complianceHooks); // Stellar compliance hooks
+ * console.log(meta.limits);          // { maxModulesPerHook: 20, maxTrustedIssuers: 50 }
+ * ```
+ */
+export { getEcosystemMetadata } from './ecosystem-metadata';
+
+export type {
+  StellarComplianceHook,
+  StellarEcosystemMetadata,
+  StellarAdminControlMeta,
+  StellarOperatorRoleMeta,
+  StellarComplianceHookMeta,
+} from './ecosystem-metadata';
 
 /**
  * Root configuration type for RWA token generation.

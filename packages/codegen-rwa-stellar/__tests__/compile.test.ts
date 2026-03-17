@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -75,30 +75,53 @@ function createMinimalConfig(): RWAConfig {
   };
 }
 
-function writeGeneratedFiles(outputDir: string, files: Record<string, string>): void {
+function writeGeneratedFiles(outputDir: string, files: Record<string, string | Uint8Array>): void {
   for (const [filePath, content] of Object.entries(files)) {
     const fullPath = join(outputDir, filePath);
     mkdirSync(join(fullPath, '..'), { recursive: true });
-    writeFileSync(fullPath, content, 'utf-8');
+    if (typeof content === 'string') {
+      writeFileSync(fullPath, content, 'utf-8');
+    } else {
+      writeFileSync(fullPath, content);
+    }
   }
 }
 
-function runStellarBuild(projectDir: string): { success: boolean; output: string } {
-  try {
-    // `stellar contract build` writes build output to stderr (via cargo),
-    // so we merge stderr into stdout to capture everything.
-    const output = execSync('stellar contract build 2>&1', {
+async function runStellarBuild(projectDir: string): Promise<{ success: boolean; output: string }> {
+  return new Promise((resolve) => {
+    // Use async process execution to avoid blocking the Vitest worker event loop.
+    const child = spawn('stellar', ['contract', 'build'], {
       cwd: projectDir,
-      encoding: 'utf-8',
       shell: '/bin/bash',
-      timeout: COMPILE_TIMEOUT,
     });
-    return { success: true, output };
-  } catch (err) {
-    const e = err as { stdout?: string; stderr?: string };
-    const combined = [e.stdout, e.stderr].filter(Boolean).join('\n');
-    return { success: false, output: combined };
-  }
+
+    const stdoutChunks: string[] = [];
+    const stderrChunks: string[] = [];
+
+    child.stdout.on('data', (chunk) => stdoutChunks.push(String(chunk)));
+    child.stderr.on('data', (chunk) => stderrChunks.push(String(chunk)));
+
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+      // Ensure runaway builds are force-stopped.
+      setTimeout(() => child.kill('SIGKILL'), 2_000);
+    }, COMPILE_TIMEOUT);
+
+    child.on('close', (code) => {
+      clearTimeout(timeout);
+      const output = [...stdoutChunks, ...stderrChunks].join('');
+      if (timedOut) {
+        resolve({
+          success: false,
+          output: `${output}\nBuild timed out after ${COMPILE_TIMEOUT}ms.`,
+        });
+        return;
+      }
+      resolve({ success: code === 0, output });
+    });
+  });
 }
 
 const skipReason =
@@ -119,7 +142,7 @@ describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must comp
 
   it(
     'should compile a full-featured RWA project (with DocumentManager + roles)',
-    () => {
+    async () => {
       const config = createFullConfig();
       const result = generate(config);
 
@@ -129,7 +152,7 @@ describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must comp
       expect(existsSync(join(projectDir, 'Cargo.toml'))).toBe(true);
       expect(existsSync(join(projectDir, 'contracts/rwa-token/src/contract.rs'))).toBe(true);
 
-      const buildResult = runStellarBuild(projectDir);
+      const buildResult = await runStellarBuild(projectDir);
       expect(buildResult.success, `Compilation failed:\n${buildResult.output}`).toBe(true);
 
       const expectedWasms = [
@@ -149,14 +172,14 @@ describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must comp
 
   it(
     'should compile a minimal RWA project (no DocumentManager, no roles)',
-    () => {
+    async () => {
       const config = createMinimalConfig();
       const result = generate(config);
 
       const projectDir = join(testRoot, 'minimal');
       writeGeneratedFiles(projectDir, result.files);
 
-      const buildResult = runStellarBuild(projectDir);
+      const buildResult = await runStellarBuild(projectDir);
       expect(buildResult.success, `Compilation failed:\n${buildResult.output}`).toBe(true);
       expect(buildResult.output).toContain('rwa_token.wasm');
     },
@@ -165,7 +188,7 @@ describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must comp
 
   it(
     'should compile with multiple roles',
-    () => {
+    async () => {
       const config = createFullConfig({
         accessControl: {
           ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
@@ -180,7 +203,7 @@ describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must comp
       const projectDir = join(testRoot, 'multi-role');
       writeGeneratedFiles(projectDir, result.files);
 
-      const buildResult = runStellarBuild(projectDir);
+      const buildResult = await runStellarBuild(projectDir);
       expect(buildResult.success, `Compilation failed:\n${buildResult.output}`).toBe(true);
       expect(buildResult.output).toContain('rwa_token.wasm');
     },
