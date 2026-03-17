@@ -1,7 +1,9 @@
 export type {
   RWAConfig,
   TokenConfig,
+  AdministrativeControls,
   IdentityVerificationConfig,
+  IdentityControls,
   ComplianceConfig,
   AccessControlConfig,
   DeploymentConfig,
@@ -14,3 +16,5 @@ export type {
 } from './types';
 
 export { DEFAULT_ROLE_SYMBOLS } from './defaults';
+
+export { PREDEFINED_CLAIM_TOPICS, MIN_CUSTOM_CLAIM_TOPIC_ID, MAX_CLAIM_TOPICS } from './constants';

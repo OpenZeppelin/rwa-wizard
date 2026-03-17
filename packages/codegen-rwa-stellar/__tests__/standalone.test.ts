@@ -227,7 +227,7 @@ describe('standalone Node.js integration (US4)', () => {
         expect(typeof mod.description).toBe('string');
         expect(Array.isArray(mod.supportedHooks)).toBe(true);
         for (const hook of mod.supportedHooks) {
-          expect(['transfer', 'creation', 'destruction']).toContain(hook);
+          expect(['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed']).toContain(hook);
         }
       }
     });

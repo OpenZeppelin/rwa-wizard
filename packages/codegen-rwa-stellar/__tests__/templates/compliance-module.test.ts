@@ -11,7 +11,7 @@ function createModuleSelection(
 ): ComplianceModuleSelection {
   return {
     moduleId: 'supply-cap',
-    hook: 'creation',
+    hook: 'canCreate',
     ...overrides,
   };
 }
@@ -72,38 +72,38 @@ describe('Compliance Module Contract Template', () => {
   });
 
   describe('hook-specific stubs', () => {
-    it('should generate stub methods that are no-ops for transfer hook', () => {
-      const mod = createModuleSelection({ hook: 'transfer' });
+    it('should generate stub methods that are no-ops for canTransfer hook', () => {
+      const mod = createModuleSelection({ hook: 'canTransfer' });
       const contract = generateComplianceModuleContract(mod);
 
       expect(contract).toContain('fn on_transfer(');
       expect(contract).toContain('fn can_transfer(');
     });
 
-    it('should generate stub methods that are no-ops for creation hook', () => {
-      const mod = createModuleSelection({ hook: 'creation' });
+    it('should generate stub methods that are no-ops for canCreate hook', () => {
+      const mod = createModuleSelection({ hook: 'canCreate' });
       const contract = generateComplianceModuleContract(mod);
 
       expect(contract).toContain('fn on_created(');
       expect(contract).toContain('fn can_create(');
     });
 
-    it('should generate stub methods for destruction hook', () => {
-      const mod = createModuleSelection({ hook: 'destruction' });
+    it('should generate stub methods for destroyed hook', () => {
+      const mod = createModuleSelection({ hook: 'destroyed' });
       const contract = generateComplianceModuleContract(mod);
 
       expect(contract).toContain('fn on_destroyed(');
     });
 
     it('can_transfer should return true by default (stub)', () => {
-      const mod = createModuleSelection({ hook: 'transfer' });
+      const mod = createModuleSelection({ hook: 'canTransfer' });
       const contract = generateComplianceModuleContract(mod);
 
       expect(contract).toContain('true');
     });
 
     it('can_create should return true by default (stub)', () => {
-      const mod = createModuleSelection({ hook: 'creation' });
+      const mod = createModuleSelection({ hook: 'canCreate' });
       const contract = generateComplianceModuleContract(mod);
 
       expect(contract).toContain('true');
@@ -133,7 +133,7 @@ describe('Compliance Module Contract Template', () => {
   });
 
   describe('different modules', () => {
-    const hooks: ComplianceHook[] = ['transfer', 'creation', 'destruction'];
+    const hooks: ComplianceHook[] = ['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed'];
 
     for (const hook of hooks) {
       it(`should generate a valid contract for hook: ${hook}`, () => {

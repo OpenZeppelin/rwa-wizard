@@ -29,7 +29,7 @@ const config: RWAConfig = {
     trustedIssuers: [{ address: 'GCEXAMPLEISSUER1...', claimTopics: [1, 2] }],
   },
   compliance: {
-    modules: [{ moduleId: 'supply-cap', hook: 'creation' }],
+    modules: [{ moduleId: 'supply-cap', hook: 'canCreate' }],
   },
   accessControl: {
     ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER...' },
@@ -82,7 +82,7 @@ Root configuration object with the following sections:
 | --------- | ----------------------------- | ----------------------------- |
 | `modules` | `ComplianceModuleSelection[]` | `{ moduleId, hook, config? }` |
 
-`ComplianceHook` values: `'transfer'` | `'creation'` | `'destruction'`
+`ComplianceHook` is a `string` — each ecosystem defines its own valid hook values. Stellar uses `'canTransfer'` | `'canCreate'` | `'transferred'` | `'created'` | `'destroyed'`. EVM T-REX uses `'canTransfer'` | `'transferred'` | `'created'` | `'destroyed'`.
 
 ### `AccessControlConfig`
 
@@ -100,21 +100,21 @@ Root configuration object with the following sections:
 
 ## Exports
 
-| Export                       | Kind  | Description                           |
-| ---------------------------- | ----- | ------------------------------------- |
-| `RWAConfig`                  | type  | Root configuration interface          |
-| `TokenConfig`                | type  | Token parameters                      |
-| `IdentityVerificationConfig` | type  | Identity setup                        |
-| `ComplianceConfig`           | type  | Compliance modules                    |
-| `AccessControlConfig`        | type  | Ownership and roles                   |
-| `DeploymentConfig`           | type  | Deployment target                     |
-| `ClaimTopic`                 | type  | Claim topic entry                     |
-| `TrustedIssuer`              | type  | Trusted issuer entry                  |
-| `ComplianceModuleSelection`  | type  | Module selection                      |
-| `ComplianceHook`             | type  | Hook type union                       |
-| `OwnershipModel`             | type  | Ownership discriminated union         |
-| `OperatorRole`               | type  | Role definition                       |
-| `DEFAULT_ROLE_SYMBOLS`       | value | Well-known role name → symbol mapping |
+| Export                       | Kind  | Description                                   |
+| ---------------------------- | ----- | --------------------------------------------- |
+| `RWAConfig`                  | type  | Root configuration interface                  |
+| `TokenConfig`                | type  | Token parameters                              |
+| `IdentityVerificationConfig` | type  | Identity setup                                |
+| `ComplianceConfig`           | type  | Compliance modules                            |
+| `AccessControlConfig`        | type  | Ownership and roles                           |
+| `DeploymentConfig`           | type  | Deployment target                             |
+| `ClaimTopic`                 | type  | Claim topic entry                             |
+| `TrustedIssuer`              | type  | Trusted issuer entry                          |
+| `ComplianceModuleSelection`  | type  | Module selection                              |
+| `ComplianceHook`             | type  | Hook identifier (`string`, ecosystem-defined) |
+| `OwnershipModel`             | type  | Ownership discriminated union                 |
+| `OperatorRole`               | type  | Role definition                               |
+| `DEFAULT_ROLE_SYMBOLS`       | value | Well-known role name → symbol mapping         |
 
 ## Design Notes
 
