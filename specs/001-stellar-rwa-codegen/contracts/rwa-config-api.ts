@@ -12,7 +12,7 @@
  * in @openzeppelin/codegen-rwa-stellar).
  *
  * Primary exports (counted toward SC-007 ≤10 target):
- *   Types:     RWAConfig, ComplianceHook, OwnershipModel
+ *   Types:     RWAConfig, ComplianceHook (string alias), OwnershipModel
  *   Constants: DEFAULT_ROLE_SYMBOLS
  *   Total: 4 primary exports
  *
@@ -68,7 +68,12 @@ export interface IdentityVerificationConfig {
 // Compliance
 // ---------------------------------------------------------------------------
 
-export type ComplianceHook = 'transfer' | 'creation' | 'destruction';
+/**
+ * Opaque hook identifier — each ecosystem defines its own valid values.
+ * Stellar: 'canTransfer' | 'canCreate' | 'transferred' | 'created' | 'destroyed'
+ * EVM T-REX: 'canTransfer' | 'transferred' | 'created' | 'destroyed'
+ */
+export type ComplianceHook = string;
 
 export interface ComplianceModuleSelection {
   /** Registry identifier of the compliance module */

@@ -2,6 +2,12 @@
 // Token Configuration
 // ---------------------------------------------------------------------------
 
+export interface AdministrativeControls {
+  burnable: boolean;
+  mintable: boolean;
+  pausable: boolean;
+}
+
 export interface TokenConfig {
   /** Token name (max length enforced by each generator) */
   name: string;
@@ -11,6 +17,8 @@ export interface TokenConfig {
   decimals: number;
   /** Initial supply as a bigint-compatible string (optional) */
   initialSupply?: string;
+  /** Administrative controls (burnable, mintable, pausable) */
+  administrativeControls: AdministrativeControls;
   /** Document management extension toggle */
   documentManager: {
     enabled: boolean;
@@ -26,6 +34,8 @@ export interface ClaimTopic {
   id: number;
   /** Human-readable label */
   name: string;
+  /** Whether this topic was added by the user (not predefined) */
+  isCustom?: boolean;
 }
 
 export interface TrustedIssuer {
@@ -35,16 +45,29 @@ export interface TrustedIssuer {
   claimTopics: number[];
 }
 
+export interface IdentityControls {
+  addressFreezing: boolean;
+  partialTokenFreezing: boolean;
+  recovery: boolean;
+  forcedTransfers: boolean;
+}
+
 export interface IdentityVerificationConfig {
   claimTopics: ClaimTopic[];
   trustedIssuers: TrustedIssuer[];
+  controls: IdentityControls;
 }
 
 // ---------------------------------------------------------------------------
 // Compliance
 // ---------------------------------------------------------------------------
 
-export type ComplianceHook = 'transfer' | 'creation' | 'destruction';
+/**
+ * Opaque hook identifier — each ecosystem defines its own valid values.
+ * Stellar: 'canTransfer' | 'canCreate' | 'transferred' | 'created' | 'destroyed'
+ * EVM T-REX: 'canTransfer' | 'transferred' | 'created' | 'destroyed'
+ */
+export type ComplianceHook = string;
 
 export interface ComplianceModuleSelection {
   /** Registry identifier of the compliance module */

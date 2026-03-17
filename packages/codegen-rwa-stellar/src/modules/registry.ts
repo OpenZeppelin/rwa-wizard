@@ -1,4 +1,4 @@
-import type { ComplianceHook } from '@openzeppelin/rwa-config';
+import type { StellarComplianceHook } from '../ecosystem-metadata';
 
 /**
  * Metadata for an available compliance module per data-model.md.
@@ -10,7 +10,7 @@ export interface ComplianceModuleRegistryEntry {
   id: string;
   name: string;
   description: string;
-  supportedHooks: ComplianceHook[];
+  supportedHooks: StellarComplianceHook[];
 }
 
 /**
@@ -24,19 +24,19 @@ export const COMPLIANCE_MODULE_REGISTRY: ComplianceModuleRegistryEntry[] = [
     id: 'supply-cap',
     name: 'Supply Cap',
     description: 'Enforces a maximum total supply for the token',
-    supportedHooks: ['creation'],
+    supportedHooks: ['canCreate'],
   },
   {
     id: 'max-balance',
     name: 'Max Balance',
     description: 'Limits the maximum token balance per wallet',
-    supportedHooks: ['transfer', 'creation'],
+    supportedHooks: ['canTransfer', 'canCreate'],
   },
   {
     id: 'country-restrict',
     name: 'Country Restriction',
     description: 'Restricts transfers based on country jurisdiction',
-    supportedHooks: ['transfer'],
+    supportedHooks: ['canTransfer'],
   },
 ];
 

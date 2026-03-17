@@ -85,10 +85,15 @@ interface ComplianceModuleSelection {
   config?: Record<string, unknown>; // module-specific params
 }
 
-type ComplianceHook = 'transfer' | 'creation' | 'destruction';
+type ComplianceHook = string;
 ```
 
-**Hook-to-trait method mapping** (Stellar-specific): `'transfer'` → `on_transfer`/`can_transfer`, `'creation'` → `on_created`/`can_create`, `'destruction'` → `on_destroyed`. This mapping is hardcoded in the Stellar generator.
+**`ComplianceHook` is ecosystem-defined**: The hook identifier is an opaque `string` in the shared config package. Each ecosystem's codegen package defines its valid hook values and validates them.
+
+- **Stellar** (5 hooks): `'canTransfer'`, `'canCreate'`, `'transferred'`, `'created'`, `'destroyed'` — maps 1:1 to the `ComplianceHook` Rust enum in `stellar-contracts`.
+- **EVM T-REX** (4 hooks): `'canTransfer'`, `'transferred'`, `'created'`, `'destroyed'` — maps to `IModularCompliance` methods. No `canCreate` equivalent (minting bypasses compliance).
+
+The Stellar generator validates that hook values match its `StellarComplianceHook` type; other generators validate against their own set.
 
 **Validation rules**:
 
@@ -267,7 +272,7 @@ interface ComplianceModuleRegistryEntry {
   id: string; // unique identifier, e.g., "supply-cap"
   name: string; // human-readable, e.g., "Supply Cap"
   description: string; // short description
-  supportedHooks: ComplianceHook[]; // which hooks this module can attach to
+  supportedHooks: string[]; // which hooks this module can attach to (ecosystem-specific values)
 }
 ```
 

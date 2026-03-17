@@ -24,7 +24,22 @@ import type {
   ValidationResult,
   ZipResult,
 } from './codegen-core-api';
-import type { ComplianceHook, RWAConfig } from './rwa-config-api';
+import type { RWAConfig } from './rwa-config-api';
+
+// ---------------------------------------------------------------------------
+// Stellar-specific compliance hook type
+// ---------------------------------------------------------------------------
+
+/**
+ * The 5 compliance hooks in the Stellar/Soroban `ComplianceHook` enum.
+ * Maps 1:1 to the Rust `ComplianceHook` variants in `stellar-contracts`.
+ */
+export type StellarComplianceHook =
+  | 'canTransfer'
+  | 'canCreate'
+  | 'transferred'
+  | 'created'
+  | 'destroyed';
 
 // ---------------------------------------------------------------------------
 // Compliance Module Registry
@@ -37,8 +52,8 @@ export interface ComplianceModuleRegistryEntry {
   name: string;
   /** Short description of the module's purpose */
   description: string;
-  /** Which compliance hooks this module can attach to */
-  supportedHooks: ComplianceHook[];
+  /** Which compliance hooks this module can attach to (Stellar-specific values) */
+  supportedHooks: StellarComplianceHook[];
 }
 // Note: getAvailableModules() only returns entries with concrete implementations.
 // An `implemented` flag is unnecessary since unimplemented modules are never exposed.
