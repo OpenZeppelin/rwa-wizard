@@ -79,17 +79,21 @@ apps/rwa-wizard/src/
 | `pnpm format`        | Format code with Prettier |
 | `pnpm format:check`  | Check code formatting     |
 
-## Local Development with UI Kit
+## Local Development with UI Kit and Adapters
 
-When developing against local changes to `@openzeppelin/ui-*` packages:
+When developing against local changes to `@openzeppelin/ui-*` and/or `@openzeppelin/adapter-*` packages:
 
 ```bash
-# From the monorepo root, enable local packages
+# From the monorepo root, enable local packages (UI + adapters)
 pnpm dev:local
 
-# This uses packages from ../openzeppelin-ui and ../ui-builder
-# Make sure those repos are built first:
+# Ensure sibling repos are built first:
 # cd ../openzeppelin-ui && pnpm install && pnpm build
+# cd ../openzeppelin-adapters && pnpm install && pnpm --filter './packages/adapter-*' build
+
+# UI-only or adapters-only (see root package.json scripts):
+# pnpm dev:uikit:local
+# pnpm dev:adapters:local
 
 # To switch back to npm registry packages
 pnpm dev:npm
@@ -97,20 +101,19 @@ pnpm dev:npm
 
 ### How It Works
 
-The local development workflow uses pnpm's [`readPackage` hook](https://pnpm.io/pnpmfile#hooksreadpackagepkg-context) via `.pnpmfile.cjs` to dynamically resolve packages at install time:
+The local development workflow uses pnpm's [`readPackage` hook](https://pnpm.io/pnpmfile#hooksreadpackagepkg-context) via `.pnpmfile.cjs` together with `.openzeppelin-dev.json` to rewrite dependencies at install time:
 
-1. When `LOCAL_UI=true` is set (via `pnpm dev:local`), the hook intercepts package resolution
-2. Any `@openzeppelin/ui-*` dependency is rewritten to `file:../openzeppelin-ui/packages/*`
-3. Any `@openzeppelin/ui-builder-adapter-*` dependency is rewritten to `file:../ui-builder/packages/*`
+1. When `LOCAL_UI=true` / `LOCAL_ADAPTERS=true` are set (e.g. via `pnpm dev:local`), the hook intercepts package resolution
+2. `@openzeppelin/ui-*` dependencies map to paths under `LOCAL_UI_PATH` (default `../openzeppelin-ui`)
+3. `@openzeppelin/adapter-*` dependencies map to paths under `LOCAL_ADAPTERS_PATH` (default `../openzeppelin-adapters`)
 
 **Benefits:**
 
-- `package.json` stays unchanged (no `file:` references committed)
-- Switching between local and npm is instant — just re-run install
-- Transitive dependencies are also resolved locally
-- Environment variables (`LOCAL_UI_PATH`, `LOCAL_UI_BUILDER_PATH`) allow custom paths
+- `package.json` stays unchanged (no committed `file:` overrides)
+- Switching between local and npm is a single script + `pnpm install`
+- Paths are configurable via `LOCAL_UI_PATH` and `LOCAL_ADAPTERS_PATH`
 
-See `.pnpmfile.cjs` at the monorepo root for the full implementation.
+See `.pnpmfile.cjs` and `.openzeppelin-dev.json` at the monorepo root for the full implementation.
 
 ## Dependencies
 
@@ -123,8 +126,8 @@ See `.pnpmfile.cjs` at the monorepo root for the full implementation.
 - `@openzeppelin/ui-renderer` - Transaction form rendering
 - `@openzeppelin/ui-react` - React context providers and hooks
 - `@openzeppelin/ui-storage` - IndexedDB storage utilities
-- `@openzeppelin/ui-builder-adapter-evm` - EVM blockchain adapter
-- `@openzeppelin/ui-builder-adapter-stellar` - Stellar blockchain adapter
+- `@openzeppelin/adapter-evm` - EVM blockchain adapter (runtime / capabilities)
+- `@openzeppelin/adapter-stellar` - Stellar blockchain adapter (runtime / capabilities)
 - `react` - React framework
 - `react-dom` - React DOM bindings
 - `react-router-dom` - Routing
