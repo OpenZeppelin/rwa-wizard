@@ -35,6 +35,7 @@ export class WizardDraftStorage extends EntityStorage<WizardDraftRecordPersisted
       title: r.title,
       targetId: r.targetId,
       status: r.status,
+      symbol: r.config.token.symbol,
       updatedAt: r.updatedAt,
     }));
   }

@@ -1,4 +1,4 @@
-import { useCallback, useContext, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 
 import type { DraftListItem } from '../types/wizard';
 import {
@@ -37,6 +37,10 @@ export function useDraftList(): {
       setIsLoading(false);
     }
   }, [list]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   return { items, isLoading, error, refresh };
 }
