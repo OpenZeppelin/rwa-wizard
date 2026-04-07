@@ -21,9 +21,12 @@ import { ComplianceStep } from '../../features/wizard/compliance/ComplianceStep'
 import { DeploymentPlaceholder } from '../../features/wizard/deployment/DeploymentPlaceholder';
 import { IdentityStep } from '../../features/wizard/identity/IdentityStep';
 import { useWizardDraftState } from '../../features/wizard/state/useWizardDraftState';
+import { getTargetCapabilitySnapshot, loadRuntime } from '../../registry/targetManager';
 import { listTargets } from '../../registry/targets';
+import type { TargetAdapterCapabilities } from '../../services/runtime';
+import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useDraftList, useWizardDraftStorage } from '../../storage';
-import type { ComplianceModuleOption, WizardStepId } from '../../types/wizard';
+import type { TargetCapabilitySnapshot, WizardStepId } from '../../types/wizard';
 import { isFeatureEnabled } from '../config/featureFlags';
 import { wizardStore } from '../state/wizardStore';
 
@@ -171,7 +174,8 @@ function DashboardPage() {
 function WizardPage() {
   const storeState = useWizardStoreState();
   const storage = useWizardDraftStorage();
-  const [availableModules, setAvailableModules] = useState<ComplianceModuleOption[]>([]);
+  const [targetSnapshot, setTargetSnapshot] = useState<TargetCapabilitySnapshot | null>(null);
+  const [adapterCaps, setAdapterCaps] = useState<TargetAdapterCapabilities | null>(null);
 
   const selectedTargetId = storeState.targetId ?? 'stellar';
   const draftState = useWizardDraftState();
@@ -196,17 +200,31 @@ function WizardPage() {
   }, [storeState.activeDraftId]);
 
   useEffect(() => {
-    async function loadModules() {
+    let isActive = true;
+
+    async function loadTarget() {
       try {
-        const { getCodegenService } = await import('../../services/codegen');
-        const service = getCodegenService(selectedTargetId);
-        const modules = await service.getAvailableModules();
-        setAvailableModules(modules);
+        const [snapshot, runtime] = await Promise.all([
+          getTargetCapabilitySnapshot(selectedTargetId),
+          loadRuntime(selectedTargetId),
+        ]);
+        if (isActive) {
+          setTargetSnapshot(snapshot);
+          setAdapterCaps(runtime.adapterCapabilities);
+        }
       } catch {
-        setAvailableModules([]);
+        if (isActive) {
+          setTargetSnapshot(null);
+          setAdapterCaps(null);
+        }
       }
     }
-    void loadModules();
+
+    void loadTarget();
+
+    return () => {
+      isActive = false;
+    };
   }, [selectedTargetId]);
 
   const handleDraftCreated = useCallback((id: string) => {
@@ -228,11 +246,26 @@ function WizardPage() {
   }, []);
 
   const wizardSteps: WizardStepConfig[] = useMemo(() => {
+    const availableModules = targetSnapshot?.availableModules ?? [];
+    const ecosystemMetadata = targetSnapshot?.ecosystemMetadata;
+    const adminControlsMeta = ecosystemMetadata?.administrativeControls ?? [];
+    const identityControlsMeta = ecosystemMetadata?.identityControls ?? [];
+    const operatorRoles = ecosystemMetadata?.operatorRoles ?? [];
+    const complianceHooks = ecosystemMetadata?.complianceHooks ?? [];
+    const maxModulesPerHook = ecosystemMetadata?.limits.maxModulesPerHook ?? 0;
+    const maxTrustedIssuers = ecosystemMetadata?.limits.maxTrustedIssuers ?? 0;
+    const documentManagerEnabled = draftState.config.token.documentManager.enabled;
     const steps: WizardStepConfig[] = [
       {
         id: 'asset',
         title: 'Asset',
-        component: <AssetStep token={draftState.config.token} onUpdate={draftState.updateToken} />,
+        component: (
+          <AssetStep
+            token={draftState.config.token}
+            adminControlsMeta={adminControlsMeta}
+            onUpdate={draftState.updateToken}
+          />
+        ),
         isValid: !!(draftState.config.token.name.trim() && draftState.config.token.symbol.trim()),
       },
       {
@@ -241,6 +274,8 @@ function WizardPage() {
         component: (
           <IdentityStep
             identity={draftState.config.identityVerification}
+            maxTrustedIssuers={maxTrustedIssuers}
+            identityControlsMeta={identityControlsMeta}
             onUpdate={draftState.updateIdentity}
           />
         ),
@@ -252,6 +287,8 @@ function WizardPage() {
           <ComplianceStep
             compliance={draftState.config.compliance}
             availableModules={availableModules}
+            complianceHooks={complianceHooks}
+            maxModulesPerHook={maxModulesPerHook}
             onUpdate={draftState.updateCompliance}
           />
         ),
@@ -262,6 +299,8 @@ function WizardPage() {
         component: (
           <AccessControlStep
             accessControl={draftState.config.accessControl}
+            documentManagerEnabled={documentManagerEnabled}
+            operatorRoles={operatorRoles}
             onUpdate={draftState.updateAccessControl}
           />
         ),
@@ -293,7 +332,7 @@ function WizardPage() {
     }
 
     return steps;
-  }, [draftState, availableModules]);
+  }, [draftState, targetSnapshot]);
 
   const handleCancel = useCallback(() => {
     wizardStore.reset();
@@ -301,15 +340,17 @@ function WizardPage() {
   }, [draftState]);
 
   return (
-    <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-      <WizardLayout
-        variant="scrollable"
-        steps={wizardSteps}
-        currentStepIndex={effectiveStepIndex}
-        onStepChange={handleStepChange}
-        onCancel={handleCancel}
-      />
-    </main>
+    <AdapterCapabilitiesProvider value={adapterCaps}>
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <WizardLayout
+          variant="vertical"
+          steps={wizardSteps}
+          currentStepIndex={effectiveStepIndex}
+          onStepChange={handleStepChange}
+          onCancel={handleCancel}
+        />
+      </main>
+    </AdapterCapabilitiesProvider>
   );
 }
 
