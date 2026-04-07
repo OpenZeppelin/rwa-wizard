@@ -5,6 +5,7 @@ import type {
   ComplianceModuleOption,
   GeneratedZipArtifact,
   GenerationStatus,
+  TargetEcosystemMetadata,
 } from '../../types/wizard';
 import type { RwaCodegenService, ValidationResultDTO } from './types';
 
@@ -23,6 +24,7 @@ interface CodegenPackageModule {
       onProgress?: (event: { phase: string; percentage: number; message?: string }) => void;
     }
   ) => Promise<{ fileName: string; data: Blob }>;
+  getEcosystemMetadata?: () => TargetEcosystemMetadata;
 }
 
 function wrapCodegenPackage(pkg: CodegenPackageModule): RwaCodegenService {
@@ -51,6 +53,8 @@ function wrapCodegenPackage(pkg: CodegenPackageModule): RwaCodegenService {
         supportedHooks: [...m.supportedHooks] as ComplianceModuleOption['supportedHooks'],
       }));
     },
+
+    getEcosystemMetadata: pkg.getEcosystemMetadata ? () => pkg.getEcosystemMetadata!() : undefined,
 
     async generateZip(
       config: RWAConfig,

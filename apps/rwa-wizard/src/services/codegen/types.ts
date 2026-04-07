@@ -4,6 +4,7 @@ import type {
   ComplianceModuleOption,
   GeneratedZipArtifact,
   GenerationStatus,
+  TargetEcosystemMetadata,
 } from '../../types/wizard';
 
 /** Normalized validation result for UI (field paths, codes, messages). */
@@ -20,6 +21,7 @@ export interface ValidationResultDTO {
 export interface RwaCodegenService {
   validate(config: RWAConfig): Promise<ValidationResultDTO>;
   getAvailableModules(): Promise<ComplianceModuleOption[]>;
+  getEcosystemMetadata?: () => TargetEcosystemMetadata;
   generateZip(
     config: RWAConfig,
     options?: { onStatus?: (status: GenerationStatus) => void }

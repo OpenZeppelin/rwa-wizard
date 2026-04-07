@@ -48,6 +48,7 @@ export interface DraftListItem {
   title: string;
   targetId: string;
   status: WizardDraftStatus;
+  symbol?: string;
   updatedAt: Date;
 }
 
@@ -83,8 +84,39 @@ export type ComplianceModuleOption = {
   id: string;
   name: string;
   description: string;
-  supportedHooks: Array<'transfer' | 'creation' | 'destruction'>;
+  supportedHooks: string[];
 };
+
+export interface FeatureControlMeta {
+  id: string;
+  name: string;
+  description: string;
+  locked: boolean;
+  defaultValue: boolean;
+}
+
+export interface OperatorRoleMeta {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface ComplianceHookMeta {
+  hook: string;
+  displayName: string;
+  description: string;
+}
+
+export interface TargetEcosystemMetadata {
+  administrativeControls: readonly FeatureControlMeta[];
+  identityControls: readonly FeatureControlMeta[];
+  operatorRoles: readonly OperatorRoleMeta[];
+  complianceHooks: readonly ComplianceHookMeta[];
+  limits: {
+    maxModulesPerHook: number;
+    maxTrustedIssuers: number;
+  };
+}
 
 export interface TargetNetworkOption {
   value: string;
@@ -95,6 +127,7 @@ export interface TargetNetworkOption {
 export interface TargetCapabilitySnapshot {
   targetId: string;
   availableModules: ComplianceModuleOption[];
+  ecosystemMetadata: TargetEcosystemMetadata;
   networkOptions?: TargetNetworkOption[];
   mocked: boolean;
 }
