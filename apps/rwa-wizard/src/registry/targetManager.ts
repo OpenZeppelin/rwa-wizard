@@ -1,14 +1,28 @@
 import type { RwaCodegenService } from '../services/codegen';
 import { ensureCodegenLoaded, getCodegenService } from '../services/codegen';
-import type { TargetCapabilitySnapshot } from '../types/wizard';
+import type { TargetAdapterCapabilities } from '../services/runtime';
+import { ensureAdapterLoaded, getAdapterCapabilities } from '../services/runtime';
+import type { TargetCapabilitySnapshot, TargetEcosystemMetadata } from '../types/wizard';
 import { getTarget, listTargets } from './targets';
 
 export interface LoadedTargetRuntime {
   targetId: string;
   codegenService: RwaCodegenService;
+  adapterCapabilities: TargetAdapterCapabilities | null;
 }
 
 const runtimeCache = new Map<string, LoadedTargetRuntime>();
+
+const EMPTY_ECOSYSTEM_METADATA: TargetEcosystemMetadata = {
+  administrativeControls: [],
+  identityControls: [],
+  operatorRoles: [],
+  complianceHooks: [],
+  limits: {
+    maxModulesPerHook: 0,
+    maxTrustedIssuers: 0,
+  },
+};
 
 /**
  * Loads the target runtime (codegen service) for the given target id.
@@ -26,10 +40,11 @@ export async function loadRuntime(targetId: string): Promise<LoadedTargetRuntime
   const cached = runtimeCache.get(targetId);
   if (cached) return cached;
 
-  await ensureCodegenLoaded(targetId);
+  await Promise.all([ensureCodegenLoaded(targetId), ensureAdapterLoaded(targetId)]);
 
   const codegenService = getCodegenService(targetId);
-  const runtime: LoadedTargetRuntime = { targetId, codegenService };
+  const adapterCapabilities = getAdapterCapabilities(targetId);
+  const runtime: LoadedTargetRuntime = { targetId, codegenService, adapterCapabilities };
   runtimeCache.set(targetId, runtime);
   return runtime;
 }
@@ -44,10 +59,16 @@ export async function getTargetCapabilitySnapshot(
   const runtime = await loadRuntime(targetId);
   const modules = await runtime.codegenService.getAvailableModules();
   const entry = getTarget(targetId);
+
+  const networkOptions = runtime.adapterCapabilities?.networkCatalog
+    .getNetworks()
+    .map((n) => ({ value: n.id, label: n.name, hint: n.isTestnet ? 'Testnet' : undefined }));
+
   return {
     targetId,
     availableModules: modules,
-    networkOptions: undefined,
+    ecosystemMetadata: runtime.codegenService.getEcosystemMetadata?.() ?? EMPTY_ECOSYSTEM_METADATA,
+    networkOptions,
     mocked: entry?.enabled === false,
   };
 }
