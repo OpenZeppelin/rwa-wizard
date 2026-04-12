@@ -3,7 +3,8 @@ import { useCallback } from 'react';
 import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 
 import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../types/wizard';
-import { ComplianceHookCard } from './ComplianceHookCard';
+import { HookWiringPreview } from './HookWiringPreview';
+import { ModuleCatalog } from './ModuleCatalog';
 
 interface ComplianceStepProps {
   compliance: ComplianceConfig;
@@ -13,58 +14,64 @@ interface ComplianceStepProps {
   onUpdate: (patch: Partial<ComplianceConfig>) => void;
 }
 
-const FUND_TAG_HOOKS = new Set(['canTransfer', 'transferred', 'created', 'destroyed']);
+function deriveHookRegistrations(
+  moduleId: string,
+  supportedHooks: string[]
+): ComplianceModuleSelection[] {
+  return supportedHooks.map((hook) => ({ moduleId, hook }));
+}
 
 export function ComplianceStep({
   compliance,
   availableModules,
   complianceHooks,
-  maxModulesPerHook,
   onUpdate,
 }: ComplianceStepProps) {
-  const handleAddModule = useCallback(
-    (hook: string, moduleId: string) => {
-      const selection: ComplianceModuleSelection = { moduleId, hook };
-      onUpdate({ modules: [...compliance.modules, selection] });
+  const selectedModuleIds = new Set(compliance.modules.map((m) => m.moduleId));
+
+  const handleToggleModule = useCallback(
+    (moduleId: string) => {
+      if (selectedModuleIds.has(moduleId)) {
+        onUpdate({ modules: compliance.modules.filter((m) => m.moduleId !== moduleId) });
+      } else {
+        const meta = availableModules.find((m) => m.id === moduleId);
+        if (!meta) return;
+        const registrations = deriveHookRegistrations(moduleId, meta.supportedHooks);
+        onUpdate({ modules: [...compliance.modules, ...registrations] });
+      }
     },
-    [compliance.modules, onUpdate]
+    [compliance.modules, availableModules, selectedModuleIds, onUpdate]
   );
 
-  const handleRemoveModule = useCallback(
-    (_hook: string, moduleIndex: number) => {
-      onUpdate({ modules: compliance.modules.filter((_, i) => i !== moduleIndex) });
-    },
-    [compliance.modules, onUpdate]
-  );
+  const hookRegistrations = new Map<string, string[]>();
+  for (const sel of compliance.modules) {
+    const list = hookRegistrations.get(sel.hook) ?? [];
+    if (!list.includes(sel.moduleId)) list.push(sel.moduleId);
+    hookRegistrations.set(sel.hook, list);
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold text-foreground">Compliance Framework</h2>
+        <h2 className="text-2xl font-semibold text-foreground">Compliance Modules</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Configure transfer restrictions and validation rules using compliance hooks.
+          Select which compliance policies to enforce. Each module is automatically registered on
+          the hooks it requires — you don&apos;t need to wire them manually.
         </p>
       </div>
 
-      {complianceHooks.map((meta) => (
-        <ComplianceHookCard
-          key={meta.hook}
-          hook={meta.hook}
-          displayName={meta.displayName}
-          description={meta.description}
-          modules={compliance.modules}
-          availableModules={availableModules}
-          maxModulesPerHook={maxModulesPerHook}
-          onAddModule={handleAddModule}
-          onRemoveModule={handleRemoveModule}
-          fundTag={FUND_TAG_HOOKS.has(meta.hook)}
-        />
-      ))}
+      <ModuleCatalog
+        availableModules={availableModules}
+        selectedModuleIds={selectedModuleIds}
+        onToggleModule={handleToggleModule}
+      />
 
-      {availableModules.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          No compliance modules are available for the selected target.
-        </p>
+      {compliance.modules.length > 0 && (
+        <HookWiringPreview
+          complianceHooks={complianceHooks}
+          hookRegistrations={hookRegistrations}
+          availableModules={availableModules}
+        />
       )}
     </div>
   );
