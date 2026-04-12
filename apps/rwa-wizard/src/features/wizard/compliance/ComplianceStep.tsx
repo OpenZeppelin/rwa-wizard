@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 
@@ -27,11 +27,14 @@ export function ComplianceStep({
   complianceHooks,
   onUpdate,
 }: ComplianceStepProps) {
-  const selectedModuleIds = new Set(compliance.modules.map((m) => m.moduleId));
+  const selectedModuleIds = useMemo(
+    () => new Set(compliance.modules.map((m) => m.moduleId)),
+    [compliance.modules]
+  );
 
   const handleToggleModule = useCallback(
     (moduleId: string) => {
-      if (selectedModuleIds.has(moduleId)) {
+      if (compliance.modules.some((m) => m.moduleId === moduleId)) {
         onUpdate({ modules: compliance.modules.filter((m) => m.moduleId !== moduleId) });
       } else {
         const meta = availableModules.find((m) => m.id === moduleId);
@@ -40,7 +43,7 @@ export function ComplianceStep({
         onUpdate({ modules: [...compliance.modules, ...registrations] });
       }
     },
-    [compliance.modules, availableModules, selectedModuleIds, onUpdate]
+    [compliance.modules, availableModules, onUpdate]
   );
 
   const hookRegistrations = new Map<string, string[]>();
