@@ -59,30 +59,30 @@
 
 > **NOTE**: Write these tests FIRST, ensure they FAIL before implementation
 
-- [ ] T019 [P] [US1] Add target registry tests in `apps/rwa-wizard/src/registry/targets.test.ts`
-- [ ] T020 [P] [US1] Add target manager tests in `apps/rwa-wizard/src/registry/targetManager.test.ts`
-- [ ] T021 [P] [US1] Add draft storage repository tests in `apps/rwa-wizard/src/storage/WizardDraftStorage.test.ts`
-- [ ] T022 [P] [US1] Add autosave hook tests in `apps/rwa-wizard/src/features/draft-management/hooks/useDraftAutosave.test.tsx`
-- [ ] T023 [P] [US1] Add wizard state/config mapping tests in `apps/rwa-wizard/src/features/wizard/state/useWizardDraftState.test.tsx`
-- [ ] T024 [P] [US1] Add deployment-placeholder feature-flag tests in `apps/rwa-wizard/src/app/config/featureFlags.test.ts`
+- [x] T019 [P] [US1] Add target registry tests in `apps/rwa-wizard/src/registry/targets.test.ts`
+- [x] T020 [P] [US1] Add target manager tests in `apps/rwa-wizard/src/registry/targetManager.test.ts`
+- [x] T021 [P] [US1] Add draft storage repository tests in `apps/rwa-wizard/src/storage/WizardDraftStorage.test.ts`
+- [x] T022 [P] [US1] Add autosave hook tests in `apps/rwa-wizard/src/features/draft-management/hooks/useDraftAutosave.test.tsx`
+- [x] T023 [P] [US1] Add wizard state/config mapping tests in `apps/rwa-wizard/src/features/wizard/state/useWizardDraftState.test.tsx`
+- [x] T024 [P] [US1] Add deployment-placeholder feature-flag tests in `apps/rwa-wizard/src/app/config/featureFlags.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T025 [P] [US1] Implement the sidebar target selector in `apps/rwa-wizard/src/features/target-catalog/components/TargetSelectorSidebar.tsx`
-- [ ] T026 [P] [US1] Implement the draft list surface in `apps/rwa-wizard/src/features/draft-management/components/DraftList.tsx`
-- [ ] T027 [P] [US1] Implement per-draft actions UI in `apps/rwa-wizard/src/features/draft-management/components/DraftListItem.tsx`
-- [ ] T028 [P] [US1] Implement configuration import UI in `apps/rwa-wizard/src/features/draft-management/components/ImportDraftButton.tsx`
-- [ ] T029 [P] [US1] Implement the wizard shell and step frame in `apps/rwa-wizard/src/features/wizard/components/WizardShell.tsx`
-- [ ] T030 [P] [US1] Implement the asset step in `apps/rwa-wizard/src/features/wizard/asset/AssetStep.tsx`
-- [ ] T031 [P] [US1] Implement the identity step and privacy warning in `apps/rwa-wizard/src/features/wizard/identity/IdentityStep.tsx` and `apps/rwa-wizard/src/features/wizard/identity/IdentityPrivacyNotice.tsx`
-- [ ] T032 [P] [US1] Implement the compliance step in `apps/rwa-wizard/src/features/wizard/compliance/ComplianceStep.tsx`
-- [ ] T033 [P] [US1] Implement the access-control step in `apps/rwa-wizard/src/features/wizard/access-control/AccessControlStep.tsx`
-- [ ] T034 [P] [US1] Implement shared feature-flag access and a hidden-by-default deployment placeholder gate in `apps/rwa-wizard/src/app/config/featureFlags.ts` and `apps/rwa-wizard/src/features/wizard/deployment/DeploymentPlaceholder.tsx`
-- [ ] T035 [US1] Implement wizard draft state and `RWAConfig` mapping for the MVP flow without deployment-choice persistence in `apps/rwa-wizard/src/features/wizard/state/useWizardDraftState.ts`
-- [ ] T036 [US1] Implement autosave lifecycle wiring in `apps/rwa-wizard/src/features/draft-management/hooks/useDraftAutosave.ts`
-- [ ] T037 [US1] Wire the app shell, target selector, draft list, hidden future deployment placeholder gating, and wizard navigation together in `apps/rwa-wizard/src/app/routes/AppRouter.tsx` and `apps/rwa-wizard/src/App.tsx`
+- [x] T025 [P] [US1] Implement the sidebar target selector in `apps/rwa-wizard/src/features/target-catalog/components/TargetSelectorSidebar.tsx`
+- [x] T026 [P] [US1] Implement the draft list surface in `apps/rwa-wizard/src/features/draft-management/components/DraftList.tsx`
+- [x] T027 [P] [US1] Implement per-draft actions UI in `apps/rwa-wizard/src/features/draft-management/components/DraftListItem.tsx`
+- [x] T028 [P] [US1] Implement configuration import UI in `apps/rwa-wizard/src/features/draft-management/components/ImportDraftButton.tsx`
+- [ ] T029 [P] [US1] Implement the wizard shell and step frame in `apps/rwa-wizard/src/features/wizard/components/WizardShell.tsx` *(not implemented as a local file — wizard chrome is composed with `@openzeppelin/ui-components` `WizardLayout` in `AppRouter.tsx`)*
+- [x] T030 [P] [US1] Implement the asset step in `apps/rwa-wizard/src/features/wizard/asset/AssetStep.tsx`
+- [x] T031 [P] [US1] Implement the identity step and privacy warning in `apps/rwa-wizard/src/features/wizard/identity/IdentityStep.tsx` and `apps/rwa-wizard/src/features/wizard/identity/IdentityPrivacyNotice.tsx`
+- [x] T032 [P] [US1] Implement the compliance step in `apps/rwa-wizard/src/features/wizard/compliance/ComplianceStep.tsx`
+- [x] T033 [P] [US1] Implement the access-control step in `apps/rwa-wizard/src/features/wizard/access-control/AccessControlStep.tsx`
+- [x] T034 [P] [US1] Implement shared feature-flag access and a hidden-by-default deployment placeholder gate in `apps/rwa-wizard/src/app/config/featureFlags.ts` and `apps/rwa-wizard/src/features/wizard/deployment/DeploymentPlaceholder.tsx`
+- [x] T035 [US1] Implement wizard draft state and `RWAConfig` mapping for the MVP flow without deployment-choice persistence in `apps/rwa-wizard/src/features/wizard/state/useWizardDraftState.ts`
+- [x] T036 [US1] Implement autosave lifecycle wiring in `apps/rwa-wizard/src/features/draft-management/hooks/useDraftAutosave.ts`
+- [x] T037 [US1] Wire the app shell, target selector, draft list, hidden future deployment placeholder gating, and wizard navigation together in `apps/rwa-wizard/src/app/routes/AppRouter.tsx` and `apps/rwa-wizard/src/App.tsx`
 
-**Checkpoint**: User Story 1 is independently functional and testable as the MVP.
+**Checkpoint**: User Story 1 is independently functional and testable as the MVP. *(One spec delta: T029 path — see note on T029.)*
 
 ---
 
