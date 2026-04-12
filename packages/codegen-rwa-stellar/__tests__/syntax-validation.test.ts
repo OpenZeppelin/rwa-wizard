@@ -22,9 +22,9 @@ function createFullConfig(): RWAConfig {
     },
     compliance: {
       modules: [
-        { moduleId: 'supply-cap', hook: 'canCreate' },
-        { moduleId: 'max-balance', hook: 'canTransfer' },
-        { moduleId: 'country-restrict', hook: 'canTransfer' },
+        { moduleId: 'supply-limit', config: { limit: 1000000 } },
+        { moduleId: 'max-balance', config: { maxBalance: 50000 } },
+        { moduleId: 'country-restrict' },
       ],
     },
     accessControl: {
@@ -82,7 +82,7 @@ describe('SC-002 Rust syntax validation', () => {
       expect(paths).toContain('contracts/identity-verifier/src/contract.rs');
       expect(paths).toContain('contracts/claim-topics-issuers/src/contract.rs');
       expect(paths).toContain('contracts/identity-registry-storage/src/contract.rs');
-      expect(paths).toContain('contracts/modules/supply-cap/src/contract.rs');
+      expect(paths).toContain('contracts/modules/supply-limit/src/contract.rs');
       expect(paths).toContain('contracts/modules/max-balance/src/contract.rs');
       expect(paths).toContain('contracts/modules/country-restrict/src/contract.rs');
     });
@@ -191,7 +191,7 @@ describe('SC-002 Rust syntax validation', () => {
       expect(workspaceToml).toContain('contracts/identity-verifier');
       expect(workspaceToml).toContain('contracts/claim-topics-issuers');
       expect(workspaceToml).toContain('contracts/identity-registry-storage');
-      expect(workspaceToml).toContain('contracts/modules/supply-cap');
+      expect(workspaceToml).toContain('contracts/modules/supply-limit');
       expect(workspaceToml).toContain('contracts/modules/max-balance');
       expect(workspaceToml).toContain('contracts/modules/country-restrict');
     });

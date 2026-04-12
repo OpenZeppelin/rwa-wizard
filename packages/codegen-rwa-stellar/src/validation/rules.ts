@@ -2,7 +2,7 @@ import type { ValidationRule } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../constants';
-import { getRegisteredModuleIds } from '../modules/registry';
+import { getModuleById, getRegisteredModuleIds } from '../modules/registry';
 
 const I128_MAX = BigInt('170141183460469231731687303715884105727');
 
@@ -270,9 +270,11 @@ export const validateDeployment: ValidationRule<RWAConfig> = (config) => {
 // ---------------------------------------------------------------------------
 
 export const validateComplianceModules: ValidationRule<RWAConfig> = (config) => {
-  const errors = [];
+  const errors: Array<{ field: string; code: string; message: string }> = [];
+  const warnings: Array<{ field: string; code: string; message: string }> = [];
   const { modules } = config.compliance;
   const availableModuleIds = getRegisteredModuleIds();
+  const seen = new Set<string>();
 
   for (let i = 0; i < modules.length; i++) {
     const mod = modules[i];
@@ -283,10 +285,45 @@ export const validateComplianceModules: ValidationRule<RWAConfig> = (config) => 
         code: 'UNSUPPORTED_MODULE',
         message: `Compliance module "${mod.moduleId}" is not available. Supported modules: ${[...availableModuleIds].join(', ')}`,
       });
+      continue;
+    }
+
+    if (seen.has(mod.moduleId)) {
+      errors.push({
+        field: `compliance.modules[${i}].moduleId`,
+        code: 'DUPLICATE_MODULE',
+        message: `Compliance module "${mod.moduleId}" is selected more than once`,
+      });
+      continue;
+    }
+    seen.add(mod.moduleId);
+
+    const entry = getModuleById(mod.moduleId);
+    if (!entry) continue;
+
+    if (entry.review.state === 'under-review') {
+      warnings.push({
+        field: `compliance.modules[${i}].moduleId`,
+        code: 'UNDER_REVIEW_MODULE',
+        message: `Module "${entry.name}" is under review${entry.review.prUrl ? ` (${entry.review.prUrl})` : ''} — not recommended for production`,
+      });
+    }
+
+    for (const field of entry.configFields) {
+      if (field.required) {
+        const val = mod.config?.[field.key];
+        if (val === undefined || val === null || val === '') {
+          errors.push({
+            field: `compliance.modules[${i}].config.${field.key}`,
+            code: 'REQUIRED_MODULE_CONFIG',
+            message: `Module "${entry.name}" requires config field "${field.label}"`,
+          });
+        }
+      }
     }
   }
 
-  return { errors, warnings: [] };
+  return { errors, warnings };
 };
 
 // ---------------------------------------------------------------------------

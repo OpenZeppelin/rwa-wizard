@@ -1,6 +1,7 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { CRATE_NAMES } from '../../constants';
+import { getModuleById } from '../../modules/registry';
 
 function getAdminAddress(config: RWAConfig): string {
   const ownership = config.accessControl.ownership;
@@ -47,11 +48,29 @@ function buildDeploySection(
   return lines.join('\n');
 }
 
+function buildInvokeCommand(
+  contractAddr: string,
+  fnName: string,
+  args: string,
+  networkFlag: string
+): string {
+  return `stellar contract invoke \\
+  --id ${contractAddr} \\
+  ${networkFlag} \\
+  -- \\
+  ${fnName} \\
+  ${args}`;
+}
+
+function moduleVarName(moduleId: string): string {
+  return `MODULE_${moduleId.toUpperCase().replace(/-/g, '_')}_ADDRESS`;
+}
+
 function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
   const lines: string[] = [];
   const adminAddress = getAdminAddress(config);
 
-  lines.push('# Post-deploy configuration (SR-013)');
+  lines.push('# Post-deploy configuration');
   lines.push('echo "Starting post-deploy configuration..."');
   lines.push('');
 
@@ -73,19 +92,47 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
     )
   );
 
-  if (config.compliance.modules.length > 0) {
+  const uniqueModuleIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
+  if (uniqueModuleIds.length > 0) {
     lines.push('');
-    lines.push('# Register compliance modules');
-    for (const mod of config.compliance.modules) {
-      const modVarName = `MODULE_${mod.moduleId.toUpperCase().replace(/-/g, '_')}_ADDRESS`;
+    lines.push('# Configure and register compliance modules');
+    for (const modId of uniqueModuleIds) {
+      const entry = getModuleById(modId);
+      if (!entry) continue;
+
+      const modVar = `$${moduleVarName(modId)}`;
+      lines.push('');
+      lines.push(`# -- ${entry.name} setup --`);
+
       lines.push(
         buildInvokeCommand(
-          '$COMPLIANCE_ADDRESS',
-          'add_module_to',
-          `--hook "${mod.hook}" --module "$${modVarName}" --operator "${adminAddress}"`,
+          modVar,
+          'set_compliance_address',
+          `--compliance "$COMPLIANCE_ADDRESS"`,
           networkFlag
         )
       );
+      lines.push(
+        buildInvokeCommand(
+          modVar,
+          'set_identity_registry_storage',
+          `--irs "$IRS_ADDRESS"`,
+          networkFlag
+        )
+      );
+
+      for (const hook of entry.requiredHooks) {
+        lines.push(
+          buildInvokeCommand(
+            '$COMPLIANCE_ADDRESS',
+            'add_module_to',
+            `--hook "${hook}" --module "${modVar}" --operator "${adminAddress}"`,
+            networkFlag
+          )
+        );
+      }
+
+      lines.push(buildInvokeCommand(modVar, 'verify_hook_wiring', '', networkFlag));
     }
   }
 
@@ -136,26 +183,12 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
   return lines.join('\n');
 }
 
-function buildInvokeCommand(
-  contractAddr: string,
-  fnName: string,
-  args: string,
-  networkFlag: string
-): string {
-  return `stellar contract invoke \\
-  --id ${contractAddr} \\
-  ${networkFlag} \\
-  -- \\
-  ${fnName} \\
-  ${args}`;
-}
-
 /**
  * Generates `deploy.sh` — a shell script that deploys and configures all
- * contracts in the correct dependency order per SR-006 and SR-013.
+ * contracts in the correct dependency order.
  *
- * Deployment order: CTI → IRS → Identity Verifier → Compliance → Modules → RWA Token
- * Post-deploy: bind token → register modules → add claim topics → add trusted issuers → optional mint
+ * Deployment order: CTI -> IRS -> Identity Verifier -> Compliance -> Modules -> RWA Token
+ * Post-deploy: bind token -> configure modules -> register hooks -> add claim topics -> add trusted issuers -> optional mint
  */
 export function generateDeploySh(config: RWAConfig): string {
   const networkFlag = getNetworkFlag(config);
@@ -214,25 +247,20 @@ export function generateDeploySh(config: RWAConfig): string {
   );
   sections.push('');
 
-  if (config.compliance.modules.length > 0) {
+  const uniqueModuleIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
+  if (uniqueModuleIds.length > 0) {
     sections.push('# 5. Deploy compliance modules');
-    for (const mod of config.compliance.modules) {
-      const modVarName = `MODULE_${mod.moduleId.toUpperCase().replace(/-/g, '_')}_ADDRESS`;
+    for (const modId of uniqueModuleIds) {
+      const entry = getModuleById(modId);
+      if (!entry) continue;
       sections.push(
-        buildDeploySection(
-          modVarName,
-          mod.moduleId,
-          `--compliance "$COMPLIANCE_ADDRESS"`,
-          networkFlag
-        )
+        buildDeploySection(moduleVarName(modId), entry.crateName, `--admin "$ADMIN"`, networkFlag)
       );
     }
     sections.push('');
   }
 
-  sections.push(
-    `# ${config.compliance.modules.length > 0 ? '6' : '5'}. Deploy ${CRATE_NAMES.rwaTtoken}`
-  );
+  sections.push(`# ${uniqueModuleIds.length > 0 ? '6' : '5'}. Deploy ${CRATE_NAMES.rwaTtoken}`);
   const tokenArgs = buildTokenConstructorArgs(config, adminAddress);
   sections.push(
     buildDeploySection('RWA_TOKEN_ADDRESS', CRATE_NAMES.rwaTtoken, tokenArgs, networkFlag)

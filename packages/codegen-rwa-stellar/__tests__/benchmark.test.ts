@@ -26,8 +26,8 @@ function createTypicalConfig(): RWAConfig {
     },
     compliance: {
       modules: [
-        { moduleId: 'supply-cap', hook: 'canCreate' },
-        { moduleId: 'max-balance', hook: 'canTransfer' },
+        { moduleId: 'supply-limit', config: { limit: 1000000 } },
+        { moduleId: 'max-balance', config: { maxBalance: 50000 } },
       ],
     },
     accessControl: {
@@ -67,7 +67,7 @@ describe('SC-001 performance benchmark', () => {
       'contracts/identity-verifier/src/contract.rs',
       'contracts/claim-topics-issuers/src/contract.rs',
       'contracts/identity-registry-storage/src/contract.rs',
-      'contracts/modules/supply-cap/src/contract.rs',
+      'contracts/modules/supply-limit/src/contract.rs',
       'contracts/modules/max-balance/src/contract.rs',
     ];
 

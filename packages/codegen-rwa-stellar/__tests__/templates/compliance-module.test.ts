@@ -1,119 +1,76 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ComplianceHook, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
-
+import type { ComplianceModuleRegistryEntry } from '../../src/modules/registry';
 import { generateCrateToml } from '../../src/templates/cargo/crate-toml';
 import { generateComplianceModuleContract } from '../../src/templates/contracts/compliance-module';
 import { generateLibRs } from '../../src/templates/lib-rs';
 
-function createModuleSelection(
-  overrides: Partial<ComplianceModuleSelection> = {}
-): ComplianceModuleSelection {
+function createEntry(
+  overrides: Partial<ComplianceModuleRegistryEntry> = {}
+): ComplianceModuleRegistryEntry {
   return {
-    moduleId: 'supply-cap',
-    hook: 'canCreate',
+    id: 'supply-limit',
+    name: 'Supply Limit',
+    description: 'Enforces a maximum total supply for the token',
+    requiredHooks: ['canCreate', 'created', 'destroyed'],
+    crateName: 'supply-limit',
+    review: { state: 'stable' },
+    configFields: [],
     ...overrides,
   };
 }
 
 describe('Compliance Module Contract Template', () => {
-  describe('ComplianceModule trait impl', () => {
+  describe('contract structure', () => {
     it('should generate a valid #[contract] struct', () => {
-      const mod = createModuleSelection();
-      const contract = generateComplianceModuleContract(mod);
-
+      const contract = generateComplianceModuleContract(createEntry());
       expect(contract).toContain('#[contract]');
-      expect(contract).toContain('pub struct');
+      expect(contract).toContain('pub struct SupplyLimitModule');
     });
 
-    it('should have an impl block with all ComplianceModule methods', () => {
-      const mod = createModuleSelection();
-      const contract = generateComplianceModuleContract(mod);
-
+    it('should have an impl block with #[contractimpl]', () => {
+      const contract = generateComplianceModuleContract(createEntry());
       expect(contract).toContain('#[contractimpl]');
-      expect(contract).toContain('impl SupplyCapModule');
+      expect(contract).toContain('impl SupplyLimitModule');
     });
 
-    it('should include all required ComplianceModule trait methods', () => {
-      const mod = createModuleSelection();
-      const contract = generateComplianceModuleContract(mod);
-
-      expect(contract).toContain('fn on_transfer(');
-      expect(contract).toContain('fn on_created(');
-      expect(contract).toContain('fn on_destroyed(');
-      expect(contract).toContain('fn can_transfer(');
-      expect(contract).toContain('fn can_create(');
-      expect(contract).toContain('fn name(');
-      expect(contract).toContain('fn get_compliance_address(');
-      expect(contract).toContain('fn set_compliance_address(');
-    });
-
-    it('should include #![no_std] preamble', () => {
-      const mod = createModuleSelection();
-      const contract = generateComplianceModuleContract(mod);
-
-      expect(contract).toContain('use soroban_sdk::');
-    });
-
-    it('should have a __constructor with compliance parameter', () => {
-      const mod = createModuleSelection();
-      const contract = generateComplianceModuleContract(mod);
-
+    it('should include constructor with admin parameter', () => {
+      const contract = generateComplianceModuleContract(createEntry());
       expect(contract).toContain('pub fn __constructor(');
-      expect(contract).toContain('compliance: Address');
+      expect(contract).toContain('admin: Address');
+    });
+
+    it('should include setup helpers', () => {
+      const contract = generateComplianceModuleContract(createEntry());
+      expect(contract).toContain('fn set_compliance_address(');
+      expect(contract).toContain('fn set_identity_registry_storage(');
+      expect(contract).toContain('fn verify_hook_wiring(');
     });
 
     it('should return the module name via name()', () => {
-      const mod = createModuleSelection({ moduleId: 'supply-cap' });
-      const contract = generateComplianceModuleContract(mod);
-
-      expect(contract).toContain('supply-cap');
-    });
-  });
-
-  describe('hook-specific stubs', () => {
-    it('should generate stub methods that are no-ops for canTransfer hook', () => {
-      const mod = createModuleSelection({ hook: 'canTransfer' });
-      const contract = generateComplianceModuleContract(mod);
-
-      expect(contract).toContain('fn on_transfer(');
-      expect(contract).toContain('fn can_transfer(');
+      const contract = generateComplianceModuleContract(createEntry());
+      expect(contract).toContain('"supply-limit"');
     });
 
-    it('should generate stub methods that are no-ops for canCreate hook', () => {
-      const mod = createModuleSelection({ hook: 'canCreate' });
-      const contract = generateComplianceModuleContract(mod);
-
-      expect(contract).toContain('fn on_created(');
-      expect(contract).toContain('fn can_create(');
+    it('should include review banner for under-review modules', () => {
+      const contract = generateComplianceModuleContract(
+        createEntry({
+          review: { state: 'under-review', prUrl: 'https://github.com/example/pull/1' },
+        })
+      );
+      expect(contract).toContain('UNDER REVIEW');
+      expect(contract).toContain('https://github.com/example/pull/1');
     });
 
-    it('should generate stub methods for destroyed hook', () => {
-      const mod = createModuleSelection({ hook: 'destroyed' });
-      const contract = generateComplianceModuleContract(mod);
-
-      expect(contract).toContain('fn on_destroyed(');
-    });
-
-    it('can_transfer should return true by default (stub)', () => {
-      const mod = createModuleSelection({ hook: 'canTransfer' });
-      const contract = generateComplianceModuleContract(mod);
-
-      expect(contract).toContain('true');
-    });
-
-    it('can_create should return true by default (stub)', () => {
-      const mod = createModuleSelection({ hook: 'canCreate' });
-      const contract = generateComplianceModuleContract(mod);
-
-      expect(contract).toContain('true');
+    it('should not include review banner for stable modules', () => {
+      const contract = generateComplianceModuleContract(createEntry());
+      expect(contract).not.toContain('UNDER REVIEW');
     });
   });
 
   describe('separate crate structure', () => {
     it('should generate valid lib.rs for module crate', () => {
       const libRs = generateLibRs();
-
       expect(libRs).toContain('#![no_std]');
       expect(libRs).toContain('mod contract;');
       expect(libRs).toContain('pub use contract::*;');
@@ -121,11 +78,10 @@ describe('Compliance Module Contract Template', () => {
 
     it('should generate valid Cargo.toml for module crate', () => {
       const toml = generateCrateToml({
-        name: 'supply-cap',
+        name: 'supply-limit',
         dependencies: ['soroban-sdk', 'stellar-tokens'],
       });
-
-      expect(toml).toContain('name = "supply-cap"');
+      expect(toml).toContain('name = "supply-limit"');
       expect(toml).toContain('crate-type = ["cdylib"]');
       expect(toml).toContain('soroban-sdk = { workspace = true }');
       expect(toml).toContain('stellar-tokens = { workspace = true }');
@@ -133,25 +89,9 @@ describe('Compliance Module Contract Template', () => {
   });
 
   describe('different modules', () => {
-    const hooks: ComplianceHook[] = ['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed'];
-
-    for (const hook of hooks) {
-      it(`should generate a valid contract for hook: ${hook}`, () => {
-        const mod = createModuleSelection({ moduleId: `test-module-${hook}`, hook });
-        const contract = generateComplianceModuleContract(mod);
-
-        expect(contract).toContain('#[contract]');
-        expect(contract).toContain(`test-module-${hook}`);
-      });
-    }
-
     it('should generate unique struct names based on moduleId', () => {
-      const mod1 = generateComplianceModuleContract(
-        createModuleSelection({ moduleId: 'supply-cap' })
-      );
-      const mod2 = generateComplianceModuleContract(
-        createModuleSelection({ moduleId: 'max-balance' })
-      );
+      const mod1 = generateComplianceModuleContract(createEntry({ id: 'supply-limit' }));
+      const mod2 = generateComplianceModuleContract(createEntry({ id: 'max-balance' }));
 
       const structMatch1 = mod1.match(/pub struct (\w+)/);
       const structMatch2 = mod2.match(/pub struct (\w+)/);
@@ -159,6 +99,13 @@ describe('Compliance Module Contract Template', () => {
       expect(structMatch1).not.toBeNull();
       expect(structMatch2).not.toBeNull();
       expect(structMatch1![1]).not.toBe(structMatch2![1]);
+    });
+
+    it('should embed module id in the name() return', () => {
+      const contract = generateComplianceModuleContract(
+        createEntry({ id: 'country-restrict' })
+      );
+      expect(contract).toContain('"country-restrict"');
     });
   });
 });

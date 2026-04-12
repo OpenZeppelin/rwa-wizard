@@ -69,11 +69,16 @@ export interface IdentityVerificationConfig {
  */
 export type ComplianceHook = string;
 
+/**
+ * A selected compliance module with optional module-specific configuration.
+ *
+ * The module's required hooks are derived from the registry at generation
+ * time — they are NOT stored in the config.  The config is purely
+ * "which modules did the user pick and with what parameters".
+ */
 export interface ComplianceModuleSelection {
   /** Registry identifier of the compliance module */
   moduleId: string;
-  /** Which hook to attach the module to */
-  hook: ComplianceHook;
   /** Module-specific configuration parameters */
   config?: Record<string, unknown>;
 }
