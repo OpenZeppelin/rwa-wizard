@@ -10,18 +10,18 @@ describe('Compliance Module Registry', () => {
       expect(COMPLIANCE_MODULE_REGISTRY.length).toBeGreaterThan(0);
     });
 
-    it('each entry should have required fields: id, name, description, supportedHooks', () => {
+    it('each entry should have required fields: id, name, description, requiredHooks', () => {
       for (const entry of COMPLIANCE_MODULE_REGISTRY) {
         expect(entry).toHaveProperty('id');
         expect(entry).toHaveProperty('name');
         expect(entry).toHaveProperty('description');
-        expect(entry).toHaveProperty('supportedHooks');
+        expect(entry).toHaveProperty('requiredHooks');
 
         expect(typeof entry.id).toBe('string');
         expect(typeof entry.name).toBe('string');
         expect(typeof entry.description).toBe('string');
-        expect(Array.isArray(entry.supportedHooks)).toBe(true);
-        expect(entry.supportedHooks.length).toBeGreaterThan(0);
+        expect(Array.isArray(entry.requiredHooks)).toBe(true);
+        expect(entry.requiredHooks.length).toBeGreaterThan(0);
       }
     });
 
@@ -31,10 +31,10 @@ describe('Compliance Module Registry', () => {
       expect(uniqueIds.size).toBe(ids.length);
     });
 
-    it('supportedHooks should only contain valid ComplianceHook values', () => {
+    it('requiredHooks should only contain valid ComplianceHook values', () => {
       const validHooks = new Set(['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed']);
       for (const entry of COMPLIANCE_MODULE_REGISTRY) {
-        for (const hook of entry.supportedHooks) {
+        for (const hook of entry.requiredHooks) {
           expect(validHooks.has(hook)).toBe(true);
         }
       }
@@ -53,7 +53,7 @@ describe('Compliance Module Registry', () => {
         expect(entry).toHaveProperty('id');
         expect(entry).toHaveProperty('name');
         expect(entry).toHaveProperty('description');
-        expect(entry).toHaveProperty('supportedHooks');
+        expect(entry).toHaveProperty('requiredHooks');
       }
     });
 
@@ -65,12 +65,12 @@ describe('Compliance Module Registry', () => {
       }
     });
 
-    it('should return accurate supportedHooks for each module', () => {
+    it('should return accurate requiredHooks for each module', () => {
       const available = getAvailableModules();
       for (const entry of available) {
         const registryEntry = COMPLIANCE_MODULE_REGISTRY.find((e) => e.id === entry.id);
         expect(registryEntry).toBeDefined();
-        expect(entry.supportedHooks).toEqual(registryEntry!.supportedHooks);
+        expect(entry.requiredHooks).toEqual(registryEntry!.requiredHooks);
       }
     });
   });

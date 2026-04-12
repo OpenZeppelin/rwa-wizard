@@ -2,7 +2,7 @@ import * as p from '@clack/prompts';
 
 import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 
-import type { ComplianceModuleInfo } from '../../generators/registry';
+import type { ComplianceModuleRegistryEntry } from '@openzeppelin/codegen-rwa-stellar';
 
 function handleCancel(value: unknown): void {
   if (p.isCancel(value)) {
@@ -11,8 +11,12 @@ function handleCancel(value: unknown): void {
   }
 }
 
+function hookList(entry: ComplianceModuleRegistryEntry): string {
+  return entry.requiredHooks.join(', ');
+}
+
 export async function complianceStep(
-  availableModules: ComplianceModuleInfo[]
+  availableModules: ComplianceModuleRegistryEntry[]
 ): Promise<ComplianceConfig> {
   p.log.step('Step 3/5 — Compliance Modules');
 
@@ -26,7 +30,7 @@ export async function complianceStep(
     options: availableModules.map((m) => ({
       value: m.id,
       label: m.name,
-      hint: `${m.description} (hooks: ${m.supportedHooks.join(', ')})`,
+      hint: `${m.description} (hooks: ${hookList(m)})${m.review.state === 'under-review' ? ' ⚠ under review' : ''}`,
     })),
     required: false,
   });
@@ -39,22 +43,64 @@ export async function complianceStep(
 
   const modules: ComplianceModuleSelection[] = [];
   for (const moduleId of selectedIds) {
-    const mod = availableModules.find((m) => m.id === moduleId)!;
+    const entry = availableModules.find((m) => m.id === moduleId)!;
 
-    let hook: string;
-    if (mod.supportedHooks.length === 1) {
-      hook = mod.supportedHooks[0];
-      p.log.info(`${mod.name}: auto-assigned to "${hook}" hook`);
-    } else {
-      const chosen = await p.select({
-        message: `${mod.name} — assign to which hook?`,
-        options: mod.supportedHooks.map((h) => ({ value: h, label: h })),
-      });
-      handleCancel(chosen);
-      hook = chosen as string;
+    p.log.info(`${entry.name}: auto-registered on hooks: ${hookList(entry)}`);
+
+    if (entry.review.state === 'under-review') {
+      p.log.warn(
+        `⚠  "${entry.name}" is under review${entry.review.prUrl ? ` — ${entry.review.prUrl}` : ''}`
+      );
     }
 
-    modules.push({ moduleId, hook });
+    const config: Record<string, unknown> = {};
+    for (const field of entry.configFields) {
+      if (field.type === 'number') {
+        const val = await p.text({
+          message: `${entry.name} — ${field.label}`,
+          placeholder: field.placeholder,
+          validate: (input) => {
+            if (field.required && !input.trim()) return `${field.label} is required`;
+            if (input.trim() && isNaN(Number(input))) return 'Must be a number';
+            return undefined;
+          },
+        });
+        handleCancel(val);
+        const strVal = (val as string).trim();
+        if (strVal) config[field.key] = Number(strVal);
+      } else if (field.type === 'string[]') {
+        const val = await p.text({
+          message: `${entry.name} — ${field.label} (comma-separated)`,
+          placeholder: field.placeholder,
+          validate: (input) => {
+            if (field.required && !input.trim()) return `${field.label} is required`;
+            return undefined;
+          },
+        });
+        handleCancel(val);
+        const strVal = (val as string).trim();
+        if (strVal) {
+          config[field.key] = strVal.split(',').map((s) => s.trim()).filter(Boolean);
+        }
+      } else {
+        const val = await p.text({
+          message: `${entry.name} — ${field.label}`,
+          placeholder: field.placeholder,
+          validate: (input) => {
+            if (field.required && !input.trim()) return `${field.label} is required`;
+            return undefined;
+          },
+        });
+        handleCancel(val);
+        const strVal = (val as string).trim();
+        if (strVal) config[field.key] = strVal;
+      }
+    }
+
+    modules.push({
+      moduleId,
+      config: Object.keys(config).length > 0 ? config : undefined,
+    });
   }
 
   return { modules };

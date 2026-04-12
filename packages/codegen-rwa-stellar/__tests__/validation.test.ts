@@ -713,7 +713,7 @@ describe('RWA Config Validation (US5)', () => {
     it('should error on unsupported compliance module', () => {
       const config = createValidConfig({
         compliance: {
-          modules: [{ moduleId: 'nonexistent-module', hook: 'canTransfer' }],
+          modules: [{ moduleId: 'nonexistent-module' }],
         },
       });
 

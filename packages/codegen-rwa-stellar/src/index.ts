@@ -1,5 +1,4 @@
 import type {
-  GenerateOptions,
   GenerationResult,
   ProgressCallback,
   ValidationResult,
@@ -11,6 +10,7 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 import type { ComplianceModuleRegistryEntry } from './modules/registry';
 import { getAvailableModules as getModules } from './modules/registry';
 
+import type { StellarGenerateOptions } from './stellar-rwa-generator';
 import { sanitizeDirectoryName, StellarRwaGenerator } from './stellar-rwa-generator';
 
 /**
@@ -61,12 +61,27 @@ export { generateRoleSymbol } from './constants';
 export { StellarRwaGenerator } from './stellar-rwa-generator';
 
 /**
+ * Stellar-specific generation options.
+ *
+ * Extends the core `GenerateOptions` with `stellarContractsPath` for local
+ * dependency resolution and `allowUnderReviewModules` to gate review-branch modules.
+ */
+export type { StellarGenerateOptions } from './stellar-rwa-generator';
+
+/**
  * Metadata describing an available compliance module in the Stellar registry.
  *
  * Includes the module's unique ID, human-readable name, description,
- * and the set of compliance hooks it supports (Stellar: `canTransfer`, `canCreate`, etc.).
+ * the set of required hooks, review state, and config field descriptors.
  */
-export type { ComplianceModuleRegistryEntry } from './modules/registry';
+export type {
+  ComplianceModuleRegistryEntry,
+  ModuleReviewMeta,
+  ModuleReviewState,
+  ModuleConfigField,
+} from './modules/registry';
+
+export { getModuleById } from './modules/registry';
 
 /**
  * Ecosystem metadata for Stellar/Soroban — operator roles, compliance hooks, and limits.
@@ -145,7 +160,7 @@ const generator = new StellarRwaGenerator();
  * console.log(Object.keys(result.files)); // file paths
  * ```
  */
-export function generate(config: RWAConfig, options?: GenerateOptions): GenerationResult {
+export function generate(config: RWAConfig, options?: StellarGenerateOptions): GenerationResult {
   return generator.generate(config, options);
 }
 
@@ -157,6 +172,7 @@ export function generate(config: RWAConfig, options?: GenerateOptions): Generati
  * Errors block generation; warnings are advisory.
  *
  * @param config - The RWA configuration to validate.
+ * @param options - Optional Stellar-specific options.
  * @returns A `ValidationResult` with `valid`, `errors`, and `warnings` fields.
  *
  * @example
@@ -171,8 +187,8 @@ export function generate(config: RWAConfig, options?: GenerateOptions): Generati
  * }
  * ```
  */
-export function validate(config: RWAConfig): ValidationResult {
-  return generator.validate(config);
+export function validate(config: RWAConfig, options?: StellarGenerateOptions): ValidationResult {
+  return generator.validate(config, options);
 }
 
 /**

@@ -20,7 +20,7 @@ export const STELLAR_CONTRACTS_GIT_URL = 'https://github.com/OpenZeppelin/stella
 
 export const STELLAR_CONTRACTS_COMMIT_HASH = 'e7722e4923accfd754991a56b3226e0a834c27a1';
 
-export const SOROBAN_SDK_VERSION = '25.0.2';
+export const SOROBAN_SDK_VERSION = '25.3.0';
 
 export const RUST_EDITION = '2021';
 

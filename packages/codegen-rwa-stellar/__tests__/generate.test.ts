@@ -401,8 +401,8 @@ describe('StellarRwaGenerator', () => {
         compliance: {
           modules: [
             {
-              moduleId: 'supply-cap',
-              hook: 'canTransfer',
+              moduleId: 'supply-limit',
+              config: { limit: 1000000 },
             },
           ],
         },

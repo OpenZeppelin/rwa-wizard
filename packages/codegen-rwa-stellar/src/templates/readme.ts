@@ -1,6 +1,7 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { CRATE_NAMES, SOROBAN_SDK_VERSION, STELLAR_CONTRACTS_COMMIT_HASH } from '../constants';
+import { getModuleById } from '../modules/registry';
 
 interface ContractTableRow {
   crate: string;
@@ -141,9 +142,39 @@ ${renderContractTable(contractTable)}
 ### Dependencies
 
 All contracts depend on the [OpenZeppelin Stellar Contracts](https://github.com/OpenZeppelin/stellar-contracts) library (pinned to commit \`${STELLAR_CONTRACTS_COMMIT_HASH.slice(0, 7)}\`).
-
+${renderUnderReviewWarning(config)}
 ## Platform Note
 
 Shell scripts (\`build.sh\`, \`deploy.sh\`) target **Unix-like environments** (Linux, macOS). Windows users should use WSL or a compatible shell.
 `;
+}
+
+function renderUnderReviewWarning(config: RWAConfig): string {
+  const uniqueIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
+  const underReview = uniqueIds
+    .map((id) => getModuleById(id))
+    .filter((e) => e && e.review.state === 'under-review');
+
+  if (underReview.length === 0) return '';
+
+  const items: string[] = [];
+  for (const entry of underReview) {
+    const link = entry!.review.prUrl ? ` — [Review PR](${entry!.review.prUrl})` : '';
+    items.push(`- **${entry!.name}** (\`${entry!.id}\`)${link}`);
+  }
+
+  const parts: string[] = [];
+  parts.push('');
+  parts.push('## Under-Review Modules');
+  parts.push('');
+  parts.push(
+    '> **Warning:** This project uses compliance modules that are still under review in the upstream [stellar-contracts](https://github.com/OpenZeppelin/stellar-contracts) repository. Do NOT deploy to production until all reviews are complete and merged.'
+  );
+  parts.push('');
+  parts.push(items.join('\n'));
+  parts.push('');
+  parts.push('See `UNDER_REVIEW_MODULES.md` for details.');
+  parts.push('');
+
+  return parts.join('\n');
 }
