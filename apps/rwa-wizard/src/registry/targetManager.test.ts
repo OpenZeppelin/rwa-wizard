@@ -7,10 +7,12 @@ const mockService: RwaCodegenService = {
   validate: vi.fn().mockResolvedValue({ valid: true, errors: [], warnings: [] }),
   getAvailableModules: vi.fn().mockResolvedValue([
     {
-      id: 'supply-cap',
-      name: 'Supply Cap',
+      id: 'supply-limit',
+      name: 'Supply Limit',
       description: 'Cap',
-      supportedHooks: ['canCreate' as const],
+      requiredHooks: ['canCreate', 'created', 'destroyed'],
+      review: { state: 'under-review' },
+      configFields: [],
     },
   ]),
   getEcosystemMetadata: vi.fn().mockReturnValue({

@@ -16,7 +16,16 @@ interface CodegenPackageModule {
     id: string;
     name: string;
     description: string;
-    supportedHooks: unknown[];
+    requiredHooks: string[];
+    review: { state: string; prUrl?: string };
+    configFields: Array<{
+      key: string;
+      label: string;
+      type: string;
+      required: boolean;
+      placeholder?: string;
+      hint?: string;
+    }>;
   }>;
   generateZip: (
     config: RWAConfig,
@@ -50,7 +59,19 @@ function wrapCodegenPackage(pkg: CodegenPackageModule): RwaCodegenService {
         id: m.id,
         name: m.name,
         description: m.description,
-        supportedHooks: [...m.supportedHooks] as ComplianceModuleOption['supportedHooks'],
+        requiredHooks: [...m.requiredHooks],
+        review: {
+          state: m.review.state as ComplianceModuleOption['review']['state'],
+          prUrl: m.review.prUrl,
+        },
+        configFields: m.configFields.map((f) => ({
+          key: f.key,
+          label: f.label,
+          type: f.type as 'number' | 'string' | 'string[]',
+          required: f.required,
+          placeholder: f.placeholder,
+          hint: f.hint,
+        })),
       }));
     },
 

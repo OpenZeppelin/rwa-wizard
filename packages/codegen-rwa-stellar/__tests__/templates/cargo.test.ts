@@ -139,4 +139,25 @@ describe('Workspace Cargo.toml Template', () => {
     expect(output).toContain('[profile.release]');
     expect(output).toContain('opt-level = "z"');
   });
+
+  it('should use local path deps when stellarContractsPath is provided', () => {
+    const output = generateWorkspaceToml({
+      members: ['contracts/test'],
+      stellarContractsPath: '/home/user/stellar-contracts',
+    });
+
+    expect(output).toContain('stellar-tokens = { path = "/home/user/stellar-contracts/packages/stellar-tokens" }');
+    expect(output).toContain('stellar-access = { path = "/home/user/stellar-contracts/packages/stellar-access" }');
+    expect(output).not.toContain('git =');
+    expect(output).not.toContain('rev =');
+  });
+
+  it('should strip trailing slash from stellarContractsPath', () => {
+    const output = generateWorkspaceToml({
+      members: ['contracts/test'],
+      stellarContractsPath: '/home/user/stellar-contracts/',
+    });
+
+    expect(output).toContain('path = "/home/user/stellar-contracts/packages/stellar-tokens"');
+  });
 });

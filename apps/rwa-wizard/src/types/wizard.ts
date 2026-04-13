@@ -80,11 +80,29 @@ export interface TargetCatalogEntry {
   packageName: string;
 }
 
+export type ModuleReviewState = 'stable' | 'under-review';
+
+export interface ModuleReviewInfo {
+  state: ModuleReviewState;
+  prUrl?: string;
+}
+
+export interface ModuleConfigFieldMeta {
+  key: string;
+  label: string;
+  type: 'number' | 'string' | 'string[]';
+  required: boolean;
+  placeholder?: string;
+  hint?: string;
+}
+
 export type ComplianceModuleOption = {
   id: string;
   name: string;
   description: string;
-  supportedHooks: string[];
+  requiredHooks: string[];
+  review: ModuleReviewInfo;
+  configFields: ModuleConfigFieldMeta[];
 };
 
 export interface FeatureControlMeta {

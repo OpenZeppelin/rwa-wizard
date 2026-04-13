@@ -26,22 +26,53 @@ export function createMockCodegenService(targetId: string = MOCK_TARGET_ID): Rwa
     async getAvailableModules(): Promise<ComplianceModuleOption[]> {
       return [
         {
-          id: 'supply-cap',
-          name: 'Supply Cap',
+          id: 'supply-limit',
+          name: 'Supply Limit',
           description: 'Enforces a maximum total supply for the token',
-          supportedHooks: ['canCreate'],
+          requiredHooks: ['canCreate', 'created', 'destroyed'],
+          review: {
+            state: 'under-review',
+            prUrl: 'https://github.com/OpenZeppelin/stellar-contracts/pull/650',
+          },
+          configFields: [
+            {
+              key: 'limit',
+              label: 'Supply Limit',
+              type: 'number',
+              required: true,
+              placeholder: 'e.g. 1000000',
+            },
+          ],
         },
         {
           id: 'max-balance',
           name: 'Max Balance',
-          description: 'Limits the maximum token balance per wallet',
-          supportedHooks: ['canTransfer', 'canCreate'],
+          description: 'Limits the maximum token balance per identity',
+          requiredHooks: ['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed'],
+          review: {
+            state: 'under-review',
+            prUrl: 'https://github.com/OpenZeppelin/stellar-contracts/pull/650',
+          },
+          configFields: [
+            {
+              key: 'maxBalance',
+              label: 'Max Balance',
+              type: 'number',
+              required: true,
+              placeholder: 'e.g. 50000',
+            },
+          ],
         },
         {
           id: 'country-restrict',
           name: 'Country Restriction',
-          description: 'Restricts transfers based on country jurisdiction',
-          supportedHooks: ['canTransfer'],
+          description: 'Blocks transfers to holders from restricted countries',
+          requiredHooks: ['canTransfer'],
+          review: {
+            state: 'under-review',
+            prUrl: 'https://github.com/OpenZeppelin/stellar-contracts/pull/651',
+          },
+          configFields: [],
         },
       ];
     },

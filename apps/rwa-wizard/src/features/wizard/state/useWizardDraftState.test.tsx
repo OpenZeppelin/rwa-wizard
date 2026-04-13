@@ -39,7 +39,7 @@ describe('useWizardDraftState', () => {
     const { result } = renderHook(() => useWizardDraftState());
     act(() => {
       result.current.updateCompliance({
-        modules: [{ moduleId: 'supply-cap', hook: 'canCreate' }],
+        modules: [{ moduleId: 'supply-limit' }],
       });
     });
     expect(result.current.config.compliance.modules).toHaveLength(1);

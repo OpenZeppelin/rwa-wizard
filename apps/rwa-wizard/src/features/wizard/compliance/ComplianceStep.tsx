@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
+import type { ComplianceConfig } from '@openzeppelin/rwa-config';
 
 import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../types/wizard';
 import { HookWiringPreview } from './HookWiringPreview';
@@ -12,13 +12,6 @@ interface ComplianceStepProps {
   complianceHooks: readonly ComplianceHookMeta[];
   maxModulesPerHook: number;
   onUpdate: (patch: Partial<ComplianceConfig>) => void;
-}
-
-function deriveHookRegistrations(
-  moduleId: string,
-  supportedHooks: string[]
-): ComplianceModuleSelection[] {
-  return supportedHooks.map((hook) => ({ moduleId, hook }));
 }
 
 export function ComplianceStep({
@@ -37,21 +30,38 @@ export function ComplianceStep({
       if (compliance.modules.some((m) => m.moduleId === moduleId)) {
         onUpdate({ modules: compliance.modules.filter((m) => m.moduleId !== moduleId) });
       } else {
-        const meta = availableModules.find((m) => m.id === moduleId);
-        if (!meta) return;
-        const registrations = deriveHookRegistrations(moduleId, meta.supportedHooks);
-        onUpdate({ modules: [...compliance.modules, ...registrations] });
+        onUpdate({ modules: [...compliance.modules, { moduleId }] });
       }
     },
-    [compliance.modules, availableModules, onUpdate]
+    [compliance.modules, onUpdate]
   );
 
-  const hookRegistrations = new Map<string, string[]>();
-  for (const sel of compliance.modules) {
-    const list = hookRegistrations.get(sel.hook) ?? [];
-    if (!list.includes(sel.moduleId)) list.push(sel.moduleId);
-    hookRegistrations.set(sel.hook, list);
-  }
+  const handleConfigChange = useCallback(
+    (moduleId: string, config: Record<string, unknown>) => {
+      onUpdate({
+        modules: compliance.modules.map((m) =>
+          m.moduleId === moduleId
+            ? { ...m, config: Object.keys(config).length > 0 ? config : undefined }
+            : m
+        ),
+      });
+    },
+    [compliance.modules, onUpdate]
+  );
+
+  const hookRegistrations = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const sel of compliance.modules) {
+      const meta = availableModules.find((m) => m.id === sel.moduleId);
+      if (!meta) continue;
+      for (const hook of meta.requiredHooks) {
+        const list = map.get(hook) ?? [];
+        if (!list.includes(sel.moduleId)) list.push(sel.moduleId);
+        map.set(hook, list);
+      }
+    }
+    return map;
+  }, [compliance.modules, availableModules]);
 
   return (
     <div className="space-y-8">
@@ -66,7 +76,9 @@ export function ComplianceStep({
       <ModuleCatalog
         availableModules={availableModules}
         selectedModuleIds={selectedModuleIds}
+        selectedModules={compliance.modules}
         onToggleModule={handleToggleModule}
+        onConfigChange={handleConfigChange}
       />
 
       {compliance.modules.length > 0 && (
