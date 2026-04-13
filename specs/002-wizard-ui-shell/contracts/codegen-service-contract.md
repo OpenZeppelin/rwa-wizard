@@ -28,15 +28,35 @@ interface RwaCodegenService {
 ## Supporting Types
 
 ```ts
+type ModuleReviewState = 'stable' | 'under-review';
+
+interface ModuleReviewInfo {
+  state: ModuleReviewState;
+  prUrl?: string;
+}
+
+interface ModuleConfigFieldMeta {
+  key: string;
+  label: string;
+  type: 'string' | 'number' | 'string[]';
+  required: boolean;
+  placeholder?: string;
+  hint?: string;
+}
+
 interface ComplianceModuleOption {
   id: string;
   name: string;
   description: string;
-  supportedHooks: Array<'transfer' | 'creation' | 'destruction'>;
+  requiredHooks: string[];
+  review: ModuleReviewInfo;
+  configFields: ModuleConfigFieldMeta[];
 }
 
+type SummaryPhase = 'validating' | 'generating' | 'packaging' | 'success' | 'error';
+
 interface GenerationStatus {
-  phase: 'validating' | 'generating' | 'packaging' | 'success' | 'error';
+  phase: SummaryPhase;
   message?: string;
 }
 

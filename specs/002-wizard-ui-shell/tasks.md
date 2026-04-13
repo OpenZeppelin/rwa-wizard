@@ -31,15 +31,15 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [x] T006 [P] Define app-local domain types in `apps/rwa-wizard/src/types/wizard.ts` for drafts, target catalog entries, generation status, component inventory items, and mock gap records
+- [x] T006 [P] Define app-local domain types in `apps/rwa-wizard/src/types/wizard.ts` for drafts, target catalog entries, generation status, component inventory items, mock gap records, and expanded `ComplianceModuleOption` (with `requiredHooks`, `ModuleReviewInfo`, `ModuleConfigFieldMeta`)
 - [x] T007 [P] Implement IndexedDB setup in `apps/rwa-wizard/src/storage/database.ts` using `@openzeppelin/ui-storage`
 - [x] T008 [P] Implement the draft repository in `apps/rwa-wizard/src/storage/WizardDraftStorage.ts`
 - [x] T009 [P] Create the draft storage hook/context in `apps/rwa-wizard/src/storage/useWizardDraftStorage.tsx`
 - [x] T010 [P] Create the ordered target registry and feature overrides in `apps/rwa-wizard/src/registry/targets.ts`
 - [x] T011 [P] Implement lazy target runtime loading and caching in `apps/rwa-wizard/src/registry/targetManager.ts`
 - [x] T012 [P] Define codegen service interfaces and normalized DTOs in `apps/rwa-wizard/src/services/codegen/types.ts`
-- [x] T013 [P] Implement the real Stellar-backed codegen service in `apps/rwa-wizard/src/services/codegen/stellarCodegenService.ts`
-- [x] T014 [P] Implement the mock-backed codegen service and gap registry in `apps/rwa-wizard/src/services/codegen/mockCodegenService.ts` and `apps/rwa-wizard/src/services/codegen/mockGapRegistry.ts`
+- [x] T013 [P] Implement the real Stellar-backed codegen service loader in `apps/rwa-wizard/src/services/codegen/codegenLoader.ts` (dynamically imports `@openzeppelin/codegen-rwa-stellar` and maps `ComplianceModuleRegistryEntry` → `ComplianceModuleOption` including `requiredHooks`, `review`, and `configFields`)
+- [x] T014 [P] Implement the mock-backed codegen service (with `requiredHooks`, `review`, `configFields` on module options) and gap registry in `apps/rwa-wizard/src/services/codegen/mockCodegenService.ts` and `apps/rwa-wizard/src/services/codegen/mockGapRegistry.ts`
 - [x] T015 Implement the codegen service resolver in `apps/rwa-wizard/src/services/codegen/index.ts`
 - [x] T016 [P] Implement ZIP browser download orchestration in `apps/rwa-wizard/src/services/download/downloadZip.ts`
 - [x] T017 [P] Create a field-path normalization helper for validation results in `apps/rwa-wizard/src/services/validation/normalizeValidation.ts`
@@ -75,7 +75,7 @@
 - [ ] T029 [P] [US1] Implement the wizard shell and step frame in `apps/rwa-wizard/src/features/wizard/components/WizardShell.tsx` *(not implemented as a local file — wizard chrome is composed with `@openzeppelin/ui-components` `WizardLayout` in `AppRouter.tsx`)*
 - [x] T030 [P] [US1] Implement the asset step in `apps/rwa-wizard/src/features/wizard/asset/AssetStep.tsx`
 - [x] T031 [P] [US1] Implement the identity step and privacy warning in `apps/rwa-wizard/src/features/wizard/identity/IdentityStep.tsx` and `apps/rwa-wizard/src/features/wizard/identity/IdentityPrivacyNotice.tsx`
-- [x] T032 [P] [US1] Implement the compliance step in `apps/rwa-wizard/src/features/wizard/compliance/ComplianceStep.tsx`
+- [x] T032 [P] [US1] Implement the module-first compliance step in `apps/rwa-wizard/src/features/wizard/compliance/ComplianceStep.tsx`, `ModuleCatalog.tsx` (selectable module cards with review badges, required hooks, inline `ModuleConfigPanel.tsx` using `TextField`/`NumberField`), and `HookWiringPreview.tsx` (derived hook registration table)
 - [x] T033 [P] [US1] Implement the access-control step in `apps/rwa-wizard/src/features/wizard/access-control/AccessControlStep.tsx`
 - [x] T034 [P] [US1] Implement shared feature-flag access and a hidden-by-default deployment placeholder gate in `apps/rwa-wizard/src/app/config/featureFlags.ts` and `apps/rwa-wizard/src/features/wizard/deployment/DeploymentPlaceholder.tsx`
 - [x] T035 [US1] Implement wizard draft state and `RWAConfig` mapping for the MVP flow without deployment-choice persistence in `apps/rwa-wizard/src/features/wizard/state/useWizardDraftState.ts`

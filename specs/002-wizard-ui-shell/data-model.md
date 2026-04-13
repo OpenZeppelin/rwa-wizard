@@ -95,7 +95,7 @@ Describes what the currently selected target exposes to the wizard UI at runtime
 
 #### Validation rules
 
-- `availableModules` should expose only selectable modules for the active target.
+- `availableModules` should expose all modules from the target's registry (both stable and under-review), each including `requiredHooks`, `review` state, and `configFields` metadata.
 - `networkOptions` may be omitted in the MVP default-flag state and are only consumed if a future deployment placeholder is enabled.
 - `mocked = true` requires an entry in the mock gap register.
 
