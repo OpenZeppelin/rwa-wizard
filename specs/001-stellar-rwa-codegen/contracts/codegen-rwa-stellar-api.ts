@@ -6,10 +6,10 @@
  * and re-exports the RWAConfig type.
  *
  * Primary exports (counted toward SC-007 ≤10 target):
- *   Functions:  generate, generateZip, validate, getAvailableModules, generateRoleSymbol
- *   Types:      ComplianceModuleRegistryEntry
+ *   Functions:  generate, generateZip, validate, getAvailableModules, getModuleById, generateRoleSymbol
+ *   Types:      ComplianceModuleRegistryEntry, ModuleReviewMeta, ModuleConfigField
  *   Constants:  STELLAR_VALIDATION_CONSTANTS
- *   Total: 7 primary exports
+ *   Total: 10 primary exports
  *
  * Re-exports (not counted — passthrough from upstream packages):
  *   RWAConfig from @openzeppelin/rwa-config
@@ -45,18 +45,38 @@ export type StellarComplianceHook =
 // Compliance Module Registry
 // ---------------------------------------------------------------------------
 
+export type ModuleReviewState = 'stable' | 'under-review';
+
+export interface ModuleReviewMeta {
+  state: ModuleReviewState;
+  prUrl?: string;
+}
+
+export interface ModuleConfigField {
+  key: string;
+  label: string;
+  type: 'string' | 'number' | 'string[]';
+  required: boolean;
+  placeholder?: string;
+  hint?: string;
+}
+
 export interface ComplianceModuleRegistryEntry {
-  /** Unique identifier, e.g., "supply-cap" */
+  /** Unique identifier, e.g., "supply-limit" */
   id: string;
-  /** Human-readable name, e.g., "Supply Cap" */
+  /** Human-readable name, e.g., "Supply Limit" */
   name: string;
   /** Short description of the module's purpose */
   description: string;
-  /** Which compliance hooks this module can attach to (Stellar-specific values) */
-  supportedHooks: StellarComplianceHook[];
+  /** Which compliance hooks this module requires (Stellar-specific values) */
+  requiredHooks: StellarComplianceHook[];
+  /** Crate name in the stellar-contracts library */
+  crateName: string;
+  /** Review status of the upstream implementation */
+  review: ModuleReviewMeta;
+  /** Typed configuration fields the module accepts/requires */
+  configFields: ModuleConfigField[];
 }
-// Note: getAvailableModules() only returns entries with concrete implementations.
-// An `implemented` flag is unnecessary since unimplemented modules are never exposed.
 
 // ---------------------------------------------------------------------------
 // Public API Functions
@@ -90,9 +110,16 @@ export declare function generateZip(
 
 /**
  * Get the registry of available compliance modules for Stellar.
- * Only returns modules with concrete implementations.
+ * Includes all modules with implementations (both stable and under-review).
+ * Each entry includes requiredHooks, review state, and configFields.
  */
 export declare function getAvailableModules(): ComplianceModuleRegistryEntry[];
+
+/**
+ * Look up a single module by its registry identifier.
+ * Returns undefined if not found.
+ */
+export declare function getModuleById(id: string): ComplianceModuleRegistryEntry | undefined;
 
 // ---------------------------------------------------------------------------
 // Stellar-Specific Validation Constants

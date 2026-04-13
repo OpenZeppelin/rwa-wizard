@@ -78,9 +78,11 @@ export type ComplianceHook = string;
 export interface ComplianceModuleSelection {
   /** Registry identifier of the compliance module */
   moduleId: string;
-  /** Which hook to attach the module to */
-  hook: ComplianceHook;
-  /** Module-specific configuration parameters */
+  /**
+   * Module-specific configuration parameters (e.g., limit for supply-limit).
+   * Required fields are defined by the module registry's configFields schema.
+   * Hooks are derived from registry metadata — not specified here.
+   */
   config?: Record<string, unknown>;
 }
 
