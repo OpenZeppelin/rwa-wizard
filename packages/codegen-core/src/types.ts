@@ -85,6 +85,19 @@ export type ProgressCallback = (event: ProgressEvent) => void;
 
 export interface GenerateOptions {
   onProgress?: ProgressCallback;
+  /**
+   * Absolute path to a local checkout of the upstream contracts library.
+   * When set, generators resolve contract dependencies via local `path = "…"`
+   * instead of a pinned git revision. Useful during development against
+   * unmerged branches of the contracts repo.
+   */
+  contractsLibraryPath?: string;
+  /**
+   * Allow modules whose review state is not yet "stable".
+   * When false (the default), generators should reject or warn about
+   * modules that are still under review.
+   */
+  allowUnderReviewModules?: boolean;
 }
 
 export interface GenerationMetadata {

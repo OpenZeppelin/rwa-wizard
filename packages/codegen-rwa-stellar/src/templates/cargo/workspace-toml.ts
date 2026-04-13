@@ -8,15 +8,15 @@ import {
 
 export interface WorkspaceTomlConfig {
   members: string[];
-  /** When set, resolve stellar-contracts crates via local path instead of git. */
-  stellarContractsPath?: string;
+  /** When set, resolve upstream contract crates via local path instead of git. */
+  contractsLibraryPath?: string;
 }
 
 /**
  * Generates the root workspace `Cargo.toml`.
  *
  * By default, stellar-contracts crates are pinned to a git revision.
- * When `stellarContractsPath` is provided, local path dependencies are
+ * When `contractsLibraryPath` is provided, local path dependencies are
  * emitted instead, which is useful during development against an
  * unmerged branch of stellar-contracts.
  */
@@ -24,8 +24,8 @@ export function generateWorkspaceToml(config: WorkspaceTomlConfig): string {
   const membersBlock = config.members.map((m) => `    "${m}",`).join('\n');
 
   let depsBlock: string;
-  if (config.stellarContractsPath) {
-    const base = config.stellarContractsPath.replace(/\/+$/, '');
+  if (config.contractsLibraryPath) {
+    const base = config.contractsLibraryPath.replace(/\/+$/, '');
     depsBlock = WORKSPACE_CRATE_DEPS.map(
       (crate) => `${crate} = { path = "${base}/packages/${crate}" }`
     ).join('\n');

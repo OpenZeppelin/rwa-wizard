@@ -81,25 +81,23 @@ interface ComplianceConfig {
 
 interface ComplianceModuleSelection {
   moduleId: string; // registry identifier
-  hook: ComplianceHook; // which hook to attach to
-  config?: Record<string, unknown>; // module-specific params
+  config?: Record<string, unknown>; // module-specific params (e.g., { limit: 1000000 })
 }
 
 type ComplianceHook = string;
 ```
 
-**`ComplianceHook` is ecosystem-defined**: The hook identifier is an opaque `string` in the shared config package. Each ecosystem's codegen package defines its valid hook values and validates them.
+**Module-first model**: Users select modules by `moduleId`. Each module's `requiredHooks` are derived from the registry — users do not assign hooks manually. The `ComplianceHook` type is an opaque `string` in the shared config package; each ecosystem's codegen package defines its valid hook values.
 
 - **Stellar** (5 hooks): `'canTransfer'`, `'canCreate'`, `'transferred'`, `'created'`, `'destroyed'` — maps 1:1 to the `ComplianceHook` Rust enum in `stellar-contracts`.
 - **EVM T-REX** (4 hooks): `'canTransfer'`, `'transferred'`, `'created'`, `'destroyed'` — maps to `IModularCompliance` methods. No `canCreate` equivalent (minting bypasses compliance).
 
-The Stellar generator validates that hook values match its `StellarComplianceHook` type; other generators validate against their own set.
-
 **Validation rules**:
 
 - `modules[].moduleId`: must be a registered module in the generator's registry
-- `modules[].hook`: must be a valid ComplianceHook value
-- No duplicate module+hook combinations
+- No duplicate `moduleId` values
+- All `required` config fields (defined in registry `configFields`) must be present in `modules[].config`
+- Under-review modules generate a warning (not error)
 
 ---
 
@@ -165,6 +163,8 @@ interface Generator<TConfig = unknown> {
 
 interface GenerateOptions {
   onProgress?: ProgressCallback;
+  contractsLibraryPath?: string; // local contracts lib checkout path (path deps instead of git)
+  allowUnderReviewModules?: boolean; // permit modules with non-stable review state
 }
 ```
 
@@ -252,8 +252,16 @@ interface ZipResult {
 ```typescript
 type ProgressCallback = (event: ProgressEvent) => void;
 
+const PROGRESS_PHASES = [
+  'validating', 'generating-contracts', 'generating-scripts',
+  'generating-config', 'generating-readme', 'packaging',
+  'success', 'error',
+] as const;
+
+type ProgressPhase = (typeof PROGRESS_PHASES)[number];
+
 interface ProgressEvent {
-  phase: string; // e.g., "validating", "generating-contracts", "assembling-zip"
+  phase: ProgressPhase; // typed pipeline phase
   percentage: number; // 0–100
   message?: string; // optional detail
 }
@@ -268,15 +276,34 @@ interface ProgressEvent {
 Metadata for an available compliance module.
 
 ```typescript
+type ModuleReviewState = 'stable' | 'under-review';
+
+interface ModuleReviewMeta {
+  state: ModuleReviewState;
+  prUrl?: string; // link to upstream review PR
+}
+
+interface ModuleConfigField {
+  key: string; // config property name
+  label: string; // human-readable label
+  type: 'string' | 'number' | 'string[]';
+  required: boolean;
+  placeholder?: string;
+  hint?: string;
+}
+
 interface ComplianceModuleRegistryEntry {
-  id: string; // unique identifier, e.g., "supply-cap"
-  name: string; // human-readable, e.g., "Supply Cap"
+  id: string; // unique identifier, e.g., "supply-limit"
+  name: string; // human-readable, e.g., "Supply Limit"
   description: string; // short description
-  supportedHooks: string[]; // which hooks this module can attach to (ecosystem-specific values)
+  requiredHooks: StellarComplianceHook[]; // hooks this module is registered on (derived, not user-specified)
+  crateName: string; // crate name in stellar-contracts library
+  review: ModuleReviewMeta; // upstream review status
+  configFields: ModuleConfigField[]; // typed configuration schema
 }
 ```
 
-**Notes**: `getAvailableModules()` only returns entries with concrete implementations in the `stellar-contracts` library. Unimplemented modules are never exposed — no `implemented` flag is needed.
+**Notes**: `getAvailableModules()` returns all entries including under-review modules. Each entry's `review` metadata enables consumers to make informed decisions. `getModuleById(id)` provides single-entry lookup. Currently all 7 modules (supply-limit, max-balance, country-restrict, country-allow, transfer-restrict, initial-lockup-period, time-transfers-limits) are registered with `under-review` state.
 
 ---
 
