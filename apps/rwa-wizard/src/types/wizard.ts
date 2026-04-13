@@ -28,7 +28,6 @@ export interface WizardDraftMetadata {
   importSource: DraftImportSource;
   schemaVersion: string;
   lastOpenedAt?: Date;
-  mockCoverage?: string[];
 }
 
 export interface WizardDraftRecord {
@@ -147,7 +146,6 @@ export interface TargetCapabilitySnapshot {
   availableModules: ComplianceModuleOption[];
   ecosystemMetadata: TargetEcosystemMetadata;
   networkOptions?: TargetNetworkOption[];
-  mocked: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -169,7 +167,6 @@ export interface GenerationJobState {
   completedAt?: Date;
   zipFileName?: string;
   errorMessage?: string;
-  usedMock: boolean;
 }
 
 export interface GenerationStatus {
@@ -183,7 +180,7 @@ export interface GeneratedZipArtifact {
 }
 
 // ---------------------------------------------------------------------------
-// Component inventory (US3) and mock gap register
+// Component inventory (US3)
 // ---------------------------------------------------------------------------
 
 export interface ComponentInventoryItem {
@@ -192,13 +189,4 @@ export interface ComponentInventoryItem {
   classification: 'reused' | 'local-candidate' | 'promoted-shared';
   rationale: string;
   followUpAction?: string;
-}
-
-export interface MockGapRecord {
-  id: string;
-  targetId: string;
-  capability: string;
-  mockBehavior: string;
-  replacementTrigger: string;
-  owner?: string;
 }

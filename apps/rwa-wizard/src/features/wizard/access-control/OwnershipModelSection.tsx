@@ -1,5 +1,10 @@
+import { useCallback, useEffect, useRef } from 'react';
+import type { FieldValues } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+
 import type { OwnershipModel } from '@openzeppelin/rwa-config';
 import {
+  AddressField,
   Card,
   CardContent,
   CardDescription,
@@ -8,7 +13,6 @@ import {
 } from '@openzeppelin/ui-components';
 
 import { SelectableCard } from '../../../components/shared/SelectableCard';
-import { ValidatedAddressInput } from '../../../components/shared/ValidatedAddressInput';
 import { useAddressing } from '../../../services/runtime';
 
 interface OwnershipModelSectionProps {
@@ -34,24 +38,55 @@ const OWNERSHIP_OPTIONS = [
   },
 ];
 
+interface AddressFormValues {
+  ownerAddress: string;
+}
+
 export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSectionProps) {
   const addressing = useAddressing();
   const currentAddress =
     ownership.type === 'single-owner' ? ownership.ownerAddress : ownership.address;
+
+  const isSyncing = useRef(false);
+  const onUpdateRef = useRef(onUpdate);
+  onUpdateRef.current = onUpdate;
+  const ownershipRef = useRef(ownership);
+  ownershipRef.current = ownership;
+
+  const { control, reset, watch } = useForm<AddressFormValues>({
+    defaultValues: { ownerAddress: currentAddress },
+    mode: 'onChange',
+  });
+
+  useEffect(() => {
+    isSyncing.current = true;
+    reset({ ownerAddress: currentAddress });
+    requestAnimationFrame(() => {
+      isSyncing.current = false;
+    });
+  }, [currentAddress, reset]);
+
+  const handleWatch = useCallback((formValues: FieldValues) => {
+    if (isSyncing.current) return;
+    const value = (formValues.ownerAddress as string) ?? '';
+    const current = ownershipRef.current;
+    if (current.type === 'single-owner') {
+      onUpdateRef.current({ type: 'single-owner', ownerAddress: value });
+    } else {
+      onUpdateRef.current({ ...current, address: value });
+    }
+  }, []);
+
+  useEffect(() => {
+    const sub = watch(handleWatch);
+    return () => sub.unsubscribe();
+  }, [watch, handleWatch]);
 
   const handleModelChange = (type: OwnershipModel['type']) => {
     if (type === 'single-owner') {
       onUpdate({ type, ownerAddress: '' });
     } else {
       onUpdate({ type, address: '' });
-    }
-  };
-
-  const handleAddressChange = (value: string) => {
-    if (ownership.type === 'single-owner') {
-      onUpdate({ type: 'single-owner', ownerAddress: value });
-    } else {
-      onUpdate({ ...ownership, address: value });
     }
   };
 
@@ -88,14 +123,14 @@ export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSec
           ))}
         </div>
 
-        <ValidatedAddressInput
+        <AddressField
           id="owner-address"
+          name="ownerAddress"
           label={addressLabel}
-          value={currentAddress}
-          onChange={handleAddressChange}
-          addressing={addressing}
           placeholder="Enter blockchain address"
           helperText={addressHint}
+          control={control}
+          addressing={addressing ?? undefined}
         />
       </CardContent>
     </Card>

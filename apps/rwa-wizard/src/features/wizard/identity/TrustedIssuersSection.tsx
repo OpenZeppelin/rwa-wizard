@@ -1,5 +1,6 @@
-import { Plus, X } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { AlertTriangle, Plus, X } from 'lucide-react';
+import { useCallback } from 'react';
+import { useForm } from 'react-hook-form';
 
 import type {
   ClaimTopic,
@@ -7,19 +8,24 @@ import type {
   TrustedIssuer,
 } from '@openzeppelin/rwa-config';
 import {
+  AddressDisplay,
+  AddressField,
   Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
   Label,
 } from '@openzeppelin/ui-components';
 import { cn } from '@openzeppelin/ui-utils';
 
-import { Badge } from '../../../components/shared/Badge';
-import { useAddressing } from '../../../services/runtime';
+import { TogglePill } from '../../../components/shared/TogglePill';
+import { useAddressing, useExplorer } from '../../../services/runtime';
+
+interface IssuerDraftForm {
+  address: string;
+}
 
 interface TrustedIssuersSectionProps {
   identity: IdentityVerificationConfig;
@@ -33,33 +39,32 @@ export function TrustedIssuersSection({
   onUpdate,
 }: TrustedIssuersSectionProps) {
   const addressing = useAddressing();
-  const [draftAddress, setDraftAddress] = useState('');
-  const [touched, setTouched] = useState(false);
+  const explorer = useExplorer();
   const atLimit = identity.trustedIssuers.length >= maxTrustedIssuers;
   const availableTopics = identity.claimTopics;
 
-  const validationError = useMemo(() => {
-    if (!touched || !draftAddress.trim()) return undefined;
-    if (addressing && !addressing.isValidAddress(draftAddress.trim())) {
-      return 'Invalid address format for the selected chain';
-    }
-    if (identity.trustedIssuers.some((iss) => iss.address === draftAddress.trim())) {
-      return 'Issuer already added';
-    }
-    return undefined;
-  }, [touched, draftAddress, addressing, identity.trustedIssuers]);
+  const { control, handleSubmit, reset, watch } = useForm<IssuerDraftForm>({
+    defaultValues: { address: '' },
+    mode: 'onChange',
+  });
 
-  const canAdd = draftAddress.trim() && !atLimit && !validationError;
+  const draftAddress = watch('address');
 
-  const handleAdd = useCallback(() => {
-    const address = draftAddress.trim();
-    if (!address || atLimit) return;
-    if (addressing && !addressing.isValidAddress(address)) return;
-    const newIssuer: TrustedIssuer = { address, claimTopics: [] };
-    onUpdate({ trustedIssuers: [...identity.trustedIssuers, newIssuer] });
-    setDraftAddress('');
-    setTouched(false);
-  }, [draftAddress, atLimit, addressing, identity.trustedIssuers, onUpdate]);
+  const isDuplicate = identity.trustedIssuers.some((iss) => iss.address === draftAddress?.trim());
+
+  const handleAdd = useCallback(
+    (data: IssuerDraftForm) => {
+      const address = data.address.trim();
+      if (!address || atLimit || isDuplicate) return;
+      const newIssuer: TrustedIssuer = {
+        address,
+        claimTopics: availableTopics.map((t) => t.id),
+      };
+      onUpdate({ trustedIssuers: [...identity.trustedIssuers, newIssuer] });
+      reset({ address: '' });
+    },
+    [atLimit, isDuplicate, availableTopics, identity.trustedIssuers, onUpdate, reset]
+  );
 
   const handleRemove = useCallback(
     (index: number) => {
@@ -88,12 +93,15 @@ export function TrustedIssuersSection({
     [identity.trustedIssuers, onUpdate]
   );
 
+  const duplicateValidation = isDuplicate ? 'Issuer already added' : undefined;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Trusted Issuers</CardTitle>
         <CardDescription>
-          Configure trusted authorities that can issue identity claims.
+          Configure trusted authorities that can issue identity claims. Each issuer must be
+          permitted to verify at least one claim topic.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -105,50 +113,39 @@ export function TrustedIssuersSection({
             availableTopics={availableTopics}
             onRemove={handleRemove}
             onToggleTopic={toggleIssuerTopic}
+            getExplorerUrl={explorer ? (addr) => explorer.getExplorerUrl(addr) : undefined}
           />
         ))}
 
-        <div className="space-y-2">
-          <Label>Issuer Contract Address</Label>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter issuer contract address"
-              value={draftAddress}
-              onChange={(e) => {
-                setDraftAddress(e.target.value);
-                if (!touched) setTouched(true);
-              }}
-              disabled={atLimit}
-              className={cn(
-                'flex-1',
-                validationError && 'border-destructive focus-visible:ring-destructive'
-              )}
-            />
-          </div>
-          {validationError && <p className="text-xs text-destructive">{validationError}</p>}
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-muted-foreground">Permitted Claim Topics</Label>
-            <div className="flex flex-wrap gap-1">
-              {availableTopics.map((t) => (
-                <Badge key={t.id} variant="outline">
-                  {t.name}
-                </Badge>
-              ))}
+        <div className="space-y-1">
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <AddressField
+                id="trusted-issuer-address"
+                name="address"
+                label="Issuer Contract Address"
+                placeholder="Enter issuer contract address"
+                control={control}
+                addressing={addressing ?? undefined}
+                validation={{ required: false }}
+              />
             </div>
-          </div>
-          <div className="flex justify-center">
             <Button
               type="button"
-              variant="ghost"
+              onClick={handleSubmit(handleAdd)}
               size="sm"
-              onClick={handleAdd}
-              disabled={!canAdd}
-              className="gap-1.5"
+              disabled={!draftAddress?.trim() || atLimit || isDuplicate}
+              className="mb-0.5"
             >
-              <Plus className="size-4" />
-              Add Trusted Issuer
+              <Plus className="mr-1 size-4" />
+              Add
             </Button>
           </div>
+          {(duplicateValidation || availableTopics.length > 0) && (
+            <p className="text-xs text-muted-foreground">
+              {duplicateValidation ?? 'New issuers are auto-permitted for all claim topics.'}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -161,17 +158,32 @@ function IssuerRow({
   availableTopics,
   onRemove,
   onToggleTopic,
+  getExplorerUrl,
 }: {
   issuer: TrustedIssuer;
   index: number;
   availableTopics: ClaimTopic[];
   onRemove: (index: number) => void;
   onToggleTopic: (issuerIndex: number, topicId: number) => void;
+  getExplorerUrl?: (address: string) => string | null;
 }) {
+  const hasNoTopics = issuer.claimTopics.length === 0;
+
   return (
-    <div className="space-y-2 rounded-lg border border-border p-3">
+    <div
+      className={cn(
+        'space-y-3 rounded-lg border p-3',
+        hasNoTopics ? 'border-destructive/50 bg-destructive/5' : 'border-border'
+      )}
+    >
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate font-mono text-sm">{issuer.address}</span>
+        <AddressDisplay
+          address={issuer.address}
+          variant="inline"
+          truncate={false}
+          showCopyButton
+          explorerUrl={getExplorerUrl?.(issuer.address) ?? undefined}
+        />
         <Button
           type="button"
           variant="ghost"
@@ -182,26 +194,27 @@ function IssuerRow({
           <X className="size-3.5" />
         </Button>
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {availableTopics.map((topic) => {
-          const isPermitted = issuer.claimTopics.includes(topic.id);
-          return (
-            <button
+
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Permitted Claim Topics</Label>
+        <div className="flex flex-wrap gap-1.5">
+          {availableTopics.map((topic) => (
+            <TogglePill
               key={topic.id}
-              type="button"
+              label={topic.name}
+              selected={issuer.claimTopics.includes(topic.id)}
               onClick={() => onToggleTopic(index, topic.id)}
-              className={cn(
-                'rounded-full border px-2 py-0.5 text-xs font-medium transition-colors',
-                isPermitted
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground hover:bg-muted'
-              )}
-            >
-              {topic.name}
-            </button>
-          );
-        })}
+            />
+          ))}
+        </div>
       </div>
+
+      {hasNoTopics && (
+        <div className="flex items-center gap-1.5 text-xs text-destructive">
+          <AlertTriangle className="size-3.5 shrink-0" />
+          <span>Select at least one claim topic for this issuer</span>
+        </div>
+      )}
     </div>
   );
 }

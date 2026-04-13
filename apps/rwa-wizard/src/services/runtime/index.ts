@@ -25,4 +25,5 @@ export {
   AdapterCapabilitiesProvider,
   useAdapterCapabilities,
   useAddressing,
+  useExplorer,
 } from './AdapterCapabilitiesContext';

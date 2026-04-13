@@ -1,12 +1,17 @@
 import { Plus } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
 
 import type { ClaimTopic } from '@openzeppelin/rwa-config';
 import { MIN_CUSTOM_CLAIM_TOPIC_ID } from '@openzeppelin/rwa-config';
-import { Button, Input, Label } from '@openzeppelin/ui-components';
-import { cn } from '@openzeppelin/ui-utils';
+import { Button, Label, NumberField, TextField } from '@openzeppelin/ui-components';
 
-import { Badge } from './Badge';
+import { TogglePill } from './TogglePill';
+
+interface CustomTopicForm {
+  name: string;
+  id: number | '';
+}
 
 interface TopicToggleGroupProps {
   predefinedTopics: readonly ClaimTopic[];
@@ -25,8 +30,13 @@ export function TopicToggleGroup({
   onRemove,
   maxTopics = 15,
 }: TopicToggleGroupProps) {
-  const [customName, setCustomName] = useState('');
-  const [customId, setCustomId] = useState('');
+  const { control, reset, watch } = useForm<CustomTopicForm>({
+    defaultValues: { name: '', id: '' },
+    mode: 'onChange',
+  });
+
+  const watchedName = watch('name');
+  const watchedId = watch('id');
 
   const selectedIds = useMemo(
     () => new Set(selectedTopics.map((topic) => topic.id)),
@@ -34,86 +44,96 @@ export function TopicToggleGroup({
   );
   const atLimit = selectedTopics.length >= maxTopics;
 
+  const predefinedIds = useMemo(
+    () => new Set(predefinedTopics.map((t) => t.id)),
+    [predefinedTopics]
+  );
+  const customTopics = useMemo(
+    () => selectedTopics.filter((t) => !predefinedIds.has(t.id)),
+    [selectedTopics, predefinedIds]
+  );
+
+  const parsedId = typeof watchedId === 'number' ? watchedId : parseInt(String(watchedId), 10);
+  const canAddCustom =
+    !!String(watchedName).trim() &&
+    !isNaN(parsedId) &&
+    parsedId >= MIN_CUSTOM_CLAIM_TOPIC_ID &&
+    !selectedIds.has(parsedId) &&
+    !atLimit;
+
   const handleAddCustom = useCallback(() => {
-    const name = customName.trim();
-    const id = parseInt(customId, 10);
-    if (!name || isNaN(id) || id < MIN_CUSTOM_CLAIM_TOPIC_ID) return;
-    if (selectedIds.has(id)) return;
-    onAddCustom({ id, name, isCustom: true });
-    setCustomName('');
-    setCustomId('');
-  }, [customName, customId, selectedIds, onAddCustom]);
+    const name = String(watchedName).trim();
+    if (!name || isNaN(parsedId) || parsedId < MIN_CUSTOM_CLAIM_TOPIC_ID) return;
+    if (selectedIds.has(parsedId)) return;
+    onAddCustom({ id: parsedId, name, isCustom: true });
+    reset({ name: '', id: '' });
+  }, [watchedName, parsedId, selectedIds, onAddCustom, reset]);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        {predefinedTopics.map((topic) => {
-          const isSelected = selectedIds.has(topic.id);
-          return (
-            <button
+      <div>
+        <Label className="text-xs text-muted-foreground">
+          {selectedTopics.length}/{maxTopics} selected
+        </Label>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {predefinedTopics.map((topic) => {
+            const isSelected = selectedIds.has(topic.id);
+            return (
+              <TogglePill
+                key={topic.id}
+                label={topic.name}
+                detail={topic.id}
+                selected={isSelected}
+                onClick={() => onToggle(topic)}
+                disabled={!isSelected && atLimit}
+              />
+            );
+          })}
+          {customTopics.map((topic) => (
+            <TogglePill
               key={topic.id}
-              type="button"
-              onClick={() => onToggle(topic)}
-              disabled={!isSelected && atLimit}
-              className={cn(
-                'cursor-pointer rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-                isSelected
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-background text-foreground hover:bg-muted',
-                !isSelected && atLimit && 'cursor-not-allowed opacity-50'
-              )}
-            >
-              {topic.name} ({topic.id})
-            </button>
-          );
-        })}
+              label={topic.name}
+              detail={topic.id}
+              selected={true}
+              onClick={() => onRemove(topic.id)}
+              onRemove={() => onRemove(topic.id)}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Add Custom Topic</Label>
-        <div className="flex gap-2">
-          <Input
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <TextField
+            id="custom-topic-name"
+            name="name"
+            label="Add Custom Topic"
             placeholder="Topic Name"
-            value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
-            className="flex-1"
-            disabled={atLimit}
+            control={control}
+            validation={{ required: false }}
           />
-          <Input
-            placeholder={`Topic ID (>=${MIN_CUSTOM_CLAIM_TOPIC_ID})`}
-            value={customId}
-            onChange={(e) => setCustomId(e.target.value)}
-            type="number"
-            min={MIN_CUSTOM_CLAIM_TOPIC_ID}
-            className="w-36"
-            disabled={atLimit}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={handleAddCustom}
-            disabled={!customName.trim() || !customId || atLimit}
-          >
-            <Plus className="size-4" />
-          </Button>
         </div>
+        <div className="w-36">
+          <NumberField
+            id="custom-topic-id"
+            name="id"
+            label="Topic ID"
+            placeholder={`>=${MIN_CUSTOM_CLAIM_TOPIC_ID}`}
+            control={control}
+            validation={{ required: false, min: MIN_CUSTOM_CLAIM_TOPIC_ID }}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={handleAddCustom}
+          disabled={!canAddCustom}
+          className="mb-0.5"
+        >
+          <Plus className="size-4" />
+        </Button>
       </div>
-
-      {selectedTopics.length > 0 && (
-        <div className="space-y-1.5">
-          <Label>
-            Selected Topics ({selectedTopics.length}/{maxTopics})
-          </Label>
-          <div className="flex flex-wrap gap-2">
-            {selectedTopics.map((topic) => (
-              <Badge key={topic.id} variant="outline" onRemove={() => onRemove(topic.id)}>
-                {topic.name} ({topic.id})
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

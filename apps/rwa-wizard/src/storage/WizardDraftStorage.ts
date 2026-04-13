@@ -130,7 +130,7 @@ export class WizardDraftStorage extends EntityStorage<WizardDraftRecordPersisted
         },
       })),
     };
-    return JSON.stringify(envelope);
+    return JSON.stringify(envelope, null, 2);
   }
 
   /**

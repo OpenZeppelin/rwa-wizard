@@ -57,8 +57,8 @@ export function ClaimTopicsSection({ identity, onUpdate }: ClaimTopicsSectionPro
       <CardHeader>
         <CardTitle>Claim Topics</CardTitle>
         <CardDescription>
-          Select claim topics to verify (max {MAX_CLAIM_TOPICS}). Predefined: KYC (1), AML (2),
-          Accreditation (3), Tax Residency (4).
+          Select the claim topics your token will require for identity verification, or add your own
+          custom topics.
         </CardDescription>
       </CardHeader>
       <CardContent>

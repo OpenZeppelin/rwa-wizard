@@ -7,7 +7,7 @@ import { getTarget, listTargets } from './targets';
 
 export interface LoadedTargetRuntime {
   targetId: string;
-  codegenService: RwaCodegenService;
+  codegenService: RwaCodegenService | null;
   adapterCapabilities: TargetAdapterCapabilities | null;
 }
 
@@ -25,9 +25,9 @@ const EMPTY_ECOSYSTEM_METADATA: TargetEcosystemMetadata = {
 };
 
 /**
- * Loads the target runtime (codegen service) for the given target id.
- * Caches by targetId. Ensures the real codegen package is loaded when available.
- * Rejects for hidden or unsupported targets (contract: loadRuntime must reject disabled).
+ * Loads the target runtime (codegen service + adapter) for the given target id.
+ * Caches by targetId. The codegen service may be null if the real package is
+ * unavailable — callers should disable generation in that case.
  */
 export async function loadRuntime(targetId: string): Promise<LoadedTargetRuntime> {
   const entry = getTarget(targetId);
@@ -50,15 +50,14 @@ export async function loadRuntime(targetId: string): Promise<LoadedTargetRuntime
 }
 
 /**
- * Returns capability snapshot for a target (modules, network options, mocked flag).
+ * Returns capability snapshot for a target (modules, network options).
  * Call after loadRuntime or use for UI that only needs module list.
  */
 export async function getTargetCapabilitySnapshot(
   targetId: string
 ): Promise<TargetCapabilitySnapshot> {
   const runtime = await loadRuntime(targetId);
-  const modules = await runtime.codegenService.getAvailableModules();
-  const entry = getTarget(targetId);
+  const modules = runtime.codegenService ? await runtime.codegenService.getAvailableModules() : [];
 
   const networkOptions = runtime.adapterCapabilities?.networkCatalog
     .getNetworks()
@@ -67,9 +66,8 @@ export async function getTargetCapabilitySnapshot(
   return {
     targetId,
     availableModules: modules,
-    ecosystemMetadata: runtime.codegenService.getEcosystemMetadata?.() ?? EMPTY_ECOSYSTEM_METADATA,
+    ecosystemMetadata: runtime.codegenService?.getEcosystemMetadata?.() ?? EMPTY_ECOSYSTEM_METADATA,
     networkOptions,
-    mocked: entry?.enabled === false,
   };
 }
 

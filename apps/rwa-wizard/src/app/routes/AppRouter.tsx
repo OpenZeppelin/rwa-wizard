@@ -20,9 +20,12 @@ import { AssetStep } from '../../features/wizard/asset/AssetStep';
 import { ComplianceStep } from '../../features/wizard/compliance/ComplianceStep';
 import { DeploymentPlaceholder } from '../../features/wizard/deployment/DeploymentPlaceholder';
 import { IdentityStep } from '../../features/wizard/identity/IdentityStep';
+import { ReviewStep } from '../../features/wizard/review/ReviewStep';
 import { useWizardDraftState } from '../../features/wizard/state/useWizardDraftState';
 import { getTargetCapabilitySnapshot, loadRuntime } from '../../registry/targetManager';
 import { listTargets } from '../../registry/targets';
+import type { RwaCodegenService } from '../../services/codegen/types';
+import { exportDraftAsJson } from '../../services/download/exportDraftAsJson';
 import type { TargetAdapterCapabilities } from '../../services/runtime';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useDraftList, useWizardDraftStorage } from '../../storage';
@@ -176,6 +179,7 @@ function WizardPage() {
   const storage = useWizardDraftStorage();
   const [targetSnapshot, setTargetSnapshot] = useState<TargetCapabilitySnapshot | null>(null);
   const [adapterCaps, setAdapterCaps] = useState<TargetAdapterCapabilities | null>(null);
+  const [codegenService, setCodegenService] = useState<RwaCodegenService | null>(null);
 
   const selectedTargetId = storeState.targetId ?? 'stellar';
   const draftState = useWizardDraftState();
@@ -211,11 +215,13 @@ function WizardPage() {
         if (isActive) {
           setTargetSnapshot(snapshot);
           setAdapterCaps(runtime.adapterCapabilities);
+          setCodegenService(runtime.codegenService);
         }
       } catch {
         if (isActive) {
           setTargetSnapshot(null);
           setAdapterCaps(null);
+          setCodegenService(null);
         }
       }
     }
@@ -244,6 +250,14 @@ function WizardPage() {
     const stepId = STEP_IDS[index];
     if (stepId) wizardStore.setCurrentStep(stepId);
   }, []);
+
+  const handleExportDraft = useCallback(() => {
+    const id = storeState.activeDraftId;
+    if (!id) return;
+    void exportDraftAsJson(id, storage).catch(() => {
+      // Export failure is non-destructive; silently ignore.
+    });
+  }, [storeState.activeDraftId, storage]);
 
   const wizardSteps: WizardStepConfig[] = useMemo(() => {
     const availableModules = targetSnapshot?.availableModules ?? [];
@@ -309,16 +323,13 @@ function WizardPage() {
         id: 'review',
         title: 'Review',
         component: (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-foreground">Review</h2>
-            <p className="text-sm text-muted-foreground">
-              Review your configuration before generating the project. Full review and generation
-              features are available in Phase 4.
-            </p>
-            <pre className="max-h-96 overflow-auto rounded-lg bg-muted p-4 text-xs">
-              {JSON.stringify(draftState.config, null, 2)}
-            </pre>
-          </div>
+          <ReviewStep
+            config={draftState.config}
+            draftId={storeState.activeDraftId}
+            codegenService={codegenService}
+            availableModules={availableModules}
+            onExport={handleExportDraft}
+          />
         ),
       },
     ];
@@ -332,7 +343,7 @@ function WizardPage() {
     }
 
     return steps;
-  }, [draftState, targetSnapshot]);
+  }, [draftState, targetSnapshot, codegenService, storeState.activeDraftId, handleExportDraft]);
 
   const handleCancel = useCallback(() => {
     wizardStore.reset();

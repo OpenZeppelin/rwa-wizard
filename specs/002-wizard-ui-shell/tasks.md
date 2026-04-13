@@ -94,19 +94,19 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T038 [P] [US2] Add real/mock codegen service parity tests in `apps/rwa-wizard/src/services/codegen/codegenService.test.ts`
-- [ ] T039 [P] [US2] Add generation flow hook tests in `apps/rwa-wizard/src/features/generation/hooks/useGenerationFlow.test.tsx`
-- [ ] T040 [P] [US2] Add download helper tests in `apps/rwa-wizard/src/services/download/downloadZip.test.ts`
+- [x] T038 [P] [US2] Add real/mock codegen service parity tests in `apps/rwa-wizard/src/services/codegen/codegenService.test.ts`
+- [x] T039 [P] [US2] Add generation flow hook tests in `apps/rwa-wizard/src/features/generation/hooks/useGenerationFlow.test.tsx`
+- [x] T040 [P] [US2] Add download helper tests in `apps/rwa-wizard/src/services/download/downloadZip.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T041 [P] [US2] Implement the review step summary UI in `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
-- [ ] T042 [P] [US2] Implement current-draft export UI in `apps/rwa-wizard/src/features/draft-management/components/ExportDraftButton.tsx`
-- [ ] T043 [P] [US2] Implement generation status UI in `apps/rwa-wizard/src/features/generation/components/GenerationStatusPanel.tsx`
-- [ ] T044 [P] [US2] Implement generation failure/recovery UI in `apps/rwa-wizard/src/features/generation/components/GenerationErrorState.tsx`
-- [ ] T045 [US2] Implement generation orchestration in `apps/rwa-wizard/src/features/generation/hooks/useGenerationFlow.ts`
-- [ ] T046 [US2] Wire review, export, and ZIP handoff flows in `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
-- [ ] T047 [US2] Integrate browser ZIP delivery and coarse generation phases in `apps/rwa-wizard/src/services/download/downloadZip.ts` and `apps/rwa-wizard/src/features/generation/hooks/useGenerationFlow.ts`
+- [x] T041 [P] [US2] Implement the review step summary UI in `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
+- [x] T042 [P] [US2] Implement current-draft export UI in `apps/rwa-wizard/src/features/draft-management/components/ExportDraftButton.tsx`
+- [x] T043 [P] [US2] Implement generation status UI in `apps/rwa-wizard/src/features/generation/components/GenerationStatusPanel.tsx`
+- [x] T044 [P] [US2] Implement generation failure/recovery UI in `apps/rwa-wizard/src/features/generation/components/GenerationErrorState.tsx`
+- [x] T045 [US2] Implement generation orchestration in `apps/rwa-wizard/src/features/generation/hooks/useGenerationFlow.ts`
+- [x] T046 [US2] Wire review, export, and ZIP handoff flows in `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
+- [x] T047 [US2] Integrate browser ZIP delivery and coarse generation phases in `apps/rwa-wizard/src/services/download/downloadZip.ts` and `apps/rwa-wizard/src/features/generation/hooks/useGenerationFlow.ts`
 
 **Checkpoint**: User Stories 1 and 2 both work independently. The shell can now produce the first complete user-facing outcome.
 

@@ -1,38 +1,25 @@
 import { getTarget } from '../../registry/targets';
 import { loadCodegenService } from './codegenLoader';
-import { createMockCodegenService } from './mockCodegenService';
 import type { RwaCodegenService } from './types';
 
 const serviceCache = new Map<string, RwaCodegenService>();
-const mockByTarget = new Map<string, RwaCodegenService>();
 
 /**
- * Resolves the codegen service for a target. Uses loaded implementation when
- * already cached for that target; falls back to mock when not loaded or on failure.
+ * Resolves the codegen service for a target. Returns null when the real
+ * codegen package hasn't been loaded yet — callers should disable generation
+ * in that case rather than silently falling back to a mock.
  */
-export function getCodegenService(targetId: string): RwaCodegenService {
+export function getCodegenService(targetId: string): RwaCodegenService | null {
   const entry = getTarget(targetId);
   if (!entry) {
     throw new Error(`codegen/unknown-target: ${targetId}`);
   }
-  if (!entry.enabled && entry.showInUI) {
-    if (!mockByTarget.has(targetId)) {
-      mockByTarget.set(targetId, createMockCodegenService(targetId));
-    }
-    return mockByTarget.get(targetId)!;
-  }
-  const cached = serviceCache.get(targetId);
-  if (cached) return cached;
-  if (!mockByTarget.has(targetId)) {
-    mockByTarget.set(targetId, createMockCodegenService(targetId));
-  }
-  return mockByTarget.get(targetId)!;
+  return serviceCache.get(targetId) ?? null;
 }
 
 /**
  * Lazy-load the codegen runtime for a target (dynamic import) and cache it.
- * Call from targetManager when loadRuntime(targetId) is invoked — same pattern
- * as UI Builder / Role Manager adapter loading.
+ * Call from targetManager when loadRuntime(targetId) is invoked.
  */
 export async function ensureCodegenLoaded(targetId: string): Promise<void> {
   if (serviceCache.has(targetId)) return;
@@ -41,5 +28,4 @@ export async function ensureCodegenLoaded(targetId: string): Promise<void> {
 }
 
 export type { RwaCodegenService, ValidationResultDTO } from './types';
-export { createMockCodegenService } from './mockCodegenService';
-export { getMockGapsForTarget, getMockGap, getAllMockGaps } from './mockGapRegistry';
+export { createTestCodegenService } from './testCodegenService';

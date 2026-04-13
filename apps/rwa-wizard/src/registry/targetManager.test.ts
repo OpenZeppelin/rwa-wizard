@@ -75,7 +75,7 @@ describe('targetManager', () => {
       const runtime = await loadRuntime('stellar');
       expect(runtime.targetId).toBe('stellar');
       expect(runtime.codegenService).toBeDefined();
-      expect(typeof runtime.codegenService.validate).toBe('function');
+      expect(typeof runtime.codegenService!.validate).toBe('function');
     });
 
     it('includes adapter capabilities in the loaded runtime', async () => {
@@ -121,9 +121,9 @@ describe('targetManager', () => {
       expect(snapshot.networkOptions![0].hint).toBe('Testnet');
     });
 
-    it('includes a mocked flag', async () => {
+    it('does not include a mocked flag', async () => {
       const snapshot = await getTargetCapabilitySnapshot('stellar');
-      expect(typeof snapshot.mocked).toBe('boolean');
+      expect(snapshot).not.toHaveProperty('mocked');
     });
   });
 });

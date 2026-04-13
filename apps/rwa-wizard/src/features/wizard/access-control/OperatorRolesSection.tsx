@@ -11,7 +11,7 @@ import {
 } from '@openzeppelin/ui-components';
 
 import { AddressListInput } from '../../../components/shared/AddressListInput';
-import { useAddressing } from '../../../services/runtime';
+import { useAddressing, useExplorer } from '../../../services/runtime';
 import type { OperatorRoleMeta } from '../../../types/wizard';
 
 interface OperatorRolesSectionProps {
@@ -28,6 +28,7 @@ export function OperatorRolesSection({
   onUpdate,
 }: OperatorRolesSectionProps) {
   const addressing = useAddressing();
+  const explorer = useExplorer();
   const visibleRoles = operatorRoles.filter(
     (role) => role.id !== 'document-manager' || documentManagerEnabled
   );
@@ -87,6 +88,7 @@ export function OperatorRolesSection({
                 onAdd={(addr) => handleAddAddress(roleDef, addr)}
                 onRemove={(idx) => handleRemoveAddress(roleDef.id, idx)}
                 addressing={addressing}
+                getExplorerUrl={explorer ? (addr) => explorer.getExplorerUrl(addr) : undefined}
                 placeholder="Operator address"
               />
             </div>
