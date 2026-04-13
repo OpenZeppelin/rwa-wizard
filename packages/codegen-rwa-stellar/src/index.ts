@@ -1,4 +1,5 @@
 import type {
+  GenerateOptions,
   GenerationResult,
   ProgressCallback,
   ValidationResult,
@@ -10,7 +11,6 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 import type { ComplianceModuleRegistryEntry } from './modules/registry';
 import { getAvailableModules as getModules } from './modules/registry';
 
-import type { StellarGenerateOptions } from './stellar-rwa-generator';
 import { sanitizeDirectoryName, StellarRwaGenerator } from './stellar-rwa-generator';
 
 /**
@@ -59,14 +59,6 @@ export { generateRoleSymbol } from './constants';
  * functions rather than instantiating this class directly.
  */
 export { StellarRwaGenerator } from './stellar-rwa-generator';
-
-/**
- * Stellar-specific generation options.
- *
- * Extends the core `GenerateOptions` with `stellarContractsPath` for local
- * dependency resolution and `allowUnderReviewModules` to gate review-branch modules.
- */
-export type { StellarGenerateOptions } from './stellar-rwa-generator';
 
 /**
  * Metadata describing an available compliance module in the Stellar registry.
@@ -160,7 +152,7 @@ const generator = new StellarRwaGenerator();
  * console.log(Object.keys(result.files)); // file paths
  * ```
  */
-export function generate(config: RWAConfig, options?: StellarGenerateOptions): GenerationResult {
+export function generate(config: RWAConfig, options?: GenerateOptions): GenerationResult {
   return generator.generate(config, options);
 }
 
@@ -187,7 +179,7 @@ export function generate(config: RWAConfig, options?: StellarGenerateOptions): G
  * }
  * ```
  */
-export function validate(config: RWAConfig, options?: StellarGenerateOptions): ValidationResult {
+export function validate(config: RWAConfig, options?: GenerateOptions): ValidationResult {
   return generator.validate(config, options);
 }
 

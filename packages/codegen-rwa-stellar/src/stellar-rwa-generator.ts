@@ -35,20 +35,6 @@ import { rwaValidationRules } from './validation/rules';
 import { CRATE_NAMES } from './constants';
 
 /**
- * Stellar-specific generation options extending the core `GenerateOptions`.
- */
-export interface StellarGenerateOptions extends GenerateOptions {
-  /**
-   * Absolute path to a local `stellar-contracts` checkout.
-   * When set, workspace Cargo.toml uses `path = "<this>/packages/<crate>/`
-   * instead of the default git+rev dependency.
-   */
-  stellarContractsPath?: string;
-  /** Allow under-review modules in generation (skip review-state validation errors). */
-  allowUnderReviewModules?: boolean;
-}
-
-/**
  * Sanitize a token symbol into a valid directory name for the ZIP root.
  *
  * Algorithm: lowercase → replace non-alphanumeric with hyphens →
@@ -150,11 +136,11 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
   readonly name = GENERATOR_NAME;
   readonly version = GENERATOR_VERSION;
 
-  validate(config: RWAConfig, _options?: StellarGenerateOptions): ValidationResult {
+  validate(config: RWAConfig, _options?: GenerateOptions): ValidationResult {
     return validateWithRules(config, rwaValidationRules);
   }
 
-  generate(config: RWAConfig, options?: StellarGenerateOptions): GenerationResult {
+  generate(config: RWAConfig, options?: GenerateOptions): GenerationResult {
     const progress = resolveProgressCallback(options?.onProgress);
 
     progress(createProgressEvent('validating', 10));
@@ -204,7 +190,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
 
     const workspaceToml = generateWorkspaceToml({
       members,
-      stellarContractsPath: options?.stellarContractsPath,
+      contractsLibraryPath: options?.contractsLibraryPath,
     });
     files = mergeFileTrees(files, createFile('Cargo.toml', workspaceToml));
 
