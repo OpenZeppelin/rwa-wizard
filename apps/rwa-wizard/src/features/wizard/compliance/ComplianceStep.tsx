@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import type { ComplianceConfig } from '@openzeppelin/rwa-config';
 
+import { WizardFrame } from '../../../components/shared/WizardFrame';
 import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../types/wizard';
 import { HookWiringPreview } from './HookWiringPreview';
 import { ModuleCatalog } from './ModuleCatalog';
@@ -64,15 +65,11 @@ export function ComplianceStep({
   }, [compliance.modules, availableModules]);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-semibold text-foreground">Compliance Modules</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Select which compliance policies to enforce. Each module is automatically registered on
-          the hooks it requires — you don&apos;t need to wire them manually.
-        </p>
-      </div>
-
+    <WizardFrame
+      title="Compliance Modules"
+      description="Select which compliance policies to enforce. Each module is automatically registered on the hooks it requires — you don't need to wire them manually."
+      spacing="space-y-8"
+    >
       <ModuleCatalog
         availableModules={availableModules}
         selectedModuleIds={selectedModuleIds}
@@ -88,6 +85,6 @@ export function ComplianceStep({
           availableModules={availableModules}
         />
       )}
-    </div>
+    </WizardFrame>
   );
 }

@@ -6,6 +6,7 @@ import type {
 } from '@openzeppelin/rwa-config';
 import { Form } from '@openzeppelin/ui-components';
 
+import { WizardFrame } from '../../../components/shared/WizardFrame';
 import { useStepForm } from '../../../hooks/useStepForm';
 import type { FeatureControlMeta } from '../../../types/wizard';
 import { AdministrativeControls } from './AdministrativeControls';
@@ -35,14 +36,10 @@ export function AssetStep({ token, adminControlsMeta, onUpdate }: AssetStepProps
 
   return (
     <Form {...form}>
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground">Asset Configuration</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Define the fundamental token properties and administrative controls for your RWA token.
-          </p>
-        </div>
-
+      <WizardFrame
+        title="Asset Configuration"
+        description="Define the fundamental token properties and administrative controls for your RWA token."
+      >
         <TokenBasics control={form.control} />
         <AdministrativeControls
           controls={token.administrativeControls}
@@ -50,7 +47,7 @@ export function AssetStep({ token, adminControlsMeta, onUpdate }: AssetStepProps
           onToggle={handleAdminToggle}
         />
         <DocumentManagerSection control={form.control} />
-      </div>
+      </WizardFrame>
     </Form>
   );
 }

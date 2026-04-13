@@ -1,5 +1,6 @@
 import type { AccessControlConfig, OwnershipModel } from '@openzeppelin/rwa-config';
 
+import { WizardFrame } from '../../../components/shared/WizardFrame';
 import type { OperatorRoleMeta } from '../../../types/wizard';
 import { OperatorRolesSection } from './OperatorRolesSection';
 import { OwnershipModelSection } from './OwnershipModelSection';
@@ -22,14 +23,10 @@ export function AccessControlStep({
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-foreground">Roles & Access Control</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Define the ownership structure for your RWA token contract.
-        </p>
-      </div>
-
+    <WizardFrame
+      title="Roles & Access Control"
+      description="Define the ownership structure for your RWA token contract."
+    >
       <OwnershipModelSection ownership={accessControl.ownership} onUpdate={handleOwnershipChange} />
       <OperatorRolesSection
         accessControl={accessControl}
@@ -37,6 +34,6 @@ export function AccessControlStep({
         operatorRoles={operatorRoles}
         onUpdate={onUpdate}
       />
-    </div>
+    </WizardFrame>
   );
 }

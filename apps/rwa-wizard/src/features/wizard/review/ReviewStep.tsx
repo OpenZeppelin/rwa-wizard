@@ -5,6 +5,7 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 import { Button } from '@openzeppelin/ui-components';
 
 import { ConfigSummary } from '../../../components/shared/ConfigSummary';
+import { WizardFrame } from '../../../components/shared/WizardFrame';
 import type { RwaCodegenService } from '../../../services/codegen/types';
 import { useExplorer } from '../../../services/runtime';
 import type { ComplianceModuleOption } from '../../../types/wizard';
@@ -44,14 +45,10 @@ export function ReviewStep({
   }, [generate]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-foreground">Review & Generate</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Review your configuration and generate your project.
-        </p>
-      </div>
-
+    <WizardFrame
+      title="Review & Generate"
+      description="Review your configuration and generate your project."
+    >
       <ConfigSummary
         config={config}
         availableModules={availableModules}
@@ -99,6 +96,6 @@ export function ReviewStep({
           </Button>
         </div>
       )}
-    </div>
+    </WizardFrame>
   );
 }

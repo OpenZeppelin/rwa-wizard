@@ -120,18 +120,18 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T048 [P] [US3] Add component inventory classification helper tests in `apps/rwa-wizard/src/utils/componentInventory.test.ts`
+- [x] T048 [P] [US3] Add component inventory classification helper tests in `apps/rwa-wizard/src/utils/componentInventory.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T049 [P] [US3] Implement local wizard layout primitives in `apps/rwa-wizard/src/components/shared/WizardFrame.tsx` and `apps/rwa-wizard/src/components/shared/WizardSection.tsx`
-- [ ] T050 [P] [US3] Implement the component inventory classification helper in `apps/rwa-wizard/src/utils/componentInventory.ts`
-- [ ] T051 [US3] Refactor shared wizard-shell patterns into local reusable components in `apps/rwa-wizard/src/features/target-catalog/components/TargetSelectorSidebar.tsx`, `apps/rwa-wizard/src/features/wizard/components/WizardShell.tsx`, and `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
-- [ ] T052 [US3] Create the component inventory artifact in `specs/002-wizard-ui-shell/component-inventory.md`
-- [ ] T053 [US3] Create the mock gap register artifact in `specs/002-wizard-ui-shell/mock-gap-register.md`
-- [ ] T054 [US3] Record each reviewed surface with component name, owning file, classification (`reused`, `local-candidate`, `promoted-shared`), rationale, and follow-up action in `specs/002-wizard-ui-shell/component-inventory.md`
-- [ ] T055 [US3] Record each active mock-backed gap with affected flow, mocked API seam, user-visible fallback, replacement trigger, owning task, and status in `specs/002-wizard-ui-shell/mock-gap-register.md`
-- [ ] T056 [US3] Record any component promoted during this feature with its shared UI example-coverage status and target example path in `specs/002-wizard-ui-shell/component-inventory.md`
+- [x] T049 [P] [US3] Implement local wizard layout primitives in `apps/rwa-wizard/src/components/shared/WizardFrame.tsx` and `apps/rwa-wizard/src/components/shared/WizardSection.tsx`
+- [x] T050 [P] [US3] Implement the component inventory classification helper in `apps/rwa-wizard/src/utils/componentInventory.ts`
+- [x] T051 [US3] Refactor shared wizard-shell patterns into local reusable components in `apps/rwa-wizard/src/features/target-catalog/components/TargetSelectorSidebar.tsx`, `apps/rwa-wizard/src/features/wizard/components/WizardShell.tsx`, and `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
+- [x] T052 [US3] Create the component inventory artifact in `specs/002-wizard-ui-shell/component-inventory.md`
+- [x] T053 [US3] Create the mock gap register artifact in `specs/002-wizard-ui-shell/mock-gap-register.md`
+- [x] T054 [US3] Record each reviewed surface with component name, owning file, classification (`reused`, `local-candidate`, `promoted-shared`), rationale, and follow-up action in `specs/002-wizard-ui-shell/component-inventory.md`
+- [x] T055 [US3] Record each active mock-backed gap with affected flow, mocked API seam, user-visible fallback, replacement trigger, owning task, and status in `specs/002-wizard-ui-shell/mock-gap-register.md`
+- [x] T056 [US3] Record any component promoted during this feature with its shared UI example-coverage status and target example path in `specs/002-wizard-ui-shell/component-inventory.md`
 
 **Checkpoint**: All user stories are functional, and the release artifacts needed for reuse/promotion decisions are in place.
 

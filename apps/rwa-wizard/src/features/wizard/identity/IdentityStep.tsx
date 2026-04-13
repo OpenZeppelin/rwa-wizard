@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import type { IdentityControls, IdentityVerificationConfig } from '@openzeppelin/rwa-config';
 
+import { WizardFrame } from '../../../components/shared/WizardFrame';
 import type { FeatureControlMeta } from '../../../types/wizard';
 import { ClaimTopicsSection } from './ClaimTopicsSection';
 import { IdentityControlsSection } from './IdentityControlsSection';
@@ -32,14 +33,10 @@ export function IdentityStep({
   );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-foreground">Identity Configuration</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Configure identity verification and management controls for your RWA token.
-        </p>
-      </div>
-
+    <WizardFrame
+      title="Identity Configuration"
+      description="Configure identity verification and management controls for your RWA token."
+    >
       <IdentityPrivacyNotice />
       <ImplementationApproach />
       <ClaimTopicsSection identity={identity} onUpdate={onUpdate} />
@@ -53,6 +50,6 @@ export function IdentityStep({
         identityControlsMeta={identityControlsMeta}
         onToggle={handleControlToggle}
       />
-    </div>
+    </WizardFrame>
   );
 }
