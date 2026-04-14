@@ -1,14 +1,19 @@
+import {
+  getAdditionalRoleAssignments,
+  getAdminAddress,
+  getManagerAddress,
+} from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { CRATE_NAMES } from '../../constants';
-import { getModuleById } from '../../modules/registry';
+import { roleSymbolToRustIdentifier } from '../../access-control';
+import { CRATE_NAMES, generateRoleSymbol } from '../../constants';
+import { getModuleDescriptorById } from '../../modules/registry';
 
-function getAdminAddress(config: RWAConfig): string {
-  const ownership = config.accessControl.ownership;
-  if (ownership.type === 'single-owner') return ownership.ownerAddress;
-  return ownership.address;
-}
+const roleResolutionOptions = { generateRoleSymbol };
 
+/**
+ * Build the correct Stellar CLI network flag for the configured deployment target.
+ */
 function getNetworkFlag(config: RWAConfig): string {
   const network = config.deployment.network;
   if (network === 'testnet' || network === 'mainnet') {
@@ -17,18 +22,24 @@ function getNetworkFlag(config: RWAConfig): string {
   return `--rpc-url ${network}`;
 }
 
+/**
+ * Build the raw `stellar contract deploy` command for a contract crate.
+ */
 function buildDeployCommand(
   crateName: string,
   constructorArgs: string,
   networkFlag: string
 ): string {
   return `stellar contract deploy \\
-  --wasm target/wasm32-unknown-unknown/release/${crateName.replace(/-/g, '_')}.wasm \\
+  --wasm target/wasm32v1-none/release/${crateName.replace(/-/g, '_')}.wasm \\
   ${networkFlag} \\
   -- \\
   ${constructorArgs}`;
 }
 
+/**
+ * Build a shell section that deploys one contract and captures its address.
+ */
 function buildDeploySection(
   varName: string,
   crateName: string,
@@ -48,27 +59,56 @@ function buildDeploySection(
   return lines.join('\n');
 }
 
+/**
+ * Build a shell-safe `stellar contract invoke` command.
+ */
 function buildInvokeCommand(
   contractAddr: string,
   fnName: string,
   args: string,
   networkFlag: string
 ): string {
-  return `stellar contract invoke \\
-  --id ${contractAddr} \\
-  ${networkFlag} \\
-  -- \\
-  ${fnName} \\
-  ${args}`;
+  const commandLines = [
+    'stellar contract invoke \\',
+    `  --id ${contractAddr} \\`,
+    `  ${networkFlag} \\`,
+    '  -- \\',
+    `  ${fnName}`,
+  ];
+
+  if (args.trim().length > 0) {
+    commandLines[commandLines.length - 1] += ' \\';
+    commandLines.push(`  ${args}`);
+  }
+
+  return commandLines.join('\n');
 }
 
+/**
+ * Convert a module id into the shell variable name used in `deploy.sh`.
+ */
 function moduleVarName(moduleId: string): string {
   return `MODULE_${moduleId.toUpperCase().replace(/-/g, '_')}_ADDRESS`;
 }
 
+/**
+ * Deduplicate module selections while preserving the first-seen order.
+ */
+function getUniqueModuleSelections(config: RWAConfig): RWAConfig['compliance']['modules'] {
+  const byId = new Map<string, RWAConfig['compliance']['modules'][number]>();
+  for (const selection of config.compliance.modules) {
+    if (!byId.has(selection.moduleId)) {
+      byId.set(selection.moduleId, selection);
+    }
+  }
+  return [...byId.values()];
+}
+
+/**
+ * Build the post-deploy configuration section for wiring and bootstrap data.
+ */
 function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
   const lines: string[] = [];
-  const adminAddress = getAdminAddress(config);
 
   lines.push('# Post-deploy configuration');
   lines.push('echo "Starting post-deploy configuration..."');
@@ -79,7 +119,7 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
     buildInvokeCommand(
       '$COMPLIANCE_ADDRESS',
       'bind_token',
-      `--token "$RWA_TOKEN_ADDRESS" --operator "${adminAddress}"`,
+      '--token "$RWA_TOKEN_ADDRESS" --operator "$MANAGER"',
       networkFlag
     )
   );
@@ -87,46 +127,57 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
     buildInvokeCommand(
       '$IRS_ADDRESS',
       'bind_token',
-      `--token "$RWA_TOKEN_ADDRESS" --operator "${adminAddress}"`,
+      '--token "$RWA_TOKEN_ADDRESS" --operator "$MANAGER"',
       networkFlag
     )
   );
 
-  const uniqueModuleIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
-  if (uniqueModuleIds.length > 0) {
+  const selectedModules = getUniqueModuleSelections(config);
+  if (selectedModules.length > 0) {
     lines.push('');
     lines.push('# Configure and register compliance modules');
-    for (const modId of uniqueModuleIds) {
-      const entry = getModuleById(modId);
-      if (!entry) continue;
+    for (const selection of selectedModules) {
+      const descriptor = getModuleDescriptorById(selection.moduleId);
+      if (!descriptor) continue;
 
-      const modVar = `$${moduleVarName(modId)}`;
+      // Keep module lifecycle details on the descriptor so adding a new module
+      // does not require reviving cross-file switch logic in deploy generation.
+      const modVar = `$${moduleVarName(selection.moduleId)}`;
       lines.push('');
-      lines.push(`# -- ${entry.name} setup --`);
+      lines.push(`# -- ${descriptor.name} setup --`);
+
+      if (descriptor.deployment.requiresIdentityRegistryStorage) {
+        lines.push(
+          buildInvokeCommand(
+            modVar,
+            'set_identity_registry_storage',
+            '--token "$RWA_TOKEN_ADDRESS" --irs "$IRS_ADDRESS"',
+            networkFlag
+          )
+        );
+      }
+
+      for (const invocation of descriptor.deployment.getConfigurationInvocations(selection)) {
+        lines.push(
+          buildInvokeCommand(modVar, invocation.functionName, invocation.args, networkFlag)
+        );
+      }
 
       lines.push(
         buildInvokeCommand(
           modVar,
           'set_compliance_address',
-          `--compliance "$COMPLIANCE_ADDRESS"`,
-          networkFlag
-        )
-      );
-      lines.push(
-        buildInvokeCommand(
-          modVar,
-          'set_identity_registry_storage',
-          `--irs "$IRS_ADDRESS"`,
+          '--compliance "$COMPLIANCE_ADDRESS"',
           networkFlag
         )
       );
 
-      for (const hook of entry.requiredHooks) {
+      for (const hook of descriptor.requiredHooks) {
         lines.push(
           buildInvokeCommand(
             '$COMPLIANCE_ADDRESS',
             'add_module_to',
-            `--hook "${hook}" --module "${modVar}" --operator "${adminAddress}"`,
+            `--hook "${hook}" --module "${modVar}" --operator "$MANAGER"`,
             networkFlag
           )
         );
@@ -144,7 +195,7 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
         buildInvokeCommand(
           '$CTI_ADDRESS',
           'add_claim_topic',
-          `--topic ${topic.id} --operator "${adminAddress}"`,
+          `--claim_topic ${topic.id} --operator "$MANAGER"`,
           networkFlag
         )
       );
@@ -155,12 +206,12 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
     lines.push('');
     lines.push('# Add trusted issuers');
     for (const issuer of config.identityVerification.trustedIssuers) {
-      const topicsArg = issuer.claimTopics.map(String).join(',');
+      const topicsArg = `'[${issuer.claimTopics.map(String).join(', ')}]'`;
       lines.push(
         buildInvokeCommand(
           '$CTI_ADDRESS',
           'add_trusted_issuer',
-          `--issuer "${issuer.address}" --claim-topics "[${topicsArg}]" --operator "${adminAddress}"`,
+          `--trusted_issuer "${issuer.address}" --claim_topics ${topicsArg} --operator "$MANAGER"`,
           networkFlag
         )
       );
@@ -174,7 +225,7 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
       buildInvokeCommand(
         '$RWA_TOKEN_ADDRESS',
         'mint',
-        `--to "${adminAddress}" --amount ${config.token.initialSupply}`,
+        `--to "$ADMIN" --amount ${config.token.initialSupply} --operator "$MANAGER"`,
         networkFlag
       )
     );
@@ -193,12 +244,14 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
 export function generateDeploySh(config: RWAConfig): string {
   const networkFlag = getNetworkFlag(config);
   const adminAddress = getAdminAddress(config);
+  const managerAddress = getManagerAddress(config, roleResolutionOptions);
   const sections: string[] = [];
 
   sections.push('#!/bin/bash');
   sections.push('set -e');
   sections.push('');
   sections.push(`ADMIN="${adminAddress}"`);
+  sections.push(`MANAGER="${managerAddress}"`);
   sections.push('');
   sections.push('echo "Deploying RWA token system..."');
   sections.push('');
@@ -208,7 +261,7 @@ export function generateDeploySh(config: RWAConfig): string {
     buildDeploySection(
       'CTI_ADDRESS',
       CRATE_NAMES.claimTopicsIssuers,
-      `--admin "$ADMIN"`,
+      '--admin "$ADMIN" --manager "$MANAGER"',
       networkFlag
     )
   );
@@ -219,7 +272,7 @@ export function generateDeploySh(config: RWAConfig): string {
     buildDeploySection(
       'IRS_ADDRESS',
       CRATE_NAMES.identityRegistryStorage,
-      `--admin "$ADMIN"`,
+      '--admin "$ADMIN" --manager "$MANAGER"',
       networkFlag
     )
   );
@@ -230,7 +283,7 @@ export function generateDeploySh(config: RWAConfig): string {
     buildDeploySection(
       'IDENTITY_VERIFIER_ADDRESS',
       CRATE_NAMES.identityVerifier,
-      `--admin "$ADMIN" --cti_address "$CTI_ADDRESS"`,
+      '--admin "$ADMIN" --manager "$MANAGER" --identity_registry_storage "$IRS_ADDRESS" --claim_topics_and_issuers "$CTI_ADDRESS"',
       networkFlag
     )
   );
@@ -241,27 +294,32 @@ export function generateDeploySh(config: RWAConfig): string {
     buildDeploySection(
       'COMPLIANCE_ADDRESS',
       CRATE_NAMES.compliance,
-      `--admin "$ADMIN"`,
+      '--admin "$ADMIN" --manager "$MANAGER"',
       networkFlag
     )
   );
   sections.push('');
 
-  const uniqueModuleIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
-  if (uniqueModuleIds.length > 0) {
+  const selectedModules = getUniqueModuleSelections(config);
+  if (selectedModules.length > 0) {
     sections.push('# 5. Deploy compliance modules');
-    for (const modId of uniqueModuleIds) {
-      const entry = getModuleById(modId);
-      if (!entry) continue;
+    for (const selection of selectedModules) {
+      const descriptor = getModuleDescriptorById(selection.moduleId);
+      if (!descriptor) continue;
       sections.push(
-        buildDeploySection(moduleVarName(modId), entry.crateName, `--admin "$ADMIN"`, networkFlag)
+        buildDeploySection(
+          moduleVarName(selection.moduleId),
+          descriptor.crateName,
+          '--admin "$ADMIN"',
+          networkFlag
+        )
       );
     }
     sections.push('');
   }
 
-  sections.push(`# ${uniqueModuleIds.length > 0 ? '6' : '5'}. Deploy ${CRATE_NAMES.rwaTtoken}`);
-  const tokenArgs = buildTokenConstructorArgs(config, adminAddress);
+  sections.push(`# ${selectedModules.length > 0 ? '6' : '5'}. Deploy ${CRATE_NAMES.rwaTtoken}`);
+  const tokenArgs = buildTokenConstructorArgs(config);
   sections.push(
     buildDeploySection('RWA_TOKEN_ADDRESS', CRATE_NAMES.rwaTtoken, tokenArgs, networkFlag)
   );
@@ -270,22 +328,26 @@ export function generateDeploySh(config: RWAConfig): string {
   sections.push(buildPostDeployConfig(config, networkFlag));
   sections.push('');
   sections.push('echo "Deployment complete!"');
-  sections.push(`echo "RWA Token address: $RWA_TOKEN_ADDRESS"`);
+  sections.push('echo "RWA Token address: $RWA_TOKEN_ADDRESS"');
   sections.push('');
 
   return sections.join('\n');
 }
 
-function buildTokenConstructorArgs(config: RWAConfig, adminAddress: string): string {
+/**
+ * Build the RWA token constructor argument list for `deploy.sh`.
+ */
+function buildTokenConstructorArgs(config: RWAConfig): string {
   const args: string[] = [];
   args.push(`--name "${config.token.name}"`);
   args.push(`--symbol "${config.token.symbol}"`);
-  args.push(`--admin "${adminAddress}"`);
-  args.push(`--initial_supply ${config.token.initialSupply ?? '0'}`);
+  args.push('--admin "$ADMIN"');
+  args.push('--manager "$MANAGER"');
+  args.push('--compliance "$COMPLIANCE_ADDRESS"');
+  args.push('--identity_verifier "$IDENTITY_VERIFIER_ADDRESS"');
 
-  for (const role of config.accessControl.roles) {
-    const symbol = role.symbol ?? role.name.toLowerCase();
-    args.push(`--${symbol} "${role.addresses[0]}"`);
+  for (const role of getAdditionalRoleAssignments(config, roleResolutionOptions)) {
+    args.push(`--${roleSymbolToRustIdentifier(role.symbol)} "${role.address}"`);
   }
 
   return args.join(' \\\n  ');

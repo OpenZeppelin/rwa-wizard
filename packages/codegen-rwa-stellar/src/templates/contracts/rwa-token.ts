@@ -1,192 +1,150 @@
+/**
+ * Developer note:
+ *
+ * This file is not the canonical Rust contract template. The source of truth
+ * lives in the upstream `stellar-contracts` example loaded via the active
+ * `UpstreamTemplateSource` (bundled snapshot by default, local checkout in
+ * supported Node.js workflows).
+ *
+ * This module exists only to apply the minimal config-driven deltas that the
+ * upstream example cannot express directly yet:
+ * - token decimals
+ * - additional configured roles
+ * - optional DocumentManager support
+ *
+ * Drift is avoided by:
+ * - always starting from the upstream source, never from a copied local Rust file
+ * - anchoring local edits to exact upstream snippets via `UPSTREAM_*` markers
+ * - using `replaceExact()` / `insert*Exact()` so missing or changed markers fail fast
+ *
+ * Keep this patch layer narrow. Prefer extending upstream templates or adding
+ * small exact-match patches over reintroducing a full handwritten local Rust
+ * template.
+ */
+import { insertAfterExact, insertBeforeExact, replaceExact } from '@openzeppelin/codegen-core';
+import { getAdditionalRoleAssignments } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { DEFAULT_TOKEN_VERSION, generateRoleSymbol } from '../../constants';
+import { roleSymbolToRustIdentifier } from '../../access-control';
+import { generateRoleSymbol } from '../../constants';
+import { createBundledTemplateSource } from '../../upstream/providers/bundled';
+import type { UpstreamTemplateSource } from '../../upstream/types';
 
-function buildImports(config: RWAConfig): string {
-  const sdkItems: string[] = ['contract', 'contractimpl'];
+const UPSTREAM_SDK_IMPORT = `use soroban_sdk::{
+    contract, contractimpl, symbol_short, Address, Env, MuxedAddress, String, Symbol, Vec,
+};`;
 
-  const hasRoles = config.accessControl.roles.length > 0;
-  if (hasRoles) {
-    sdkItems.push('symbol_short');
-  }
-  if (config.token.documentManager.enabled) {
-    sdkItems.push('BytesN');
-  }
-
-  // MuxedAddress, Symbol, and Vec are required by the #[contractimpl(contracttrait)]
-  // macro expansions for FungibleToken and AccessControl
-  sdkItems.push('MuxedAddress', 'Symbol', 'Vec');
-  sdkItems.push('Address', 'Env', 'String');
-
-  const imports: string[] = [`use soroban_sdk::{${sdkItems.join(', ')}};`];
-
-  imports.push('use stellar_access::access_control::{self as access_control, AccessControl};');
-  imports.push('use stellar_contract_utils::pausable::{self as pausable, Pausable};');
-
-  const rwaImports = ['RWAStorageKey', 'RWAToken', 'RWA'];
-  imports.push(
-    `use stellar_tokens::{
+const UPSTREAM_TOKEN_IMPORT = `use stellar_tokens::{
     fungible::{Base, FungibleToken},
-    rwa::{${rwaImports.join(', ')}},
-};`
-  );
+    rwa::{RWAToken, RWA},
+};
+`;
 
-  if (config.token.documentManager.enabled) {
-    imports.push(
-      `use stellar_tokens::rwa::extensions::doc_manager::{
-    self as doc_manager, Document, DocumentManager,
-};`
-    );
-  }
+const UPSTREAM_ROLE_CONSTANT = 'const MANAGER_ROLE: Symbol = symbol_short!("manager");';
 
-  return imports.join('\n');
+const UPSTREAM_CONSTRUCTOR = `    pub fn __constructor(
+        e: &Env,
+        name: String,
+        symbol: String,
+        admin: Address,
+        manager: Address,
+        compliance: Address,
+        identity_verifier: Address,
+    ) {
+        Base::set_metadata(e, 7, name, symbol);
+
+        access_control::set_admin(e, &admin);
+
+        // create a role "manager" and grant it to \`manager\`
+        access_control::grant_role_no_auth(e, &manager, &MANAGER_ROLE, &admin);
+
+        RWA::set_compliance(e, &compliance);
+        RWA::set_identity_verifier(e, &identity_verifier);
+    }`;
+
+const roleResolutionOptions = { generateRoleSymbol };
+
+/**
+ * Resolve all non-manager roles that need constructor wiring.
+ */
+function getAdditionalRoles(config: RWAConfig) {
+  return getAdditionalRoleAssignments(config, roleResolutionOptions);
 }
 
-function buildConstructor(config: RWAConfig): string {
-  const roles = config.accessControl.roles;
-  const lines: string[] = [];
+/**
+ * Convert a role symbol into the uppercase Rust constant name used in templates.
+ */
+function toRoleConstName(symbol: string): string {
+  return `${symbol
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toUpperCase()}_ROLE`;
+}
 
-  const hasInitialSupply = config.token.initialSupply !== undefined;
-
-  lines.push('    pub fn __constructor(');
-  lines.push('        e: &Env,');
-  lines.push('        name: String,');
-  lines.push('        symbol: String,');
-  lines.push('        admin: Address,');
-
-  if (hasInitialSupply) {
-    lines.push('        initial_supply: i128,');
+/**
+ * Build the role constant block injected into the upstream token template.
+ */
+function buildRoleConstants(config: RWAConfig): string {
+  const lines = [UPSTREAM_ROLE_CONSTANT];
+  for (const role of getAdditionalRoles(config)) {
+    lines.push(`const ${toRoleConstName(role.symbol)}: Symbol = symbol_short!("${role.symbol}");`);
   }
+  return lines.join('\n');
+}
 
-  for (const role of roles) {
-    const symbol = role.symbol ?? generateRoleSymbol(role.name);
-    lines.push(`        ${symbol}: Address,`);
+/**
+ * Build the patched constructor with configured decimals and extra roles.
+ */
+function buildConstructor(config: RWAConfig): string {
+  const additionalRoles = getAdditionalRoles(config);
+  const lines: string[] = [
+    '    pub fn __constructor(',
+    '        e: &Env,',
+    '        name: String,',
+    '        symbol: String,',
+    '        admin: Address,',
+    '        manager: Address,',
+    '        compliance: Address,',
+    '        identity_verifier: Address,',
+  ];
+
+  for (const role of additionalRoles) {
+    lines.push(`        ${roleSymbolToRustIdentifier(role.symbol)}: Address,`);
   }
 
   lines.push('    ) {');
   lines.push(`        Base::set_metadata(e, ${config.token.decimals}, name, symbol);`);
-  lines.push(
-    `        e.storage().instance().set(&RWAStorageKey::Version, &String::from_str(e, "${DEFAULT_TOKEN_VERSION}"));`
-  );
+  lines.push('');
   lines.push('        access_control::set_admin(e, &admin);');
+  lines.push('');
+  lines.push('        // create a role "manager" and grant it to `manager`');
+  lines.push('        access_control::grant_role_no_auth(e, &manager, &MANAGER_ROLE, &admin);');
 
-  for (const role of roles) {
-    const symbol = role.symbol ?? generateRoleSymbol(role.name);
+  for (const role of additionalRoles) {
     lines.push(
-      `        access_control::grant_role_no_auth(e, &${symbol}, &symbol_short!("${symbol}"), &admin);`
+      `        access_control::grant_role_no_auth(e, &${roleSymbolToRustIdentifier(role.symbol)}, &${toRoleConstName(role.symbol)}, &admin);`
     );
   }
 
-  if (hasInitialSupply) {
-    lines.push('        Base::mint(e, &admin, initial_supply);');
-  }
-
+  lines.push('');
+  lines.push('        RWA::set_compliance(e, &compliance);');
+  lines.push('        RWA::set_identity_verifier(e, &identity_verifier);');
   lines.push('    }');
 
   return lines.join('\n');
 }
 
-function buildPausableImpl(): string {
-  return `#[contractimpl]
-impl Pausable for RwaTokenContract {
-    fn pause(e: &Env, caller: Address) {
-        caller.require_auth();
-        pausable::pause(e);
-    }
-
-    fn unpause(e: &Env, caller: Address) {
-        caller.require_auth();
-        pausable::unpause(e);
-    }
-}`;
-}
-
-function buildRWATokenImpl(): string {
-  return `#[contractimpl]
-impl RWAToken for RwaTokenContract {
-    fn forced_transfer(e: &Env, from: Address, to: Address, amount: i128, operator: Address) {
-        operator.require_auth();
-        RWA::forced_transfer(e, &from, &to, amount);
-    }
-
-    fn mint(e: &Env, to: Address, amount: i128, operator: Address) {
-        operator.require_auth();
-        RWA::mint(e, &to, amount);
-    }
-
-    fn burn(e: &Env, user_address: Address, amount: i128, operator: Address) {
-        operator.require_auth();
-        RWA::burn(e, &user_address, amount);
-    }
-
-    fn recover_balance(
-        e: &Env,
-        old_account: Address,
-        new_account: Address,
-        operator: Address,
-    ) -> bool {
-        operator.require_auth();
-        RWA::recover_balance(e, &old_account, &new_account)
-    }
-
-    fn set_address_frozen(e: &Env, user_address: Address, freeze: bool, operator: Address) {
-        operator.require_auth();
-        RWA::set_address_frozen(e, &user_address, freeze);
-    }
-
-    fn freeze_partial_tokens(e: &Env, user_address: Address, amount: i128, operator: Address) {
-        operator.require_auth();
-        RWA::freeze_partial_tokens(e, &user_address, amount);
-    }
-
-    fn unfreeze_partial_tokens(e: &Env, user_address: Address, amount: i128, operator: Address) {
-        operator.require_auth();
-        RWA::unfreeze_partial_tokens(e, &user_address, amount);
-    }
-
-    fn is_frozen(e: &Env, user_address: Address) -> bool {
-        RWA::is_frozen(e, &user_address)
-    }
-
-    fn get_frozen_tokens(e: &Env, user_address: Address) -> i128 {
-        RWA::get_frozen_tokens(e, &user_address)
-    }
-
-    fn version(e: &Env) -> String {
-        RWA::version(e)
-    }
-
-    fn onchain_id(e: &Env) -> Address {
-        RWA::onchain_id(e)
-    }
-
-    fn set_compliance(e: &Env, compliance: Address, operator: Address) {
-        operator.require_auth();
-        RWA::set_compliance(e, &compliance);
-    }
-
-    fn compliance(e: &Env) -> Address {
-        RWA::compliance(e)
-    }
-
-    fn set_identity_verifier(e: &Env, identity_verifier: Address, operator: Address) {
-        operator.require_auth();
-        RWA::set_identity_verifier(e, &identity_verifier);
-    }
-
-    fn identity_verifier(e: &Env) -> Address {
-        RWA::identity_verifier(e)
-    }
-}`;
-}
-
+/**
+ * Generate the optional DocumentManager implementation block.
+ */
 function buildDocumentManagerImpl(): string {
   return `#[contractimpl]
-impl DocumentManager for RwaTokenContract {
+impl DocumentManager for RWATokenContract {
     fn get_document(e: &Env, name: BytesN<32>) -> Document {
         doc_manager::get_document(e, &name)
     }
 
+    #[only_role(operator, "manager")]
     fn set_document(
         e: &Env,
         name: BytesN<32>,
@@ -194,12 +152,11 @@ impl DocumentManager for RwaTokenContract {
         document_hash: BytesN<32>,
         operator: Address,
     ) {
-        operator.require_auth();
         doc_manager::set_document(e, &name, &uri, &document_hash);
     }
 
+    #[only_role(operator, "manager")]
     fn remove_document(e: &Env, name: BytesN<32>, operator: Address) {
-        operator.require_auth();
         doc_manager::remove_document(e, &name);
     }
 
@@ -210,41 +167,51 @@ impl DocumentManager for RwaTokenContract {
 }
 
 /**
+ * Inject the DocumentManager extension imports and implementation.
+ */
+function addDocumentManagerSupport(source: string): string {
+  let patched = replaceExact(
+    source,
+    UPSTREAM_SDK_IMPORT,
+    `use soroban_sdk::{
+    contract, contractimpl, symbol_short, Address, BytesN, Env, MuxedAddress, String, Symbol, Vec,
+};`
+  );
+
+  patched = insertAfterExact(
+    patched,
+    UPSTREAM_TOKEN_IMPORT,
+    `
+use stellar_tokens::rwa::extensions::doc_manager::{
+    self as doc_manager, Document, DocumentManager,
+};
+`
+  );
+
+  return insertBeforeExact(
+    patched,
+    '#[contractimpl(contracttrait)]\nimpl AccessControl for RWATokenContract {}\n',
+    `\n${buildDocumentManagerImpl()}\n\n`
+  );
+}
+
+/**
  * Generates the RWA Token contract source code (`contract.rs`).
  *
- * Follows the canonical pattern from stellar-contracts/examples/rwa/:
- * empty struct, __constructor with Base::set_metadata + access_control setup,
- * FungibleToken/AccessControl/Pausable trait impls, conditional DocumentManager.
+ * Uses the upstream example as the baseline, then patches the constructor and
+ * optional extensions with generator-specific configuration values.
  */
-export function generateRwaTokenContract(config: RWAConfig): string {
-  const sections: string[] = [];
-
-  sections.push(buildImports(config));
-  sections.push('');
-  sections.push('#[contract]');
-  sections.push('pub struct RwaTokenContract;');
-  sections.push('');
-  sections.push('#[contractimpl]');
-  sections.push('impl RwaTokenContract {');
-  sections.push(buildConstructor(config));
-  sections.push('}');
-  sections.push('');
-  sections.push('#[contractimpl(contracttrait)]');
-  sections.push('impl FungibleToken for RwaTokenContract {');
-  sections.push('    type ContractType = RWA;');
-  sections.push('}');
-  sections.push('');
-  sections.push('#[contractimpl(contracttrait)]');
-  sections.push('impl AccessControl for RwaTokenContract {}');
-  sections.push('');
-  sections.push(buildPausableImpl());
-  sections.push('');
-  sections.push(buildRWATokenImpl());
+export function generateRwaTokenContract(
+  config: RWAConfig,
+  templateSource: UpstreamTemplateSource = createBundledTemplateSource()
+): string {
+  let source = templateSource.getTemplate('core-contract', 'rwa-token');
+  source = replaceExact(source, UPSTREAM_ROLE_CONSTANT, buildRoleConstants(config));
+  source = replaceExact(source, UPSTREAM_CONSTRUCTOR, buildConstructor(config));
 
   if (config.token.documentManager.enabled) {
-    sections.push('');
-    sections.push(buildDocumentManagerImpl());
+    source = addDocumentManagerSupport(source);
   }
 
-  return sections.join('\n') + '\n';
+  return source;
 }

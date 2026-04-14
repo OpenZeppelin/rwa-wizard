@@ -21,91 +21,59 @@ function createEntry(
 }
 
 describe('Compliance Module Contract Template', () => {
-  describe('contract structure', () => {
-    it('should generate a valid #[contract] struct', () => {
-      const contract = generateComplianceModuleContract(createEntry());
-      expect(contract).toContain('#[contract]');
-      expect(contract).toContain('pub struct SupplyLimitModule');
-    });
+  it('uses the upstream supply-limit implementation as the source of truth', () => {
+    const contract = generateComplianceModuleContract(createEntry());
 
-    it('should have an impl block with #[contractimpl]', () => {
-      const contract = generateComplianceModuleContract(createEntry());
-      expect(contract).toContain('#[contractimpl]');
-      expect(contract).toContain('impl SupplyLimitModule');
-    });
-
-    it('should include constructor with admin parameter', () => {
-      const contract = generateComplianceModuleContract(createEntry());
-      expect(contract).toContain('pub fn __constructor(');
-      expect(contract).toContain('admin: Address');
-    });
-
-    it('should include setup helpers', () => {
-      const contract = generateComplianceModuleContract(createEntry());
-      expect(contract).toContain('fn set_compliance_address(');
-      expect(contract).toContain('fn set_identity_registry_storage(');
-      expect(contract).toContain('fn verify_hook_wiring(');
-    });
-
-    it('should return the module name via name()', () => {
-      const contract = generateComplianceModuleContract(createEntry());
-      expect(contract).toContain('"supply-limit"');
-    });
-
-    it('should include review banner for under-review modules', () => {
-      const contract = generateComplianceModuleContract(
-        createEntry({
-          review: { state: 'under-review', prUrl: 'https://github.com/example/pull/1' },
-        })
-      );
-      expect(contract).toContain('UNDER REVIEW');
-      expect(contract).toContain('https://github.com/example/pull/1');
-    });
-
-    it('should not include review banner for stable modules', () => {
-      const contract = generateComplianceModuleContract(createEntry());
-      expect(contract).not.toContain('UNDER REVIEW');
-    });
+    expect(contract).toContain('pub struct SupplyLimitContract;');
+    expect(contract).toContain('impl ComplianceModule for SupplyLimitContract');
+    expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
+    expect(contract).toContain('fn require_module_admin_or_compliance_auth');
+    expect(contract).toContain('pub fn set_supply_limit(e: &Env, token: Address, limit: i128)');
+    expect(contract).toContain('pub fn verify_hook_wiring(e: &Env)');
   });
 
-  describe('separate crate structure', () => {
-    it('should generate valid lib.rs for module crate', () => {
-      const libRs = generateLibRs();
-      expect(libRs).toContain('#![no_std]');
-      expect(libRs).toContain('mod contract;');
-      expect(libRs).toContain('pub use contract::*;');
-    });
+  it('prepends a review banner for under-review modules', () => {
+    const contract = generateComplianceModuleContract(
+      createEntry({
+        review: { state: 'under-review', prUrl: 'https://github.com/example/pull/1' },
+      })
+    );
 
-    it('should generate valid Cargo.toml for module crate', () => {
-      const toml = generateCrateToml({
-        name: 'supply-limit',
-        dependencies: ['soroban-sdk', 'stellar-tokens'],
-      });
-      expect(toml).toContain('name = "supply-limit"');
-      expect(toml).toContain('crate-type = ["cdylib"]');
-      expect(toml).toContain('soroban-sdk = { workspace = true }');
-      expect(toml).toContain('stellar-tokens = { workspace = true }');
-    });
+    expect(contract).toContain('under review and not yet merged upstream');
+    expect(contract).toContain('https://github.com/example/pull/1');
   });
 
-  describe('different modules', () => {
-    it('should generate unique struct names based on moduleId', () => {
-      const mod1 = generateComplianceModuleContract(createEntry({ id: 'supply-limit' }));
-      const mod2 = generateComplianceModuleContract(createEntry({ id: 'max-balance' }));
+  it('does not prepend a review banner for stable modules', () => {
+    const contract = generateComplianceModuleContract(createEntry());
+    expect(contract).not.toContain('under review and not yet merged upstream');
+  });
 
-      const structMatch1 = mod1.match(/pub struct (\w+)/);
-      const structMatch2 = mod2.match(/pub struct (\w+)/);
+  it('keeps the standard lib.rs crate wrapper', () => {
+    const libRs = generateLibRs();
+    expect(libRs).toContain('#![no_std]');
+    expect(libRs).toContain('mod contract;');
+    expect(libRs).toContain('pub use contract::*;');
+  });
 
-      expect(structMatch1).not.toBeNull();
-      expect(structMatch2).not.toBeNull();
-      expect(structMatch1![1]).not.toBe(structMatch2![1]);
+  it('generates upstream-aligned Cargo.toml metadata for module crates', () => {
+    const toml = generateCrateToml({
+      name: 'supply-limit',
+      dependencies: ['soroban-sdk', 'stellar-tokens'],
+      includeRlib: true,
     });
 
-    it('should embed module id in the name() return', () => {
-      const contract = generateComplianceModuleContract(
-        createEntry({ id: 'country-restrict' })
-      );
-      expect(contract).toContain('"country-restrict"');
-    });
+    expect(toml).toContain('name = "supply-limit"');
+    expect(toml).toContain('crate-type = ["cdylib", "rlib"]');
+    expect(toml).toContain('[package.metadata.stellar]');
+    expect(toml).toContain('edition.workspace = true');
+  });
+
+  it('selects a different upstream module implementation per registry entry', () => {
+    const supplyLimit = generateComplianceModuleContract(createEntry({ id: 'supply-limit' }));
+    const maxBalance = generateComplianceModuleContract(createEntry({ id: 'max-balance' }));
+
+    expect(supplyLimit).toContain('pub struct SupplyLimitContract;');
+    expect(maxBalance).toContain('pub struct MaxBalanceContract;');
+    expect(maxBalance).toContain('pub fn set_max_balance');
   });
 });

@@ -27,7 +27,13 @@ export function classifyComponent(input: ClassifyInput): ComponentInventoryItem 
   const { componentName, owningFile, rationale, classificationOverride, followUpAction } = input;
 
   if (classificationOverride) {
-    return { componentName, owningFile, classification: classificationOverride, rationale, followUpAction };
+    return {
+      componentName,
+      owningFile,
+      classification: classificationOverride,
+      rationale,
+      followUpAction,
+    };
   }
 
   const isSharedPackage = SHARED_PACKAGE_PATTERNS.some((pkg) => owningFile.includes(pkg));
@@ -49,7 +55,10 @@ export function isPromotionCandidate(item: ComponentInventoryItem): boolean {
   return item.classification === 'local-candidate';
 }
 
-type ClassificationGroup = Record<ComponentInventoryItem['classification'], ComponentInventoryItem[]>;
+type ClassificationGroup = Record<
+  ComponentInventoryItem['classification'],
+  ComponentInventoryItem[]
+>;
 
 /** Groups inventory items by their classification for reporting. */
 export function groupByClassification(items: ComponentInventoryItem[]): ClassificationGroup {

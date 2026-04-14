@@ -1,8 +1,7 @@
-import { RUST_EDITION } from '../../constants';
-
 export interface CrateTomlConfig {
   name: string;
   dependencies: string[];
+  includeRlib?: boolean;
 }
 
 /**
@@ -11,6 +10,7 @@ export interface CrateTomlConfig {
  */
 export function generateCrateToml(config: CrateTomlConfig): string {
   const deps = config.dependencies.map((dep) => `${dep} = { workspace = true }`).join('\n');
+  const crateTypes = config.includeRlib ? '["cdylib", "rlib"]' : '["cdylib"]';
 
   const devDeps = config.dependencies.includes('soroban-sdk')
     ? '\n[dev-dependencies]\nsoroban-sdk = { workspace = true, features = ["testutils"] }\n'
@@ -18,12 +18,18 @@ export function generateCrateToml(config: CrateTomlConfig): string {
 
   return `[package]
 name = "${config.name}"
-edition = "${RUST_EDITION}"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 publish = false
-version = "0.1.0"
+version.workspace = true
+authors.workspace = true
+
+[package.metadata.stellar]
+cargo_inherit = true
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ${crateTypes}
 doctest = false
 
 [dependencies]

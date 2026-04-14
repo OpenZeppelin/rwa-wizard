@@ -1,7 +1,8 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { CRATE_NAMES, SOROBAN_SDK_VERSION, STELLAR_CONTRACTS_COMMIT_HASH } from '../constants';
+import { CRATE_NAMES, SOROBAN_SDK_VERSION, STELLAR_CONTRACTS_REPOSITORY_URL } from '../constants';
 import { getModuleById } from '../modules/registry';
+import type { UpstreamTemplateSourceMetadata } from '../upstream/types';
 
 interface ContractTableRow {
   crate: string;
@@ -10,6 +11,21 @@ interface ContractTableRow {
   traits: string[];
 }
 
+interface SelectedModuleRow {
+  id: string;
+  name: string;
+  hooks: string[];
+  configSummary: string;
+  reviewSummary: string;
+}
+
+export interface ReadmeGenerationContext {
+  templateSourceMetadata: UpstreamTemplateSourceMetadata;
+}
+
+/**
+ * Build the contract summary table rows shown in the generated README.
+ */
 function getCoreContractTable(config: RWAConfig): ContractTableRow[] {
   const tokenTraits = ['FungibleToken', 'AccessControl', 'Pausable'];
   if (config.token.documentManager.enabled) {
@@ -50,6 +66,9 @@ function getCoreContractTable(config: RWAConfig): ContractTableRow[] {
   ];
 }
 
+/**
+ * Render the contract summary table as Markdown.
+ */
 function renderContractTable(rows: ContractTableRow[]): string {
   const lines: string[] = [];
   lines.push('| Crate | Contract | Purpose | Traits |');
@@ -62,6 +81,117 @@ function renderContractTable(rows: ContractTableRow[]): string {
   return lines.join('\n');
 }
 
+/**
+ * Return module rows for the selected compliance modules.
+ */
+function getSelectedModuleRows(config: RWAConfig): SelectedModuleRow[] {
+  const seen = new Set<string>();
+  const rows: SelectedModuleRow[] = [];
+
+  for (const selection of config.compliance.modules) {
+    if (seen.has(selection.moduleId)) {
+      continue;
+    }
+    seen.add(selection.moduleId);
+
+    const entry = getModuleById(selection.moduleId);
+    if (!entry) {
+      continue;
+    }
+
+    rows.push({
+      id: entry.id,
+      name: entry.name,
+      hooks: [...entry.requiredHooks],
+      configSummary: formatModuleConfigSummary(
+        selection.config ?? {},
+        entry.configFields.map((f) => f.key)
+      ),
+      reviewSummary:
+        entry.review.state === 'under-review'
+          ? entry.review.prUrl
+            ? `Under review ([PR](${entry.review.prUrl}))`
+            : 'Under review'
+          : 'Stable',
+    });
+  }
+
+  return rows;
+}
+
+/**
+ * Format module config values into a concise human-readable summary.
+ */
+function formatModuleConfigSummary(
+  config: Record<string, unknown>,
+  preferredKeys: readonly string[]
+): string {
+  const configKeys = Object.keys(config);
+  if (configKeys.length === 0) {
+    return 'None';
+  }
+
+  const remainingKeys = configKeys.filter((key) => !preferredKeys.includes(key)).sort();
+  const orderedKeys = [...preferredKeys.filter((key) => key in config), ...remainingKeys];
+  const parts = orderedKeys.flatMap((key) => {
+    const value = config[key];
+    if (value === undefined || value === null) {
+      return [];
+    }
+    if (typeof value === 'string' && value.trim().length === 0) {
+      return [];
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return [];
+    }
+
+    return [`\`${key}=${formatModuleConfigValue(value)}\``];
+  });
+
+  return parts.length > 0 ? parts.join(', ') : 'None';
+}
+
+/**
+ * Render one module config value for Markdown output.
+ */
+function formatModuleConfigValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry)).join(', ');
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+/**
+ * Render the selected compliance modules section when modules are configured.
+ */
+function renderSelectedModules(config: RWAConfig): string {
+  const rows = getSelectedModuleRows(config);
+  if (rows.length === 0) {
+    return '';
+  }
+
+  const lines: string[] = [];
+  lines.push('## Selected Compliance Modules');
+  lines.push('');
+  lines.push('| Module | Hooks | Config | Review |');
+  lines.push('|--------|-------|--------|--------|');
+
+  for (const row of rows) {
+    lines.push(
+      `| ${row.name} (\`${row.id}\`) | ${row.hooks.map((hook) => `\`${hook}\``).join(', ')} | ${row.configSummary} | ${row.reviewSummary} |`
+    );
+  }
+
+  lines.push('');
+  return lines.join('\n');
+}
+
+/**
+ * Format the configured deployment network for human-readable documentation.
+ */
 function getNetworkDescription(config: RWAConfig): string {
   const network = config.deployment.network;
   if (network === 'testnet') return 'Stellar Testnet';
@@ -70,7 +200,21 @@ function getNetworkDescription(config: RWAConfig): string {
 }
 
 /**
- * Generates the project README.md with 7 required sections per SR-009:
+ * Render human-readable provenance for the upstream template source used.
+ */
+function renderUpstreamProvenance(metadata: UpstreamTemplateSourceMetadata): string {
+  const shortCommit = metadata.sourceCommitHash.slice(0, 7);
+
+  if (metadata.strategy === 'local-checkout') {
+    return `Contract source was generated from a local checkout of [OpenZeppelin Stellar Contracts](${STELLAR_CONTRACTS_REPOSITORY_URL}) at commit \`${shortCommit}\`. The workspace \`Cargo.toml\` resolves upstream crates via local path dependencies for this generation.`;
+  }
+
+  return `Contract source was generated from a bundled snapshot of upstream [OpenZeppelin Stellar Contracts](${STELLAR_CONTRACTS_REPOSITORY_URL}) examples synced from commit \`${shortCommit}\`. See \`Cargo.toml\` for the exact dependency source used by this project.`;
+}
+
+/**
+ * Generates the project README.md with the SR-009 required sections plus
+ * module/provenance details when relevant:
  * 1. Project title and generated-by attribution
  * 2. Prerequisites
  * 3. Build instructions
@@ -79,9 +223,10 @@ function getNetworkDescription(config: RWAConfig): string {
  * 6. Contract table
  * 7. Unix note
  */
-export function generateReadme(config: RWAConfig): string {
+export function generateReadme(config: RWAConfig, context: ReadmeGenerationContext): string {
   const contractTable = getCoreContractTable(config);
   const networkDesc = getNetworkDescription(config);
+  const selectedModulesSection = renderSelectedModules(config);
 
   return `# ${config.token.name} (${config.token.symbol})
 
@@ -139,9 +284,9 @@ Contracts communicate through address references established during deployment. 
 
 ${renderContractTable(contractTable)}
 
-### Dependencies
+${selectedModulesSection ? `${selectedModulesSection}\n` : ''}### Upstream Provenance
 
-All contracts depend on the [OpenZeppelin Stellar Contracts](https://github.com/OpenZeppelin/stellar-contracts) library (pinned to commit \`${STELLAR_CONTRACTS_COMMIT_HASH.slice(0, 7)}\`).
+${renderUpstreamProvenance(context.templateSourceMetadata)}
 ${renderUnderReviewWarning(config)}
 ## Platform Note
 
@@ -149,6 +294,9 @@ Shell scripts (\`build.sh\`, \`deploy.sh\`) target **Unix-like environments** (L
 `;
 }
 
+/**
+ * Render the under-review module warning section when relevant.
+ */
 function renderUnderReviewWarning(config: RWAConfig): string {
   const uniqueIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
   const underReview = uniqueIds

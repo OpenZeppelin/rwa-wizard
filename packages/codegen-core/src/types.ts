@@ -105,7 +105,7 @@ export interface GenerationMetadata {
   generatorVersion: string;
   generatedAt: string;
   fileCount: number;
-  /** SHA-256 of JSON.stringify(config) with keys sorted alphabetically */
+  /** Deterministic hash of the config's stable JSON representation */
   configHash: string;
 }
 

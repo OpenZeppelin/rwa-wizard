@@ -1,51 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
+import { createValidConfig } from './helpers/config';
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../src/constants';
 import { StellarRwaGenerator } from '../src/stellar-rwa-generator';
-
-function createValidConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return {
-    token: {
-      name: 'Acme Real Estate Token',
-      symbol: 'ACME',
-      decimals: 18,
-      initialSupply: '1000000000000000000000000',
-      documentManager: { enabled: true },
-      ...overrides.token,
-    },
-    identityVerification: {
-      claimTopics: [
-        { id: 1, name: 'KYC' },
-        { id: 2, name: 'AML' },
-      ],
-      trustedIssuers: [
-        {
-          address: 'GCEXAMPLEISSUER1',
-          claimTopics: [1, 2],
-        },
-      ],
-      ...overrides.identityVerification,
-    },
-    compliance: {
-      modules: [],
-      ...overrides.compliance,
-    },
-    accessControl: {
-      ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
-      roles: [
-        { name: 'Manager', symbol: 'manager', addresses: ['GCEXAMPLEMGR'] },
-        { name: 'Agent', symbol: 'agent', addresses: ['GCEXAMPLEAGNT'] },
-      ],
-      ...overrides.accessControl,
-    },
-    deployment: {
-      network: 'testnet',
-      ...overrides.deployment,
-    },
-  };
-}
 
 const I128_MAX = '170141183460469231731687303715884105727';
 const I128_OVERFLOW = '170141183460469231731687303715884105728';
@@ -808,8 +765,8 @@ describe('RWA Config Validation (US5)', () => {
   describe('edge cases', () => {
     it('should silently ignore extra/unknown config properties', () => {
       const config = createValidConfig();
-      (config as Record<string, unknown>).unknownProperty = 'should be ignored';
-      (config.token as Record<string, unknown>).extraField = 42;
+      (config as unknown as Record<string, unknown>).unknownProperty = 'should be ignored';
+      (config.token as unknown as Record<string, unknown>).extraField = 42;
 
       const result = generator.validate(config);
       expect(result.valid).toBe(true);
