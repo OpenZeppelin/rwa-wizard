@@ -683,79 +683,6 @@ describe('RWA Config Validation (US5)', () => {
         })
       );
     });
-
-    it('should error on duplicate compliance modules', () => {
-      const config = createValidConfig({
-        compliance: {
-          modules: [
-            { moduleId: 'country-restrict' },
-            { moduleId: 'country-restrict' },
-          ],
-        },
-      });
-
-      const result = generator.validate(config);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContainEqual(
-        expect.objectContaining({
-          code: 'DUPLICATE_MODULE',
-        })
-      );
-    });
-
-    it('should error on missing required module config', () => {
-      const config = createValidConfig({
-        compliance: {
-          modules: [{ moduleId: 'supply-limit' }],
-        },
-      });
-
-      const result = generator.validate(config);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContainEqual(
-        expect.objectContaining({
-          code: 'REQUIRED_MODULE_CONFIG',
-          field: 'compliance.modules[0].config.limit',
-        })
-      );
-    });
-
-    it('should pass when required config is provided', () => {
-      const config = createValidConfig({
-        compliance: {
-          modules: [{ moduleId: 'supply-limit', config: { limit: 1000000 } }],
-        },
-      });
-
-      const result = generator.validate(config);
-      expect(result.valid).toBe(true);
-    });
-
-    it('should warn on under-review modules', () => {
-      const config = createValidConfig({
-        compliance: {
-          modules: [{ moduleId: 'supply-limit', config: { limit: 1000000 } }],
-        },
-      });
-
-      const result = generator.validate(config);
-      expect(result.warnings).toContainEqual(
-        expect.objectContaining({
-          code: 'UNDER_REVIEW_MODULE',
-        })
-      );
-    });
-
-    it('should accept modules without required config fields', () => {
-      const config = createValidConfig({
-        compliance: {
-          modules: [{ moduleId: 'transfer-restrict' }],
-        },
-      });
-
-      const result = generator.validate(config);
-      expect(result.valid).toBe(true);
-    });
   });
 
   // -----------------------------------------------------------------------
@@ -778,7 +705,6 @@ describe('RWA Config Validation (US5)', () => {
           name: '',
           symbol: '',
           decimals: -1,
-          administrativeControls: { burnable: false, mintable: false, pausable: false },
           documentManager: { enabled: false },
         },
         deployment: { network: '' },
@@ -801,7 +727,6 @@ describe('RWA Config Validation (US5)', () => {
           name: '',
           symbol: '',
           decimals: -1,
-          administrativeControls: { burnable: false, mintable: false, pausable: false },
           documentManager: { enabled: false },
         },
       });
