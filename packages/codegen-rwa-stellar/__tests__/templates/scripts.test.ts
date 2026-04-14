@@ -1,52 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
+import { createValidConfig } from '../helpers/config';
 import { CRATE_NAMES } from '../../src/constants';
 import { generateBuildSh } from '../../src/templates/scripts/build-sh';
 import { generateDeploySh } from '../../src/templates/scripts/deploy-sh';
-
-function createValidConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return {
-    token: {
-      name: 'Acme Real Estate Token',
-      symbol: 'ACME',
-      decimals: 18,
-      initialSupply: '1000000000000000000000000',
-      documentManager: { enabled: true },
-      ...overrides.token,
-    },
-    identityVerification: {
-      claimTopics: [
-        { id: 1, name: 'KYC' },
-        { id: 2, name: 'AML' },
-      ],
-      trustedIssuers: [
-        {
-          address: 'GCEXAMPLEISSUER1',
-          claimTopics: [1, 2],
-        },
-      ],
-      ...overrides.identityVerification,
-    },
-    compliance: {
-      modules: [],
-      ...overrides.compliance,
-    },
-    accessControl: {
-      ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
-      roles: [
-        { name: 'Manager', symbol: 'manager', addresses: ['GCEXAMPLEMGR'] },
-        { name: 'Agent', symbol: 'agent', addresses: ['GCEXAMPLEAGNT'] },
-      ],
-      ...overrides.accessControl,
-    },
-    deployment: {
-      network: 'testnet',
-      ...overrides.deployment,
-    },
-  };
-}
 
 describe('build.sh template', () => {
   it('should be a bash script with shebang', () => {
@@ -135,6 +92,8 @@ describe('deploy.sh template', () => {
 
       const ivSection = extractDeploySection(script, 'IDENTITY_VERIFIER_ADDRESS');
       expect(ivSection).toContain('$CTI_ADDRESS');
+      expect(ivSection).toContain('$IRS_ADDRESS');
+      expect(ivSection).toContain('$MANAGER');
     });
   });
 
@@ -223,6 +182,24 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
 
       expect(script).toContain('add_module_to');
+      expect(script).toContain('set_supply_limit');
+    });
+
+    it('should configure IRS-dependent modules before binding them to Compliance', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'max-balance', config: { maxBalance: 50000 } }],
+        },
+      });
+      const script = generateDeploySh(config);
+
+      const setIrsPos = script.indexOf('set_identity_registry_storage');
+      const setCompliancePos = script.indexOf('set_compliance_address');
+      const addModulePos = script.indexOf('add_module_to');
+
+      expect(setIrsPos).toBeGreaterThan(-1);
+      expect(setIrsPos).toBeLessThan(setCompliancePos);
+      expect(setCompliancePos).toBeLessThan(addModulePos);
     });
 
     it('should have correct post-deploy order: bind token → register modules → add claim topics → add trusted issuers → optional mint', () => {
@@ -260,6 +237,7 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
 
       expect(script).toContain('mint');
+      expect(script).toContain('--operator "$MANAGER"');
     });
 
     it('should include mint call with amount when initialSupply is "0"', () => {

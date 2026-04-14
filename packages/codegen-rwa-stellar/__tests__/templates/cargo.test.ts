@@ -28,13 +28,17 @@ describe('Per-crate Cargo.toml Template', () => {
     expect(output).toContain('crate-type = ["cdylib"]');
   });
 
-  it('should use Rust edition 2021', () => {
+  it('should inherit workspace package metadata', () => {
     const output = generateCrateToml({
       name: 'test-crate',
       dependencies: ['soroban-sdk'],
     });
 
-    expect(output).toContain(`edition = "${RUST_EDITION}"`);
+    expect(output).toContain('edition.workspace = true');
+    expect(output).toContain('license.workspace = true');
+    expect(output).toContain('repository.workspace = true');
+    expect(output).toContain('version.workspace = true');
+    expect(output).toContain('authors.workspace = true');
   });
 
   it('should include workspace dependencies', () => {
@@ -75,6 +79,16 @@ describe('Per-crate Cargo.toml Template', () => {
 
     expect(output).toContain('doctest = false');
   });
+
+  it('should include stellar cargo inheritance metadata', () => {
+    const output = generateCrateToml({
+      name: 'test-crate',
+      dependencies: ['soroban-sdk'],
+    });
+
+    expect(output).toContain('[package.metadata.stellar]');
+    expect(output).toContain('cargo_inherit = true');
+  });
 });
 
 describe('Workspace Cargo.toml Template', () => {
@@ -93,7 +107,8 @@ describe('Workspace Cargo.toml Template', () => {
       members: ['contracts/test'],
     });
 
-    expect(output).toContain(`soroban-sdk = "${SOROBAN_SDK_VERSION}"`);
+    expect(output).toContain(`version = "${SOROBAN_SDK_VERSION}"`);
+    expect(output).toContain('experimental_spec_shaking_v2');
   });
 
   it('should pin stellar-contracts git deps to specific commit hash', () => {
@@ -113,6 +128,20 @@ describe('Workspace Cargo.toml Template', () => {
         `${crate} = { git = "${STELLAR_CONTRACTS_GIT_URL}", rev = "${STELLAR_CONTRACTS_COMMIT_HASH}" }`
       );
     }
+  });
+
+  it('should map local stellar-contracts package paths correctly', () => {
+    const output = generateWorkspaceToml({
+      members: ['contracts/test'],
+      contractsLibraryPath: '/tmp/stellar-contracts',
+    });
+
+    expect(output).toContain('stellar-tokens = { path = "/tmp/stellar-contracts/packages/tokens" }');
+    expect(output).toContain('stellar-access = { path = "/tmp/stellar-contracts/packages/access" }');
+    expect(output).toContain('stellar-macros = { path = "/tmp/stellar-contracts/packages/macros" }');
+    expect(output).toContain(
+      'stellar-contract-utils = { path = "/tmp/stellar-contracts/packages/contract-utils" }'
+    );
   });
 
   it('should use Rust edition 2021', () => {

@@ -1,51 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
+import { createValidConfig } from './helpers/config';
 import { CRATE_NAMES } from '../src/constants';
 import { StellarRwaGenerator } from '../src/stellar-rwa-generator';
-
-function createValidConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return {
-    token: {
-      name: 'Acme Real Estate Token',
-      symbol: 'ACME',
-      decimals: 18,
-      initialSupply: '1000000000000000000000000',
-      documentManager: { enabled: true },
-      ...overrides.token,
-    },
-    identityVerification: {
-      claimTopics: [
-        { id: 1, name: 'KYC' },
-        { id: 2, name: 'AML' },
-      ],
-      trustedIssuers: [
-        {
-          address: 'GCEXAMPLEISSUER1',
-          claimTopics: [1, 2],
-        },
-      ],
-      ...overrides.identityVerification,
-    },
-    compliance: {
-      modules: [],
-      ...overrides.compliance,
-    },
-    accessControl: {
-      ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
-      roles: [
-        { name: 'Manager', symbol: 'manager', addresses: ['GCEXAMPLEMGR'] },
-        { name: 'Agent', symbol: 'agent', addresses: ['GCEXAMPLEAGNT'] },
-      ],
-      ...overrides.accessControl,
-    },
-    deployment: {
-      network: 'testnet',
-      ...overrides.deployment,
-    },
-  };
-}
 
 describe('StellarRwaGenerator', () => {
   const generator = new StellarRwaGenerator();
@@ -153,16 +110,16 @@ describe('StellarRwaGenerator', () => {
     it('RWA Token should implement FungibleToken, AccessControl, Pausable', () => {
       const contract = result.files['contracts/rwa-token/src/contract.rs'] as string;
 
-      expect(contract).toContain('impl FungibleToken for RwaTokenContract');
+      expect(contract).toContain('impl FungibleToken for RWATokenContract');
       expect(contract).toContain('type ContractType = RWA;');
-      expect(contract).toContain('impl AccessControl for RwaTokenContract');
-      expect(contract).toContain('impl Pausable for RwaTokenContract');
+      expect(contract).toContain('impl AccessControl for RWATokenContract');
+      expect(contract).toContain('impl Pausable for RWATokenContract');
     });
 
     it('RWA Token should include DocumentManager when enabled', () => {
       const contract = result.files['contracts/rwa-token/src/contract.rs'] as string;
 
-      expect(contract).toContain('impl DocumentManager for RwaTokenContract');
+      expect(contract).toContain('impl DocumentManager for RWATokenContract');
     });
 
     it('Compliance should implement Compliance, TokenBinder, AccessControl', () => {
@@ -183,11 +140,11 @@ describe('StellarRwaGenerator', () => {
     it('CTI should implement ClaimTopicsAndIssuers, AccessControl', () => {
       const contract = result.files['contracts/claim-topics-issuers/src/contract.rs'] as string;
 
-      expect(contract).toContain('impl ClaimTopicsAndIssuers for ClaimTopicsIssuersContract');
-      expect(contract).toContain('impl AccessControl for ClaimTopicsIssuersContract');
+      expect(contract).toContain('impl ClaimTopicsAndIssuers for ClaimTopicsAndIssuersContract');
+      expect(contract).toContain('impl AccessControl for ClaimTopicsAndIssuersContract');
     });
 
-    it('IRS should implement IdentityRegistryStorage, CountryDataManager, TokenBinder, AccessControl', () => {
+    it('IRS should implement IdentityRegistryStorage, CountryDataManager, and TokenBinder', () => {
       const contract = result.files[
         'contracts/identity-registry-storage/src/contract.rs'
       ] as string;
@@ -195,7 +152,6 @@ describe('StellarRwaGenerator', () => {
       expect(contract).toContain('impl IdentityRegistryStorage for IdentityRegistryContract');
       expect(contract).toContain('impl CountryDataManager for IdentityRegistryContract');
       expect(contract).toContain('impl TokenBinder for IdentityRegistryContract');
-      expect(contract).toContain('impl AccessControl for IdentityRegistryContract');
     });
   });
 
@@ -203,7 +159,7 @@ describe('StellarRwaGenerator', () => {
     const config = createValidConfig();
     const result = generator.generate(config);
 
-    it('RWA Token: e, name, symbol, admin, initial_supply + role params', () => {
+    it('RWA Token: e, name, symbol, admin, manager, compliance, identity_verifier', () => {
       const contract = result.files['contracts/rwa-token/src/contract.rs'] as string;
 
       expect(contract).toContain('pub fn __constructor(');
@@ -211,35 +167,43 @@ describe('StellarRwaGenerator', () => {
       expect(contract).toContain('name: String,');
       expect(contract).toContain('symbol: String,');
       expect(contract).toContain('admin: Address,');
-      expect(contract).toContain('initial_supply: i128,');
+      expect(contract).toContain('manager: Address,');
+      expect(contract).toContain('compliance: Address,');
+      expect(contract).toContain('identity_verifier: Address,');
+      expect(contract).not.toContain('initial_supply: i128,');
     });
 
-    it('Compliance: e, admin', () => {
+    it('Compliance: e, admin, manager', () => {
       const contract = result.files['contracts/compliance/src/contract.rs'] as string;
 
-      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
+      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address, manager: Address)');
     });
 
-    it('Identity Verifier: e, admin, cti_address', () => {
+    it('Identity Verifier: e, admin, manager, identity_registry_storage, claim_topics_and_issuers', () => {
       const contract = result.files['contracts/identity-verifier/src/contract.rs'] as string;
 
+      expect(contract).toContain('admin: Address,');
+      expect(contract).toContain('manager: Address,');
+      expect(contract).toContain('identity_registry_storage: Address,');
+      expect(contract).toContain('claim_topics_and_issuers: Address,');
+    });
+
+    it('CTI: e, admin, manager', () => {
+      const contract = result.files['contracts/claim-topics-issuers/src/contract.rs'] as string;
+
       expect(contract).toContain(
-        'pub fn __constructor(e: &Env, admin: Address, cti_address: Address)'
+        'pub fn __constructor(e: &Env, admin: Address, manager: Address)'
       );
     });
 
-    it('CTI: e, admin', () => {
-      const contract = result.files['contracts/claim-topics-issuers/src/contract.rs'] as string;
-
-      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
-    });
-
-    it('IRS: e, admin', () => {
+    it('IRS: e, admin, manager', () => {
       const contract = result.files[
         'contracts/identity-registry-storage/src/contract.rs'
       ] as string;
 
-      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
+      expect(contract).toContain(
+        'pub fn __constructor(e: &Env, admin: Address, manager: Address)'
+      );
     });
   });
 
@@ -411,6 +375,7 @@ describe('StellarRwaGenerator', () => {
       const phases: string[] = [];
       generator.generate(config, {
         onProgress: (event) => phases.push(event.phase),
+        allowUnderReviewModules: true,
       });
 
       expect(phases).toContain('validating');
@@ -432,7 +397,7 @@ describe('StellarRwaGenerator', () => {
       const result = generator.generate(config);
       const tokenContract = result.files['contracts/rwa-token/src/contract.rs'] as string;
 
-      expect(tokenContract).not.toContain('grant_role_no_auth');
+      expect(tokenContract).toContain('grant_role_no_auth(e, &manager, &MANAGER_ROLE, &admin);');
       expect(result.metadata.fileCount).toBeGreaterThan(0);
     });
 

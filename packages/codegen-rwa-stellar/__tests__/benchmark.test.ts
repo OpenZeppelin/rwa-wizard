@@ -1,17 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
+import { createValidConfig } from './helpers/config';
 import { generate, generateZip } from '../src/index';
 
-function createTypicalConfig(): RWAConfig {
-  return {
+function createTypicalConfig() {
+  return createValidConfig({
     token: {
       name: 'Benchmark Real Estate Token',
       symbol: 'BENCH',
-      decimals: 18,
-      initialSupply: '1000000000000000000000000',
-      documentManager: { enabled: true },
     },
     identityVerification: {
       claimTopics: [
@@ -38,8 +34,7 @@ function createTypicalConfig(): RWAConfig {
         { name: 'Operator', symbol: 'operator', addresses: ['GCOP1'] },
       ],
     },
-    deployment: { network: 'testnet' },
-  };
+  });
 }
 
 /**
@@ -55,7 +50,7 @@ describe('SC-001 performance benchmark', () => {
     const config = createTypicalConfig();
 
     const start = performance.now();
-    const result = generate(config);
+    const result = generate(config, { allowUnderReviewModules: true });
     const elapsed = performance.now() - start;
 
     expect(elapsed).toBeLessThan(SC001_THRESHOLD_MS);
@@ -80,7 +75,7 @@ describe('SC-001 performance benchmark', () => {
     const config = createTypicalConfig();
 
     const start = performance.now();
-    const zip = await generateZip(config);
+    const zip = await generateZip(config, { allowUnderReviewModules: true });
     const elapsed = performance.now() - start;
 
     expect(elapsed).toBeLessThan(SC001_THRESHOLD_MS);
@@ -94,7 +89,7 @@ describe('SC-001 performance benchmark', () => {
 
     const start = performance.now();
     for (let i = 0; i < runs; i++) {
-      generate(config);
+      generate(config, { allowUnderReviewModules: true });
     }
     const totalElapsed = performance.now() - start;
     const avgMs = totalElapsed / runs;

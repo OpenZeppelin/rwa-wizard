@@ -1,58 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ProgressCallback } from '@openzeppelin/codegen-core';
-import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import { createValidConfig } from './helpers/config';
 import {
   extractFilesFromZip,
   findFileContent,
   validateProjectStructure,
-} from '../../codegen-core/__tests__/utils/zip-inspector';
+} from './utils/zip-inspector';
 import { CRATE_NAMES } from '../src/constants';
 import { generateZip } from '../src/index';
 import { sanitizeDirectoryName } from '../src/stellar-rwa-generator';
-
-function createValidConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return {
-    token: {
-      name: 'Acme Real Estate Token',
-      symbol: 'ACME',
-      decimals: 18,
-      initialSupply: '1000000000000000000000000',
-      documentManager: { enabled: true },
-      ...overrides.token,
-    },
-    identityVerification: {
-      claimTopics: [
-        { id: 1, name: 'KYC' },
-        { id: 2, name: 'AML' },
-      ],
-      trustedIssuers: [
-        {
-          address: 'GCEXAMPLEISSUER1',
-          claimTopics: [1, 2],
-        },
-      ],
-      ...overrides.identityVerification,
-    },
-    compliance: {
-      modules: [],
-      ...overrides.compliance,
-    },
-    accessControl: {
-      ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
-      roles: [
-        { name: 'Manager', symbol: 'manager', addresses: ['GCEXAMPLEMGR'] },
-        { name: 'Agent', symbol: 'agent', addresses: ['GCEXAMPLEAGNT'] },
-      ],
-      ...overrides.accessControl,
-    },
-    deployment: {
-      network: 'testnet',
-      ...overrides.deployment,
-    },
-  };
-}
 
 describe('generateZip (US3)', () => {
   describe('sanitizeDirectoryName', () => {

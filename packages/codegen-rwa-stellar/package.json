@@ -47,6 +47,7 @@
     "build": "tsdown",
     "prepublishOnly": "[ \"$SKIP_PUBLISH_BUILD\" = \"true\" ] || pnpm build",
     "dev": "tsdown --watch",
+    "sync:stellar-templates": "node ./scripts/sync-stellar-templates.mjs",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
@@ -59,7 +60,9 @@
   },
   "dependencies": {
     "@openzeppelin/codegen-core": "workspace:*",
-    "@openzeppelin/rwa-config": "workspace:*"
+    "@openzeppelin/codegen-rwa-common": "workspace:*",
+    "@openzeppelin/rwa-config": "workspace:*",
+    "i18n-iso-countries": "^7.14.0"
   },
   "license": "AGPL-3.0",
   "engines": {

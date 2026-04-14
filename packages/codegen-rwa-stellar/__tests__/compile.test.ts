@@ -6,9 +6,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import { createMinimalConfig as createBaseMinimalConfig, createValidConfig } from './helpers/config';
 import { generate } from '../src/index';
 
 const COMPILE_TIMEOUT = 300_000; // 5 minutes
+const LOCAL_STELLAR_CONTRACTS_PATH =
+  process.env.STELLAR_CONTRACTS_PATH ?? '/Users/ghost/dev/repos/OpenZeppelin/stellar-contracts';
 
 function hasStellarCli(): boolean {
   try {
@@ -31,8 +34,17 @@ function hasRustWasmTarget(): boolean {
   }
 }
 
+function hasLocalContractsLibrary(): boolean {
+  return (
+    existsSync(join(LOCAL_STELLAR_CONTRACTS_PATH, 'packages/tokens')) &&
+    existsSync(join(LOCAL_STELLAR_CONTRACTS_PATH, 'packages/access')) &&
+    existsSync(join(LOCAL_STELLAR_CONTRACTS_PATH, 'packages/macros')) &&
+    existsSync(join(LOCAL_STELLAR_CONTRACTS_PATH, 'packages/contract-utils'))
+  );
+}
+
 function createFullConfig(overrides?: Partial<RWAConfig>): RWAConfig {
-  return {
+  return createValidConfig({
     token: {
       name: 'Compile Test Token',
       symbol: 'CTEST',
@@ -44,35 +56,16 @@ function createFullConfig(overrides?: Partial<RWAConfig>): RWAConfig {
       claimTopics: [{ id: 1, name: 'KYC' }],
       trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1] }],
     },
-    compliance: { modules: [] },
     accessControl: {
       ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
       roles: [{ name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] }],
     },
-    deployment: { network: 'testnet' },
     ...overrides,
-  };
+  });
 }
 
 function createMinimalConfig(): RWAConfig {
-  return {
-    token: {
-      name: 'Minimal Token',
-      symbol: 'MIN',
-      decimals: 7,
-      documentManager: { enabled: false },
-    },
-    identityVerification: {
-      claimTopics: [{ id: 1, name: 'KYC' }],
-      trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1] }],
-    },
-    compliance: { modules: [] },
-    accessControl: {
-      ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
-      roles: [],
-    },
-    deployment: { network: 'testnet' },
-  };
+  return createBaseMinimalConfig();
 }
 
 function writeGeneratedFiles(outputDir: string, files: Record<string, string | Uint8Array>): void {
@@ -127,6 +120,8 @@ async function runStellarBuild(projectDir: string): Promise<{ success: boolean; 
 const skipReason =
   !hasStellarCli() || !hasRustWasmTarget()
     ? 'Requires `stellar` CLI and Rust wasm32 target to be installed'
+    : !hasLocalContractsLibrary()
+      ? 'Requires a local `stellar-contracts` checkout (set STELLAR_CONTRACTS_PATH if needed)'
     : undefined;
 
 describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must compile', () => {
@@ -144,7 +139,7 @@ describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must comp
     'should compile a full-featured RWA project (with DocumentManager + roles)',
     async () => {
       const config = createFullConfig();
-      const result = generate(config);
+      const result = generate(config, { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH });
 
       const projectDir = join(testRoot, 'full-featured');
       writeGeneratedFiles(projectDir, result.files);
@@ -174,7 +169,7 @@ describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must comp
     'should compile a minimal RWA project (no DocumentManager, no roles)',
     async () => {
       const config = createMinimalConfig();
-      const result = generate(config);
+      const result = generate(config, { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH });
 
       const projectDir = join(testRoot, 'minimal');
       writeGeneratedFiles(projectDir, result.files);
@@ -198,7 +193,7 @@ describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must comp
           ],
         },
       });
-      const result = generate(config);
+      const result = generate(config, { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH });
 
       const projectDir = join(testRoot, 'multi-role');
       writeGeneratedFiles(projectDir, result.files);

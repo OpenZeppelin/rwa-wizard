@@ -1,7 +1,6 @@
 import type {
   GenerateOptions,
   GenerationResult,
-  ProgressCallback,
   ValidationResult,
   ZipResult,
 } from '@openzeppelin/codegen-core';
@@ -192,7 +191,7 @@ export function validate(config: RWAConfig, options?: GenerateOptions): Validati
  * replaced with hyphens, `-rwa` suffix appended).
  *
  * @param config - The RWA configuration describing the token project.
- * @param options - Optional settings including a progress callback.
+ * @param options - Optional settings including progress, local checkout, and review flags.
  * @returns A `ZipResult` containing the Blob data, fileName, and generation metadata.
  * @throws {Error} If the config is invalid.
  *
@@ -209,12 +208,12 @@ export function validate(config: RWAConfig, options?: GenerateOptions): Validati
  */
 export async function generateZip(
   config: RWAConfig,
-  options?: { onProgress?: ProgressCallback }
+  options?: GenerateOptions
 ): Promise<ZipResult> {
-  const result = generate(config);
+  const result = generate(config, options);
   const dirName = sanitizeDirectoryName(config.token.symbol);
 
-  return coreGenerateZip(result, dirName, options);
+  return coreGenerateZip(result, dirName, { onProgress: options?.onProgress });
 }
 
 /**
@@ -222,7 +221,7 @@ export async function generateZip(
  *
  * Returns only modules with concrete implementations in the generator.
  * Each entry includes the module ID, human-readable name, description,
- * and supported compliance hooks.
+ * and required compliance hooks.
  *
  * @returns An array of `ComplianceModuleRegistryEntry` objects.
  *
@@ -232,7 +231,7 @@ export async function generateZip(
  *
  * const modules = getAvailableModules();
  * for (const mod of modules) {
- *   console.log(`${mod.id}: ${mod.description} (hooks: ${mod.supportedHooks.join(', ')})`);
+ *   console.log(`${mod.id}: ${mod.description} (hooks: ${mod.requiredHooks.join(', ')})`);
  * }
  * ```
  */

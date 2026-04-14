@@ -8,7 +8,11 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*", "__tests__/**/*"],
+  "include": ["src/**/*", "src/**/*.json", "__tests__/**/*"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../config" }, { "path": "../codegen-core" }]
+  "references": [
+    { "path": "../config" },
+    { "path": "../codegen-core" },
+    { "path": "../codegen-rwa-common" }
+  ]
 }

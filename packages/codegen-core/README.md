@@ -1,6 +1,6 @@
 # @openzeppelin/codegen-core
 
-Chain-agnostic code generation pipeline engine. Provides file tree assembly, ZIP packaging, a composable validation framework, and progress reporting — used as the foundation for all OpenZeppelin code generators.
+Chain-agnostic code generation primitives used by OpenZeppelin generators. This package owns the shared infrastructure layer: file trees, ZIP assembly, validation composition, progress reporting, deterministic config hashing, exact source patching, and template-source abstractions.
 
 ## Install
 
@@ -8,13 +8,23 @@ Chain-agnostic code generation pipeline engine. Provides file tree assembly, ZIP
 npm install @openzeppelin/codegen-core
 ```
 
+## What This Package Owns
+
+- File tree assembly and path manipulation
+- ZIP packaging from `GenerationResult`
+- Validation rule composition and result shaping
+- Progress callback helpers
+- Deterministic config serialization and hashing
+- Exact-match source patch helpers
+- Snapshot-backed template source abstractions
+
 ## API Reference
 
 ### Generation Pipeline
 
 #### `generateZip(result, rootDirName, options?)`
 
-Packages a `GenerationResult` (file tree + metadata) into a ZIP archive.
+Packages a `GenerationResult` into a ZIP archive rooted under `rootDirName`.
 
 ```typescript
 import { generateZip } from '@openzeppelin/codegen-core';
@@ -22,25 +32,21 @@ import { generateZip } from '@openzeppelin/codegen-core';
 const zipResult = await generateZip(generationResult, 'my-project', {
   onProgress: (event) => console.log(`${event.phase}: ${event.percentage}%`),
 });
-
-// zipResult.data — Blob (browser) or Buffer-backed Blob (Node.js)
-// zipResult.fileName — e.g. "my-project.zip"
-// zipResult.metadata — GenerationMetadata
 ```
 
 ### Validation Framework
 
-#### `createValidationRule(name, fn)`
+#### `createValidationRule(fn)`
 
-Creates a named validation rule from a function that receives the config and returns errors/warnings.
+Creates a typed validation rule from a function that returns `{ errors, warnings }`.
 
 #### `composeValidationRules(...rules)`
 
-Composes multiple validation rules into a single rule set.
+Combines multiple rules into a single validation rule.
 
 #### `validateWithRules(config, rules)`
 
-Runs all composed rules against a config and returns a `ValidationResult`.
+Runs rules against a config and produces a `ValidationResult`.
 
 ```typescript
 import {
@@ -49,66 +55,98 @@ import {
   validateWithRules,
 } from '@openzeppelin/codegen-core';
 
-const nameRule = createValidationRule('name-check', (config) => {
-  const errors = [];
-  if (!config.name) {
-    errors.push({ field: 'name', code: 'REQUIRED', message: 'Name is required' });
-  }
-  return { errors, warnings: [] };
+const nameRule = createValidationRule<{ name: string }>((config) => {
+  return config.name
+    ? { errors: [], warnings: [] }
+    : {
+        errors: [{ field: 'name', code: 'REQUIRED_FIELD', message: 'Name is required' }],
+        warnings: [],
+      };
 });
 
-const rules = composeValidationRules(nameRule);
-const result = validateWithRules(myConfig, rules);
-// result.valid, result.errors, result.warnings
+const combinedRule = composeValidationRules(nameRule);
+const result = validateWithRules({ name: '' }, [combinedRule]);
 ```
 
 ### File Tree Utilities
 
-#### `createFile(path, content)`
-
-Creates a `FileTree` with a single file entry.
-
-#### `mergeFileTrees(...trees)`
-
-Merges multiple `FileTree` objects (later entries override earlier ones on conflict).
-
-#### `addFile(tree, path, content)`
-
-Returns a new `FileTree` with the given file added.
-
-#### `prefixPaths(tree, prefix)`
-
-Returns a new `FileTree` with all paths prefixed by the given directory.
-
-#### `getFilePaths(tree)` / `getFileCount(tree)`
-
-Query helpers for `FileTree` contents.
+- `createFile(path, content)`
+- `mergeFileTrees(...trees)`
+- `addFile(tree, path, content)`
+- `prefixPaths(tree, prefix)`
+- `getFilePaths(tree)`
+- `getFileCount(tree)`
 
 ```typescript
 import { createFile, mergeFileTrees, prefixPaths } from '@openzeppelin/codegen-core';
 
-const src = mergeFileTrees(
-  createFile('lib.rs', '#![no_std]'),
-  createFile('contract.rs', '// contract code')
-);
+const tree = mergeFileTrees(createFile('src/main.txt', 'hello'), createFile('README.md', '# Demo'));
+const rooted = prefixPaths(tree, 'demo-project');
+```
 
-const prefixed = prefixPaths(src, 'contracts/token/src');
-// { "contracts/token/src/lib.rs": "...", "contracts/token/src/contract.rs": "..." }
+### Determinism Utilities
+
+- `sortObjectKeys(value)`
+- `stableJsonStringify(value)`
+- `computeConfigHash(value)`
+- `hashString(value)`
+
+```typescript
+import { computeConfigHash, stableJsonStringify } from '@openzeppelin/codegen-core';
+
+const json = stableJsonStringify({ b: 2, a: 1 });
+const hash = computeConfigHash({ b: 2, a: 1 });
+```
+
+### Source Patch Helpers
+
+- `replaceExact(source, search, replacement)`
+- `insertBeforeExact(source, marker, insertion)`
+- `insertAfterExact(source, marker, insertion)`
+
+These helpers fail fast when the expected source marker disappears, which makes upstream template drift explicit during generation.
+
+### Template Source Helpers
+
+- `getTemplateSourceKey(kind, id)`
+- `assertTemplateSnapshotCompleteness(snapshot, manifest)`
+- `createSnapshotTemplateSource(snapshot, metadata)`
+
+```typescript
+import {
+  createSnapshotTemplateSource,
+  getTemplateSourceKey,
+  type TemplateSnapshot,
+} from '@openzeppelin/codegen-core';
+
+const snapshot: TemplateSnapshot = {
+  metadata: {
+    sourceRepoUrl: 'https://example.com/repo.git',
+    sourceCommitHash: 'abc123',
+    syncedAt: '2026-01-01T00:00:00.000Z',
+  },
+  templates: {
+    [getTemplateSourceKey('contract', 'token')]: {
+      sourcePath: 'fixtures/token.txt',
+      content: 'template contents',
+    },
+  },
+};
+
+const source = createSnapshotTemplateSource(snapshot, {
+  ...snapshot.metadata,
+  strategy: 'bundled-snapshot',
+});
 ```
 
 ### Progress Utilities
 
-#### `createProgressEvent(phase, percentage, message?)`
-
-Factory for `ProgressEvent` objects.
-
-#### `resolveProgressCallback(cb?)`
-
-Returns the provided callback or a no-op default — safe to call unconditionally.
+- `createProgressEvent(phase, percentage, message?)`
+- `resolveProgressCallback(callback?)`
 
 ### Generator Interface
 
-All generators implement the `Generator<TConfig>` interface:
+All generators implement `Generator<TConfig>`.
 
 ```typescript
 import type { GenerationResult, Generator, ValidationResult } from '@openzeppelin/codegen-core';
@@ -120,27 +158,29 @@ class MyGenerator implements Generator<MyConfig> {
   validate(config: MyConfig): ValidationResult {
     /* ... */
   }
+
   generate(config: MyConfig, options?): GenerationResult {
     /* ... */
   }
 }
 ```
 
-## Types
+## Shared Types
 
-| Type                 | Description                                                               |
-| -------------------- | ------------------------------------------------------------------------- |
-| `FileTree`           | `Record<string, string \| Uint8Array>` — in-memory project structure      |
-| `Generator<TConfig>` | Interface for code generators                                             |
-| `ValidationResult`   | `{ valid, errors, warnings }`                                             |
-| `ValidationError`    | `{ field, code, message }`                                                |
-| `ValidationWarning`  | `{ field, code, message }`                                                |
-| `GenerationResult`   | `{ files: FileTree, metadata }`                                           |
-| `GenerationMetadata` | `{ generatorName, generatorVersion, generatedAt, fileCount, configHash }` |
-| `ZipResult`          | `{ data: Blob, fileName, metadata }`                                      |
-| `ProgressEvent`      | `{ phase, percentage, message? }`                                         |
-| `ProgressCallback`   | `(event: ProgressEvent) => void`                                          |
-| `GenerateOptions`    | `{ onProgress?: ProgressCallback }`                                       |
+Notable exported types include:
+
+- `FileTree`
+- `ValidationResult`, `ValidationError`, `ValidationWarning`
+- `GenerationResult`, `GenerationMetadata`, `ZipResult`
+- `ProgressEvent`, `ProgressCallback`
+- `GenerateOptions`
+- `TemplateSnapshot`, `TemplateSource`, `TemplateManifestEntry`
+
+`GenerateOptions` currently includes:
+
+- `onProgress`: shared progress callback
+- `contractsLibraryPath`: optional local upstream checkout path for generators that support it
+- `allowUnderReviewModules`: optional policy override for generators that gate unfinished modules
 
 ## License
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import { createValidConfig as createBaseValidConfig, createMinimalConfig } from './helpers/config';
 import {
   generate,
   generateRoleSymbol,
@@ -18,8 +19,10 @@ import type {
   ZipResult,
 } from '../src/index';
 
-function createValidConfig(): RWAConfig {
-  return {
+function createValidConfig(
+  overrides: Parameters<typeof createBaseValidConfig>[0] = {}
+): RWAConfig {
+  return createBaseValidConfig({
     token: {
       name: 'Standalone Test Token',
       symbol: 'STST',
@@ -31,13 +34,12 @@ function createValidConfig(): RWAConfig {
       claimTopics: [{ id: 1, name: 'KYC' }],
       trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1] }],
     },
-    compliance: { modules: [] },
     accessControl: {
       ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
       roles: [{ name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] }],
     },
-    deployment: { network: 'testnet' },
-  };
+    ...overrides,
+  });
 }
 
 /**
@@ -125,16 +127,15 @@ describe('standalone Node.js integration (US4)', () => {
     });
 
     it('should never throw, even for severely malformed configs', () => {
-      const malformed = {
+      const malformed = createMinimalConfig({
         token: { name: '', symbol: '', decimals: -1, documentManager: { enabled: false } },
         identityVerification: { claimTopics: [], trustedIssuers: [] },
-        compliance: { modules: [] },
         accessControl: {
-          ownership: { type: 'single-owner' as const, ownerAddress: '' },
+          ownership: { type: 'single-owner', ownerAddress: '' },
           roles: [],
         },
         deployment: { network: '' },
-      } satisfies RWAConfig;
+      });
 
       expect(() => validate(malformed)).not.toThrow();
       const result = validate(malformed);
@@ -268,15 +269,14 @@ describe('standalone Node.js integration (US4)', () => {
   describe('concurrent invocation safety (CR-009)', () => {
     it('should handle multiple parallel generate calls without interference', async () => {
       const config1 = createValidConfig();
-      const config2: RWAConfig = {
-        ...createValidConfig(),
+      const config2 = createValidConfig({
         token: {
           name: 'Token B',
           symbol: 'TOKB',
           decimals: 6,
           documentManager: { enabled: false },
         },
-      };
+      });
 
       const [result1, result2] = await Promise.all([
         Promise.resolve(generate(config1)),
