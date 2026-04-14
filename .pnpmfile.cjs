@@ -211,21 +211,52 @@ function rewriteDependencies(pkg, context, cacheDir, familyKey, family) {
   }
 }
 
-function readPackage(pkg, context) {
-  if (!isAnyLocalFamilyEnabled()) {
-    return pkg;
-  }
+/**
+ * Widen `^X.Y.Z` ranges on `@openzeppelin/adapter*` packages to also include
+ * pre-release versions (`>=X.Y.Z-0 <(X+1).0.0`).
+ *
+ * This lets `pnpm install` resolve RC packages when the stable release has not
+ * shipped yet, without changing `package.json`. Local `file:` rewrites are left
+ * untouched because they no longer match the semver pattern.
+ */
+function allowAdapterPrereleases(pkg) {
+  for (const depType of ['dependencies', 'devDependencies']) {
+    if (!pkg[depType]) continue;
 
-  const workspaceRoot = __dirname;
-  const projectConfig = readProjectConfig(workspaceRoot);
+    for (const [name, range] of Object.entries(pkg[depType])) {
+      if (!name.startsWith('@openzeppelin/adapter') && !name.startsWith('@openzeppelin/adapters-')) {
+        continue;
+      }
 
-  for (const [familyKey, family] of Object.entries(projectConfig.families)) {
-    if (process.env[family.envFlag] !== 'true') {
-      continue;
+      const match = range.match(/^\^(\d+)\.(\d+)\.(\d+)$/);
+      if (!match) continue;
+
+      const major = Number(match[1]);
+      const minor = Number(match[2]);
+      const patch = Number(match[3]);
+      const upperBound =
+        major > 0 ? `${major + 1}.0.0` : minor > 0 ? `0.${minor + 1}.0` : `0.0.${patch + 1}`;
+
+      pkg[depType][name] = `>=${major}.${minor}.${patch}-0 <${upperBound}`;
     }
-
-    rewriteDependencies(pkg, context, projectConfig.cacheDir, familyKey, family);
   }
+}
+
+function readPackage(pkg, context) {
+  if (isAnyLocalFamilyEnabled()) {
+    const workspaceRoot = __dirname;
+    const projectConfig = readProjectConfig(workspaceRoot);
+
+    for (const [familyKey, family] of Object.entries(projectConfig.families)) {
+      if (process.env[family.envFlag] !== 'true') {
+        continue;
+      }
+
+      rewriteDependencies(pkg, context, projectConfig.cacheDir, familyKey, family);
+    }
+  }
+
+  allowAdapterPrereleases(pkg);
 
   return pkg;
 }

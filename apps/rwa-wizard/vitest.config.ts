@@ -3,9 +3,14 @@ import { defineConfig, mergeConfig } from 'vitest/config';
 
 import viteConfig from './vite.config';
 
-export default mergeConfig(
-  viteConfig as UserConfig,
-  defineConfig({
+async function resolveViteConfig(mode: string): Promise<UserConfig> {
+  return typeof viteConfig === 'function'
+    ? await viteConfig({ command: 'serve', mode })
+    : (viteConfig as UserConfig);
+}
+
+export default defineConfig(async ({ mode }) =>
+  mergeConfig(await resolveViteConfig(mode), {
     test: {
       globals: true,
       environment: 'happy-dom',
@@ -13,7 +18,11 @@ export default mergeConfig(
       include: ['src/**/*.{test,spec}.{ts,tsx}'],
       server: {
         deps: {
-          inline: ['@openzeppelin/ui-components', '@uiw/react-textarea-code-editor'],
+          inline: [
+            '@openzeppelin/ui-components',
+            '@uiw/react-textarea-code-editor',
+            '@openzeppelin/codegen-rwa-stellar',
+          ],
         },
       },
     },

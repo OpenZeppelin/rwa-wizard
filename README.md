@@ -27,7 +27,7 @@ This project is currently in development.
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
 - [Available Scripts](#available-scripts)
-- [Local Development with UI Builder](#local-development-with-ui-builder)
+- [Local development with openzeppelin-ui and openzeppelin-adapters](#local-development-with-openzeppelin-ui-and-openzeppelin-adapters)
 - [Project Structure](#project-structure)
 - [Tech Stack](#tech-stack)
 - [Code Style](#code-style)
@@ -94,31 +94,50 @@ This project is organized as a monorepo with the following applications and pack
 | `pnpm format`         | Format code with Prettier                                         |
 | `pnpm format:check`   | Check formatting without changes                                  |
 | `pnpm fix-all`        | Run Prettier, then ESLint fix                                     |
-| `pnpm dev:local`      | Rewire UI dependencies to local `openzeppelin-ui` / `ui-builder`  |
-| `pnpm dev:npm`        | Restore npm-based UI dependencies after local package development |
+| `pnpm dev:uikit:local` | Use local `openzeppelin-ui` packages only                         |
+| `pnpm dev:adapters:local` | Use local `openzeppelin-adapters` packages only              |
+| `pnpm dev:local`      | Use local `openzeppelin-ui` and `openzeppelin-adapters` packages |
+| `pnpm dev:npm`        | Restore npm-based UI and adapter dependencies                    |
 | `pnpm commit`         | Create a commit using Commitizen                                  |
 | `pnpm changeset`      | Create a changeset for versioning                                 |
 | `pnpm clean`          | Clean build artifacts                                             |
 
 
-## Local Development with UI Builder
+## Local development with openzeppelin-ui and openzeppelin-adapters
 
-This project can consume packages from the [UI Builder](https://github.com/OpenZeppelin/ui-builder) repository. To develop against local changes:
+This project can consume packages from [openzeppelin-ui](https://github.com/OpenZeppelin/openzeppelin-ui) (`@openzeppelin/ui-*`) and [openzeppelin-adapters](https://github.com/OpenZeppelin/openzeppelin-adapters) (`@openzeppelin/adapter-*`). See [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) for clone layout, troubleshooting, and workflow details.
 
-1. **Enable local packages**:
-  ```bash
+1. **Enable local UI + adapter packages**:
+
+   ```bash
    pnpm dev:local
-  ```
-   This automatically builds the local `openzeppelin-ui` packages (defaults to `../openzeppelin-ui`)
-   and installs dependencies with `LOCAL_UI=true`.
-2. **Switch back to npm packages** (before committing):
-  ```bash
+   ```
+
+   This delegates to the published `oz-ui-dev` CLI, which builds and packs the configured families from your local checkouts before reinstalling RWA Wizard against those packed artifacts.
+
+2. **Enable only local UI packages**:
+
+   ```bash
+   pnpm dev:uikit:local
+   ```
+
+3. **Enable only local adapter packages**:
+
+   ```bash
+   pnpm dev:adapters:local
+   ```
+
+4. **Switch back to npm packages** (before committing):
+
+   ```bash
    pnpm dev:npm
-  ```
-3. **Custom path** (optional):
-  ```bash
-   LOCAL_UI_PATH=/path/to/openzeppelin-ui pnpm dev:local
-  ```
+   ```
+
+5. **Custom paths** (optional):
+
+   ```bash
+   LOCAL_UI_PATH=/path/to/openzeppelin-ui LOCAL_ADAPTERS_PATH=/path/to/openzeppelin-adapters pnpm dev:local
+   ```
 
 ## Project Structure
 

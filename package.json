@@ -32,10 +32,10 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish",
-    "dev:uikit:local": "LOCAL_UI_PATH=${LOCAL_UI_PATH:-../openzeppelin-ui} && echo '🔨 Building local openzeppelin-ui packages...' && (cd \"$LOCAL_UI_PATH\" && pnpm --filter='./packages/*' build) && LOCAL_UI=true LOCAL_UI_PATH=\"$LOCAL_UI_PATH\" pnpm install --force && echo \"✅ Using local @openzeppelin/ui-* packages from $LOCAL_UI_PATH\"",
-    "dev:adapters:local": "LOCAL_ADAPTERS_PATH=${LOCAL_ADAPTERS_PATH:-../openzeppelin-adapters} && echo '🔨 Building local adapter packages...' && (cd \"$LOCAL_ADAPTERS_PATH\" && pnpm --filter='./packages/adapter-*' build) && LOCAL_ADAPTERS=true LOCAL_ADAPTERS_PATH=\"$LOCAL_ADAPTERS_PATH\" pnpm install --force && echo \"✅ Using local @openzeppelin/adapter-* packages from $LOCAL_ADAPTERS_PATH\"",
-    "dev:local": "LOCAL_UI_PATH=${LOCAL_UI_PATH:-../openzeppelin-ui} && LOCAL_ADAPTERS_PATH=${LOCAL_ADAPTERS_PATH:-../openzeppelin-adapters} && echo '🔨 Building local openzeppelin-ui packages...' && (cd \"$LOCAL_UI_PATH\" && pnpm --filter='./packages/*' build) && echo '🔨 Building local adapter packages...' && (cd \"$LOCAL_ADAPTERS_PATH\" && pnpm --filter='./packages/adapter-*' build) && LOCAL_UI=true LOCAL_ADAPTERS=true LOCAL_UI_PATH=\"$LOCAL_UI_PATH\" LOCAL_ADAPTERS_PATH=\"$LOCAL_ADAPTERS_PATH\" pnpm install --force && echo \"✅ Using local @openzeppelin/ui-* packages from $LOCAL_UI_PATH\" && echo \"✅ Using local @openzeppelin/adapter-* packages from $LOCAL_ADAPTERS_PATH\"",
-    "dev:npm": "pnpm install --force && echo '✅ Using npm @openzeppelin/ui-* and @openzeppelin/adapter-* packages'",
+    "dev:uikit:local": "LOCAL_UI_PATH=${LOCAL_UI_PATH:-../openzeppelin-ui} && LOCAL_UI_PATH=\"$LOCAL_UI_PATH\" oz-ui-dev use local --project \"$PWD\" --family ui",
+    "dev:adapters:local": "LOCAL_ADAPTERS_PATH=${LOCAL_ADAPTERS_PATH:-../openzeppelin-adapters} && LOCAL_ADAPTERS_PATH=\"$LOCAL_ADAPTERS_PATH\" oz-ui-dev use local --project \"$PWD\" --family adapters",
+    "dev:local": "LOCAL_UI_PATH=${LOCAL_UI_PATH:-../openzeppelin-ui} && LOCAL_ADAPTERS_PATH=${LOCAL_ADAPTERS_PATH:-../openzeppelin-adapters} && LOCAL_UI_PATH=\"$LOCAL_UI_PATH\" LOCAL_ADAPTERS_PATH=\"$LOCAL_ADAPTERS_PATH\" oz-ui-dev use local --project \"$PWD\" --family ui --family adapters",
+    "dev:npm": "oz-ui-dev use remote --project \"$PWD\"",
     "docker:dev": "docker-compose up --build"
   },
   "lint-staged": {
@@ -53,6 +53,7 @@
     "@commitlint/config-conventional": "^19.8.1",
     "@commitlint/cz-commitlint": "^19.8.1",
     "@ianvs/prettier-plugin-sort-imports": "4.5.1",
+    "@openzeppelin/ui-dev-cli": "^0.5.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",

@@ -1,4 +1,5 @@
 import { toSummaryPhase } from '@openzeppelin/codegen-core';
+import type { GenerateOptions } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
@@ -7,11 +8,15 @@ import type {
   GenerationStatus,
   TargetEcosystemMetadata,
 } from '../../types/wizard';
+import { getCodegenRuntimeOptions, type RuntimeGenerateOptions } from './runtimeOptions';
 import type { RwaCodegenService, ValidationResultDTO } from './types';
 
 /** Shape of a codegen package module (e.g. @openzeppelin/codegen-rwa-*). */
 interface CodegenPackageModule {
-  validate: (config: RWAConfig) => { valid: boolean; errors: unknown[]; warnings: unknown[] };
+  validate: (
+    config: RWAConfig,
+    options?: GenerateOptions
+  ) => { valid: boolean; errors: unknown[]; warnings: unknown[] };
   getAvailableModules: () => Array<{
     id: string;
     name: string;
@@ -29,17 +34,42 @@ interface CodegenPackageModule {
   }>;
   generateZip: (
     config: RWAConfig,
-    options?: {
-      onProgress?: (event: { phase: string; percentage: number; message?: string }) => void;
-    }
+    options?: GenerateOptions
   ) => Promise<{ fileName: string; data: Blob }>;
   getEcosystemMetadata?: () => TargetEcosystemMetadata;
 }
 
-function wrapCodegenPackage(pkg: CodegenPackageModule): RwaCodegenService {
+function getDefaultGenerateOptions(targetId: string): RuntimeGenerateOptions | undefined {
+  switch (targetId) {
+    case 'stellar':
+      // The UI already exposes review-state badges for these modules, so generation
+      // should stay available by default and keep the warning in generated output.
+      return { allowUnderReviewModules: true };
+    default:
+      return undefined;
+  }
+}
+
+function resolveGenerateOptions(targetId: string): RuntimeGenerateOptions | undefined {
+  const runtimeOptions = getCodegenRuntimeOptions(targetId);
+  const defaultOptions = getDefaultGenerateOptions(targetId);
+
+  if (!runtimeOptions && !defaultOptions) {
+    return undefined;
+  }
+
+  return {
+    ...defaultOptions,
+    ...runtimeOptions,
+  };
+}
+
+function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCodegenService {
+  const baseGenerateOptions = resolveGenerateOptions(targetId);
+
   return {
     async validate(config: RWAConfig): Promise<ValidationResultDTO> {
-      const result = pkg.validate(config);
+      const result = pkg.validate(config, baseGenerateOptions);
       return {
         valid: result.valid,
         errors: result.errors.map((e: unknown) => {
@@ -89,7 +119,14 @@ function wrapCodegenPackage(pkg: CodegenPackageModule): RwaCodegenService {
             });
           }
         : undefined;
-      const result = await pkg.generateZip(config, { onProgress });
+      const generateOptions =
+        baseGenerateOptions || onProgress
+          ? {
+              ...baseGenerateOptions,
+              ...(onProgress ? { onProgress } : {}),
+            }
+          : undefined;
+      const result = await pkg.generateZip(config, generateOptions);
       return { fileName: result.fileName, data: result.data };
     },
   };
@@ -103,7 +140,7 @@ export async function loadCodegenService(targetId: string): Promise<RwaCodegenSe
   switch (targetId) {
     case 'stellar': {
       const mod = await import('@openzeppelin/codegen-rwa-stellar');
-      return wrapCodegenPackage(mod);
+      return wrapCodegenPackage(targetId, mod);
     }
     default:
       return null;
