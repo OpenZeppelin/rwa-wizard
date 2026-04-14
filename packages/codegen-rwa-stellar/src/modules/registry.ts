@@ -5,10 +5,8 @@ import { maxBalanceModule } from './descriptors/max-balance';
 import { supplyLimitModule } from './descriptors/supply-limit';
 import { timeTransfersLimitsModule } from './descriptors/time-transfers-limits';
 import { transferRestrictModule } from './descriptors/transfer-restrict';
-import type {
-  ComplianceModuleDescriptor,
-  ComplianceModuleRegistryEntry,
-} from './types';
+
+import type { ComplianceModuleDescriptor, ComplianceModuleRegistryEntry } from './types';
 
 export type {
   ComplianceModuleRegistryEntry,

@@ -31,8 +31,7 @@ export function generateWorkspaceToml(config: WorkspaceTomlConfig): string {
   if (config.contractsLibraryPath) {
     const base = config.contractsLibraryPath.replace(/\/+$/, '');
     depsBlock = WORKSPACE_CRATE_DEPS.map(
-      (crate) =>
-        `${crate} = { path = "${base}/packages/${WORKSPACE_CRATE_PACKAGE_PATHS[crate]}" }`
+      (crate) => `${crate} = { path = "${base}/packages/${WORKSPACE_CRATE_PACKAGE_PATHS[crate]}" }`
     ).join('\n');
   } else {
     depsBlock = WORKSPACE_CRATE_DEPS.map(

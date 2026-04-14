@@ -290,7 +290,29 @@ describe('StellarRwaGenerator', () => {
       expect(readme).toContain('Deploy');
       expect(readme).toContain('Architecture');
       expect(readme).toContain('Contracts');
+      expect(readme).toContain('Upstream Provenance');
+      expect(readme).toContain('bundled snapshot');
       expect(readme).toContain('Unix');
+    });
+
+    it('should list selected compliance modules in README.md', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [
+            { moduleId: 'supply-limit', config: { limit: 1000000 } },
+            { moduleId: 'country-allow', config: { allowedCountries: ['CH', 'SG'] } },
+          ],
+        },
+      });
+      const result = generator.generate(config, { allowUnderReviewModules: true });
+      const readme = result.files['README.md'] as string;
+
+      expect(readme).toContain('Selected Compliance Modules');
+      expect(readme).toContain('Supply Limit (`supply-limit`)');
+      expect(readme).toContain('Country Allow-list (`country-allow`)');
+      expect(readme).toContain('`limit=1000000`');
+      expect(readme).toContain('`allowedCountries=CH, SG`');
+      expect(readme).toContain('Under review ([PR](');
     });
   });
 

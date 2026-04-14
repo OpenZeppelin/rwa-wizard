@@ -67,10 +67,7 @@ export function assertTemplateSnapshotCompleteness<TKind extends string>(
 export function createSnapshotTemplateSource<
   TKind extends string,
   TMetadata extends TemplateSourceMetadata,
->(
-  snapshot: TemplateSnapshot,
-  metadata: TMetadata
-): TemplateSource<TKind, TMetadata> {
+>(snapshot: TemplateSnapshot, metadata: TMetadata): TemplateSource<TKind, TMetadata> {
   return {
     metadata,
     getTemplate(kind, id) {

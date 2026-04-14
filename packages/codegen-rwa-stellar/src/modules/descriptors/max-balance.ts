@@ -27,7 +27,12 @@ export const maxBalanceModule = defineComplianceModuleDescriptor({
     getConfigurationInvocations(selection) {
       const maxBalance = getOptionalScalarConfigValue(selection, 'maxBalance');
       return maxBalance
-        ? [createModuleInvocation('set_max_balance', `--token "$RWA_TOKEN_ADDRESS" --max ${maxBalance}`)]
+        ? [
+            createModuleInvocation(
+              'set_max_balance',
+              `--token "$RWA_TOKEN_ADDRESS" --max ${maxBalance}`
+            ),
+          ]
         : [];
     },
   },

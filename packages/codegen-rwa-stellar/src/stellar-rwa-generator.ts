@@ -240,7 +240,15 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     files = mergeFileTrees(files, createFile('scripts/build.sh', generateBuildSh(config)));
     files = mergeFileTrees(files, createFile('scripts/deploy.sh', generateDeploySh(config)));
     files = mergeFileTrees(files, createFile('config.json', generateConfigJson(config)));
-    files = mergeFileTrees(files, createFile('README.md', generateReadme(config)));
+    files = mergeFileTrees(
+      files,
+      createFile(
+        'README.md',
+        generateReadme(config, {
+          templateSourceMetadata: templateSource.metadata,
+        })
+      )
+    );
 
     const underReviewMd = generateUnderReviewModulesMd(config);
     if (underReviewMd) {

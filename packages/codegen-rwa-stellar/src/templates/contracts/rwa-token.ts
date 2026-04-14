@@ -21,11 +21,7 @@
  * small exact-match patches over reintroducing a full handwritten local Rust
  * template.
  */
-import {
-  insertAfterExact,
-  insertBeforeExact,
-  replaceExact,
-} from '@openzeppelin/codegen-core';
+import { insertAfterExact, insertBeforeExact, replaceExact } from '@openzeppelin/codegen-core';
 import { getAdditionalRoleAssignments } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
@@ -79,7 +75,10 @@ function getAdditionalRoles(config: RWAConfig) {
  * Convert a role symbol into the uppercase Rust constant name used in templates.
  */
 function toRoleConstName(symbol: string): string {
-  return `${symbol.replace(/[^a-zA-Z0-9]/g, '_').replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase()}_ROLE`;
+  return `${symbol
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toUpperCase()}_ROLE`;
 }
 
 /**

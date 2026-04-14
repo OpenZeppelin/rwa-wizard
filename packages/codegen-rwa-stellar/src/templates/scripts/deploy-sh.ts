@@ -158,7 +158,9 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
       }
 
       for (const invocation of descriptor.deployment.getConfigurationInvocations(selection)) {
-        lines.push(buildInvokeCommand(modVar, invocation.functionName, invocation.args, networkFlag));
+        lines.push(
+          buildInvokeCommand(modVar, invocation.functionName, invocation.args, networkFlag)
+        );
       }
 
       lines.push(
@@ -223,7 +225,7 @@ function buildPostDeployConfig(config: RWAConfig, networkFlag: string): string {
       buildInvokeCommand(
         '$RWA_TOKEN_ADDRESS',
         'mint',
-          `--to "$ADMIN" --amount ${config.token.initialSupply} --operator "$MANAGER"`,
+        `--to "$ADMIN" --amount ${config.token.initialSupply} --operator "$MANAGER"`,
         networkFlag
       )
     );

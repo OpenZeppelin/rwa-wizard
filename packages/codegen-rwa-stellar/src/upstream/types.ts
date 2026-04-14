@@ -1,11 +1,11 @@
 import type {
+  TemplateSourceMetadata as CoreTemplateSourceMetadata,
   TemplateManifestEntry,
   TemplatePayload,
   TemplateSnapshot,
   TemplateSnapshotMetadata,
   TemplateSource,
   TemplateSourceKey,
-  TemplateSourceMetadata as CoreTemplateSourceMetadata,
 } from '@openzeppelin/codegen-core';
 
 export type UpstreamTemplateKind =

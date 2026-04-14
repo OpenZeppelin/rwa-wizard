@@ -27,7 +27,12 @@ export const supplyLimitModule = defineComplianceModuleDescriptor({
     getConfigurationInvocations(selection) {
       const limit = getOptionalScalarConfigValue(selection, 'limit');
       return limit
-        ? [createModuleInvocation('set_supply_limit', `--token "$RWA_TOKEN_ADDRESS" --limit ${limit}`)]
+        ? [
+            createModuleInvocation(
+              'set_supply_limit',
+              `--token "$RWA_TOKEN_ADDRESS" --limit ${limit}`
+            ),
+          ]
         : [];
     },
   },

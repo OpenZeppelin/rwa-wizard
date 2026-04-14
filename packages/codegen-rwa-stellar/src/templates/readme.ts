@@ -1,10 +1,6 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import {
-  CRATE_NAMES,
-  SOROBAN_SDK_VERSION,
-  STELLAR_CONTRACTS_REPOSITORY_URL,
-} from '../constants';
+import { CRATE_NAMES, SOROBAN_SDK_VERSION, STELLAR_CONTRACTS_REPOSITORY_URL } from '../constants';
 import { getModuleById } from '../modules/registry';
 import type { UpstreamTemplateSourceMetadata } from '../upstream/types';
 
@@ -107,7 +103,10 @@ function getSelectedModuleRows(config: RWAConfig): SelectedModuleRow[] {
       id: entry.id,
       name: entry.name,
       hooks: [...entry.requiredHooks],
-      configSummary: formatModuleConfigSummary(selection.config ?? {}, entry.configFields.map((f) => f.key)),
+      configSummary: formatModuleConfigSummary(
+        selection.config ?? {},
+        entry.configFields.map((f) => f.key)
+      ),
       reviewSummary:
         entry.review.state === 'under-review'
           ? entry.review.prUrl
@@ -123,7 +122,10 @@ function getSelectedModuleRows(config: RWAConfig): SelectedModuleRow[] {
 /**
  * Format module config values into a concise human-readable summary.
  */
-function formatModuleConfigSummary(config: Record<string, unknown>, preferredKeys: readonly string[]): string {
+function formatModuleConfigSummary(
+  config: Record<string, unknown>,
+  preferredKeys: readonly string[]
+): string {
   const configKeys = Object.keys(config);
   if (configKeys.length === 0) {
     return 'None';

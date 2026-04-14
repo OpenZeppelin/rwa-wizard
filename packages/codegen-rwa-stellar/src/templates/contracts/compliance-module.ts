@@ -1,3 +1,23 @@
+/**
+ * Developer note:
+ *
+ * This file is not the canonical module contract template. The source of truth
+ * lives in the upstream `stellar-contracts` module example loaded through the
+ * active `UpstreamTemplateSource`.
+ *
+ * This wrapper exists only to apply local generator policy on top of the
+ * upstream source, currently limited to the under-review warning banner for
+ * modules that are not yet merged upstream.
+ *
+ * Drift is avoided by:
+ * - always loading the upstream module source instead of keeping a local copy
+ * - constraining local behavior to a small wrapper concern (the review banner)
+ * - leaving the contract body itself untouched so upstream changes flow through
+ *
+ * Keep this layer minimal. If future module behavior diverges, prefer upstream
+ * changes or narrowly scoped exact patches over replacing the upstream module
+ * source with a handwritten local template.
+ */
 import type { ComplianceModuleRegistryEntry } from '../../modules/registry';
 import { createBundledTemplateSource } from '../../upstream/providers/bundled';
 import { prependRustCommentBanner } from '../../upstream/render-utils';

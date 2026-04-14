@@ -5,6 +5,7 @@ import {
   canUseLocalCheckoutTemplateSource,
   createLocalCheckoutTemplateSource,
 } from './providers/local';
+
 import type { UpstreamTemplateSource } from './types';
 
 /**

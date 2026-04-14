@@ -67,18 +67,15 @@ const config: RWAConfig = {
 
 Root configuration object with the following sections:
 
-
-| Field                  | Type                         | Description                                          |
-| ---------------------- | ---------------------------- | ---------------------------------------------------- |
-| `token`                | `TokenConfig`                | Token metadata, controls, and document manager       |
-| `identityVerification` | `IdentityVerificationConfig` | Claim topics, trusted issuers, and identity controls |
-| `compliance`           | `ComplianceConfig`           | Selected compliance modules and module config        |
-| `accessControl`        | `AccessControlConfig`        | Ownership model and operator roles                   |
-| `deployment`           | `DeploymentConfig`           | Target network and optional deployer account         |
-
+| Field                  | Type                         | Description                                            |
+| ---------------------- | ---------------------------- | ------------------------------------------------------ |
+| `token`                | `TokenConfig`                | Token metadata, controls, and document manager         |
+| `identityVerification` | `IdentityVerificationConfig` | Claim topics, trusted issuers, and identity controls   |
+| `compliance`           | `ComplianceConfig`           | Selected compliance modules and module config          |
+| `accessControl`        | `AccessControlConfig`        | Ownership model and operator roles                     |
+| `deployment`           | `DeploymentConfig`           | Target network and optional deployer account           |
 
 ### `TokenConfig`
-
 
 | Field                     | Type      | Required | Description                                |
 | ------------------------- | --------- | -------- | ------------------------------------------ |
@@ -89,47 +86,37 @@ Root configuration object with the following sections:
 | `administrativeControls`  | `object`  | Yes      | Burnable, mintable, and pausable toggles   |
 | `documentManager.enabled` | `boolean` | Yes      | Enable document management                 |
 
-
 ### `IdentityVerificationConfig`
 
-
-| Field            | Type               | Description                                       |
-| ---------------- | ------------------ | ------------------------------------------------- |
-| `claimTopics`    | `ClaimTopic[]`     | `{ id, name, isCustom? }`                         |
-| `trustedIssuers` | `TrustedIssuer[]`  | `{ address, claimTopics }`                        |
-| `controls`       | `IdentityControls` | Address freezing, recovery, and transfer controls |
-
+| Field            | Type              | Description                                  |
+| ---------------- | ----------------- | -------------------------------------------- |
+| `claimTopics`    | `ClaimTopic[]`      | `{ id, name, isCustom? }`                      |
+| `trustedIssuers` | `TrustedIssuer[]`   | `{ address, claimTopics }`                     |
+| `controls`       | `IdentityControls`  | Address freezing, recovery, and transfer controls |
 
 ### `ComplianceConfig`
 
-
-| Field     | Type                          | Description                                 |
-| --------- | ----------------------------- | ------------------------------------------- |
-| `modules` | `ComplianceModuleSelection[]` | Selected modules as `{ moduleId, config? }` |
-
+| Field     | Type                          | Description                                     |
+| --------- | ----------------------------- | ----------------------------------------------- |
+| `modules` | `ComplianceModuleSelection[]` | Selected modules as `{ moduleId, config? }`     |
 
 `ComplianceHook` is an opaque string type. Each ecosystem defines its valid hook set separately. Hooks are not stored in `ComplianceModuleSelection`; generators derive them from their module registry metadata at generation time.
 
 ### `AccessControlConfig`
-
 
 | Field       | Type             | Description                           |
 | ----------- | ---------------- | ------------------------------------- |
 | `ownership` | `OwnershipModel` | `single-owner`, `multi-sig`, or `dao` |
 | `roles`     | `OperatorRole[]` | `{ name, symbol?, addresses }`        |
 
-
 ### `DeploymentConfig`
-
 
 | Field           | Type     | Required | Description                                     |
 | --------------- | -------- | -------- | ----------------------------------------------- |
 | `network`       | `string` | Yes      | Target network (`"testnet"`, `"mainnet"`, etc.) |
 | `sourceAccount` | `string` | No       | Deployer account address                        |
 
-
 ## Exports
-
 
 | Export                       | Kind  | Description                                   |
 | ---------------------------- | ----- | --------------------------------------------- |
@@ -146,7 +133,6 @@ Root configuration object with the following sections:
 | `OwnershipModel`             | type  | Ownership discriminated union                 |
 | `OperatorRole`               | type  | Role definition                               |
 | `DEFAULT_ROLE_SYMBOLS`       | value | Well-known role name to symbol mapping        |
-
 
 ## Design Notes
 

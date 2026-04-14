@@ -45,15 +45,13 @@ export const WORKSPACE_CRATE_DEPS = [
   'stellar-contract-utils',
 ] as const;
 
-export const WORKSPACE_CRATE_PACKAGE_PATHS: Record<
-  (typeof WORKSPACE_CRATE_DEPS)[number],
-  string
-> = {
-  'stellar-tokens': 'tokens',
-  'stellar-access': 'access',
-  'stellar-macros': 'macros',
-  'stellar-contract-utils': 'contract-utils',
-};
+export const WORKSPACE_CRATE_PACKAGE_PATHS: Record<(typeof WORKSPACE_CRATE_DEPS)[number], string> =
+  {
+    'stellar-tokens': 'tokens',
+    'stellar-access': 'access',
+    'stellar-macros': 'macros',
+    'stellar-contract-utils': 'contract-utils',
+  };
 
 /**
  * Auto-generate a Soroban-compatible role symbol from a human-readable role name.
