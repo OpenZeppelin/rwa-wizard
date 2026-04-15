@@ -38,7 +38,7 @@ export function ReviewStep({
   });
 
   const { jobState, generate, reset, isGenerating } = generationFlow;
-  const canGenerate = codegenService != null && !isGenerating && jobState.phase !== 'success';
+  const canGenerate = codegenService != null && !isGenerating;
 
   const handleGenerate = useCallback(() => {
     void generate();
@@ -58,7 +58,7 @@ export function ReviewStep({
       {jobState.phase !== 'idle' && jobState.phase !== 'error' && (
         <GenerationStatusPanel
           phase={jobState.phase}
-          message={jobState.phase === 'success' ? 'Project generated successfully.' : undefined}
+          phaseLog={jobState.phaseLog}
           zipFileName={jobState.zipFileName}
         />
       )}
@@ -82,20 +82,11 @@ export function ReviewStep({
               <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               Generating…
             </>
-          ) : jobState.phase === 'success' ? (
-            'Generated'
           ) : (
             'Generate Project'
           )}
         </Button>
       </div>
-      {jobState.phase === 'success' && (
-        <div className="flex justify-end">
-          <Button variant="ghost" size="sm" onClick={reset}>
-            Generate Again
-          </Button>
-        </div>
-      )}
     </WizardFrame>
   );
 }

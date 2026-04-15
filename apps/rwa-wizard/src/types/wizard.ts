@@ -163,6 +163,8 @@ export type GenerationPhase =
 export interface GenerationJobState {
   draftId: string;
   phase: GenerationPhase;
+  /** Ordered list of every phase the run has passed through (including current). */
+  phaseLog: GenerationPhase[];
   startedAt?: Date;
   completedAt?: Date;
   zipFileName?: string;

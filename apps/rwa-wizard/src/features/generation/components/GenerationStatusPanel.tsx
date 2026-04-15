@@ -1,5 +1,4 @@
-import { CheckCircle, Download, Loader2, Package, Search, Sparkles } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 
 import { cn } from '@openzeppelin/ui-utils';
 
@@ -7,135 +6,67 @@ import type { GenerationPhase } from '../../../types/wizard';
 
 interface GenerationStatusPanelProps {
   phase: GenerationPhase;
-  message?: string;
+  phaseLog: GenerationPhase[];
   zipFileName?: string;
 }
 
-interface PhaseConfig {
-  id: GenerationPhase;
-  label: string;
-  icon: React.ReactNode;
-  completedIcon: React.ReactNode;
-}
+const PHASE_LABEL: Record<string, string> = {
+  validating: 'Validating configuration',
+  generating: 'Generating project',
+  packaging: 'Packaging files',
+  success: 'Done',
+};
 
-const PHASES: PhaseConfig[] = [
-  {
-    id: 'validating',
-    label: 'Validating',
-    icon: <Search className="size-4" />,
-    completedIcon: <CheckCircle className="size-4" />,
-  },
-  {
-    id: 'generating',
-    label: 'Generating',
-    icon: <Sparkles className="size-4" />,
-    completedIcon: <CheckCircle className="size-4" />,
-  },
-  {
-    id: 'packaging',
-    label: 'Packaging',
-    icon: <Package className="size-4" />,
-    completedIcon: <CheckCircle className="size-4" />,
-  },
-  {
-    id: 'success',
-    label: 'Complete',
-    icon: <Download className="size-4" />,
-    completedIcon: <CheckCircle className="size-4" />,
-  },
-];
-
-function phaseIndex(phase: GenerationPhase): number {
-  return PHASES.findIndex((p) => p.id === phase);
-}
-
-/**
- * Tracks when a phase becomes "just entered" so we can apply a one-shot
- * entrance animation via CSS (scale up + fade in).
- */
-function usePhaseEntrance(phase: GenerationPhase) {
-  const [entering, setEntering] = useState<GenerationPhase | null>(null);
-  const prevPhase = useRef(phase);
-
-  useEffect(() => {
-    if (phase !== prevPhase.current) {
-      setEntering(phase);
-      prevPhase.current = phase;
-      const id = setTimeout(() => setEntering(null), 400);
-      return () => clearTimeout(id);
-    }
-  }, [phase]);
-
-  return entering;
-}
-
-export function GenerationStatusPanel({ phase, message, zipFileName }: GenerationStatusPanelProps) {
-  const currentIdx = phaseIndex(phase);
-  const entering = usePhaseEntrance(phase);
-
-  if (phase === 'idle') return null;
+export function GenerationStatusPanel({
+  phase,
+  phaseLog,
+  zipFileName,
+}: GenerationStatusPanelProps) {
+  if (phaseLog.length === 0) return null;
 
   return (
     <div
-      className="animate-in fade-in slide-in-from-bottom-2 rounded-lg border bg-card p-6 shadow-sm duration-300"
       role="status"
       aria-live="polite"
+      className="animate-in fade-in rounded-lg border border-border/60 bg-muted/30 px-4 py-3 duration-200"
     >
-      <h3 className="mb-4 text-sm font-semibold text-foreground">Generation Progress</h3>
+      <ul className="space-y-1.5">
+        {phaseLog.map((entry) => {
+          const isDone = entry !== phase || phase === 'success';
+          const isCurrent = entry === phase && phase !== 'success';
+          const isSuccess = entry === 'success';
 
-      <div className="flex items-center gap-2">
-        {PHASES.map((p, idx) => {
-          const isComplete = currentIdx > idx || phase === 'success';
-          const isCurrent = p.id === phase;
-          const isPending = currentIdx < idx && phase !== 'success';
-          const isEntering = entering === p.id;
+          const label =
+            isSuccess && zipFileName ? `Done — ${zipFileName}` : (PHASE_LABEL[entry] ?? entry);
 
           return (
-            <div key={p.id} className="flex items-center gap-2">
-              {idx > 0 && (
-                <div
+            <li
+              key={entry}
+              className={cn(
+                'flex items-center gap-2 text-sm animate-in fade-in slide-in-from-bottom-1 duration-150',
+                isDone && !isSuccess && 'text-muted-foreground',
+                isCurrent && 'font-medium text-foreground',
+                isSuccess && 'font-medium text-emerald-700 dark:text-emerald-300'
+              )}
+            >
+              {isCurrent ? (
+                <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" aria-hidden />
+              ) : (
+                <CheckCircle
                   className={cn(
-                    'h-px w-6 origin-left transition-all duration-500 ease-out',
-                    isComplete ? 'scale-x-100 bg-green-500' : 'scale-x-75 bg-border'
+                    'size-3.5 shrink-0',
+                    isSuccess
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-muted-foreground/60'
                   )}
+                  aria-hidden
                 />
               )}
-              <div
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium',
-                  'transition-all duration-300 ease-out',
-                  isComplete && 'bg-green-50 text-green-700',
-                  isCurrent && !isComplete && 'bg-primary/10 text-primary',
-                  isPending && 'bg-muted text-muted-foreground opacity-60',
-                  isEntering && 'animate-in zoom-in-95 fade-in duration-300'
-                )}
-              >
-                {isCurrent && !isComplete ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : isComplete ? (
-                  <span className="animate-in zoom-in-50 duration-200">{p.completedIcon}</span>
-                ) : (
-                  p.icon
-                )}
-                <span>{p.label}</span>
-              </div>
-            </div>
+              <span>{label}</span>
+            </li>
           );
         })}
-      </div>
-
-      {message && (
-        <p className="animate-in fade-in mt-3 text-sm text-muted-foreground duration-200">
-          {message}
-        </p>
-      )}
-
-      {phase === 'success' && zipFileName && (
-        <div className="animate-in fade-in slide-in-from-bottom-1 mt-3 flex items-center gap-2 duration-300">
-          <CheckCircle className="size-4 text-green-600" />
-          <p className="text-sm font-medium text-green-700">Downloaded: {zipFileName}</p>
-        </div>
-      )}
+      </ul>
     </div>
   );
 }

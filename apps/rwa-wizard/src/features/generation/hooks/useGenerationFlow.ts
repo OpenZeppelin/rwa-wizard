@@ -25,6 +25,7 @@ function createIdleJob(draftId: string): GenerationJobState {
   return {
     draftId,
     phase: 'idle',
+    phaseLog: [],
   };
 }
 
@@ -48,7 +49,12 @@ export function useGenerationFlow({
   const generatingRef = useRef(false);
 
   const setPhase = useCallback((phase: GenerationPhase, extra?: Partial<GenerationJobState>) => {
-    setJobState((prev) => ({ ...prev, phase, ...extra }));
+    setJobState((prev) => ({
+      ...prev,
+      phase,
+      phaseLog: prev.phaseLog.includes(phase) ? prev.phaseLog : [...prev.phaseLog, phase],
+      ...extra,
+    }));
   }, []);
 
   const generate = useCallback(async () => {
@@ -59,6 +65,7 @@ export function useGenerationFlow({
     setJobState({
       draftId: effectiveDraftId,
       phase: 'validating',
+      phaseLog: ['validating'],
       startedAt,
     });
 
@@ -83,12 +90,13 @@ export function useGenerationFlow({
               errorMessage: status.message ?? 'Generation failed',
               completedAt: new Date(),
             });
-          } else {
+          } else if (status.phase !== 'success') {
             setPhase(status.phase as GenerationPhase);
           }
         },
       });
 
+      setPhase('packaging');
       setPhase('success', {
         zipFileName: artifact.fileName,
         completedAt: new Date(),
