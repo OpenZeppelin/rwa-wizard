@@ -4,7 +4,8 @@ import { useForm } from 'react-hook-form';
 
 import { NumberField, TextField } from '@openzeppelin/ui-components';
 
-import type { ComplianceModuleOption, ModuleConfigFieldMeta } from '../../../types/wizard';
+import type { ComplianceModuleOption } from '../../../types/wizard';
+import { fromFormValues, hasPendingStringArrayInput, toFormValues } from './moduleConfigFormValues';
 
 interface ModuleConfigPanelProps {
   module: ComplianceModuleOption;
@@ -27,7 +28,7 @@ export function ModuleConfigPanel({ module, config, onChange }: ModuleConfigPane
     [module.configFields, config]
   );
 
-  const { control, reset, watch } = useForm<FieldValues>({
+  const { control, getValues, reset, watch } = useForm<FieldValues>({
     defaultValues: formDefaults,
     mode: 'onChange',
   });
@@ -45,10 +46,16 @@ export function ModuleConfigPanel({ module, config, onChange }: ModuleConfigPane
   const handleWatch = useCallback(
     (formValues: FieldValues) => {
       if (isSyncing.current) return;
+      if (hasPendingStringArrayInput(configFields, formValues)) return;
       onChangeRef.current(fromFormValues(configFields, formValues));
     },
     [configFields]
   );
+
+  const flushToParent = useCallback(() => {
+    if (isSyncing.current) return;
+    onChangeRef.current(fromFormValues(configFields, getValues()));
+  }, [configFields, getValues]);
 
   useEffect(() => {
     const sub = watch(handleWatch);
@@ -56,7 +63,13 @@ export function ModuleConfigPanel({ module, config, onChange }: ModuleConfigPane
   }, [watch, handleWatch]);
 
   return (
-    <div className="grid gap-3">
+    <div
+      className="grid gap-3"
+      onBlurCapture={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+        flushToParent();
+      }}
+    >
       {configFields.map((field) =>
         field.type === 'number' ? (
           <NumberField
@@ -84,46 +97,4 @@ export function ModuleConfigPanel({ module, config, onChange }: ModuleConfigPane
       )}
     </div>
   );
-}
-
-function toFormValues(
-  fields: readonly ModuleConfigFieldMeta[],
-  config: Record<string, unknown>
-): FieldValues {
-  const values: FieldValues = {};
-  for (const f of fields) {
-    const raw = config[f.key];
-    if (raw === undefined || raw === null) {
-      values[f.key] = '';
-    } else if (Array.isArray(raw)) {
-      values[f.key] = raw.join(', ');
-    } else {
-      values[f.key] = f.type === 'number' ? raw : String(raw);
-    }
-  }
-  return values;
-}
-
-function fromFormValues(
-  fields: readonly ModuleConfigFieldMeta[],
-  formValues: FieldValues
-): Record<string, unknown> {
-  const config: Record<string, unknown> = {};
-  for (const f of fields) {
-    const raw = formValues[f.key];
-    if (raw === undefined || raw === null || raw === '') continue;
-
-    if (f.type === 'number') {
-      const num = typeof raw === 'number' ? raw : Number(raw);
-      if (!Number.isNaN(num)) config[f.key] = num;
-    } else if (f.type === 'string[]') {
-      config[f.key] = String(raw)
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-    } else {
-      config[f.key] = String(raw);
-    }
-  }
-  return config;
 }
