@@ -1,7 +1,4 @@
-import {
-  getAdditionalRoleAssignments,
-  getManagerAddress,
-} from '@openzeppelin/codegen-rwa-common';
+import { getAdditionalRoleAssignments, getManagerAddress } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { roleSymbolToRustIdentifier } from '../../access-control';

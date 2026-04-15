@@ -3,11 +3,8 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { resolveStellarDeploymentTarget } from '../../deployment/target';
 import { buildDeploymentSections } from './deploy-sh-deployments';
-import { shellEcho, shellSection } from './deploy-sh-helpers';
-import {
-  buildInitialSupplyGuidance,
-  buildPostDeployConfig,
-} from './deploy-sh-post-deploy';
+import { buildColorPreamble, shellEcho, shellSection } from './deploy-sh-helpers';
+import { buildInitialSupplyGuidance, buildPostDeployConfig } from './deploy-sh-post-deploy';
 import { buildDeploymentSummary } from './deploy-sh-summary';
 import { getManagerDeploymentAddress } from './deploy-sh-token';
 
@@ -32,6 +29,8 @@ export function generateDeploySh(config: RWAConfig): string {
 
   sections.push('#!/bin/bash');
   sections.push('set -e');
+  sections.push('');
+  sections.push(...buildColorPreamble());
   sections.push('');
   sections.push(`ADMIN="${adminAddress}"`);
   sections.push(`MANAGER="${managerAddress}"`);

@@ -16,7 +16,9 @@ type AccessControlledConfig = Pick<RWAConfig, 'accessControl'>;
  * Normalize configured role members, trimming blanks and preserving order.
  */
 function getRoleAddresses(addresses: readonly string[]): string[] {
-  return [...new Set(addresses.map((address) => address.trim()).filter((address) => address.length > 0))];
+  return [
+    ...new Set(addresses.map((address) => address.trim()).filter((address) => address.length > 0)),
+  ];
 }
 
 /**

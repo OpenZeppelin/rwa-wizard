@@ -4,10 +4,10 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 import { CRATE_NAMES } from '../../constants';
 import { getModuleDescriptorById } from '../../modules/registry';
 import {
-  type DeployedContract,
   buildDeploySection,
   moduleVarName,
   shellSubsection,
+  type DeployedContract,
 } from './deploy-sh-helpers';
 import { buildTokenConstructorArgs } from './deploy-sh-token';
 
@@ -24,8 +24,11 @@ function appendDeploymentSection(
   deployedContracts: DeployedContract[],
   descriptor: DeploymentDescriptor,
   networkFlag: string,
-  explorerUrlTemplate: string | undefined
+  explorerUrlTemplate: string | undefined,
+  stepLabel?: string
 ): void {
+  lines.push('echo ""');
+
   if (descriptor.comment) {
     lines.push(descriptor.comment);
   }
@@ -37,7 +40,8 @@ function appendDeploymentSection(
       descriptor.crateName,
       descriptor.constructorArgs,
       networkFlag,
-      explorerUrlTemplate
+      explorerUrlTemplate,
+      stepLabel
     )
   );
   deployedContracts.push({ name: descriptor.displayName, varName: descriptor.varName });
@@ -114,24 +118,37 @@ export function buildDeploymentSections(
   const lines: string[] = [];
   const deployedContracts: DeployedContract[] = [];
 
-  lines.push(...shellSubsection('Core Contracts'));
-  lines.push('');
+  const coreDescriptors = buildCoreDeploymentDescriptors();
+  lines.push(...shellSubsection(`Core Contracts (${coreDescriptors.length})`));
 
-  for (const descriptor of buildCoreDeploymentDescriptors()) {
-    appendDeploymentSection(lines, deployedContracts, descriptor, networkFlag, explorerUrlTemplate);
+  for (let i = 0; i < coreDescriptors.length; i++) {
+    appendDeploymentSection(
+      lines,
+      deployedContracts,
+      coreDescriptors[i],
+      networkFlag,
+      explorerUrlTemplate,
+      `[${i + 1}/${coreDescriptors.length}]`
+    );
   }
 
   const moduleDeployments = buildModuleDeploymentDescriptors(config);
   if (moduleDeployments.length > 0) {
     lines.push(...shellSubsection(`Compliance Modules (${moduleDeployments.length})`));
-    lines.push('');
-    for (const descriptor of moduleDeployments) {
-      appendDeploymentSection(lines, deployedContracts, descriptor, networkFlag, explorerUrlTemplate);
+
+    for (let i = 0; i < moduleDeployments.length; i++) {
+      appendDeploymentSection(
+        lines,
+        deployedContracts,
+        moduleDeployments[i],
+        networkFlag,
+        explorerUrlTemplate,
+        `[${i + 1}/${moduleDeployments.length}]`
+      );
     }
   }
 
   lines.push(...shellSubsection('RWA Token'));
-  lines.push('');
   appendDeploymentSection(
     lines,
     deployedContracts,

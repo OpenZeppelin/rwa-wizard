@@ -1,4 +1,7 @@
-import { getAdditionalRoleAssignments, getResolvedRoleAssignments } from '@openzeppelin/codegen-rwa-common';
+import {
+  getAdditionalRoleAssignments,
+  getResolvedRoleAssignments,
+} from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { roleSymbolToRustIdentifier } from '../../access-control';
@@ -81,7 +84,10 @@ export type AdditionalRole = ReturnType<typeof getAdditionalRoles>[number];
  * Normalize a configured role name for semantic matching.
  */
 function normalizeRoleName(name: string): string {
-  return name.trim().toLowerCase().replace(/[\s_]+/g, '-');
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, '-');
 }
 
 /**
@@ -132,7 +138,9 @@ export function buildAdditionalRoleSupport(additionalRoles: readonly AdditionalR
   }
 
   lines.push('');
-  lines.push('fn grant_role_members(e: &Env, accounts: Vec<Address>, role: &Symbol, admin: &Address) {');
+  lines.push(
+    'fn grant_role_members(e: &Env, accounts: Vec<Address>, role: &Symbol, admin: &Address) {'
+  );
   lines.push('    for account in accounts.iter() {');
   lines.push('        access_control::grant_role_no_auth(e, &account, role, admin);');
   lines.push('    }');

@@ -2,11 +2,12 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { resolveStellarDeploymentTarget } from '../../deployment/target';
 import {
-  type DeployedContract,
-  THIN_SEPARATOR,
+  CLR,
   shellEcho,
   shellEchoRaw,
   shellSection,
+  THIN_SEPARATOR,
+  type DeployedContract,
 } from './deploy-sh-helpers';
 
 export function buildDeploymentSummary(
@@ -26,25 +27,25 @@ export function buildDeploymentSummary(
   lines.push(shellEcho('  Signer:   $SOURCE_ACCOUNT'));
   lines.push('echo ""');
 
-  lines.push(shellEcho(THIN_SEPARATOR));
+  lines.push(shellEcho(`${CLR.dim}${THIN_SEPARATOR}${CLR.rst}`));
   lines.push(shellEchoRaw('  Contract                       Address'));
-  lines.push(shellEcho(THIN_SEPARATOR));
+  lines.push(shellEcho(`${CLR.dim}${THIN_SEPARATOR}${CLR.rst}`));
 
   for (const contract of contracts) {
     const paddedName = contract.name.padEnd(30);
-    lines.push(shellEcho(`  ${paddedName} \${${contract.varName}}`));
+    lines.push(shellEcho(`  ${CLR.green}${paddedName}${CLR.rst} \${${contract.varName}}`));
   }
 
-  lines.push(shellEcho(THIN_SEPARATOR));
+  lines.push(shellEcho(`${CLR.dim}${THIN_SEPARATOR}${CLR.rst}`));
 
   if (explorerUrlTemplate) {
     lines.push('echo ""');
-    lines.push(shellEcho('  Contract Explorer Links:'));
+    lines.push(shellEcho(`  ${CLR.bold}Contract Explorer Links:${CLR.rst}`));
     for (const contract of contracts) {
       lines.push(shellEcho(`    ${contract.name}:`));
       lines.push(
         shellEcho(
-          `      ${explorerUrlTemplate.replace('__CONTRACT_ADDRESS__', `\${${contract.varName}}`)}`
+          `${CLR.dim}      ${explorerUrlTemplate.replace('__CONTRACT_ADDRESS__', `\${${contract.varName}}`)}${CLR.rst}`
         )
       );
     }

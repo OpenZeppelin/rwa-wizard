@@ -1,9 +1,39 @@
 export const SEPARATOR = '═══════════════════════════════════════════════════════════════';
 export const THIN_SEPARATOR = '───────────────────────────────────────────────────────────────';
 
+/**
+ * Bash variable references for ANSI colors.
+ * The actual escape codes are defined by {@link buildColorPreamble} at the top of the script.
+ */
+export const CLR = {
+  bold: '${BOLD}',
+  dim: '${DIM}',
+  green: '${GREEN}',
+  red: '${RED}',
+  cyan: '${CYAN}',
+  yellow: '${YELLOW}',
+  rst: '${RST}',
+} as const;
+
 export interface DeployedContract {
   name: string;
   varName: string;
+}
+
+/**
+ * Shell preamble that defines ANSI color variables.
+ * Colors are automatically disabled when stdout is not a terminal (piped output).
+ */
+export function buildColorPreamble(): string[] {
+  return [
+    'if [ -t 1 ]; then',
+    "  BOLD=$'\\033[1m'    DIM=$'\\033[2m'",
+    "  GREEN=$'\\033[32m'  RED=$'\\033[31m'  CYAN=$'\\033[36m'  YELLOW=$'\\033[33m'",
+    "  RST=$'\\033[0m'",
+    'else',
+    "  BOLD='' DIM='' GREEN='' RED='' CYAN='' YELLOW='' RST=''",
+    'fi',
+  ];
 }
 
 export function shellEcho(msg: string): string {
@@ -17,27 +47,30 @@ export function shellEchoRaw(msg: string): string {
 export function shellSection(title: string): string[] {
   return [
     'echo ""',
-    shellEcho(SEPARATOR),
-    shellEcho(`  ${title}`),
-    shellEcho(SEPARATOR),
+    'echo ""',
+    shellEcho(`${CLR.bold}${CLR.cyan}${SEPARATOR}${CLR.rst}`),
+    shellEcho(`${CLR.bold}${CLR.cyan}  ${title}${CLR.rst}`),
+    shellEcho(`${CLR.bold}${CLR.cyan}${SEPARATOR}${CLR.rst}`),
     'echo ""',
   ];
 }
 
 export function shellSubsection(title: string): string[] {
-  return ['echo ""', shellEcho(THIN_SEPARATOR), shellEcho(`  ${title}`), shellEcho(THIN_SEPARATOR)];
+  return [
+    'echo ""',
+    shellEcho(`${CLR.bold}${THIN_SEPARATOR}${CLR.rst}`),
+    shellEcho(`${CLR.bold}  ${title}${CLR.rst}`),
+    shellEcho(`${CLR.bold}${THIN_SEPARATOR}${CLR.rst}`),
+  ];
 }
 
 function buildExplorerLine(explorerUrlTemplate: string | undefined, varName: string): string {
   if (!explorerUrlTemplate) return '';
   return shellEcho(
-    `  Explorer: ${explorerUrlTemplate.replace('__CONTRACT_ADDRESS__', `\${${varName}}`)}`
+    `${CLR.dim}    Explorer: ${explorerUrlTemplate.replace('__CONTRACT_ADDRESS__', `\${${varName}}`)}${CLR.rst}`
   );
 }
 
-/**
- * Build the raw `stellar contract deploy` command for a contract crate.
- */
 function buildDeployCommand(
   crateName: string,
   constructorArgs: string,
@@ -53,6 +86,8 @@ function buildDeployCommand(
 
 /**
  * Build a shell section that deploys one contract and captures its address.
+ *
+ * @param stepLabel - Optional progress label like `[1/4]` shown before the contract name.
  */
 export function buildDeploySection(
   varName: string,
@@ -60,17 +95,19 @@ export function buildDeploySection(
   crateName: string,
   constructorArgs: string,
   networkFlag: string,
-  explorerUrlTemplate: string | undefined
+  explorerUrlTemplate: string | undefined,
+  stepLabel?: string
 ): string {
   const lines: string[] = [];
+  const prefix = stepLabel ? `${stepLabel} ` : '';
 
-  lines.push(shellEcho(`  Deploying ${displayName}...`));
+  lines.push(shellEcho(`${CLR.bold}  ${prefix}Deploying ${displayName} ...${CLR.rst}`));
   lines.push(`${varName}=$(${buildDeployCommand(crateName, constructorArgs, networkFlag)})`);
   lines.push(`if [ $? -ne 0 ] || [ -z "$${varName}" ]; then`);
-  lines.push(`  echo "  ✗ Failed to deploy ${displayName} (${crateName})"`);
+  lines.push(`  echo "${CLR.red}  ✗ Failed to deploy ${displayName} (${crateName})${CLR.rst}"`);
   lines.push('  exit 1');
   lines.push('fi');
-  lines.push(shellEcho(`  ✓ ${displayName}: \${${varName}}`));
+  lines.push(shellEcho(`${CLR.green}  ✓ ${displayName}: \${${varName}}${CLR.rst}`));
   const explorerLine = buildExplorerLine(explorerUrlTemplate, varName);
   if (explorerLine) {
     lines.push(explorerLine);

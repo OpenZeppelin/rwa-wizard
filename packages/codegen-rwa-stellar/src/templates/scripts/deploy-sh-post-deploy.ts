@@ -5,6 +5,7 @@ import { serializeStellarComplianceHookForCli } from '../../ecosystem-metadata';
 import { getModuleDescriptorById } from '../../modules/registry';
 import {
   buildInvokeCommand,
+  CLR,
   moduleVarName,
   shellEcho,
   shellSection,
@@ -18,7 +19,8 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
   const lines: string[] = [];
 
   lines.push(...shellSubsection('Token Binding'));
-  lines.push(shellEcho('  Binding token on Compliance and IRS...'));
+  lines.push('echo ""');
+  lines.push(shellEcho(`${CLR.bold}  Binding token on Compliance and IRS...${CLR.rst}`));
   lines.push(
     buildInvokeCommand(
       '$COMPLIANCE_ADDRESS',
@@ -35,7 +37,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
       networkFlag
     )
   );
-  lines.push(shellEcho('  ✓ Token bound to Compliance and IRS'));
+  lines.push(shellEcho(`${CLR.green}  ✓ Token bound to Compliance and IRS${CLR.rst}`));
 
   const selectedModules = getUniqueModuleSelections(config.compliance.modules);
   if (selectedModules.length > 0) {
@@ -49,8 +51,8 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
       if (!descriptor) continue;
 
       const modVar = `$${moduleVarName(selection.moduleId)}`;
-      lines.push('');
-      lines.push(shellEcho(`  Configuring ${descriptor.name}...`));
+      lines.push('echo ""');
+      lines.push(shellEcho(`${CLR.bold}  Configuring ${descriptor.name}...${CLR.rst}`));
 
       if (descriptor.deployment.requiresIdentityRegistryStorage) {
         lines.push(
@@ -98,7 +100,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
 
       lines.push(
         shellEcho(
-          `  ✓ ${descriptor.name} registered on hooks: ${descriptor.requiredHooks.map(serializeStellarComplianceHookForCli).join(', ')}`
+          `${CLR.green}  ✓ ${descriptor.name} registered on hooks: ${descriptor.requiredHooks.map(serializeStellarComplianceHookForCli).join(', ')}${CLR.rst}`
         )
       );
     }
@@ -117,7 +119,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
           networkFlag
         )
       );
-      lines.push(shellEcho(`  ✓ Claim topic ${topic.id} (${topic.name})`));
+      lines.push(shellEcho(`${CLR.green}  ✓ Claim topic ${topic.id} (${topic.name})${CLR.rst}`));
     }
   }
 
@@ -137,7 +139,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
       );
       lines.push(
         shellEcho(
-          `  ✓ Issuer ${issuer.address.slice(0, 8)}... → topics [${issuer.claimTopics.join(', ')}]`
+          `${CLR.green}  ✓ Issuer ${issuer.address.slice(0, 8)}... → topics [${issuer.claimTopics.join(', ')}]${CLR.rst}`
         )
       );
     }
