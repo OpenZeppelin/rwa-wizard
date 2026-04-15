@@ -1,8 +1,7 @@
 import * as p from '@clack/prompts';
 
-import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
-
 import type { ComplianceModuleRegistryEntry } from '@openzeppelin/codegen-rwa-stellar';
+import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 
 function handleCancel(value: unknown): void {
   if (p.isCancel(value)) {
@@ -80,7 +79,10 @@ export async function complianceStep(
         handleCancel(val);
         const strVal = (val as string).trim();
         if (strVal) {
-          config[field.key] = strVal.split(',').map((s) => s.trim()).filter(Boolean);
+          config[field.key] = strVal
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
         }
       } else {
         const val = await p.text({
