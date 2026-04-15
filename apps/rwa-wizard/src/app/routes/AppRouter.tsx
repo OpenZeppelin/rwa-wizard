@@ -423,15 +423,21 @@ function WizardPage() {
     return steps;
   }, [draftState, targetSnapshot, codegenService, storeState.activeDraftId, handleExportDraft]);
 
+  const [resetKey, setResetKey] = useState(0);
+
   const handleCancel = useCallback(() => {
     wizardStore.reset();
     draftState.resetConfig();
+    setResetKey((k) => k + 1);
   }, [draftState]);
+
+  const layoutKey = `${storeState.activeDraftId ?? 'new'}-${resetKey}`;
 
   return (
     <AdapterCapabilitiesProvider value={adapterCaps}>
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <WizardLayout
+          key={layoutKey}
           variant="vertical"
           steps={wizardSteps}
           currentStepIndex={effectiveStepIndex}
