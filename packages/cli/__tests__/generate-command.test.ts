@@ -94,6 +94,25 @@ describe('generateCommand', () => {
       expect(logger.success).toHaveBeenCalledWith('Generation complete');
     });
 
+    it('should pass allowUnderReviewModules to validate, generateZip, and generate', async () => {
+      vi.mocked(loadConfig).mockReturnValue(createValidConfig());
+
+      await generateCommand({
+        config: 'test.json',
+        output: '/out.zip',
+        zip: true,
+        chain: 'stellar',
+        allowUnderReviewModules: true,
+      });
+
+      expect(mockAdapter.validate).toHaveBeenCalledWith(expect.any(Object), {
+        allowUnderReviewModules: true,
+      });
+      expect(mockAdapter.generateZip).toHaveBeenCalledWith(expect.any(Object), {
+        allowUnderReviewModules: true,
+      });
+    });
+
     it('should not offer config export in headless mode', async () => {
       vi.mocked(loadConfig).mockReturnValue(createValidConfig());
 
