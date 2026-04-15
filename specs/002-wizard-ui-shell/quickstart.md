@@ -86,6 +86,7 @@ Open the local Vite URL in a browser.
 
 - Enable the future deployment placeholder through the shared `AppConfigService`-backed feature-flag path used by the other OpenZeppelin apps.
 - Confirm the deployment placeholder can appear for development/staged rollout scenarios without becoming a required part of the MVP ZIP-generation flow.
+- If future deployment-target controls are wired behind that flag, confirm they round-trip through `config.deployment.target` preset/custom objects rather than a legacy `deployment.network` string.
 - Disable the flag again and confirm the placeholder is hidden with no impact on the default wizard path.
 
 ## Test Commands
@@ -103,4 +104,5 @@ pnpm --filter @openzeppelin/rwa-wizard-app test
 - Generation runs through the app-local in-browser codegen boundary rather than a backend service.
 - The default MVP flow ends at ZIP generation/export without any visible deployment step.
 - The UI shell works end to end even if some generator capabilities are still temporarily mocked.
+- Any future deployment placeholder evolves from the same `RWAConfig` contract and writes `deployment.target`, not `deployment.network`.
 - No unsupported target can be entered from the selector.

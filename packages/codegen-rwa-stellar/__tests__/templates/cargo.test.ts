@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  RUST_EDITION,
-  SOROBAN_SDK_VERSION,
-  STELLAR_CONTRACTS_COMMIT_HASH,
-  STELLAR_CONTRACTS_GIT_URL,
-} from '../../src/constants';
+import { RUST_EDITION, SOROBAN_SDK_VERSION } from '../../src/constants';
 import { generateCrateToml } from '../../src/templates/cargo/crate-toml';
 import { generateWorkspaceToml } from '../../src/templates/cargo/workspace-toml';
+import {
+  GENERATED_STELLAR_SOURCE_COMMIT_HASH,
+  GENERATED_STELLAR_SOURCE_REPO_URL,
+} from '../../src/upstream/generated-revision';
 
 describe('Per-crate Cargo.toml Template', () => {
   it('should include crate name', () => {
@@ -125,7 +124,7 @@ describe('Workspace Cargo.toml Template', () => {
 
     for (const crate of expectedCrates) {
       expect(output).toContain(
-        `${crate} = { git = "${STELLAR_CONTRACTS_GIT_URL}", rev = "${STELLAR_CONTRACTS_COMMIT_HASH}" }`
+        `${crate} = { git = "${GENERATED_STELLAR_SOURCE_REPO_URL}", rev = "${GENERATED_STELLAR_SOURCE_COMMIT_HASH}" }`
       );
     }
   });
@@ -136,9 +135,15 @@ describe('Workspace Cargo.toml Template', () => {
       contractsLibraryPath: '/tmp/stellar-contracts',
     });
 
-    expect(output).toContain('stellar-tokens = { path = "/tmp/stellar-contracts/packages/tokens" }');
-    expect(output).toContain('stellar-access = { path = "/tmp/stellar-contracts/packages/access" }');
-    expect(output).toContain('stellar-macros = { path = "/tmp/stellar-contracts/packages/macros" }');
+    expect(output).toContain(
+      'stellar-tokens = { path = "/tmp/stellar-contracts/packages/tokens" }'
+    );
+    expect(output).toContain(
+      'stellar-access = { path = "/tmp/stellar-contracts/packages/access" }'
+    );
+    expect(output).toContain(
+      'stellar-macros = { path = "/tmp/stellar-contracts/packages/macros" }'
+    );
     expect(output).toContain(
       'stellar-contract-utils = { path = "/tmp/stellar-contracts/packages/contract-utils" }'
     );

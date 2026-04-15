@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { createValidConfig as createBaseValidConfig, createMinimalConfig } from './helpers/config';
+import {
+  createCustomDeploymentTarget,
+  createMinimalConfig,
+  createValidConfig as createBaseValidConfig,
+} from './helpers/config';
 import {
   generate,
   generateRoleSymbol,
@@ -134,7 +138,7 @@ describe('standalone Node.js integration (US4)', () => {
           ownership: { type: 'single-owner', ownerAddress: '' },
           roles: [],
         },
-        deployment: { network: '' },
+        deployment: { target: createCustomDeploymentTarget('') },
       });
 
       expect(() => validate(malformed)).not.toThrow();

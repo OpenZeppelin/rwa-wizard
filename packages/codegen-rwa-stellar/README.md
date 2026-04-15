@@ -10,11 +10,11 @@ npm install @openzeppelin/codegen-rwa-stellar
 
 ## Template Sourcing
 
-This generator uses real upstream contract templates from `OpenZeppelin/stellar-contracts`.
+This generator uses contract templates synced from a public Stellar contracts repository.
 
-- By default it reads from a bundled snapshot so generation stays deterministic and browser-safe.
+- By default it reads from a bundled snapshot so generation stays deterministic and browser-safe. The bundled snapshot records the exact source repo and commit that the generated `Cargo.toml` points to.
 - In Node.js, you can pass `contractsLibraryPath` to read templates and local Cargo path dependencies directly from a local `stellar-contracts` checkout.
-- Compliance modules currently come from locally integrated upstream work that is still under review; generation requires `allowUnderReviewModules: true` when those modules are selected.
+- Compliance modules currently come from public upstream work that is still under review; generation requires `allowUnderReviewModules: true` when those modules are selected.
 
 ## Quickstart
 
@@ -57,7 +57,9 @@ const config: RWAConfig = {
     ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER...' },
     roles: [{ name: 'Manager', symbol: 'manager', addresses: ['GCMGR...'] }],
   },
-  deployment: { network: 'testnet' },
+  deployment: {
+    target: { kind: 'preset', ecosystem: 'stellar', networkId: 'stellar-testnet' },
+  },
 };
 
 const validation = validate(config);
@@ -98,15 +100,39 @@ writeFileSync(zip.fileName, Buffer.from(await zip.data.arrayBuffer()));
 
 `contractsLibraryPath` is optional and only used in runtimes that can read from the local filesystem. Browser callers automatically fall back to the bundled snapshot.
 
+For non-preset environments, switch `deployment.target` to `kind: 'custom'` and provide `rpcUrl`. You can also include `explorerUrl` and `label` so the generated deploy output keeps showing friendly names and explorer links on custom infrastructure.
+
+The emitted `config.json` is an informational snapshot of the source `RWAConfig`. It is useful for regeneration or UI re-import, but the generated `deploy.sh` does not read it at runtime.
+
+If `token.initialSupply` is set, the generated `deploy.sh` does **not** auto-mint it. The upstream Stellar claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before `mint` can succeed. The current generator scaffolds CTI, IRS, and the identity verifier, but not those investor-specific identity contracts.
+
+### Manual E2E
+
+Use the checked-in full sample config to generate, build, and deploy a representative project:
+
+```bash
+pnpm --filter @openzeppelin/codegen-rwa-stellar test:manual:e2e -- \
+  --config packages/cli/examples/stellar-full-e2e.json \
+  --address G... \
+  --source-account alice
+```
+
+Notes:
+
+- The default sample uses the placeholder `__STELLAR_E2E_ADDRESS__`, so you must pass `--address` (or `STELLAR_E2E_ADDRESS`) unless your custom config already contains real addresses.
+- Pass `--source-account <identity>` or export `SOURCE_ACCOUNT` / `STELLAR_ACCOUNT` so the generated `deploy.sh` can sign deploy and invoke transactions.
+- The chosen source account must be able to authorize the admin/operator address used by the generated deployment script.
+- If your config sets `token.initialSupply`, expect a validation warning and a successful deploy without auto-minting; mint only after onboarding a verified recipient identity and claim stack.
+- If you need an explicit signer override, you can also pass `--sign-with-key <identity>` or use `STELLAR_SIGN_WITH_KEY`.
+- Pass `--contracts-library-path /absolute/path/to/stellar-contracts` if you want the manual flow to use local path dependencies instead of the bundled git-pinned source.
+
 ### Query Available Compliance Modules
 
 ```typescript
 import { getAvailableModules } from '@openzeppelin/codegen-rwa-stellar';
 
 for (const mod of getAvailableModules()) {
-  console.log(
-    `${mod.id}: hooks=${mod.requiredHooks.join(', ')} review=${mod.review.state}`
-  );
+  console.log(`${mod.id}: hooks=${mod.requiredHooks.join(', ')} review=${mod.review.state}`);
 }
 ```
 
@@ -190,7 +216,7 @@ acme-rwa/
 ├── Cargo.toml
 ├── README.md
 ├── UNDER_REVIEW_MODULES.md      # Present when under-review modules are selected
-├── config.json
+├── config.json                 # Informational source-config snapshot for regeneration/import
 ├── rustfmt.toml
 ├── scripts/
 │   ├── build.sh

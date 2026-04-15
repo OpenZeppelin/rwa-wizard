@@ -56,6 +56,22 @@ describe('Compliance Module Descriptors', () => {
     ]);
   });
 
+  it('serializes time-transfer limit structs using the Stellar CLI JSON shape', () => {
+    const invocations = getModuleDescriptorById(
+      'time-transfers-limits'
+    )?.deployment.getConfigurationInvocations({
+      moduleId: 'time-transfers-limits',
+      config: { limitTime: 86400, limitValue: 25000 },
+    });
+
+    expect(invocations).toEqual([
+      {
+        functionName: 'set_time_transfer_limit',
+        args: `--token "$RWA_TOKEN_ADDRESS" --limit '{"limit_time": 86400, "limit_value": "25000"}'`,
+      },
+    ]);
+  });
+
   it('returns no configuration invocations for modules without post-deploy config', () => {
     const invocations = getModuleDescriptorById(
       'transfer-restrict'
@@ -64,5 +80,23 @@ describe('Compliance Module Descriptors', () => {
     });
 
     expect(invocations).toEqual([]);
+  });
+
+  it('keeps optional hook-wiring verification co-located on supporting descriptors', () => {
+    const verifyingInvocations = getModuleDescriptorById(
+      'supply-limit'
+    )?.deployment.getPostRegistrationInvocations?.({
+      moduleId: 'supply-limit',
+      config: { limit: 1000 },
+    });
+    const nonVerifyingInvocations = getModuleDescriptorById(
+      'country-restrict'
+    )?.deployment.getPostRegistrationInvocations?.({
+      moduleId: 'country-restrict',
+      config: { restrictedCountries: ['US'] },
+    });
+
+    expect(verifyingInvocations).toEqual([{ functionName: 'verify_hook_wiring', args: '' }]);
+    expect(nonVerifyingInvocations ?? []).toEqual([]);
   });
 });

@@ -162,6 +162,16 @@ export const STELLAR_COMPLIANCE_HOOKS: readonly StellarComplianceHookMeta[] = [
   },
 ] as const;
 
+/**
+ * Serialize a hook id into the enum case name exposed by the contract CLI.
+ *
+ * Keep the lower-camel hook ids as the internal TS-facing vocabulary, and
+ * convert only at the CLI boundary where Soroban expects Rust enum case names.
+ */
+export function serializeStellarComplianceHookForCli(hook: StellarComplianceHook): string {
+  return hook.slice(0, 1).toUpperCase() + hook.slice(1);
+}
+
 // ---------------------------------------------------------------------------
 // Ecosystem limits
 // ---------------------------------------------------------------------------

@@ -1,14 +1,16 @@
 import {
   SOROBAN_SDK_VERSION,
   STELLAR_CONTRACTS_AUTHORS,
-  STELLAR_CONTRACTS_COMMIT_HASH,
-  STELLAR_CONTRACTS_GIT_URL,
   STELLAR_CONTRACTS_LICENSE,
   STELLAR_CONTRACTS_REPOSITORY_URL,
   STELLAR_CONTRACTS_VERSION,
   WORKSPACE_CRATE_DEPS,
   WORKSPACE_CRATE_PACKAGE_PATHS,
 } from '../../constants';
+import {
+  GENERATED_STELLAR_SOURCE_COMMIT_HASH,
+  GENERATED_STELLAR_SOURCE_REPO_URL,
+} from '../../upstream/generated-revision';
 
 export interface WorkspaceTomlConfig {
   members: string[];
@@ -36,7 +38,7 @@ export function generateWorkspaceToml(config: WorkspaceTomlConfig): string {
   } else {
     depsBlock = WORKSPACE_CRATE_DEPS.map(
       (crate) =>
-        `${crate} = { git = "${STELLAR_CONTRACTS_GIT_URL}", rev = "${STELLAR_CONTRACTS_COMMIT_HASH}" }`
+        `${crate} = { git = "${GENERATED_STELLAR_SOURCE_REPO_URL}", rev = "${GENERATED_STELLAR_SOURCE_COMMIT_HASH}" }`
     ).join('\n');
   }
 

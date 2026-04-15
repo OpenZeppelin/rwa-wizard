@@ -114,9 +114,33 @@ export interface AccessControlConfig {
 // Deployment
 // ---------------------------------------------------------------------------
 
+export interface PresetDeploymentTarget {
+  /** Resolve a named network from the adapter layer */
+  kind: 'preset';
+  /** Ecosystem identifier, e.g. "stellar" */
+  ecosystem: string;
+  /** Adapter-defined network identifier, e.g. "stellar-testnet" */
+  networkId: string;
+}
+
+export interface CustomDeploymentTarget {
+  /** Use a custom RPC target instead of an adapter preset */
+  kind: 'custom';
+  /** Ecosystem identifier, e.g. "stellar" */
+  ecosystem: string;
+  /** RPC URL used by the generator/deploy scripts */
+  rpcUrl: string;
+  /** Optional explorer base URL used for generated display links */
+  explorerUrl?: string;
+  /** Optional human-readable label shown in generated output */
+  label?: string;
+}
+
+export type DeploymentTarget = PresetDeploymentTarget | CustomDeploymentTarget;
+
 export interface DeploymentConfig {
-  /** Target network: "testnet", "mainnet", or custom RPC URL */
-  network: string;
+  /** Target network reference or custom RPC target */
+  target: DeploymentTarget;
   /** Deployer account (optional, defaults to CLI signer) */
   sourceAccount?: string;
 }

@@ -90,8 +90,8 @@
 | **Affected Flow**         | Deployment placeholder step (hidden by default behind `DEPLOYMENT_STEP` feature flag)                                                                                  |
 | **Mocked API Seam**       | `TargetCapabilitySnapshot.networkOptions`                                                                                                                              |
 | **User-Visible Fallback** | The deployment step is hidden by default. If enabled via feature flag, network options may be empty because the capability snapshot does not populate them in the MVP. |
-| **Mock Behavior**         | `networkOptions` is an optional field on `TargetCapabilitySnapshot`. No network data is populated in the current implementation.                                       |
-| **Replacement Trigger**   | When the deployment feature is implemented with real network selection, `networkOptions` will be populated by the target runtime and consumed by the deployment step.  |
+| **Mock Behavior**         | `networkOptions` is an optional field on `TargetCapabilitySnapshot`. No network data is populated in the current implementation. When the placeholder is implemented for real, those options must map to `RWAConfig.deployment.target` preset/custom references rather than a raw network string. |
+| **Replacement Trigger**   | When the deployment feature is implemented with real target selection, `networkOptions` will be populated by the target runtime and consumed by the deployment step to populate `config.deployment.target`. |
 | **Owning File**           | `apps/rwa-wizard/src/types/wizard.ts` (`TargetCapabilitySnapshot.networkOptions`)                                                                                      |
 | **Status**                | **Deferred** — hidden behind feature flag                                                                                                                              |
 

@@ -1,5 +1,6 @@
 import { PR_650 } from './review-urls';
 import {
+  createHookWiringVerificationInvocation,
   createModuleInvocation,
   defineComplianceModuleDescriptor,
   getOptionalScalarConfigValue,
@@ -34,6 +35,9 @@ export const maxBalanceModule = defineComplianceModuleDescriptor({
             ),
           ]
         : [];
+    },
+    getPostRegistrationInvocations() {
+      return [createHookWiringVerificationInvocation()];
     },
   },
 });

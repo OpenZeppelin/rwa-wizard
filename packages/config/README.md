@@ -55,7 +55,11 @@ const config: RWAConfig = {
     ],
   },
   deployment: {
-    network: 'testnet',
+    target: {
+      kind: 'preset',
+      ecosystem: 'stellar',
+      networkId: 'stellar-testnet',
+    },
     sourceAccount: 'GCDEPLOYER...',
   },
 };
@@ -73,7 +77,7 @@ Root configuration object with the following sections:
 | `identityVerification` | `IdentityVerificationConfig` | Claim topics, trusted issuers, and identity controls   |
 | `compliance`           | `ComplianceConfig`           | Selected compliance modules and module config          |
 | `accessControl`        | `AccessControlConfig`        | Ownership model and operator roles                     |
-| `deployment`           | `DeploymentConfig`           | Target network and optional deployer account           |
+| `deployment`           | `DeploymentConfig`           | Deployment target reference and optional deployer account |
 
 ### `TokenConfig`
 
@@ -111,10 +115,19 @@ Root configuration object with the following sections:
 
 ### `DeploymentConfig`
 
-| Field           | Type     | Required | Description                                     |
-| --------------- | -------- | -------- | ----------------------------------------------- |
-| `network`       | `string` | Yes      | Target network (`"testnet"`, `"mainnet"`, etc.) |
-| `sourceAccount` | `string` | No       | Deployer account address                        |
+| Field           | Type               | Required | Description                                    |
+| --------------- | ------------------ | -------- | ---------------------------------------------- |
+| `target`        | `DeploymentTarget` | Yes      | Preset network reference or custom RPC target  |
+| `sourceAccount` | `string`           | No       | Deployer account address                       |
+
+### `DeploymentTarget`
+
+`DeploymentTarget` is a discriminated union:
+
+| Variant | Fields | Description |
+| ------- | ------ | ----------- |
+| `preset` | `{ kind: 'preset', ecosystem: string, networkId: string }` | Reference an adapter-defined network by ecosystem and network ID |
+| `custom` | `{ kind: 'custom', ecosystem: string, rpcUrl: string, explorerUrl?: string, label?: string }` | Use a custom RPC endpoint with optional explorer metadata |
 
 ## Exports
 
@@ -126,6 +139,9 @@ Root configuration object with the following sections:
 | `ComplianceConfig`           | type  | Compliance modules                            |
 | `AccessControlConfig`        | type  | Ownership and roles                           |
 | `DeploymentConfig`           | type  | Deployment target                             |
+| `DeploymentTarget`           | type  | Deployment target union                       |
+| `PresetDeploymentTarget`     | type  | Adapter-backed preset network reference       |
+| `CustomDeploymentTarget`     | type  | Custom RPC deployment target                  |
 | `ClaimTopic`                 | type  | Claim topic entry                             |
 | `TrustedIssuer`              | type  | Trusted issuer entry                          |
 | `ComplianceModuleSelection`  | type  | Module selection                              |
@@ -137,6 +153,7 @@ Root configuration object with the following sections:
 ## Design Notes
 
 - **Chain-agnostic**: No chain-specific validation limits, runtime policies, or generator behavior live here.
+- **Adapter-aligned references**: Deployment targets store lightweight references (`ecosystem`, `networkId`, `rpcUrl`) instead of importing adapter runtime types directly.
 - **Schema-first**: This package defines the shape of config data; shared runtime helper logic now lives in generator packages such as `@openzeppelin/codegen-rwa-common`.
 - **Minimal runtime surface**: The main runtime export is `DEFAULT_ROLE_SYMBOLS`, which provides neutral default symbol mappings for well-known roles.
 

@@ -18,7 +18,7 @@ const config: RWAConfig = {
     name: 'Acme Real Estate Token',
     symbol: 'ACME',
     decimals: 18,
-    initialSupply: '1000000000000000000000000', // 1M tokens
+    initialSupply: '1000000000000000000000000', // 1M requested units; surfaced as post-deploy mint guidance on Stellar
     documentManager: { enabled: true },
   },
   identityVerification: {
@@ -34,7 +34,7 @@ const config: RWAConfig = {
     ],
   },
   compliance: {
-    modules: [{ moduleId: 'supply-cap', hook: 'creation' }],
+    modules: [{ moduleId: 'supply-limit', config: { limit: 1000000 } }],
   },
   accessControl: {
     ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER...' },
@@ -44,7 +44,11 @@ const config: RWAConfig = {
     ],
   },
   deployment: {
-    network: 'testnet',
+    target: {
+      kind: 'preset',
+      ecosystem: 'stellar',
+      networkId: 'stellar-testnet',
+    },
   },
 };
 
@@ -53,6 +57,9 @@ const validation = validate(config);
 if (!validation.valid) {
   console.error('Config errors:', validation.errors);
   process.exit(1);
+}
+if (validation.warnings.length > 0) {
+  console.warn('Config warnings:', validation.warnings);
 }
 
 // Step 2: Generate the file tree
@@ -66,6 +73,22 @@ for (const path of Object.keys(result.files)) {
 // Access individual file contents
 const tokenContract = result.files['contracts/rwa-token/src/contract.rs'];
 console.log(tokenContract);
+```
+
+On Stellar, setting `token.initialSupply` does not make `deploy.sh` mint automatically. The generator emits validation and README/deploy guidance so the mint can be performed later, after the recipient has been onboarded into the upstream identity system.
+
+If you are targeting custom infrastructure instead of an adapter preset, switch `deployment.target` to:
+
+```typescript
+deployment: {
+  target: {
+    kind: 'custom',
+    ecosystem: 'stellar',
+    rpcUrl: 'https://custom-rpc.example.com',
+    explorerUrl: 'https://explorer.example.com', // optional
+    label: 'Partner Sandbox', // optional
+  },
+}
 ```
 
 ## Generate a ZIP Archive
@@ -99,7 +122,7 @@ import { getAvailableModules } from '@openzeppelin/codegen-rwa-stellar';
 
 const modules = getAvailableModules();
 for (const mod of modules) {
-  console.log(`${mod.id}: ${mod.name} — hooks: ${mod.supportedHooks.join(', ')}`);
+  console.log(`${mod.id}: ${mod.name} — hooks: ${mod.requiredHooks.join(', ')}`);
 }
 ```
 
@@ -111,7 +134,7 @@ For a config with token symbol "ACME" and one compliance module:
 acme-rwa/
 ├── Cargo.toml                        # Workspace manifest
 ├── README.md                         # Setup instructions + architecture
-├── config.json                       # Serialized wizard config
+├── config.json                       # Serialized config snapshot for provenance/re-import
 ├── scripts/
 │   ├── build.sh                      # Compile all contracts
 │   └── deploy.sh                     # Deploy + configure in correct order
@@ -142,7 +165,7 @@ acme-rwa/
 │   │       ├── lib.rs
 │   │       └── contract.rs
 │   └── modules/
-│       └── supply-cap/
+│       └── supply-limit/
 │           ├── Cargo.toml
 │           └── src/
 │               ├── lib.rs

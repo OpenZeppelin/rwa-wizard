@@ -17,7 +17,7 @@ Represents one persisted wizard draft stored in client-side IndexedDB.
 | `targetId`    | `string`                                                       | Yes      | Selected target ecosystem, initially `stellar`         |
 | `status`      | `'draft' \| 'ready' \| 'generating' \| 'generated' \| 'error'` | Yes      | High-level lifecycle state                             |
 | `currentStep` | `WizardStepId`                                                 | Yes      | Last active wizard stage                               |
-| `config`      | `RWAConfig`                                                    | Yes      | Canonical persisted wizard payload                     |
+| `config`      | `RWAConfig`                                                    | Yes      | Canonical persisted wizard payload; future deployment UI must write `deployment.target` references, not a raw network string |
 | `metadata`    | `WizardDraftMetadata`                                          | Yes      | UI-only flags and provenance                           |
 | `createdAt`   | `Date`                                                         | Yes      | Storage-managed                                        |
 | `updatedAt`   | `Date`                                                         | Yes      | Storage-managed                                        |
@@ -27,6 +27,7 @@ Represents one persisted wizard draft stored in client-side IndexedDB.
 - `title` must be non-empty once a draft is persisted.
 - `targetId` must reference a visible target catalog entry.
 - `config` must remain serializable for storage and import/export.
+- If a future deployment placeholder is enabled, `config.deployment.target` must remain a valid preset/custom `DeploymentTarget` reference shape.
 - `status = 'ready'` is allowed only when blocking validation errors are absent.
 - `status = 'generating'` is transient and must revert to `ready`, `generated`, or `error`.
 
@@ -97,6 +98,7 @@ Describes what the currently selected target exposes to the wizard UI at runtime
 
 - `availableModules` should expose all modules from the target's registry (both stable and under-review), each including `requiredHooks`, `review` state, and `configFields` metadata.
 - `networkOptions` may be omitted in the MVP default-flag state and are only consumed if a future deployment placeholder is enabled.
+- When consumed by a future deployment placeholder, `networkOptions` must map into `config.deployment.target` as preset/custom references rather than a legacy `deployment.network` string.
 - `mocked = true` requires an entry in the mock gap register.
 
 ### 6. `GenerationJobState`

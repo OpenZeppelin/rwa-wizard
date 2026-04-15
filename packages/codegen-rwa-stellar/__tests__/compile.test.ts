@@ -4,9 +4,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import type { GenerateOptions } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { createMinimalConfig as createBaseMinimalConfig, createValidConfig } from './helpers/config';
+import {
+  createMinimalConfig as createBaseMinimalConfig,
+  createValidConfig,
+} from './helpers/config';
+
 import { generate } from '../src/index';
 
 const COMPILE_TIMEOUT = 300_000; // 5 minutes
@@ -58,7 +63,17 @@ function createFullConfig(overrides?: Partial<RWAConfig>): RWAConfig {
     },
     accessControl: {
       ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
-      roles: [{ name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] }],
+      roles: [
+        { name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] },
+        { name: 'Agent', symbol: 'agent', addresses: ['GCAGENT1'] },
+      ],
+    },
+    compliance: {
+      modules: [
+        { moduleId: 'supply-limit', config: { limit: 1_000_000 } },
+        { moduleId: 'max-balance', config: { maxBalance: 50_000 } },
+        { moduleId: 'country-restrict', config: { restrictedCountries: ['US'] } },
+      ],
     },
     ...overrides,
   });
@@ -117,91 +132,129 @@ async function runStellarBuild(projectDir: string): Promise<{ success: boolean; 
   });
 }
 
-const skipReason =
+function generateProjectFiles(config: RWAConfig, options?: GenerateOptions) {
+  return generate(config, options).files;
+}
+
+function writeGeneratedProject(
+  testRoot: string,
+  projectName: string,
+  config: RWAConfig,
+  options?: GenerateOptions
+): string {
+  const projectDir = join(testRoot, projectName);
+  writeGeneratedFiles(projectDir, generateProjectFiles(config, options));
+  return projectDir;
+}
+
+async function expectBuildSucceeds(
+  projectDir: string,
+  expectedWasms: string[],
+  failureLabel: string
+): Promise<void> {
+  expect(existsSync(join(projectDir, 'Cargo.toml'))).toBe(true);
+  expect(existsSync(join(projectDir, 'contracts/rwa-token/src/contract.rs'))).toBe(true);
+
+  const buildResult = await runStellarBuild(projectDir);
+  expect(buildResult.success, `${failureLabel}:\n${buildResult.output}`).toBe(true);
+
+  for (const wasm of expectedWasms) {
+    expect(buildResult.output).toContain(`${wasm}.wasm`);
+  }
+}
+
+const defaultCompileSkipReason =
   !hasStellarCli() || !hasRustWasmTarget()
     ? 'Requires `stellar` CLI and Rust wasm32 target to be installed'
-    : !hasLocalContractsLibrary()
-      ? 'Requires a local `stellar-contracts` checkout (set STELLAR_CONTRACTS_PATH if needed)'
     : undefined;
 
-describe.skipIf(!!skipReason)('Compilation E2E — generated contracts must compile', () => {
-  const testRoot = join(tmpdir(), `codegen-compile-e2e-${Date.now()}`);
+const localCheckoutSkipReason = defaultCompileSkipReason
+  ? defaultCompileSkipReason
+  : !hasLocalContractsLibrary()
+    ? 'Requires a local `stellar-contracts` checkout (set STELLAR_CONTRACTS_PATH if needed)'
+    : undefined;
 
-  beforeAll(() => {
-    mkdirSync(testRoot, { recursive: true });
-  });
+describe.skipIf(!!defaultCompileSkipReason)(
+  'Compilation E2E — bundled generated contracts must compile',
+  () => {
+    const testRoot = join(tmpdir(), `codegen-compile-e2e-${Date.now()}`);
 
-  afterAll(() => {
-    rmSync(testRoot, { recursive: true, force: true });
-  });
+    beforeAll(() => {
+      mkdirSync(testRoot, { recursive: true });
+    });
 
-  it(
-    'should compile a full-featured RWA project (with DocumentManager + roles)',
-    async () => {
-      const config = createFullConfig();
-      const result = generate(config, { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH });
+    afterAll(() => {
+      rmSync(testRoot, { recursive: true, force: true });
+    });
 
-      const projectDir = join(testRoot, 'full-featured');
-      writeGeneratedFiles(projectDir, result.files);
+    it(
+      'should compile a full-featured bundled RWA project (modules + DocumentManager + roles)',
+      async () => {
+        const config = createFullConfig();
+        const projectDir = writeGeneratedProject(testRoot, 'full-featured-bundled', config, {
+          allowUnderReviewModules: true,
+        });
 
-      expect(existsSync(join(projectDir, 'Cargo.toml'))).toBe(true);
-      expect(existsSync(join(projectDir, 'contracts/rwa-token/src/contract.rs'))).toBe(true);
-
-      const buildResult = await runStellarBuild(projectDir);
-      expect(buildResult.success, `Compilation failed:\n${buildResult.output}`).toBe(true);
-
-      const expectedWasms = [
-        'rwa_token',
-        'compliance',
-        'identity_verifier',
-        'claim_topics_issuers',
-        'identity_registry_storage',
-      ];
-
-      for (const wasm of expectedWasms) {
-        expect(buildResult.output).toContain(`${wasm}.wasm`);
-      }
-    },
-    COMPILE_TIMEOUT
-  );
-
-  it(
-    'should compile a minimal RWA project (no DocumentManager, no roles)',
-    async () => {
-      const config = createMinimalConfig();
-      const result = generate(config, { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH });
-
-      const projectDir = join(testRoot, 'minimal');
-      writeGeneratedFiles(projectDir, result.files);
-
-      const buildResult = await runStellarBuild(projectDir);
-      expect(buildResult.success, `Compilation failed:\n${buildResult.output}`).toBe(true);
-      expect(buildResult.output).toContain('rwa_token.wasm');
-    },
-    COMPILE_TIMEOUT
-  );
-
-  it(
-    'should compile with multiple roles',
-    async () => {
-      const config = createFullConfig({
-        accessControl: {
-          ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
-          roles: [
-            { name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] },
-            { name: 'Agent', symbol: 'agent', addresses: ['GCAGENT1'] },
+        await expectBuildSucceeds(
+          projectDir,
+          [
+            'rwa_token',
+            'compliance',
+            'identity_verifier',
+            'claim_topics_issuers',
+            'identity_registry_storage',
+            'supply_limit',
+            'max_balance',
+            'country_restrict',
           ],
-        },
-      });
-      const result = generate(config, { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH });
+          'Bundled compilation failed'
+        );
+      },
+      COMPILE_TIMEOUT
+    );
 
-      const projectDir = join(testRoot, 'multi-role');
-      writeGeneratedFiles(projectDir, result.files);
+    it(
+      'should compile a minimal RWA project (no DocumentManager, no roles)',
+      async () => {
+        const config = createMinimalConfig();
+        const projectDir = writeGeneratedProject(testRoot, 'minimal-bundled', config);
 
-      const buildResult = await runStellarBuild(projectDir);
-      expect(buildResult.success, `Compilation failed:\n${buildResult.output}`).toBe(true);
-      expect(buildResult.output).toContain('rwa_token.wasm');
-    },
-    COMPILE_TIMEOUT
-  );
-});
+        await expectBuildSucceeds(projectDir, ['rwa_token'], 'Minimal bundled compilation failed');
+      },
+      COMPILE_TIMEOUT
+    );
+  }
+);
+
+describe.skipIf(!!localCheckoutSkipReason)(
+  'Compilation E2E — local checkout override must remain compatible',
+  () => {
+    const testRoot = join(tmpdir(), `codegen-compile-local-e2e-${Date.now()}`);
+
+    beforeAll(() => {
+      mkdirSync(testRoot, { recursive: true });
+    });
+
+    afterAll(() => {
+      rmSync(testRoot, { recursive: true, force: true });
+    });
+
+    it(
+      'should compile a full-featured project with local path dependencies',
+      async () => {
+        const config = createFullConfig();
+        const projectDir = writeGeneratedProject(testRoot, 'full-featured-local', config, {
+          allowUnderReviewModules: true,
+          contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH,
+        });
+
+        await expectBuildSucceeds(
+          projectDir,
+          ['rwa_token', 'supply_limit', 'max_balance', 'country_restrict'],
+          'Local-checkout compilation failed'
+        );
+      },
+      COMPILE_TIMEOUT
+    );
+  }
+);

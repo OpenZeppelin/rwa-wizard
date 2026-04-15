@@ -1,10 +1,37 @@
-import * as countries from 'i18n-iso-countries';
+import countriesModule from 'i18n-iso-countries';
 
 import type {
   ComplianceModuleDescriptor,
   ComplianceModuleSelection,
   ModuleInvocation,
 } from '../types';
+
+interface CountriesApi {
+  alpha2ToNumeric(code: string): string | undefined;
+}
+
+/**
+ * Normalize `i18n-iso-countries` interop across Vitest, tsdown, and Node ESM.
+ */
+function resolveCountriesApi(module: unknown): CountriesApi {
+  const candidate = module as Partial<CountriesApi> & {
+    default?: Partial<CountriesApi>;
+  };
+
+  const api =
+    typeof candidate.alpha2ToNumeric === 'function'
+      ? (candidate as CountriesApi)
+      : typeof candidate.default?.alpha2ToNumeric === 'function'
+        ? (candidate.default as CountriesApi)
+        : undefined;
+  if (!api || typeof api.alpha2ToNumeric !== 'function') {
+    throw new Error('Failed to load i18n-iso-countries alpha2ToNumeric helper');
+  }
+
+  return api;
+}
+
+const countries = resolveCountriesApi(countriesModule);
 
 /**
  * Define one compliance module descriptor with co-located behavior.
@@ -20,6 +47,14 @@ export function defineComplianceModuleDescriptor(
  */
 export function createModuleInvocation(functionName: string, args: string): ModuleInvocation {
   return { functionName, args };
+}
+
+/**
+ * Create the optional post-registration verification call used by modules
+ * that expose `verify_hook_wiring` in their public contract ABI.
+ */
+export function createHookWiringVerificationInvocation(): ModuleInvocation {
+  return createModuleInvocation('verify_hook_wiring', '');
 }
 
 /**
@@ -99,5 +134,7 @@ export function serializeNumericArray(values: readonly string[]): string {
  * Serialize a time-transfer limit struct for Stellar CLI invocation.
  */
 export function serializeLimitStruct(limitTime: string, limitValue: string): string {
-  return `'{"limit_time": ${limitTime}, "limit_value": ${limitValue}}'`;
+  // Soroban CLI expects i128 fields to be quoted JSON strings, even when
+  // neighboring scalar fields like u64 remain numeric literals.
+  return `'{"limit_time": ${limitTime}, "limit_value": ${JSON.stringify(limitValue)}}'`;
 }

@@ -10,6 +10,16 @@ describe('useWizardDraftState', () => {
     expect(result.current.config).toEqual(createDefaultRwaConfig());
   });
 
+  it('uses a preset deployment target in the default config', () => {
+    expect(createDefaultRwaConfig().deployment).toEqual({
+      target: {
+        kind: 'preset',
+        ecosystem: 'stellar',
+        networkId: 'stellar-testnet',
+      },
+    });
+  });
+
   it('initializes with a provided config', () => {
     const custom = createDefaultRwaConfig();
     custom.token.name = 'Test Token';

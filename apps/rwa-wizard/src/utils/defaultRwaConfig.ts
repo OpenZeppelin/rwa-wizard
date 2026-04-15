@@ -1,7 +1,11 @@
-import type { RWAConfig } from '@openzeppelin/rwa-config';
+import type { PresetDeploymentTarget, RWAConfig } from '@openzeppelin/rwa-config';
 
 export const DEFAULT_DECIMALS = 7;
-export const DEFAULT_NETWORK = 'testnet';
+export const DEFAULT_DEPLOYMENT_TARGET: PresetDeploymentTarget = {
+  kind: 'preset',
+  ecosystem: 'stellar',
+  networkId: 'stellar-testnet',
+};
 
 export function createDefaultRwaConfig(): RWAConfig {
   return {
@@ -34,7 +38,7 @@ export function createDefaultRwaConfig(): RWAConfig {
       roles: [],
     },
     deployment: {
-      network: DEFAULT_NETWORK,
+      target: { ...DEFAULT_DEPLOYMENT_TARGET },
     },
   };
 }

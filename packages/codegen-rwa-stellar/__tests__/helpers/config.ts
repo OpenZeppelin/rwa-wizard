@@ -19,6 +19,34 @@ const DEFAULT_IDENTITY_CONTROLS = {
   forcedTransfers: true,
 } as const;
 
+const DEFAULT_DEPLOYMENT_TARGET = {
+  kind: 'preset',
+  ecosystem: 'stellar',
+  networkId: 'stellar-testnet',
+} as const;
+
+export function createPresetDeploymentTarget(
+  networkId: string = DEFAULT_DEPLOYMENT_TARGET.networkId
+): RWAConfig['deployment']['target'] {
+  return {
+    kind: 'preset',
+    ecosystem: 'stellar',
+    networkId,
+  };
+}
+
+export function createCustomDeploymentTarget(
+  rpcUrl: string,
+  overrides: Partial<Extract<RWAConfig['deployment']['target'], { kind: 'custom' }>> = {}
+): RWAConfig['deployment']['target'] {
+  return {
+    kind: 'custom',
+    ecosystem: 'stellar',
+    rpcUrl,
+    ...overrides,
+  };
+}
+
 function mergeConfig(base: RWAConfig, overrides: DeepPartial<RWAConfig>): RWAConfig {
   return {
     token: {
@@ -67,6 +95,9 @@ function mergeConfig(base: RWAConfig, overrides: DeepPartial<RWAConfig>): RWACon
     deployment: {
       ...base.deployment,
       ...overrides.deployment,
+      target:
+        (overrides.deployment?.target as RWAConfig['deployment']['target']) ??
+        base.deployment.target,
     },
   };
 }
@@ -106,7 +137,7 @@ export function createValidConfig(overrides: DeepPartial<RWAConfig> = {}): RWACo
         ],
       },
       deployment: {
-        network: 'testnet',
+        target: createPresetDeploymentTarget(),
       },
     },
     overrides
@@ -136,7 +167,7 @@ export function createMinimalConfig(overrides: DeepPartial<RWAConfig> = {}): RWA
         roles: [],
       },
       deployment: {
-        network: 'testnet',
+        target: createPresetDeploymentTarget(),
       },
     },
     overrides

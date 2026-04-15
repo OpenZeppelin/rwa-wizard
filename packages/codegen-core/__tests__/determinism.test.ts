@@ -37,8 +37,18 @@ describe('Determinism Utilities', () => {
 
   describe('stableJsonStringify', () => {
     it('produces identical JSON for differently ordered objects', () => {
-      const left = { token: { symbol: 'ABC', name: 'Alpha' }, deployment: { network: 'testnet' } };
-      const right = { deployment: { network: 'testnet' }, token: { name: 'Alpha', symbol: 'ABC' } };
+      const left = {
+        token: { symbol: 'ABC', name: 'Alpha' },
+        deployment: {
+          target: { kind: 'preset', ecosystem: 'stellar', networkId: 'stellar-testnet' },
+        },
+      };
+      const right = {
+        deployment: {
+          target: { networkId: 'stellar-testnet', ecosystem: 'stellar', kind: 'preset' },
+        },
+        token: { name: 'Alpha', symbol: 'ABC' },
+      };
 
       expect(stableJsonStringify(left)).toBe(stableJsonStringify(right));
     });

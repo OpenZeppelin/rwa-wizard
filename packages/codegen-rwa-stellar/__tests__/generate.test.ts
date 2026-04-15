@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createValidConfig } from './helpers/config';
+
 import { CRATE_NAMES } from '../src/constants';
 import { StellarRwaGenerator } from '../src/stellar-rwa-generator';
 
@@ -191,9 +192,7 @@ describe('StellarRwaGenerator', () => {
     it('CTI: e, admin, manager', () => {
       const contract = result.files['contracts/claim-topics-issuers/src/contract.rs'] as string;
 
-      expect(contract).toContain(
-        'pub fn __constructor(e: &Env, admin: Address, manager: Address)'
-      );
+      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address, manager: Address)');
     });
 
     it('IRS: e, admin, manager', () => {
@@ -201,9 +200,7 @@ describe('StellarRwaGenerator', () => {
         'contracts/identity-registry-storage/src/contract.rs'
       ] as string;
 
-      expect(contract).toContain(
-        'pub fn __constructor(e: &Env, admin: Address, manager: Address)'
-      );
+      expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address, manager: Address)');
     });
   });
 
@@ -292,6 +289,16 @@ describe('StellarRwaGenerator', () => {
       expect(readme).toContain('Contracts');
       expect(readme).toContain('Upstream Provenance');
       expect(readme).toContain('bundled snapshot');
+      expect(readme).toContain(
+        '`config.json` is an informational snapshot of the exact source config'
+      );
+      expect(readme).toContain('`deploy.sh` does not read it at runtime');
+      expect(readme).toContain('`SOURCE_ACCOUNT`');
+      expect(readme).toContain('`STELLAR_ACCOUNT`');
+      expect(readme).toContain('export STELLAR_ACCOUNT=alice');
+      expect(readme).toContain('does **not** auto-mint it');
+      expect(readme).toContain('Claim Issuer');
+      expect(readme).toContain('Identity');
       expect(readme).toContain('Unix');
     });
 

@@ -13,6 +13,8 @@ npm install @openzeppelin/codegen-rwa-common
 - Ownership-model admin resolution
 - Manager-role fallback resolution
 - Normalized role assignment shaping
+- Compliance-module selection deduplication
+- Compliance-module summary shaping for README/CLI/UI output
 - Reuse of neutral default role symbols from `@openzeppelin/rwa-config`
 
 It does **not** own chain-specific symbol constraints or identifier formatting. Those stay in each chain package.
@@ -28,6 +30,10 @@ It does **not** own chain-specific symbol constraints or identifier formatting. 
 | `getResolvedRoleAssignments(config, options?)`   | Normalize configured roles into `{ name, symbol, address }` records |
 | `getManagerAddress(config, options?)`            | Resolve the manager role address, falling back to the admin address |
 | `getAdditionalRoleAssignments(config, options?)` | Return role assignments excluding the manager role                  |
+| `getUniqueModuleSelections(selections)`          | Deduplicate module selections by `moduleId`, keeping first-seen order |
+| `formatModuleConfigSummary(config, preferredKeys)` | Build a compact summary string for module config values           |
+| `getSelectedModuleSummaries(selections, resolveModule)` | Normalize selected modules into display-ready summary rows   |
+| `getUnderReviewModules(selections, resolveModule)` | Return unique under-review module notices                        |
 
 
 ### Types
@@ -37,6 +43,8 @@ It does **not** own chain-specific symbol constraints or identifier formatting. 
 | ------------------------ | ------------------------------------------------------------------------------------------ |
 | `ResolvedRoleAssignment` | `{ name, symbol, address }`                                                                |
 | `RoleResolutionOptions`  | Optional callbacks such as `generateRoleSymbol(name)` for chain-specific fallback behavior |
+| `SelectedModuleSummary`  | `{ id, name, hooks, configSummary, reviewSummary }` for display surfaces                  |
+| `UnderReviewModuleSummary` | `{ id, name, prUrl? }` for under-review notices                                         |
 
 
 ## Example
