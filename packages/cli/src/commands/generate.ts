@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 
+import type { GenerateOptions as CoreGenerateOptions } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type { GeneratorAdapter } from '../generators/registry';
@@ -17,6 +18,8 @@ export interface GenerateOptions {
   output: string;
   zip?: boolean;
   chain: string;
+  /** When true, pass through to stellar codegen (not for production). */
+  allowUnderReviewModules?: boolean;
 }
 
 function formatBytes(bytes: number): string {
@@ -53,7 +56,11 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
     useZip = result.outputFormat === 'zip';
   }
 
-  const validation = adapter.validate(config);
+  const coreOptions: CoreGenerateOptions | undefined = opts.allowUnderReviewModules
+    ? { allowUnderReviewModules: true }
+    : undefined;
+
+  const validation = adapter.validate(config, coreOptions);
 
   if (validation.warnings.length > 0) {
     logger.warn('Validation warnings:');
@@ -75,7 +82,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
   if (useZip) {
     s.start('Generating ZIP archive...');
     try {
-      const zipResult = await adapter.generateZip(config);
+      const zipResult = await adapter.generateZip(config, coreOptions);
       const writeResult = await writeZip(zipResult, opts.output);
       s.stop('ZIP archive generated');
 
@@ -98,7 +105,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
   } else {
     s.start('Generating project files...');
     try {
-      const result = adapter.generate(config);
+      const result = adapter.generate(config, coreOptions);
       const writeResult = writeFileTree(result, opts.output);
       s.stop('Project files generated');
 

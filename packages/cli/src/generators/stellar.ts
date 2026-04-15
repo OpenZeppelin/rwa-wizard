@@ -1,7 +1,6 @@
 import type {
   GenerateOptions,
   GenerationResult,
-  ProgressCallback,
   ValidationResult,
   ZipResult,
 } from '@openzeppelin/codegen-core';
@@ -37,14 +36,11 @@ export const stellarAdapter: GeneratorAdapter = {
     return generate(config, options);
   },
 
-  validate(config: RWAConfig): ValidationResult {
-    return validate(config);
+  validate(config: RWAConfig, options?: GenerateOptions): ValidationResult {
+    return validate(config, options);
   },
 
-  async generateZip(
-    config: RWAConfig,
-    options?: { onProgress?: ProgressCallback }
-  ): Promise<ZipResult> {
+  async generateZip(config: RWAConfig, options?: GenerateOptions): Promise<ZipResult> {
     return generateZip(config, options);
   },
 

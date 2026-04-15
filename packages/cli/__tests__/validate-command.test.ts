@@ -45,6 +45,19 @@ describe('validateCommand', () => {
     expect(logger.success).toHaveBeenCalledWith('Configuration is valid');
   });
 
+  it('should pass allowUnderReviewModules to validate', () => {
+    vi.mocked(mockAdapter.validate).mockReturnValue({ valid: true, errors: [], warnings: [] });
+    validateCommand({
+      config: 'test.json',
+      chain: 'stellar',
+      allowUnderReviewModules: true,
+    });
+
+    expect(mockAdapter.validate).toHaveBeenCalledWith(expect.any(Object), {
+      allowUnderReviewModules: true,
+    });
+  });
+
   it('should exit with code 1 on invalid config', () => {
     vi.mocked(mockAdapter.validate).mockReturnValue({
       valid: false,

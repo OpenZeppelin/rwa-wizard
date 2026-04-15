@@ -1,3 +1,4 @@
+import type { GenerateOptions as CoreGenerateOptions } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type { GeneratorAdapter } from '../generators/registry';
@@ -8,6 +9,7 @@ import { logger } from '../utils/logger';
 export interface ValidateOptions {
   config: string;
   chain: string;
+  allowUnderReviewModules?: boolean;
 }
 
 export function validateCommand(opts: ValidateOptions): void {
@@ -27,7 +29,11 @@ export function validateCommand(opts: ValidateOptions): void {
     process.exit(1);
   }
 
-  const result = adapter.validate(config);
+  const coreOptions: CoreGenerateOptions | undefined = opts.allowUnderReviewModules
+    ? { allowUnderReviewModules: true }
+    : undefined;
+
+  const result = adapter.validate(config, coreOptions);
 
   if (result.warnings.length > 0) {
     logger.header(`Warnings (${result.warnings.length}):`);

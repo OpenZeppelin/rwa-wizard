@@ -1,7 +1,6 @@
 import type {
   GenerateOptions,
   GenerationResult,
-  ProgressCallback,
   ValidationResult,
   ZipResult,
 } from '@openzeppelin/codegen-core';
@@ -35,8 +34,8 @@ export interface GeneratorAdapter {
   readonly chain: string;
   readonly hints: ChainHints;
   generate(config: RWAConfig, options?: GenerateOptions): GenerationResult;
-  validate(config: RWAConfig): ValidationResult;
-  generateZip(config: RWAConfig, options?: { onProgress?: ProgressCallback }): Promise<ZipResult>;
+  validate(config: RWAConfig, options?: GenerateOptions): ValidationResult;
+  generateZip(config: RWAConfig, options?: GenerateOptions): Promise<ZipResult>;
   getAvailableModules(): ComplianceModuleInfo[];
 }
 
