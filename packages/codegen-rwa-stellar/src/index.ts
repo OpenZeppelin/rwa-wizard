@@ -1,7 +1,6 @@
 import type {
   GenerateOptions,
   GenerationResult,
-  ProgressCallback,
   ValidationResult,
   ZipResult,
 } from '@openzeppelin/codegen-core';
@@ -64,9 +63,16 @@ export { StellarRwaGenerator } from './stellar-rwa-generator';
  * Metadata describing an available compliance module in the Stellar registry.
  *
  * Includes the module's unique ID, human-readable name, description,
- * and the set of compliance hooks it supports (Stellar: `canTransfer`, `canCreate`, etc.).
+ * the set of required hooks, review state, and config field descriptors.
  */
-export type { ComplianceModuleRegistryEntry } from './modules/registry';
+export type {
+  ComplianceModuleRegistryEntry,
+  ModuleReviewMeta,
+  ModuleReviewState,
+  ModuleConfigField,
+} from './modules/registry';
+
+export { getModuleById } from './modules/registry';
 
 /**
  * Ecosystem metadata for Stellar/Soroban — operator roles, compliance hooks, and limits.
@@ -139,7 +145,9 @@ const generator = new StellarRwaGenerator();
  *   identityVerification: { claimTopics: [{ id: 1, name: 'KYC' }], trustedIssuers: [] },
  *   compliance: { modules: [] },
  *   accessControl: { ownership: { type: 'single-owner', ownerAddress: 'G...' }, roles: [] },
- *   deployment: { network: 'testnet' },
+ *   deployment: {
+ *     target: { kind: 'preset', ecosystem: 'stellar', networkId: 'stellar-testnet' },
+ *   },
  * });
  *
  * console.log(Object.keys(result.files)); // file paths
@@ -157,6 +165,7 @@ export function generate(config: RWAConfig, options?: GenerateOptions): Generati
  * Errors block generation; warnings are advisory.
  *
  * @param config - The RWA configuration to validate.
+ * @param options - Optional Stellar-specific options.
  * @returns A `ValidationResult` with `valid`, `errors`, and `warnings` fields.
  *
  * @example
@@ -171,8 +180,8 @@ export function generate(config: RWAConfig, options?: GenerateOptions): Generati
  * }
  * ```
  */
-export function validate(config: RWAConfig): ValidationResult {
-  return generator.validate(config);
+export function validate(config: RWAConfig, options?: GenerateOptions): ValidationResult {
+  return generator.validate(config, options);
 }
 
 /**
@@ -184,7 +193,7 @@ export function validate(config: RWAConfig): ValidationResult {
  * replaced with hyphens, `-rwa` suffix appended).
  *
  * @param config - The RWA configuration describing the token project.
- * @param options - Optional settings including a progress callback.
+ * @param options - Optional settings including progress, local checkout, and review flags.
  * @returns A `ZipResult` containing the Blob data, fileName, and generation metadata.
  * @throws {Error} If the config is invalid.
  *
@@ -201,12 +210,12 @@ export function validate(config: RWAConfig): ValidationResult {
  */
 export async function generateZip(
   config: RWAConfig,
-  options?: { onProgress?: ProgressCallback }
+  options?: GenerateOptions
 ): Promise<ZipResult> {
-  const result = generate(config);
+  const result = generate(config, options);
   const dirName = sanitizeDirectoryName(config.token.symbol);
 
-  return coreGenerateZip(result, dirName, options);
+  return coreGenerateZip(result, dirName, { onProgress: options?.onProgress });
 }
 
 /**
@@ -214,7 +223,7 @@ export async function generateZip(
  *
  * Returns only modules with concrete implementations in the generator.
  * Each entry includes the module ID, human-readable name, description,
- * and supported compliance hooks.
+ * and required compliance hooks.
  *
  * @returns An array of `ComplianceModuleRegistryEntry` objects.
  *
@@ -224,7 +233,7 @@ export async function generateZip(
  *
  * const modules = getAvailableModules();
  * for (const mod of modules) {
- *   console.log(`${mod.id}: ${mod.description} (hooks: ${mod.supportedHooks.join(', ')})`);
+ *   console.log(`${mod.id}: ${mod.description} (hooks: ${mod.requiredHooks.join(', ')})`);
  * }
  * ```
  */

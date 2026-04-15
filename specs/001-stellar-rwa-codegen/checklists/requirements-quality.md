@@ -155,7 +155,7 @@
 
 - [x] CHK036 - Are requirements specified for `initialSupply` = `"0"` vs `undefined`? [Coverage, Spec §US-1]
 
-  > **Fixed**: New edge case added: `"0"` → mint call included with amount 0 (no-op but valid); `undefined` → mint call omitted entirely.
+  > **Fixed**: New edge case added: `"0"` → deferred manual-mint guidance is still emitted with requested amount `0`; `undefined` → the guidance is omitted entirely.
 
 - [x] CHK037 - Are requirements defined for concurrent/parallel generation calls? [Coverage, Gap]
 
@@ -194,8 +194,8 @@
 
   > **Fixed**: New edge case added: validation MUST reject a trusted issuer with no claim topics as a structural error.
 
-- [x] CHK046 - Are requirements for unrecognized `deployment.network` values specified? [Edge Case, Data Model §DeploymentConfig]
-  > **Fixed**: New edge case added: unrecognized values treated as custom RPC URLs, passed through to deploy script. Generated README notes expected format.
+- [x] CHK046 - Are requirements for adapter-backed `deployment.target` variants specified clearly? [Edge Case, Data Model §DeploymentConfig]
+  > **Fixed**: New edge case added: preset targets must use recognized adapter-backed Stellar `networkId` values, unsupported ecosystems fail validation, and custom targets pass `rpcUrl` through while optionally carrying `explorerUrl` and `label` metadata for generated output.
 
 ## Non-Functional Requirements
 
@@ -252,5 +252,5 @@
 
 - All 58 items reviewed and resolved
 - Changes applied to: spec.md, data-model.md, codegen-core-api.ts, rwa-config-api.ts, codegen-rwa-stellar-api.ts
-- 3 new requirements added: CR-009 (stateless concurrency), SR-015 (lib.rs), SR-016 (constructor args), SR-017 (error handling strategy)
-- 7 new edge cases added (empty roles, initialSupply semantics, Unicode, i128 overflow, empty claimTopics, unknown network, unknown properties)
+- 4 new requirements added: CR-009 (stateless concurrency), SR-015 (lib.rs), SR-016 (constructor args), SR-017 (error handling strategy)
+- 7 new edge cases added (empty roles, initialSupply semantics, Unicode, i128 overflow, empty claimTopics, deployment target variants, unknown properties)

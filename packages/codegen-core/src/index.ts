@@ -13,6 +13,25 @@ export type {
   Generator,
 } from './types';
 
+// Determinism utilities
+export { computeConfigHash, hashString, sortObjectKeys, stableJsonStringify } from './determinism';
+
+// Template-source helpers
+export {
+  assertTemplateSnapshotCompleteness,
+  createSnapshotTemplateSource,
+  getTemplateSourceKey,
+} from './template-source';
+export type {
+  TemplateManifestEntry,
+  TemplatePayload,
+  TemplateSnapshot,
+  TemplateSnapshotMetadata,
+  TemplateSource,
+  TemplateSourceKey,
+  TemplateSourceMetadata,
+} from './template-source';
+
 // Validation framework
 export { createValidationRule, composeValidationRules, validateWithRules } from './validation';
 export type { ValidationRule, ValidationRuleResult } from './validation';
@@ -29,6 +48,9 @@ export {
 
 // Progress utilities
 export { noopProgress, createProgressEvent, resolveProgressCallback } from './progress';
+
+// Source patch helpers
+export { insertAfterExact, insertBeforeExact, replaceExact } from './source-patch';
 
 // ZIP generation
 export { generateZipFromFileTree } from './zip-generator';

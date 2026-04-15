@@ -8,9 +8,10 @@
  *
  * Primary exports (counted toward SC-007 ≤10 target):
  *   Types:    Generator, FileTree, ValidationResult, GenerationResult,
- *             ZipResult, ProgressCallback, GenerateOptions
+ *             ZipResult, ProgressCallback, GenerateOptions, ProgressPhase
  *   Functions: generateZip
- *   Total: 8 primary exports
+ *   Constants: PROGRESS_PHASES
+ *   Total: 10 primary exports
  *
  * Supporting types (not counted individually — sub-types of primary exports):
  *   ValidationError, ValidationWarning, GenerationMetadata, ProgressEvent
@@ -56,9 +57,22 @@ export interface ValidationResult {
 // Progress
 // ---------------------------------------------------------------------------
 
+export const PROGRESS_PHASES = [
+  'validating',
+  'generating-contracts',
+  'generating-scripts',
+  'generating-config',
+  'generating-readme',
+  'packaging',
+  'success',
+  'error',
+] as const;
+
+export type ProgressPhase = (typeof PROGRESS_PHASES)[number];
+
 export interface ProgressEvent {
-  /** Current pipeline phase, e.g., "validating", "generating-contracts" */
-  phase: string;
+  /** Current pipeline phase */
+  phase: ProgressPhase;
   /** Completion percentage (0–100) */
   percentage: number;
   /** Optional detail message */
@@ -73,6 +87,19 @@ export type ProgressCallback = (event: ProgressEvent) => void;
 
 export interface GenerateOptions {
   onProgress?: ProgressCallback;
+  /**
+   * Absolute path to a local checkout of the upstream contracts library.
+   * When set, generators resolve contract dependencies via local `path = "…"`
+   * instead of a pinned git revision. Useful during development against
+   * unmerged branches of the contracts repo.
+   */
+  contractsLibraryPath?: string;
+  /**
+   * Allow modules whose review state is not yet "stable".
+   * When false (the default), generators should reject or warn about
+   * modules that are still under review.
+   */
+  allowUnderReviewModules?: boolean;
 }
 
 export interface GenerationMetadata {

@@ -1,13 +1,13 @@
 <!--
 Sync Impact Report
-Version: 1.0.0 → 1.1.0
+Version: 1.1.0 → 1.2.0
 Modified Principles:
-- Section I: Renamed from "Adapter-Led" to "Codegen-Led, Chain-Agnostic Architecture" — generation now owned by codegen packages, adapters reserved for on-chain interaction
-- Section II: Added three publicly published codegen packages (@openzeppelin/codegen-core, @openzeppelin/rwa-config, @openzeppelin/codegen-rwa-stellar)
-- Section III: Renamed RwaWizardConfig → RWAConfig, owned by @openzeppelin/rwa-config
-- Section VI: ZIP generation now via @openzeppelin/codegen-core (wraps JSZip)
-- Additional Constraints: ZIP generation references codegen-core, dual API surface (generate + generateZip)
-- Governance: Added coordination rule for codegen-core and rwa-config breaking changes
+- Section I: Clarified layered package ownership (`@openzeppelin/codegen-core`, `@openzeppelin/codegen-rwa-common`, `@openzeppelin/rwa-config`, chain generators), browser-safe template sourcing defaults, and descriptor-driven module behavior
+- Section II: Expanded the published headless package list to include `@openzeppelin/codegen-rwa-common`; clarified where shared RWA-domain generator behavior belongs
+- Section III: Logger guidance now explicitly covers `@openzeppelin/codegen-rwa-common`
+- Additional Constraints: Added browser-safe template sourcing and co-located module descriptor rules
+- Development Workflow and Review Process: Replaced stale adapter-led review wording with codegen-boundary enforcement
+- Governance: Added coordination rule for `@openzeppelin/codegen-rwa-common` breaking changes
 Templates:
 - ✅ .specify/templates/plan-template.md (Constitution Check section aligns)
 - ✅ .specify/templates/spec-template.md (requirements and user stories align)
@@ -26,27 +26,30 @@ Follow-up TODOs: none
 - Feature detection drives the UI: the app MUST query generator capabilities and the compliance module registry to enable/disable wizard steps, validation rules, and ecosystem-specific hints dynamically.
 - ZIP generation of chain-specific artifacts (contracts, scripts, docs) MUST be delegated to codegen generator packages, not embedded in the wizard UI. The core generation pipeline infrastructure (`@openzeppelin/codegen-core`) provides file tree assembly, ZIP packaging, validation framework, and progress reporting — all chain-agnostic and contract-agnostic.
 - The shared `RWAConfig` type (`@openzeppelin/rwa-config`) describes _what_ the user wants; chain-specific generators decide _how_ to produce it. The config package is the single source of truth for the configuration schema.
+- Shared package boundaries MUST remain explicit: `@openzeppelin/codegen-core` owns generator-agnostic infrastructure, `@openzeppelin/codegen-rwa-common` owns reusable RWA-domain generator behavior, `@openzeppelin/rwa-config` remains schema-first and behavior-light, and chain packages own ecosystem-specific rendering, wiring, and deploy semantics.
+- Codegen packages consumed by the browser MUST remain browser-safe by default. Node-only capabilities such as local checkout/template overrides are permitted only as explicit opt-ins behind generation options and must be runtime-guarded from browser execution paths.
 - Adapter packages (`@openzeppelin/ui-builder-adapter-*`) remain for on-chain interaction (wallet connection, transaction formatting, contract queries) and ecosystem metadata (chain names, icons, networks). They are NOT responsible for code generation.
-- Rationale: Ensures the wizard is scalable to new chains without UI code changes, strictly separates presentation from generation logic, and enables headless usage of codegen packages by CLI tools and AI agents.
+- Rationale: Ensures the wizard is scalable to new chains without UI code changes, strictly separates presentation from generation logic, preserves clean shared-package layering, and enables headless usage of codegen packages by CLI tools and AI agents.
 
 ### II. Reuse-First & Monorepo Integration (NON-NEGOTIABLE)
 
 - The application MUST reuse `@openzeppelin/ui-*` packages (types, utils, renderer, storage, components, react, styles) rather than re-implementing core functionality.
 - Adapter packages remain in the `@openzeppelin/ui-builder-adapter-*` namespace (e.g., `adapter-evm`, `adapter-stellar`) for on-chain interaction and ecosystem metadata.
-- The monorepo produces three publicly published codegen packages:
+- The monorepo produces four publicly published headless generation packages:
   - `@openzeppelin/codegen-core` — chain-agnostic generation pipeline (file tree, ZIP, validation framework, progress)
-  - `@openzeppelin/rwa-config` — shared `RWAConfig` type and validation schema (chain-agnostic)
+  - `@openzeppelin/codegen-rwa-common` — shared RWA-domain generator helpers (ownership, roles, other cross-chain RWA semantics)
+  - `@openzeppelin/rwa-config` — shared `RWAConfig` type and validation schema (chain-agnostic, schema-first)
   - `@openzeppelin/codegen-rwa-stellar` — Stellar/Soroban RWA contract generator (first ecosystem implementation)
-- These codegen packages are standalone and headless — usable by the wizard app, CLI tools, and AI agents without React or browser dependencies.
+- These headless generation packages are standalone and usable by the wizard app, CLI tools, and AI agents without React or browser dependencies.
 - Local development against the `openzeppelin-ui` monorepo MUST use the pnpmfile hook workflow: run `pnpm dev:local` to resolve `@openzeppelin/ui-*` packages to local paths via `.pnpmfile.cjs`. This approach keeps `package.json` unchanged while enabling seamless switching between local and npm packages.
-- New shared utilities, types, or generation interfaces required by RWA Wizard should ideally be contributed upstream to `openzeppelin-ui` packages or adapter packages first, then consumed here. Codegen-specific infrastructure belongs in `@openzeppelin/codegen-core`.
+- New shared UI utilities, types, or interaction interfaces required by RWA Wizard should ideally be contributed upstream to `openzeppelin-ui` packages or adapter packages first, then consumed here. Codegen-specific infrastructure belongs in `@openzeppelin/codegen-core`; reusable RWA-domain generator behavior belongs in `@openzeppelin/codegen-rwa-common`; schema/default-only concerns stay in `@openzeppelin/rwa-config`.
 - Patterns for provider hierarchy, ecosystem management, config services, and storage MUST follow those established by the UI Builder and Role Manager applications.
 - Rationale: Guarantees consistency with the broader OpenZeppelin tool ecosystem, validates the standalone usability of UI Kit packages, and enables headless code generation across multiple consumption channels.
 
 ### III. Type Safety, Linting, and Code Quality (NON-NEGOTIABLE)
 
 - TypeScript strictness, shared linting, and formatting rules apply throughout the repository.
-- `console` usage in source code is prohibited; use `logger` from `@openzeppelin/ui-utils` (exceptions only in tests/scripts). Headless library packages (`codegen-core`, `rwa-config`, `codegen-rwa-stellar`) MAY use `@openzeppelin/ui-utils` for `logger` — the package has no React or heavy UI dependencies. However, since `ui-utils` currently uses a barrel export with no subpath imports, codegen packages MUST verify that tree-shaking (via tsdown) eliminates browser-only modules (`RouterService`, `AnalyticsService`, `deepLink`) from the output bundle to ensure standalone Node.js compatibility. Public API diagnostic output SHOULD prefer structured return values (`ValidationResult`, `ProgressEvent`) over logging where possible.
+- `console` usage in source code is prohibited; use `logger` from `@openzeppelin/ui-utils` (exceptions only in tests/scripts). Headless library packages (`codegen-core`, `codegen-rwa-common`, `rwa-config`, `codegen-rwa-stellar`) MAY use `@openzeppelin/ui-utils` for `logger` — the package has no React or heavy UI dependencies. However, since `ui-utils` currently uses a barrel export with no subpath imports, codegen packages MUST verify that tree-shaking (via tsdown) eliminates browser-only modules (`RouterService`, `AnalyticsService`, `deepLink`) from the output bundle to ensure standalone Node.js compatibility. Public API diagnostic output SHOULD prefer structured return values (`ValidationResult`, `ProgressEvent`) over logging where possible.
 - `any` types are disallowed without explicit justification.
 - React components MUST be typed with `React.FC` or explicit props interfaces; hooks must have explicit return types.
 - The canonical `RWAConfig` data model (owned by `@openzeppelin/rwa-config`) MUST be fully typed with no implicit `any` fields; chain-specific extensions use discriminated unions or generics. The wizard app consumes this type; it does not define its own configuration shape.
@@ -82,6 +85,8 @@ Follow-up TODOs: none
 - **Security**: Do not hardcode chain secrets; rely on wallet connections or user input. Generated scaffolding MUST avoid privileged functions with missing auth checks.
 - **Forms**: Use `@openzeppelin/ui-renderer` for transaction forms where applicable to inherit validation and schema logic from adapters.
 - **ZIP Generation**: ZIP output MUST be deterministic from a given `RWAConfig`. The generation pipeline (`@openzeppelin/codegen-core`) MUST support progress callbacks for UI feedback. The public API exposes both raw file tree output (`generate()`) and ZIP output (`generateZip()`).
+- **Template Sourcing**: Generators that need upstream templates MUST default to bundled or otherwise browser-safe template sources for app consumption. Filesystem-backed or checkout-backed overrides are allowed only for non-browser runtimes and MUST be explicit opt-ins.
+- **Module Descriptors**: Generators with configurable module catalogs MUST co-locate module metadata, capability flags, and generator behavior in module descriptors instead of scattering the same module knowledge across registries, deployment helpers, and switch statements.
 - **Privacy**: When wizard configuration involves identity data (e.g., plaintext identity registry storage), the UI MUST surface explicit privacy warnings.
 - **Wizard State**: The wizard MUST support draft persistence (auto-save) and resumption across sessions via storage.
 
@@ -92,7 +97,7 @@ Follow-up TODOs: none
 - **Docker testing**: Run `pnpm docker:dev` to build and run the Docker container locally.
 - Commit messages MUST follow Conventional Commits. Check available scopes and limits before committing.
 - PRs MUST verify that changes to UI Kit dependencies are correctly versioned.
-- Code review enforces strict separation of concerns: rejection if UI contains chain-specific logic and is not adapter-led.
+- Code review enforces strict separation of concerns: rejection if UI contains chain-specific generation logic, template logic, or bypasses codegen package boundaries.
 - Code review enforces Reuse-First: reviewers verify reuse attempts before approving new modules.
 
 ## Governance
@@ -101,6 +106,6 @@ Follow-up TODOs: none
 - Amendments require a documented proposal and PR review.
 - Breaking changes to upstream `openzeppelin-ui` interfaces require coordination with the UI Kit repository maintainers.
 - Breaking changes to adapter interfaces or generator boundaries require coordination with the UI Builder repository maintainers.
-- Breaking changes to `@openzeppelin/codegen-core` or `@openzeppelin/rwa-config` public APIs require coordination across all consuming generator packages and the wizard app.
+- Breaking changes to `@openzeppelin/codegen-core`, `@openzeppelin/codegen-rwa-common`, or `@openzeppelin/rwa-config` public APIs require coordination across all consuming generator packages and affected app surfaces.
 
-**Version**: 1.1.0 | **Ratified**: 2026-02-26 | **Last Amended**: 2026-03-01
+**Version**: 1.2.0 | **Ratified**: 2026-02-26 | **Last Amended**: 2026-04-13

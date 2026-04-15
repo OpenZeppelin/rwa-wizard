@@ -2,7 +2,11 @@ import type { ValidationRule } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../constants';
-import { getRegisteredModuleIds } from '../modules/registry';
+import {
+  getStellarPresetNetworkById,
+  getSupportedStellarPresetNetworkIds,
+} from '../deployment/target';
+import { getModuleById, getRegisteredModuleIds } from '../modules/registry';
 
 const I128_MAX = BigInt('170141183460469231731687303715884105727');
 
@@ -76,6 +80,7 @@ export const validateDecimals: ValidationRule<RWAConfig> = (config) => {
 
 export const validateInitialSupply: ValidationRule<RWAConfig> = (config) => {
   const errors = [];
+  const warnings = [];
   const { initialSupply } = config.token;
 
   if (initialSupply === undefined) {
@@ -108,7 +113,14 @@ export const validateInitialSupply: ValidationRule<RWAConfig> = (config) => {
     });
   }
 
-  return { errors, warnings: [] };
+  warnings.push({
+    field: 'token.initialSupply',
+    code: 'MANUAL_VERIFIED_MINT_REQUIRED',
+    message:
+      'Stellar deploy.sh does not auto-mint initial supply. The generated project does not scaffold the upstream claim-issuer and per-holder identity contracts required to onboard a verified mint recipient, so mint manually after identity bootstrap.',
+  });
+
+  return { errors, warnings };
 };
 
 // ---------------------------------------------------------------------------
@@ -252,13 +264,79 @@ export const validateRoles: ValidationRule<RWAConfig> = (config) => {
 
 export const validateDeployment: ValidationRule<RWAConfig> = (config) => {
   const errors = [];
-  const { network } = config.deployment;
+  const target = config.deployment?.target;
 
-  if (!network || network.trim().length === 0) {
+  if (!target) {
     errors.push({
-      field: 'deployment.network',
+      field: 'deployment.target',
       code: 'REQUIRED_FIELD',
-      message: 'Deployment network is required',
+      message: 'Deployment target is required',
+    });
+
+    return { errors, warnings: [] };
+  }
+
+  if (!target.ecosystem || target.ecosystem.trim().length === 0) {
+    errors.push({
+      field: 'deployment.target.ecosystem',
+      code: 'REQUIRED_FIELD',
+      message: 'Deployment target ecosystem is required',
+    });
+  } else if (target.ecosystem !== 'stellar') {
+    errors.push({
+      field: 'deployment.target.ecosystem',
+      code: 'UNSUPPORTED_ECOSYSTEM',
+      message: `codegen-rwa-stellar only supports deployment targets for the "stellar" ecosystem (got "${target.ecosystem}")`,
+    });
+  }
+
+  if (target.kind === 'preset') {
+    if (!target.networkId || target.networkId.trim().length === 0) {
+      errors.push({
+        field: 'deployment.target.networkId',
+        code: 'REQUIRED_FIELD',
+        message: 'Preset deployment target networkId is required',
+      });
+    } else if (!getStellarPresetNetworkById(target.networkId)) {
+      errors.push({
+        field: 'deployment.target.networkId',
+        code: 'UNSUPPORTED_NETWORK',
+        message: `Unsupported Stellar preset network "${target.networkId}". Supported networks: ${getSupportedStellarPresetNetworkIds().join(', ')}`,
+      });
+    }
+  } else if (target.kind === 'custom') {
+    if (!target.rpcUrl || target.rpcUrl.trim().length === 0) {
+      errors.push({
+        field: 'deployment.target.rpcUrl',
+        code: 'REQUIRED_FIELD',
+        message: 'Custom deployment target rpcUrl is required',
+      });
+    }
+
+    if (target.explorerUrl !== undefined) {
+      if (target.explorerUrl.trim().length === 0) {
+        errors.push({
+          field: 'deployment.target.explorerUrl',
+          code: 'INVALID_FORMAT',
+          message: 'Custom deployment target explorerUrl cannot be empty when provided',
+        });
+      } else {
+        try {
+          new URL(target.explorerUrl);
+        } catch {
+          errors.push({
+            field: 'deployment.target.explorerUrl',
+            code: 'INVALID_FORMAT',
+            message: `Custom deployment target explorerUrl must be a valid URL (got "${target.explorerUrl}")`,
+          });
+        }
+      }
+    }
+  } else {
+    errors.push({
+      field: 'deployment.target.kind',
+      code: 'INVALID_VALUE',
+      message: 'Deployment target kind must be "preset" or "custom"',
     });
   }
 
@@ -270,9 +348,11 @@ export const validateDeployment: ValidationRule<RWAConfig> = (config) => {
 // ---------------------------------------------------------------------------
 
 export const validateComplianceModules: ValidationRule<RWAConfig> = (config) => {
-  const errors = [];
+  const errors: Array<{ field: string; code: string; message: string }> = [];
+  const warnings: Array<{ field: string; code: string; message: string }> = [];
   const { modules } = config.compliance;
   const availableModuleIds = getRegisteredModuleIds();
+  const seen = new Set<string>();
 
   for (let i = 0; i < modules.length; i++) {
     const mod = modules[i];
@@ -283,10 +363,45 @@ export const validateComplianceModules: ValidationRule<RWAConfig> = (config) => 
         code: 'UNSUPPORTED_MODULE',
         message: `Compliance module "${mod.moduleId}" is not available. Supported modules: ${[...availableModuleIds].join(', ')}`,
       });
+      continue;
+    }
+
+    if (seen.has(mod.moduleId)) {
+      errors.push({
+        field: `compliance.modules[${i}].moduleId`,
+        code: 'DUPLICATE_MODULE',
+        message: `Compliance module "${mod.moduleId}" is selected more than once`,
+      });
+      continue;
+    }
+    seen.add(mod.moduleId);
+
+    const entry = getModuleById(mod.moduleId);
+    if (!entry) continue;
+
+    if (entry.review.state === 'under-review') {
+      warnings.push({
+        field: `compliance.modules[${i}].moduleId`,
+        code: 'UNDER_REVIEW_MODULE',
+        message: `Module "${entry.name}" is under review${entry.review.prUrl ? ` (${entry.review.prUrl})` : ''} — not recommended for production`,
+      });
+    }
+
+    for (const field of entry.configFields) {
+      if (field.required) {
+        const val = mod.config?.[field.key];
+        if (val === undefined || val === null || val === '') {
+          errors.push({
+            field: `compliance.modules[${i}].config.${field.key}`,
+            code: 'REQUIRED_MODULE_CONFIG',
+            message: `Module "${entry.name}" requires config field "${field.label}"`,
+          });
+        }
+      }
     }
   }
 
-  return { errors, warnings: [] };
+  return { errors, warnings };
 };
 
 // ---------------------------------------------------------------------------

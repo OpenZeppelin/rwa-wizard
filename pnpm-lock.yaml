@@ -216,14 +216,32 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1
 
-  packages/codegen-rwa-stellar:
+  packages/codegen-rwa-common:
     dependencies:
-      '@openzeppelin/codegen-core':
-        specifier: workspace:*
-        version: link:../codegen-core
       '@openzeppelin/rwa-config':
         specifier: workspace:*
         version: link:../config
+
+  packages/codegen-rwa-stellar:
+    dependencies:
+      '@openzeppelin/adapter-stellar':
+        specifier: ^2.0.0
+        version: 2.0.0(@openzeppelin/ui-components@1.0.4(@babel/runtime@7.28.6)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3))(@openzeppelin/ui-types@2.0.0)(@openzeppelin/ui-utils@1.1.0)(@solana/sysvars@5.4.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@stellar/stellar-base@14.0.4)(@trezor/connect@9.6.2(@solana/sysvars@5.4.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)))(@types/react@19.2.8)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(near-api-js@5.1.1)(react-dom@19.2.3(react@19.2.3))(react-hook-form@7.71.1(react@19.2.3))(react@19.2.3)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+      '@openzeppelin/codegen-core':
+        specifier: workspace:*
+        version: link:../codegen-core
+      '@openzeppelin/codegen-rwa-common':
+        specifier: workspace:*
+        version: link:../codegen-rwa-common
+      '@openzeppelin/rwa-config':
+        specifier: workspace:*
+        version: link:../config
+      '@openzeppelin/ui-types':
+        specifier: ^2.0.0
+        version: 2.0.0
+      i18n-iso-countries:
+        specifier: ^7.14.0
+        version: 7.14.0
 
   packages/components:
     dependencies:
@@ -994,6 +1012,7 @@ packages:
 
   '@metamask/sdk-analytics@0.0.5':
     resolution: {integrity: sha512-fDah+keS1RjSUlC8GmYXvx6Y26s3Ax1U9hGpWb6GSY5SAdmTSIqp2CvYy6yW0WgLhnYhW+6xERuD0eVqV63QIQ==}
+    deprecated: No longer maintained, superseded by @metamask/connect-analytics
 
   '@metamask/sdk-communication-layer@0.32.0':
     resolution: {integrity: sha512-dmj/KFjMi1fsdZGIOtbhxdg3amxhKL/A5BqSU4uh/SyDKPub/OT+x5pX8bGjpTL1WPWY/Q0OIlvFyX3VWnT06Q==}
@@ -1204,12 +1223,27 @@ packages:
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
 
+  '@openzeppelin/adapter-stellar@2.0.0':
+    resolution: {integrity: sha512-6CYV2BjHui5rECVdGaXv+wkwlhLaV+4GRpBZzpEHM/0HX+QHt3Iu9OgKVhFa9DxtWe6N+DQP6G7kBVEBH4qhvQ==}
+    peerDependencies:
+      '@openzeppelin/ui-components': ^2.0.0
+      '@openzeppelin/ui-types': ^2.0.0
+      '@openzeppelin/ui-utils': ^2.0.0
+      react: ^19.0.0
+      react-dom: ^19.0.0
+      react-hook-form: ^7.62.0
+
   '@openzeppelin/relayer-sdk@1.4.0':
     resolution: {integrity: sha512-TlPv/Gx7o9jH406C1/TGEe5k8kY4fpJ6Btn7y332d82RDKY+2AAByDAY8OrLFF+R+2zfo0b2SwhmuBh6ZzHjYQ==}
     engines: {node: 22.14.0, npm: use pnpm, pnpm: '>=9', yarn: use pnpm}
 
+  '@openzeppelin/relayer-sdk@1.9.0':
+    resolution: {integrity: sha512-G3Zhg0imaT9Ej1cE9Cq5d4uQvW+DinD2GvRuiPWo3+O9KI8ivBnGJkjEGgK9Ja3/QsUNIfx8Gk5Mdw2sPXjVWA==}
+    engines: {node: '>=22.14.0', npm: use pnpm, pnpm: '>=9', yarn: use pnpm}
+
   '@openzeppelin/ui-builder-adapter-evm@1.2.0':
     resolution: {integrity: sha512-0owHSzhZ3rgWERoVLZVm52wLxncSYMBb0i0ob1kC/A1JcI+a39ul79rC/u+OwK1s/iIYY+psGZxMnbxvbTaKgA==}
+    deprecated: 'Deprecated: use @openzeppelin/adapter-evm instead — https://www.npmjs.com/package/@openzeppelin/adapter-evm (source: https://github.com/OpenZeppelin/openzeppelin-adapters)'
     peerDependencies:
       '@rainbow-me/rainbowkit': ^2.2.8
       '@tanstack/react-query': ^5.74.7
@@ -1219,6 +1253,7 @@ packages:
 
   '@openzeppelin/ui-builder-adapter-stellar@1.2.0':
     resolution: {integrity: sha512-50hhBA34MkdglcP9269q+O9WnUHBqIo65yCMYEN4tX/H8JMhgVT7aSx7GsfZXU60+sE0v9CPVNV/kJhBUyufIw==}
+    deprecated: 'Deprecated: use @openzeppelin/adapter-stellar instead — https://www.npmjs.com/package/@openzeppelin/adapter-stellar (source: https://github.com/OpenZeppelin/openzeppelin-adapters)'
     peerDependencies:
       react: ^19.0.0
 
@@ -1252,6 +1287,9 @@ packages:
 
   '@openzeppelin/ui-types@1.2.0':
     resolution: {integrity: sha512-PdRHoI0vJmGScbmqSaK9+0PcsDXCnPf/V1jXQAkPupB/G9Q6W9cIq9tFz0DgzWVrMQeCT00oYHgFZVqfOkGkqA==}
+
+  '@openzeppelin/ui-types@2.0.0':
+    resolution: {integrity: sha512-wJE+oxiPo/Syu4Gcm9C8yhWzGN/fOD66IjKFUxMIgr0ddZxjSgQmho00m7NlFM7xQwYRG/e5y1s+Iyjg233l1w==}
 
   '@openzeppelin/ui-utils@1.1.0':
     resolution: {integrity: sha512-NlafrT7RpX9qAUMTY5pJdK8rUYfz6VOYtGppbfTgcL9nrRpm+Ga5lcpKnb4CprbH3+++vOiYMgEqsTTYQnvUlg==}
@@ -4589,6 +4627,9 @@ packages:
   dexie@4.2.1:
     resolution: {integrity: sha512-Ckej0NS6jxQ4Po3OrSQBFddayRhTCic2DoCAG5zacOfOVB9P2Q5Xc5uL/nVa7ZVs+HdMnvUPzLFCB/JwpB6Csg==}
 
+  diacritics@1.3.0:
+    resolution: {integrity: sha512-wlwEkqcsaxvPJML+rDh/2iS824jbREk6DUMUKkEaSlxdYHeS43cClJtsWglvw2RfeXGm6ohKDqsXteJ5sP5enA==}
+
   didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
 
@@ -5177,6 +5218,7 @@ packages:
   git-raw-commits@4.0.0:
     resolution: {integrity: sha512-ICsMM1Wk8xSGMowkOmPrzo2Fgmfo4bMHLNX6ytHjajRJUqvHOw/TFapQ+QG75c3X/tTDDhOSRPGC52dDbNM8FQ==}
     engines: {node: '>=16'}
+    deprecated: This package is no longer maintained. For the JavaScript API, please use @conventional-changelog/git-client instead.
     hasBin: true
 
   glob-parent@5.1.2:
@@ -5189,11 +5231,12 @@ packages:
 
   glob@10.5.0:
     resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-directory@4.0.1:
     resolution: {integrity: sha512-wHTUcDUoZ1H5/0iVqEudYW4/kAlN5cZ3j/bXn0Dpbizl9iaUVeWSHqiOjsgk6OW2bkLclbBjzewBz6weQ1zA2Q==}
@@ -5340,6 +5383,10 @@ packages:
     resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
     engines: {node: '>=18'}
     hasBin: true
+
+  i18n-iso-countries@7.14.0:
+    resolution: {integrity: sha512-nXHJZYtNrfsi1UQbyRqm3Gou431elgLjKl//CYlnBGt5aTWdRPH1PiS2T/p/n8Q8LnqYqzQJik3Q7mkwvLokeg==}
+    engines: {node: '>= 12'}
 
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
@@ -5914,6 +5961,9 @@ packages:
   locate-path@7.2.0:
     resolution: {integrity: sha512-gvVijfZvn7R+2qyPX8mAuKcFGDf6Nc61GdvGafQsHL0sBIxfKzA+usWn4GFC/bk+QdwPUD4kWFJLhElipq+0VA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
+  lodash-es@4.18.1:
+    resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
 
   lodash.camelcase@4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
@@ -9653,6 +9703,61 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
+  '@openzeppelin/adapter-stellar@2.0.0(@openzeppelin/ui-components@1.0.4(@babel/runtime@7.28.6)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3))(@openzeppelin/ui-types@2.0.0)(@openzeppelin/ui-utils@1.1.0)(@solana/sysvars@5.4.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@stellar/stellar-base@14.0.4)(@trezor/connect@9.6.2(@solana/sysvars@5.4.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)))(@types/react@19.2.8)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(near-api-js@5.1.1)(react-dom@19.2.3(react@19.2.3))(react-hook-form@7.71.1(react@19.2.3))(react@19.2.3)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))':
+    dependencies:
+      '@creit.tech/stellar-wallets-kit': 1.9.5(@solana/sysvars@5.4.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@stellar/stellar-base@14.0.4)(@stellar/stellar-sdk@14.4.3)(@trezor/connect@9.6.2(@solana/sysvars@5.4.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)))(@types/react@19.2.8)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(near-api-js@5.1.1)(react@19.2.3)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+      '@openzeppelin/relayer-sdk': 1.9.0
+      '@openzeppelin/ui-components': 1.0.4(@babel/runtime@7.28.6)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3)
+      '@openzeppelin/ui-types': 2.0.0
+      '@openzeppelin/ui-utils': 1.1.0
+      '@stellar/stellar-sdk': 14.4.3
+      '@stellar/stellar-xdr-json': 23.0.0
+      '@web3icons/react': 4.1.13(react@19.2.3)(typescript@5.9.3)
+      lodash-es: 4.18.1
+      lossless-json: 4.3.0
+      lucide-react: 0.510.0(react@19.2.3)
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+      react-hook-form: 7.71.1(react@19.2.3)
+    transitivePeerDependencies:
+      - '@azure/app-configuration'
+      - '@azure/cosmos'
+      - '@azure/data-tables'
+      - '@azure/identity'
+      - '@azure/keyvault-secrets'
+      - '@azure/storage-blob'
+      - '@capacitor/preferences'
+      - '@deno/kv'
+      - '@netlify/blobs'
+      - '@planetscale/database'
+      - '@react-native-async-storage/async-storage'
+      - '@solana/sysvars'
+      - '@stellar/stellar-base'
+      - '@trezor/connect'
+      - '@types/react'
+      - '@upstash/redis'
+      - '@vercel/blob'
+      - '@vercel/functions'
+      - '@vercel/kv'
+      - aws4fetch
+      - bare-url
+      - bufferutil
+      - db0
+      - debug
+      - encoding
+      - expo-constants
+      - expo-localization
+      - fastestsmallesttextencoderdecoder
+      - ioredis
+      - near-api-js
+      - react-native
+      - supports-color
+      - tslib
+      - typescript
+      - uploadthing
+      - utf-8-validate
+      - ws
+
   '@openzeppelin/relayer-sdk@1.4.0(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@actions/exec': 1.1.1
@@ -9666,6 +9771,12 @@ snapshots:
       - fastestsmallesttextencoderdecoder
       - typescript
       - utf-8-validate
+
+  '@openzeppelin/relayer-sdk@1.9.0':
+    dependencies:
+      axios: 1.13.2
+    transitivePeerDependencies:
+      - debug
 
   '@openzeppelin/ui-builder-adapter-evm@1.2.0(a7f632d5cdffa225c1ebe9cf5cf979a2)':
     dependencies:
@@ -9780,6 +9891,45 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@openzeppelin/ui-components@1.0.4(@babel/runtime@7.28.6)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3)':
+    dependencies:
+      '@openzeppelin/ui-types': 1.2.0
+      '@openzeppelin/ui-utils': 1.1.0
+      '@radix-ui/react-accordion': 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-checkbox': 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-dialog': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-dropdown-menu': 2.1.16(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-label': 2.1.8(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-popover': 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-progress': 1.1.8(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-radio-group': 1.3.8(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-select': 2.2.6(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-slot': 1.2.4(@types/react@19.2.8)(react@19.2.3)
+      '@radix-ui/react-tabs': 1.1.13(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-toast': 1.2.15(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@radix-ui/react-tooltip': 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@uiw/react-textarea-code-editor': 3.1.1(@babel/runtime@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@web3icons/react': 4.1.13(react@19.2.3)(typescript@5.9.3)
+      class-variance-authority: 0.7.1
+      clsx: 2.1.1
+      date-fns: 4.1.0
+      lodash: 4.17.21
+      lucide-react: 0.510.0(react@19.2.3)
+      next-themes: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      react: 19.2.3
+      react-day-picker: 9.13.0(react@19.2.3)
+      react-dom: 19.2.3(react@19.2.3)
+      react-hook-form: 7.71.1(react@19.2.3)
+      sonner: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      tailwind-merge: 3.4.0
+      tailwindcss-animate: 1.0.7(tailwindcss@3.4.19(yaml@2.8.2))
+    transitivePeerDependencies:
+      - '@babel/runtime'
+      - '@types/react'
+      - '@types/react-dom'
+      - tailwindcss
+      - typescript
+
   '@openzeppelin/ui-components@1.0.4(@babel/runtime@7.28.6)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(tailwindcss@4.1.18)(typescript@5.9.3)':
     dependencies:
       '@openzeppelin/ui-types': 1.2.0
@@ -9873,6 +10023,8 @@ snapshots:
   '@openzeppelin/ui-styles@1.0.0': {}
 
   '@openzeppelin/ui-types@1.2.0': {}
+
+  '@openzeppelin/ui-types@2.0.0': {}
 
   '@openzeppelin/ui-utils@1.1.0':
     dependencies:
@@ -14736,6 +14888,8 @@ snapshots:
 
   dexie@4.2.1: {}
 
+  diacritics@1.3.0: {}
+
   didyoumean@1.2.2: {}
 
   dijkstrajs@1.0.3: {}
@@ -15708,6 +15862,10 @@ snapshots:
 
   husky@9.1.7: {}
 
+  i18n-iso-countries@7.14.0:
+    dependencies:
+      diacritics: 1.3.0
+
   iconv-lite@0.4.24:
     dependencies:
       safer-buffer: 2.1.2
@@ -16287,6 +16445,8 @@ snapshots:
   locate-path@7.2.0:
     dependencies:
       p-locate: 6.0.0
+
+  lodash-es@4.18.1: {}
 
   lodash.camelcase@4.3.0: {}
 
@@ -17791,6 +17951,10 @@ snapshots:
       '@pkgr/core': 0.2.9
 
   tailwind-merge@3.4.0: {}
+
+  tailwindcss-animate@1.0.7(tailwindcss@3.4.19(yaml@2.8.2)):
+    dependencies:
+      tailwindcss: 3.4.19(yaml@2.8.2)
 
   tailwindcss-animate@1.0.7(tailwindcss@4.1.18):
     dependencies:

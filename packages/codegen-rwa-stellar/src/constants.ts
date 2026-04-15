@@ -16,11 +16,11 @@ export const STELLAR_VALIDATION_CONSTANTS = {
   ROLE_SYMBOL_MAX_LENGTH: 9,
 } as const;
 
-export const STELLAR_CONTRACTS_GIT_URL = 'https://github.com/OpenZeppelin/stellar-contracts.git';
+export const STELLAR_CONTRACTS_VERSION = '0.7.1';
+export const STELLAR_CONTRACTS_LICENSE = 'MIT';
+export const STELLAR_CONTRACTS_AUTHORS = ['OpenZeppelin'] as const;
 
-export const STELLAR_CONTRACTS_COMMIT_HASH = 'e7722e4923accfd754991a56b3226e0a834c27a1';
-
-export const SOROBAN_SDK_VERSION = '25.0.2';
+export const SOROBAN_SDK_VERSION = '25.3.0';
 
 export const RUST_EDITION = '2021';
 
@@ -40,6 +40,14 @@ export const WORKSPACE_CRATE_DEPS = [
   'stellar-macros',
   'stellar-contract-utils',
 ] as const;
+
+export const WORKSPACE_CRATE_PACKAGE_PATHS: Record<(typeof WORKSPACE_CRATE_DEPS)[number], string> =
+  {
+    'stellar-tokens': 'tokens',
+    'stellar-access': 'access',
+    'stellar-macros': 'macros',
+    'stellar-contract-utils': 'contract-utils',
+  };
 
 /**
  * Auto-generate a Soroban-compatible role symbol from a human-readable role name.

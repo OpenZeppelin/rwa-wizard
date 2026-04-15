@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getEcosystemMetadata,
+  serializeStellarComplianceHookForCli,
   STELLAR_ADMIN_CONTROLS,
   STELLAR_COMPLIANCE_HOOKS,
   STELLAR_IDENTITY_CONTROLS,
@@ -106,6 +107,14 @@ describe('STELLAR_COMPLIANCE_HOOKS', () => {
       expect(meta.displayName.trim().length).toBeGreaterThan(0);
       expect(meta.description.trim().length).toBeGreaterThan(0);
     }
+  });
+
+  it('serializes hook ids to the contract CLI enum case names', () => {
+    expect(serializeStellarComplianceHookForCli('canTransfer')).toBe('CanTransfer');
+    expect(serializeStellarComplianceHookForCli('canCreate')).toBe('CanCreate');
+    expect(serializeStellarComplianceHookForCli('transferred')).toBe('Transferred');
+    expect(serializeStellarComplianceHookForCli('created')).toBe('Created');
+    expect(serializeStellarComplianceHookForCli('destroyed')).toBe('Destroyed');
   });
 });
 

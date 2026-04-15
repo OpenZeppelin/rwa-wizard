@@ -3,9 +3,11 @@ import type {
   GenerateOptions,
   GenerationResult,
   Generator,
+  ValidationError,
   ValidationResult,
 } from '@openzeppelin/codegen-core';
 import {
+  computeConfigHash,
   createFile,
   createProgressEvent,
   getFileCount,
@@ -15,6 +17,7 @@ import {
 } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import { getModuleById } from './modules/registry';
 import { generateCrateToml } from './templates/cargo/crate-toml';
 import { generateWorkspaceToml } from './templates/cargo/workspace-toml';
 import { generateClaimTopicsIssuersContract } from './templates/contracts/claim-topics-issuers';
@@ -28,6 +31,9 @@ import { generateReadme } from './templates/readme';
 import { generateRustfmtToml } from './templates/rustfmt-toml';
 import { generateBuildSh } from './templates/scripts/build-sh';
 import { generateDeploySh } from './templates/scripts/deploy-sh';
+import { generateUnderReviewModulesMd } from './templates/under-review-modules-md';
+import { resolveUpstreamTemplateSource } from './upstream/source';
+import type { UpstreamTemplateSource } from './upstream/types';
 import { rwaValidationRules } from './validation/rules';
 
 import { CRATE_NAMES } from './constants';
@@ -55,9 +61,13 @@ interface ContractCrate {
   name: string;
   dirPath: string;
   dependencies: string[];
-  generateContract: (config: RWAConfig) => string;
+  includeRlib?: boolean;
+  generateContract: (config: RWAConfig, templateSource: UpstreamTemplateSource) => string;
 }
 
+/**
+ * Describe the core contract crates always emitted by the generator.
+ */
 function getCoreContractCrates(): ContractCrate[] {
   return [
     {
@@ -99,12 +109,20 @@ function getCoreContractCrates(): ContractCrate[] {
   ];
 }
 
-function generateContractCrateFiles(crate: ContractCrate, config: RWAConfig): FileTree {
-  const contractRs = crate.generateContract(config);
+/**
+ * Generate the standard file set for one contract crate.
+ */
+function generateContractCrateFiles(
+  crate: ContractCrate,
+  config: RWAConfig,
+  templateSource: UpstreamTemplateSource
+): FileTree {
+  const contractRs = crate.generateContract(config, templateSource);
   const libRs = generateLibRs();
   const cargoToml = generateCrateToml({
     name: crate.name,
     dependencies: crate.dependencies,
+    includeRlib: crate.includeRlib,
   });
 
   return mergeFileTrees(
@@ -114,14 +132,33 @@ function generateContractCrateFiles(crate: ContractCrate, config: RWAConfig): Fi
   );
 }
 
-function sortObjectKeys(obj: unknown): unknown {
-  if (obj === null || typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(sortObjectKeys);
-  const sorted: Record<string, unknown> = {};
-  for (const key of Object.keys(obj as Record<string, unknown>).sort()) {
-    sorted[key] = sortObjectKeys((obj as Record<string, unknown>)[key]);
+/**
+ * Promote under-review warnings to errors unless explicitly allowed.
+ */
+function applyGenerationOptionsPolicies(
+  validation: ValidationResult,
+  options?: GenerateOptions
+): ValidationResult {
+  if (options?.allowUnderReviewModules) {
+    return validation;
   }
-  return sorted;
+
+  const underReviewErrors: ValidationError[] = validation.warnings
+    .filter((warning) => warning.code === 'UNDER_REVIEW_MODULE')
+    .map((warning) => ({
+      ...warning,
+      message: `${warning.message}. Re-run with allowUnderReviewModules enabled to proceed.`,
+    }));
+
+  if (underReviewErrors.length === 0) {
+    return validation;
+  }
+
+  return {
+    valid: false,
+    errors: [...validation.errors, ...underReviewErrors],
+    warnings: validation.warnings,
+  };
 }
 
 /**
@@ -134,16 +171,20 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
   readonly name = GENERATOR_NAME;
   readonly version = GENERATOR_VERSION;
 
-  validate(config: RWAConfig): ValidationResult {
-    return validateWithRules(config, rwaValidationRules);
+  /** Validate configuration and apply generation-specific policy gates. */
+  validate(config: RWAConfig, options?: GenerateOptions): ValidationResult {
+    const validation = validateWithRules(config, rwaValidationRules);
+    return applyGenerationOptionsPolicies(validation, options);
   }
 
+  /** Generate the complete in-memory project file tree for the given config. */
   generate(config: RWAConfig, options?: GenerateOptions): GenerationResult {
     const progress = resolveProgressCallback(options?.onProgress);
+    const templateSource = resolveUpstreamTemplateSource(options);
 
     progress(createProgressEvent('validating', 10));
 
-    const validation = this.validate(config);
+    const validation = this.validate(config, options);
     if (!validation.valid) {
       throw new Error(
         `Invalid configuration: ${validation.errors.map((e) => e.message).join('; ')}`
@@ -158,33 +199,40 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     let files: FileTree = {};
 
     for (const crate of crates) {
-      files = mergeFileTrees(files, generateContractCrateFiles(crate, config));
+      files = mergeFileTrees(files, generateContractCrateFiles(crate, config, templateSource));
     }
 
-    if (config.compliance.modules.length > 0) {
-      for (const mod of config.compliance.modules) {
-        const moduleDirPath = `contracts/modules/${mod.moduleId}`;
-        members.push(moduleDirPath);
+    const uniqueModuleIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
+    for (const moduleId of uniqueModuleIds) {
+      const entry = getModuleById(moduleId);
+      if (!entry) continue;
 
-        const contractRs = generateComplianceModuleContract(mod);
-        const libRs = generateLibRs();
-        const cargoToml = generateCrateToml({
-          name: mod.moduleId,
-          dependencies: ['soroban-sdk', 'stellar-tokens'],
-        });
+      const moduleDirPath = `contracts/modules/${entry.crateName}`;
+      members.push(moduleDirPath);
 
-        files = mergeFileTrees(
-          files,
-          createFile(`${moduleDirPath}/src/contract.rs`, contractRs),
-          createFile(`${moduleDirPath}/src/lib.rs`, libRs),
-          createFile(`${moduleDirPath}/Cargo.toml`, cargoToml)
-        );
-      }
+      const contractRs = generateComplianceModuleContract(entry, templateSource);
+      const libRs = generateLibRs();
+      const cargoToml = generateCrateToml({
+        name: entry.crateName,
+        dependencies: ['soroban-sdk', 'stellar-tokens'],
+        includeRlib: true,
+      });
+
+      files = mergeFileTrees(
+        files,
+        createFile(`${moduleDirPath}/src/contract.rs`, contractRs),
+        createFile(`${moduleDirPath}/src/lib.rs`, libRs),
+        createFile(`${moduleDirPath}/Cargo.toml`, cargoToml)
+      );
     }
 
     progress(createProgressEvent('generating-scripts', 60));
 
-    const workspaceToml = generateWorkspaceToml({ members });
+    const workspaceToml = generateWorkspaceToml({
+      members,
+      contractsLibraryPath: options?.contractsLibraryPath,
+      repositoryUrl: templateSource.metadata.sourceRepoUrl,
+    });
     files = mergeFileTrees(files, createFile('Cargo.toml', workspaceToml));
 
     const rustfmtToml = generateRustfmtToml();
@@ -193,9 +241,22 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     files = mergeFileTrees(files, createFile('scripts/build.sh', generateBuildSh(config)));
     files = mergeFileTrees(files, createFile('scripts/deploy.sh', generateDeploySh(config)));
     files = mergeFileTrees(files, createFile('config.json', generateConfigJson(config)));
-    files = mergeFileTrees(files, createFile('README.md', generateReadme(config)));
+    files = mergeFileTrees(
+      files,
+      createFile(
+        'README.md',
+        generateReadme(config, {
+          templateSourceMetadata: templateSource.metadata,
+        })
+      )
+    );
 
-    const configHash = computeConfigHashSync(config);
+    const underReviewMd = generateUnderReviewModulesMd(config);
+    if (underReviewMd) {
+      files = mergeFileTrees(files, createFile('UNDER_REVIEW_MODULES.md', underReviewMd));
+    }
+
+    const configHash = computeConfigHash(config);
 
     progress(createProgressEvent('complete', 100));
 
@@ -215,20 +276,4 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
 /** Serialize RWAConfig as config.json mirroring the type structure per SR-007. */
 function generateConfigJson(config: RWAConfig): string {
   return JSON.stringify(config, null, 2) + '\n';
-}
-
-function computeConfigHashSync(config: RWAConfig): string {
-  const sorted = sortObjectKeys(config);
-  const json = JSON.stringify(sorted);
-  return hashFallback(json);
-}
-
-function hashFallback(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(16).padStart(8, '0');
 }

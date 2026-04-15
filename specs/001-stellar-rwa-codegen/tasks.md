@@ -102,12 +102,12 @@
 
 ### Tests for User Story 2
 
-- [x] T039 [P] [US2] Write script generation tests in `packages/codegen-rwa-stellar/__tests__/templates/scripts.test.ts`: deployment order, address capture threading, error handling (exit code checks), post-deploy config order per SR-013, conditional mint call
+- [x] T039 [P] [US2] Write script generation tests in `packages/codegen-rwa-stellar/__tests__/templates/scripts.test.ts`: deployment order, address capture threading, error handling (exit code checks), post-deploy config order per SR-013, ABI-safe module wiring, and deferred manual-mint guidance when `initialSupply` is set
 
 ### Implementation for User Story 2
 
 - [x] T040 [P] [US2] Implement build.sh template in `packages/codegen-rwa-stellar/src/templates/scripts/build-sh.ts`: `stellar contract build` for all workspace crates
-- [x] T041 [US2] Implement deploy.sh template in `packages/codegen-rwa-stellar/src/templates/scripts/deploy-sh.ts`: deployment order per SR-006, address capture via shell variables, exit code checks, post-deploy config per SR-013 (bind token, register modules, add claim topics, add trusted issuers, optional mint)
+- [x] T041 [US2] Implement deploy.sh template in `packages/codegen-rwa-stellar/src/templates/scripts/deploy-sh.ts`: deployment order per SR-006, address capture via shell variables, exit code checks, structured output, adapter-backed deployment-target/explorer resolution, and post-deploy config per SR-013 (bind token, register modules with ABI-safe per-module wiring, add claim topics, add trusted issuers, deferred manual-mint guidance)
 - [x] T042 [P] [US2] Implement config.json generation in `packages/codegen-rwa-stellar/src/stellar-rwa-generator.ts`: serialize RWAConfig mirroring type structure per SR-007
 - [x] T043 [US2] Implement README.md template in `packages/codegen-rwa-stellar/src/templates/readme.ts`: 7 required sections per SR-009 (title, prerequisites, build, deploy, architecture, contract table, Unix note)
 - [x] T044 [US2] Wire script, config.json, and README templates into StellarRwaGenerator.generate() in `packages/codegen-rwa-stellar/src/stellar-rwa-generator.ts`
@@ -145,7 +145,7 @@
 
 ### Tests for User Story 5
 
-- [x] T048 [US5] Write comprehensive validation tests in `packages/codegen-rwa-stellar/__tests__/validation.test.ts`: token.symbol >12 chars, decimals out of range, duplicate claimTopics, missing required fields, i128 overflow, empty trustedIssuer.claimTopics, duplicate role symbols, unsupported compliance module, valid config passes, role symbol auto-generation, empty roles array (admin-only), initialSupply `"0"` vs `undefined` semantics, Unicode token.name (UTF-8 byte length check), unrecognized deployment.network passthrough, extra/unknown config properties (silently ignored), all operators same address, zero claimTopics + zero trustedIssuers
+- [x] T048 [US5] Write comprehensive validation tests in `packages/codegen-rwa-stellar/__tests__/validation.test.ts`: token.symbol >12 chars, decimals out of range, duplicate claimTopics, missing required fields, i128 overflow, empty trustedIssuer.claimTopics, duplicate role symbols, unsupported compliance module, valid config passes, role symbol auto-generation, empty roles array (admin-only), initialSupply warning/guidance semantics, Unicode token.name (UTF-8 byte length check), `deployment.target` preset/custom validation (unsupported preset IDs, unsupported ecosystems, custom RPC/explorer semantics), extra/unknown config properties (silently ignored), all operators same address, zero claimTopics + zero trustedIssuers
 
 ### Implementation for User Story 5
 
@@ -167,15 +167,15 @@
 ### Tests for User Story 6
 
 - [x] T053 [P] [US6] Write compliance module template tests in `packages/codegen-rwa-stellar/__tests__/templates/compliance-module.test.ts`: correct ComplianceModule trait impl, hook method logic, separate crate structure
-- [x] T054 [P] [US6] Write module registry tests in `packages/codegen-rwa-stellar/__tests__/modules/registry.test.ts`: only implemented modules returned, supported hooks accurate
+- [x] T054 [P] [US6] Write module registry tests in `packages/codegen-rwa-stellar/__tests__/modules/registry.test.ts`: all 7 modules present, `requiredHooks` accurate, `review` state set, `configFields` schema valid, `getModuleById()` lookup works
 
 ### Implementation for User Story 6
 
-- [x] T055 [US6] Define compliance module registry in `packages/codegen-rwa-stellar/src/modules/registry.ts`: `ComplianceModuleRegistryEntry[]` with id, name, description, supportedHooks per data-model.md. **⚠️ NOTE**: Once the registry exists, update `validateComplianceModules` in `src/validation/rules.ts` to dynamically query it instead of using a hardcoded empty set (current Phase 6 placeholder).
-- [x] T056 [US6] Implement compliance module contract template in `packages/codegen-rwa-stellar/src/templates/contracts/compliance-module.ts`: ComplianceModule trait impl with hook-specific method logic, per-module crate Cargo.toml and lib.rs
-- [x] T057 [US6] Wire compliance module generation into StellarRwaGenerator.generate() — add module crates to FileTree when `compliance.modules` is non-empty. **⚠️ NOTE**: Module crate directories (e.g., `contracts/modules/supply-cap`) must also be added to the workspace `members` array in the root `Cargo.toml` generated by `workspace-toml.ts`. The current Phase 4 implementation only passes core contract paths as members.
-- [x] T058 [US6] Implement `getAvailableModules()` public API function in `packages/codegen-rwa-stellar/src/index.ts`: filter registry to implemented-only entries
-- [x] T059 [US6] Add compliance module deployment to deploy.sh template — deploy each module and register on Compliance contract per hook
+- [x] T055 [US6] Define compliance module registry in `packages/codegen-rwa-stellar/src/modules/registry.ts`: `ComplianceModuleRegistryEntry[]` with id, name, description, `requiredHooks`, `crateName`, `review` state (with PR URLs), and typed `configFields`. All 7 modules registered with `under-review` state. `getModuleById()` helper added. `validateComplianceModules` in `src/validation/rules.ts` dynamically queries registry for `DUPLICATE_MODULE`, `REQUIRED_MODULE_CONFIG`, and `UNDER_REVIEW_MODULE` rules.
+- [x] T056 [US6] Implement compliance module contract template in `packages/codegen-rwa-stellar/src/templates/contracts/compliance-module.ts`: thin wrapper re-exporting upstream implementation with an ABI that matches each upstream module contract, plus review-status bannering for under-review modules
+- [x] T057 [US6] Wire compliance module generation into StellarRwaGenerator.generate() — add unique module crates to FileTree, add to workspace members. Module crate directories use `crateName` (e.g., `contracts/modules/supply-limit`). Generates `UNDER_REVIEW_MODULES.md` when under-review modules are selected.
+- [x] T058 [US6] Implement `getAvailableModules()` and `getModuleById()` public API functions in `packages/codegen-rwa-stellar/src/index.ts`: returns all registry entries (both stable and under-review) with full metadata
+- [x] T059 [US6] Add compliance module deployment to deploy.sh template — deploy each unique module, call `set_compliance_address`, apply descriptor-driven optional IRS wiring and post-registration verification, and register on all `requiredHooks` via `add_module_to`
 
 **Checkpoint**: Compliance modules generate as separate crates. Registry only exposes implemented modules. Deploy script handles module registration.
 

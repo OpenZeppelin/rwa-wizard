@@ -2,14 +2,19 @@ import { describe, expect, it } from 'vitest';
 
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import {
+  createMinimalConfig as createBaseMinimalConfig,
+  createValidConfig as createBaseValidConfig,
+} from './helpers/config';
 import { generate } from '../src/index';
 
+const FULL_GENERATE_OPTIONS = { allowUnderReviewModules: true } as const;
+
 function createFullConfig(): RWAConfig {
-  return {
+  return createBaseValidConfig({
     token: {
       name: 'Syntax Test Token',
       symbol: 'SYNTX',
-      decimals: 18,
       initialSupply: '1000000',
       documentManager: { enabled: true },
     },
@@ -22,9 +27,9 @@ function createFullConfig(): RWAConfig {
     },
     compliance: {
       modules: [
-        { moduleId: 'supply-cap', hook: 'canCreate' },
-        { moduleId: 'max-balance', hook: 'canTransfer' },
-        { moduleId: 'country-restrict', hook: 'canTransfer' },
+        { moduleId: 'supply-limit', config: { limit: 1000000 } },
+        { moduleId: 'max-balance', config: { maxBalance: 50000 } },
+        { moduleId: 'country-restrict' },
       ],
     },
     accessControl: {
@@ -34,12 +39,11 @@ function createFullConfig(): RWAConfig {
         { name: 'Agent', symbol: 'agent', addresses: ['GCAGENT1'] },
       ],
     },
-    deployment: { network: 'testnet' },
-  };
+  });
 }
 
 function createMinimalConfig(): RWAConfig {
-  return {
+  return createBaseMinimalConfig({
     token: {
       name: 'Minimal',
       symbol: 'MIN',
@@ -47,13 +51,11 @@ function createMinimalConfig(): RWAConfig {
       documentManager: { enabled: false },
     },
     identityVerification: { claimTopics: [], trustedIssuers: [] },
-    compliance: { modules: [] },
     accessControl: {
       ownership: { type: 'single-owner', ownerAddress: 'GCOWNER' },
       roles: [],
     },
-    deployment: { network: 'testnet' },
-  };
+  });
 }
 
 /**
@@ -69,7 +71,7 @@ function createMinimalConfig(): RWAConfig {
 describe('SC-002 Rust syntax validation', () => {
   describe('full config (all contracts + modules)', () => {
     const config = createFullConfig();
-    const result = generate(config);
+    const result = generate(config, FULL_GENERATE_OPTIONS);
 
     const contractFiles = Object.entries(result.files).filter(
       ([path]) => path.endsWith('.rs') && path.includes('contract.rs')
@@ -82,7 +84,7 @@ describe('SC-002 Rust syntax validation', () => {
       expect(paths).toContain('contracts/identity-verifier/src/contract.rs');
       expect(paths).toContain('contracts/claim-topics-issuers/src/contract.rs');
       expect(paths).toContain('contracts/identity-registry-storage/src/contract.rs');
-      expect(paths).toContain('contracts/modules/supply-cap/src/contract.rs');
+      expect(paths).toContain('contracts/modules/supply-limit/src/contract.rs');
       expect(paths).toContain('contracts/modules/max-balance/src/contract.rs');
       expect(paths).toContain('contracts/modules/country-restrict/src/contract.rs');
     });
@@ -144,7 +146,7 @@ describe('SC-002 Rust syntax validation', () => {
 
   describe('lib.rs files', () => {
     const config = createFullConfig();
-    const result = generate(config);
+    const result = generate(config, FULL_GENERATE_OPTIONS);
 
     const libFiles = Object.entries(result.files).filter(([path]) => path.endsWith('lib.rs'));
 
@@ -166,7 +168,7 @@ describe('SC-002 Rust syntax validation', () => {
 
   describe('Cargo.toml files', () => {
     const config = createFullConfig();
-    const result = generate(config);
+    const result = generate(config, FULL_GENERATE_OPTIONS);
 
     const cargoFiles = Object.entries(result.files).filter(([path]) => path.endsWith('Cargo.toml'));
 
@@ -191,7 +193,7 @@ describe('SC-002 Rust syntax validation', () => {
       expect(workspaceToml).toContain('contracts/identity-verifier');
       expect(workspaceToml).toContain('contracts/claim-topics-issuers');
       expect(workspaceToml).toContain('contracts/identity-registry-storage');
-      expect(workspaceToml).toContain('contracts/modules/supply-cap');
+      expect(workspaceToml).toContain('contracts/modules/supply-limit');
       expect(workspaceToml).toContain('contracts/modules/max-balance');
       expect(workspaceToml).toContain('contracts/modules/country-restrict');
     });
@@ -199,7 +201,7 @@ describe('SC-002 Rust syntax validation', () => {
 
   describe('core contracts with __constructor', () => {
     const config = createFullConfig();
-    const result = generate(config);
+    const result = generate(config, FULL_GENERATE_OPTIONS);
 
     it('all core contracts should have pub fn __constructor', () => {
       const coreContracts = [

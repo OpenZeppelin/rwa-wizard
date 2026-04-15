@@ -1,27 +1,54 @@
 import {
-  RUST_EDITION,
   SOROBAN_SDK_VERSION,
-  STELLAR_CONTRACTS_COMMIT_HASH,
-  STELLAR_CONTRACTS_GIT_URL,
+  STELLAR_CONTRACTS_AUTHORS,
+  STELLAR_CONTRACTS_LICENSE,
+  STELLAR_CONTRACTS_VERSION,
   WORKSPACE_CRATE_DEPS,
+  WORKSPACE_CRATE_PACKAGE_PATHS,
 } from '../../constants';
+import {
+  GENERATED_STELLAR_SOURCE_COMMIT_HASH,
+  GENERATED_STELLAR_SOURCE_REPO_URL,
+} from '../../upstream/generated-revision';
 
 export interface WorkspaceTomlConfig {
   members: string[];
+  /** When set, resolve upstream contract crates via local path instead of git. */
+  contractsLibraryPath?: string;
+  /** Source repository recorded in workspace package metadata. */
+  repositoryUrl?: string;
+}
+
+function toRepositoryMetadataUrl(sourceRepoUrl: string): string {
+  return sourceRepoUrl.replace(/\.git$/, '');
 }
 
 /**
- * Generates the root workspace `Cargo.toml` with git dependencies pinned
- * to a specific commit hash for stellar-contracts library crates and
- * soroban-sdk pinned to a specific version. Targets Rust edition 2021.
+ * Generates the root workspace `Cargo.toml`.
+ *
+ * By default, stellar-contracts crates are pinned to a git revision.
+ * When `contractsLibraryPath` is provided, local path dependencies are
+ * emitted instead, which is useful during development against an
+ * unmerged branch of stellar-contracts.
  */
 export function generateWorkspaceToml(config: WorkspaceTomlConfig): string {
   const membersBlock = config.members.map((m) => `    "${m}",`).join('\n');
+  const repositoryUrl = toRepositoryMetadataUrl(
+    config.repositoryUrl ?? GENERATED_STELLAR_SOURCE_REPO_URL
+  );
 
-  const gitDeps = WORKSPACE_CRATE_DEPS.map(
-    (crate) =>
-      `${crate} = { git = "${STELLAR_CONTRACTS_GIT_URL}", rev = "${STELLAR_CONTRACTS_COMMIT_HASH}" }`
-  ).join('\n');
+  let depsBlock: string;
+  if (config.contractsLibraryPath) {
+    const base = config.contractsLibraryPath.replace(/\/+$/, '');
+    depsBlock = WORKSPACE_CRATE_DEPS.map(
+      (crate) => `${crate} = { path = "${base}/packages/${WORKSPACE_CRATE_PACKAGE_PATHS[crate]}" }`
+    ).join('\n');
+  } else {
+    depsBlock = WORKSPACE_CRATE_DEPS.map(
+      (crate) =>
+        `${crate} = { git = "${GENERATED_STELLAR_SOURCE_REPO_URL}", rev = "${GENERATED_STELLAR_SOURCE_COMMIT_HASH}" }`
+    ).join('\n');
+  }
 
   return `[workspace]
 resolver = "2"
@@ -30,11 +57,15 @@ ${membersBlock}
 ]
 
 [workspace.package]
-edition = "${RUST_EDITION}"
+authors = ["${STELLAR_CONTRACTS_AUTHORS.join('", "')}"]
+edition = "2021"
+license = "${STELLAR_CONTRACTS_LICENSE}"
+repository = "${repositoryUrl}"
+version = "${STELLAR_CONTRACTS_VERSION}"
 
 [workspace.dependencies]
-soroban-sdk = "${SOROBAN_SDK_VERSION}"
-${gitDeps}
+soroban-sdk = { version = "=${SOROBAN_SDK_VERSION}", features = ["experimental_spec_shaking_v2"] }
+${depsBlock}
 
 [profile.release]
 opt-level = "z"

@@ -1,51 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
+import {
+  createCustomDeploymentTarget,
+  createPresetDeploymentTarget,
+  createValidConfig,
+} from './helpers/config';
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../src/constants';
 import { StellarRwaGenerator } from '../src/stellar-rwa-generator';
-
-function createValidConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return {
-    token: {
-      name: 'Acme Real Estate Token',
-      symbol: 'ACME',
-      decimals: 18,
-      initialSupply: '1000000000000000000000000',
-      documentManager: { enabled: true },
-      ...overrides.token,
-    },
-    identityVerification: {
-      claimTopics: [
-        { id: 1, name: 'KYC' },
-        { id: 2, name: 'AML' },
-      ],
-      trustedIssuers: [
-        {
-          address: 'GCEXAMPLEISSUER1',
-          claimTopics: [1, 2],
-        },
-      ],
-      ...overrides.identityVerification,
-    },
-    compliance: {
-      modules: [],
-      ...overrides.compliance,
-    },
-    accessControl: {
-      ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
-      roles: [
-        { name: 'Manager', symbol: 'manager', addresses: ['GCEXAMPLEMGR'] },
-        { name: 'Agent', symbol: 'agent', addresses: ['GCEXAMPLEAGNT'] },
-      ],
-      ...overrides.accessControl,
-    },
-    deployment: {
-      network: 'testnet',
-      ...overrides.deployment,
-    },
-  };
-}
 
 const I128_MAX = '170141183460469231731687303715884105727';
 const I128_OVERFLOW = '170141183460469231731687303715884105728';
@@ -92,6 +53,28 @@ describe('RWA Config Validation (US5)', () => {
       const result = generator.validate(config);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
+    });
+
+    it('should warn that initial supply requires manual verified minting', () => {
+      const config = createValidConfig({
+        token: {
+          name: 'Test',
+          symbol: 'TST',
+          decimals: 18,
+          initialSupply: '1000000',
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+      expect(result.warnings).toContainEqual(
+        expect.objectContaining({
+          field: 'token.initialSupply',
+          code: 'MANUAL_VERIFIED_MINT_REQUIRED',
+        })
+      );
     });
 
     it('should pass with initialSupply undefined (no initial mint)', () => {
@@ -680,28 +663,94 @@ describe('RWA Config Validation (US5)', () => {
   // -----------------------------------------------------------------------
 
   describe('deployment', () => {
-    it('should error when network is empty', () => {
+    it('should error when preset networkId is empty', () => {
       const config = createValidConfig({
-        deployment: { network: '' },
+        deployment: { target: createPresetDeploymentTarget('') },
       });
 
       const result = generator.validate(config);
       expect(result.valid).toBe(false);
       expect(result.errors).toContainEqual(
         expect.objectContaining({
-          field: 'deployment.network',
+          field: 'deployment.target.networkId',
           code: 'REQUIRED_FIELD',
         })
       );
     });
 
-    it('should pass with unrecognized network (passthrough)', () => {
+    it('should error on unsupported preset networkId', () => {
       const config = createValidConfig({
-        deployment: { network: 'my-custom-rpc-url' },
+        deployment: { target: createPresetDeploymentTarget('stellar-future') },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'deployment.target.networkId',
+          code: 'UNSUPPORTED_NETWORK',
+        })
+      );
+    });
+
+    it('should error on unsupported ecosystem', () => {
+      const config = createValidConfig({
+        deployment: {
+          target: {
+            kind: 'preset',
+            ecosystem: 'evm',
+            networkId: 'stellar-testnet',
+          },
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'deployment.target.ecosystem',
+          code: 'UNSUPPORTED_ECOSYSTEM',
+        })
+      );
+    });
+
+    it('should pass with a supported preset target', () => {
+      const config = createValidConfig({
+        deployment: { target: createPresetDeploymentTarget('stellar-public') },
       });
 
       const result = generator.validate(config);
       expect(result.valid).toBe(true);
+    });
+
+    it('should pass with a custom rpc target', () => {
+      const config = createValidConfig({
+        deployment: {
+          target: createCustomDeploymentTarget('https://custom-rpc.example.com'),
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should error when custom explorerUrl is invalid', () => {
+      const config = createValidConfig({
+        deployment: {
+          target: createCustomDeploymentTarget('https://custom-rpc.example.com', {
+            explorerUrl: 'not-a-valid-url',
+          }),
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'deployment.target.explorerUrl',
+          code: 'INVALID_FORMAT',
+        })
+      );
     });
   });
 
@@ -713,7 +762,7 @@ describe('RWA Config Validation (US5)', () => {
     it('should error on unsupported compliance module', () => {
       const config = createValidConfig({
         compliance: {
-          modules: [{ moduleId: 'nonexistent-module', hook: 'canTransfer' }],
+          modules: [{ moduleId: 'nonexistent-module' }],
         },
       });
 
@@ -735,8 +784,8 @@ describe('RWA Config Validation (US5)', () => {
   describe('edge cases', () => {
     it('should silently ignore extra/unknown config properties', () => {
       const config = createValidConfig();
-      (config as Record<string, unknown>).unknownProperty = 'should be ignored';
-      (config.token as Record<string, unknown>).extraField = 42;
+      (config as unknown as Record<string, unknown>).unknownProperty = 'should be ignored';
+      (config.token as unknown as Record<string, unknown>).extraField = 42;
 
       const result = generator.validate(config);
       expect(result.valid).toBe(true);
@@ -750,7 +799,9 @@ describe('RWA Config Validation (US5)', () => {
           decimals: -1,
           documentManager: { enabled: false },
         },
-        deployment: { network: '' },
+        deployment: {
+          target: createCustomDeploymentTarget('', { explorerUrl: 'not-a-valid-url' }),
+        },
       });
 
       const result = generator.validate(config);
