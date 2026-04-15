@@ -15,6 +15,8 @@ export interface UseDraftAutosaveOptions {
   currentStep: WizardStepId;
   storage: WizardDraftStorageApi;
   onDraftCreated?: (id: string) => void;
+  /** Called after a draft is successfully persisted (create or update). */
+  onPersistSuccess?: () => void;
 }
 
 export interface UseDraftAutosaveResult {
@@ -34,6 +36,7 @@ export function useDraftAutosave({
   currentStep,
   storage,
   onDraftCreated,
+  onPersistSuccess,
 }: UseDraftAutosaveOptions): UseDraftAutosaveResult {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
@@ -75,13 +78,14 @@ export function useDraftAutosave({
         });
         onDraftCreated?.(newId);
       }
+      onPersistSuccess?.();
     } catch {
       // Storage failures must not destroy the in-memory session (contract).
     } finally {
       savingRef.current = false;
       setIsSaving(false);
     }
-  }, [get, save, create, onDraftCreated]);
+  }, [get, save, create, onDraftCreated, onPersistSuccess]);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);

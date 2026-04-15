@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 import type { DraftListItem } from '../types/wizard';
 import {
@@ -23,9 +23,10 @@ export function useDraftList(): {
   const [items, setItems] = useState<DraftListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  /** Only the first load should show the full-list loading state; later refreshes keep rows mounted (typewriter, etc.). */
+  const initialLoadDoneRef = useRef(false);
 
   const refresh = useCallback(async () => {
-    setIsLoading(true);
     setError(null);
     try {
       const next = await list();
@@ -34,7 +35,10 @@ export function useDraftList(): {
       setError(e instanceof Error ? e : new Error(String(e)));
       setItems([]);
     } finally {
-      setIsLoading(false);
+      if (!initialLoadDoneRef.current) {
+        initialLoadDoneRef.current = true;
+        setIsLoading(false);
+      }
     }
   }, [list]);
 

@@ -1,14 +1,48 @@
-import { useDraftList } from '../../../storage';
+import { wizardStore } from '../../../app/state/wizardStore';
+import { exportDraftAsJson } from '../../../services/download/exportDraftAsJson';
+import { useWizardDraftStorage } from '../../../storage';
+import type { DraftListItem as DraftListItemType } from '../../../types/wizard';
 import { DraftListItem } from './DraftListItem';
 
 interface DraftListProps {
   activeDraftId: string | null;
   savingDraftId?: string | null;
   onLoadDraft: (id: string) => void;
+  items: DraftListItemType[];
+  isLoading: boolean;
+  error: Error | null;
+  refresh: () => Promise<void>;
 }
 
-export function DraftList({ activeDraftId, savingDraftId = null, onLoadDraft }: DraftListProps) {
-  const { items: drafts, isLoading, error } = useDraftList();
+export function DraftList({
+  activeDraftId,
+  savingDraftId = null,
+  onLoadDraft,
+  items: drafts,
+  isLoading,
+  error,
+  refresh,
+}: DraftListProps) {
+  const storage = useWizardDraftStorage();
+  const { remove, duplicate } = storage;
+
+  const handleDelete = async (id: string) => {
+    await remove(id);
+    if (id === activeDraftId) {
+      wizardStore.reset();
+    }
+    await refresh();
+  };
+
+  const handleDuplicate = async (id: string) => {
+    const newId = await duplicate(id);
+    await refresh();
+    onLoadDraft(newId);
+  };
+
+  const handleExport = async (id: string) => {
+    await exportDraftAsJson(id, storage);
+  };
 
   if (isLoading) {
     return <p className="px-3 py-4 text-xs text-gray-400">Loading projects...</p>;
@@ -33,6 +67,9 @@ export function DraftList({ activeDraftId, savingDraftId = null, onLoadDraft }: 
           isActive={draft.id === activeDraftId}
           isSaving={draft.id === savingDraftId}
           onLoad={() => onLoadDraft(draft.id)}
+          onDelete={() => handleDelete(draft.id)}
+          onDuplicate={() => handleDuplicate(draft.id)}
+          onExport={() => handleExport(draft.id)}
         />
       ))}
     </div>

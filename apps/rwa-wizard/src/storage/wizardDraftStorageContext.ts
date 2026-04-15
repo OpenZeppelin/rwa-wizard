@@ -15,6 +15,7 @@ export interface WizardDraftStorageApi {
   save: (id: string, patch: SaveDraftPatch) => Promise<void>;
   rename: (id: string, title: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  duplicate: (id: string) => Promise<string>;
   export: (ids?: string[]) => Promise<string>;
   import: (json: string) => Promise<string[]>;
 }
@@ -26,6 +27,7 @@ export const defaultWizardDraftStorageApi: WizardDraftStorageApi = {
   save: (id, patch) => wizardDraftStorage.saveDraft(id, patch),
   rename: (id, title) => wizardDraftStorage.rename(id, title),
   remove: (id) => wizardDraftStorage.remove(id),
+  duplicate: (id) => wizardDraftStorage.duplicate(id),
   export: (ids) => wizardDraftStorage.export(ids),
   import: (json) => wizardDraftStorage.import(json),
 };

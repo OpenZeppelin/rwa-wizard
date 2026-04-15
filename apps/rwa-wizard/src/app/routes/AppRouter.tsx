@@ -1,4 +1,12 @@
-import { BookOpen, ExternalLink, LayoutDashboard, Settings, Sparkles } from 'lucide-react';
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  BookOpen,
+  ExternalLink,
+  LayoutDashboard,
+  Settings,
+  Sparkles,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
@@ -12,6 +20,7 @@ import {
   type WizardStepConfig,
 } from '@openzeppelin/ui-components';
 
+import { DraftImportDialog } from '../../features/draft-management/components/DraftImportDialog';
 import { DraftList } from '../../features/draft-management/components/DraftList';
 import { useDraftAutosave } from '../../features/draft-management/hooks/useDraftAutosave';
 import { TargetSelectorSidebar } from '../../features/target-catalog/components/TargetSelectorSidebar';
@@ -25,7 +34,10 @@ import { useWizardDraftState } from '../../features/wizard/state/useWizardDraftS
 import { getTargetCapabilitySnapshot, loadRuntime } from '../../registry/targetManager';
 import { listTargets } from '../../registry/targets';
 import type { RwaCodegenService } from '../../services/codegen/types';
-import { exportDraftAsJson } from '../../services/download/exportDraftAsJson';
+import {
+  exportAllDraftsAsJson,
+  exportDraftAsJson,
+} from '../../services/download/exportDraftAsJson';
 import type { TargetAdapterCapabilities } from '../../services/runtime';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useDraftList, useWizardDraftStorage } from '../../storage';
@@ -52,9 +64,23 @@ function AppSidebar({
 }) {
   const storeState = useWizardStoreState();
   const targets = useMemo(() => listTargets(), []);
-  const { items: drafts } = useDraftList();
+  const draftList = useDraftList();
+  const storage = useWizardDraftStorage();
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const draftListRefreshTick = useSyncExternalStore(
+    wizardStore.subscribe,
+    () => wizardStore.getState().draftListRefreshTick,
+    () => 0
+  );
   const location = useLocation();
   const navigate = useNavigate();
+
+  const refreshDraftList = draftList.refresh;
+
+  useEffect(() => {
+    if (draftListRefreshTick === 0) return;
+    void refreshDraftList();
+  }, [draftListRefreshTick, refreshDraftList]);
 
   const handleNav = useCallback(
     (path: string) => {
@@ -84,13 +110,17 @@ function AppSidebar({
     [navigate, onMobileOpenChange]
   );
 
+  const handleExportAllDrafts = useCallback(async () => {
+    await exportAllDraftsAsJson(storage);
+  }, [storage]);
+
   const headerContent = (
     <div className="mb-8">
       <img src="/OZ-Logo-BlackBG.svg" alt="OpenZeppelin" className="h-6 w-auto" />
     </div>
   );
 
-  const recentAssetsTitle = `Recent Assets${drafts.length > 0 ? `  ${drafts.length}` : ''}`;
+  const recentAssetsTitle = `Recent Assets${draftList.items.length > 0 ? `  ${draftList.items.length}` : ''}`;
 
   const footerContent = (
     <SidebarSection title="Tools">
@@ -146,11 +176,39 @@ function AppSidebar({
             Dashboard
           </SidebarButton>
           <TargetSelectorSidebar targets={targets} onCreateForTarget={handleCreateForTarget} />
+          <SidebarButton
+            icon={<ArrowDownToLine className="size-4" />}
+            onClick={() => setImportDialogOpen(true)}
+          >
+            Import
+          </SidebarButton>
+          {draftList.items.length > 0 && (
+            <SidebarButton
+              icon={<ArrowUpFromLine className="size-4" />}
+              onClick={() => void handleExportAllDrafts()}
+            >
+              Export
+            </SidebarButton>
+          )}
         </SidebarSection>
+
+        <DraftImportDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          onImported={() => void draftList.refresh()}
+        />
 
         {/* Recent Assets */}
         <SidebarSection title={recentAssetsTitle} grow>
-          <DraftList activeDraftId={storeState.activeDraftId} onLoadDraft={handleLoadDraft} />
+          <DraftList
+            activeDraftId={storeState.activeDraftId}
+            savingDraftId={storeState.savingDraftId}
+            onLoadDraft={handleLoadDraft}
+            items={draftList.items}
+            isLoading={draftList.isLoading}
+            error={draftList.error}
+            refresh={draftList.refresh}
+          />
         </SidebarSection>
       </div>
     </SidebarLayout>
@@ -187,18 +245,21 @@ function WizardPage() {
   const currentStepIndex = STEP_IDS.indexOf(storeState.currentStep);
   const effectiveStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
 
-  // Load the draft record when activeDraftId changes
+  // Load the draft record when activeDraftId changes; clear form state when id is cleared (e.g. delete).
   useEffect(() => {
-    async function loadDraft() {
+    async function syncDraftFromStorage() {
       const id = storeState.activeDraftId;
-      if (!id) return;
+      if (!id) {
+        draftState.resetConfig();
+        return;
+      }
       const draft = await storage.get(id);
       if (!draft) return;
       wizardStore.setTargetId(draft.targetId);
       wizardStore.setCurrentStep(draft.currentStep);
       draftState.setConfig(draft.config);
     }
-    void loadDraft();
+    void syncDraftFromStorage();
     // Only re-run when the active draft id changes, not on every config edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeState.activeDraftId]);
@@ -237,14 +298,31 @@ function WizardPage() {
     wizardStore.setActiveDraft(id);
   }, []);
 
-  useDraftAutosave({
+  const handlePersistSuccess = useCallback(() => {
+    wizardStore.bumpDraftListRefresh();
+  }, []);
+
+  const { isSaving } = useDraftAutosave({
     draftId: storeState.activeDraftId,
     config: draftState.config,
     targetId: selectedTargetId,
     currentStep: storeState.currentStep,
     storage,
     onDraftCreated: handleDraftCreated,
+    onPersistSuccess: handlePersistSuccess,
   });
+
+  useEffect(() => {
+    const id = storeState.activeDraftId;
+    if (isSaving && id) {
+      wizardStore.setSavingDraftId(id);
+    } else {
+      wizardStore.setSavingDraftId(null);
+    }
+    return () => {
+      wizardStore.setSavingDraftId(null);
+    };
+  }, [isSaving, storeState.activeDraftId]);
 
   const handleStepChange = useCallback((index: number) => {
     const stepId = STEP_IDS[index];

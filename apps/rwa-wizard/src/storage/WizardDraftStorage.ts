@@ -105,6 +105,27 @@ export class WizardDraftStorage extends EntityStorage<WizardDraftRecordPersisted
   }
 
   /**
+   * Creates a copy of an existing draft with a new id. Title and config are preserved
+   * so duplicated token names are not altered.
+   */
+  async duplicate(id: string): Promise<string> {
+    const original = await this.get(id);
+    if (!original) {
+      throw new Error(`draft-storage/not-found`);
+    }
+    const { id: _id, createdAt: _c, updatedAt: _u, ...recordData } = original;
+    return await withQuotaHandling(this.tableName, async () => {
+      return await super.save({
+        ...recordData,
+        metadata: {
+          ...recordData.metadata,
+          isManuallyRenamed: false,
+        },
+      });
+    });
+  }
+
+  /**
    * Exports drafts as a versioned JSON envelope. If ids omitted, exports all.
    */
   async export(ids?: string[]): Promise<string> {

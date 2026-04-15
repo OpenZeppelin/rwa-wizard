@@ -20,6 +20,7 @@ function createMockStorage(): WizardDraftStorageApi {
     save: vi.fn().mockResolvedValue(undefined),
     rename: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
+    duplicate: vi.fn().mockResolvedValue('duplicated-id'),
     export: vi.fn().mockResolvedValue('{}'),
     import: vi.fn().mockResolvedValue([]),
   };
@@ -130,5 +131,32 @@ describe('useDraftAutosave', () => {
     });
 
     expect(storage.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('invokes onPersistSuccess after a successful save', async () => {
+    const storage = createMockStorage();
+    const onPersistSuccess = vi.fn();
+    const { rerender } = renderHook(
+      ({ config }) =>
+        useDraftAutosave({
+          draftId: 'existing-id',
+          config,
+          targetId: 'stellar',
+          currentStep: 'asset',
+          storage,
+          onPersistSuccess,
+        }),
+      {
+        initialProps: { config: makeConfig('First') },
+      }
+    );
+
+    rerender({ config: makeConfig('Second') });
+
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(onPersistSuccess).toHaveBeenCalledTimes(1);
   });
 });

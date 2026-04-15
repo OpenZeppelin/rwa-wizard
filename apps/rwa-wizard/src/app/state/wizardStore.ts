@@ -7,12 +7,18 @@ export interface WizardState {
   currentStep: WizardStepId;
   /** Target id for the current flow (e.g. stellar). */
   targetId: string | null;
+  /** When set, the draft list shows a saving animation for this id (autosave in progress). */
+  savingDraftId: string | null;
+  /** Incremented after persisted draft changes so the sidebar list can refresh. */
+  draftListRefreshTick: number;
 }
 
 const initialState: WizardState = {
   activeDraftId: null,
   currentStep: 'asset',
   targetId: null,
+  savingDraftId: null,
+  draftListRefreshTick: 0,
 };
 
 let state: WizardState = { ...initialState };
@@ -50,5 +56,12 @@ export const wizardStore = {
   reset(): void {
     state = { ...initialState };
     listeners.forEach((fn) => fn(state));
+  },
+  setSavingDraftId(id: string | null): void {
+    setState({ savingDraftId: id });
+  },
+  /** Call after a draft is written to storage so Recent Assets titles/metadata stay in sync. */
+  bumpDraftListRefresh(): void {
+    setState({ draftListRefreshTick: state.draftListRefreshTick + 1 });
   },
 };

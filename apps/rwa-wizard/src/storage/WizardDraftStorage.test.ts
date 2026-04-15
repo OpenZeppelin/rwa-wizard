@@ -116,6 +116,28 @@ describe('WizardDraftStorage', () => {
     });
   });
 
+  describe('duplicate', () => {
+    it('creates a copy with a new id and preserves title', async () => {
+      const id = await storage.create({
+        title: 'Original',
+        targetId: 'stellar',
+        config: makeConfig(),
+        metadata: { isManuallyRenamed: true, importSource: 'manual' },
+      });
+      const copyId = await storage.duplicate(id);
+      expect(copyId).not.toBe(id);
+      const copy = await storage.get(copyId);
+      expect(copy?.title).toBe('Original');
+      expect(copy?.metadata.isManuallyRenamed).toBe(false);
+      const original = await storage.get(id);
+      expect(original?.title).toBe('Original');
+    });
+
+    it('rejects for unknown id', async () => {
+      await expect(storage.duplicate('nonexistent')).rejects.toThrow('draft-storage/not-found');
+    });
+  });
+
   describe('remove', () => {
     it('deletes only the specified draft', async () => {
       const id1 = await storage.create({
