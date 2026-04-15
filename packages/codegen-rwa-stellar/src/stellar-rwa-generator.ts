@@ -231,6 +231,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     const workspaceToml = generateWorkspaceToml({
       members,
       contractsLibraryPath: options?.contractsLibraryPath,
+      repositoryUrl: templateSource.metadata.sourceRepoUrl,
     });
     files = mergeFileTrees(files, createFile('Cargo.toml', workspaceToml));
 

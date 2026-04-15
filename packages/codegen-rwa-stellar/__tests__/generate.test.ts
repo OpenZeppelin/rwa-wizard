@@ -145,7 +145,7 @@ describe('StellarRwaGenerator', () => {
       expect(contract).toContain('impl AccessControl for ClaimTopicsAndIssuersContract');
     });
 
-    it('IRS should implement IdentityRegistryStorage, CountryDataManager, and TokenBinder', () => {
+    it('IRS should implement IdentityRegistryStorage, CountryDataManager, TokenBinder, and AccessControl', () => {
       const contract = result.files[
         'contracts/identity-registry-storage/src/contract.rs'
       ] as string;
@@ -153,6 +153,7 @@ describe('StellarRwaGenerator', () => {
       expect(contract).toContain('impl IdentityRegistryStorage for IdentityRegistryContract');
       expect(contract).toContain('impl CountryDataManager for IdentityRegistryContract');
       expect(contract).toContain('impl TokenBinder for IdentityRegistryContract');
+      expect(contract).toContain('impl AccessControl for IdentityRegistryContract');
     });
   });
 
@@ -299,7 +300,28 @@ describe('StellarRwaGenerator', () => {
       expect(readme).toContain('does **not** auto-mint it');
       expect(readme).toContain('Claim Issuer');
       expect(readme).toContain('Identity');
+      expect(readme).toContain('base units');
       expect(readme).toContain('Unix');
+    });
+
+    it('should preserve all configured non-manager role members across generated contract and deploy script output', () => {
+      const config = createValidConfig({
+        accessControl: {
+          ownership: { type: 'single-owner', ownerAddress: 'GCOWNERADDR' },
+          roles: [
+            { name: 'Manager', symbol: 'manager', addresses: ['GCMANAGER1'] },
+            { name: 'minter', addresses: ['GCMINTER1', 'GCMINTER2'] },
+          ],
+        },
+      });
+      const result = generator.generate(config);
+      const contract = result.files['contracts/rwa-token/src/contract.rs'] as string;
+      const deploySh = result.files['scripts/deploy.sh'] as string;
+
+      expect(contract).toContain('minter: Vec<Address>,');
+      expect(contract).toContain('grant_role_members(e, minter, &MINTER_ROLE, &admin);');
+      expect(contract).toContain('#[only_role(operator, "minter")]');
+      expect(deploySh).toContain(`--minter '["GCMINTER1", "GCMINTER2"]'`);
     });
 
     it('should list selected compliance modules in README.md', () => {

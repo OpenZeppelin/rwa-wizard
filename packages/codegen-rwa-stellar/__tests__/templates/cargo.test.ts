@@ -106,8 +106,18 @@ describe('Workspace Cargo.toml Template', () => {
       members: ['contracts/test'],
     });
 
-    expect(output).toContain(`version = "${SOROBAN_SDK_VERSION}"`);
+    expect(output).toContain(`version = "=${SOROBAN_SDK_VERSION}"`);
     expect(output).toContain('experimental_spec_shaking_v2');
+  });
+
+  it('should align workspace repository metadata with the generated upstream source repo', () => {
+    const output = generateWorkspaceToml({
+      members: ['contracts/test'],
+    });
+
+    expect(output).toContain(
+      `repository = "${GENERATED_STELLAR_SOURCE_REPO_URL.replace(/\.git$/, '')}"`
+    );
   });
 
   it('should pin stellar-contracts git deps to specific commit hash', () => {

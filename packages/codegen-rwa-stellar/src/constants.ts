@@ -16,8 +16,6 @@ export const STELLAR_VALIDATION_CONSTANTS = {
   ROLE_SYMBOL_MAX_LENGTH: 9,
 } as const;
 
-export const STELLAR_CONTRACTS_REPOSITORY_URL = 'https://github.com/OpenZeppelin/stellar-contracts';
-
 export const STELLAR_CONTRACTS_VERSION = '0.7.1';
 export const STELLAR_CONTRACTS_LICENSE = 'MIT';
 export const STELLAR_CONTRACTS_AUTHORS = ['OpenZeppelin'] as const;

@@ -99,6 +99,24 @@ describe('deploy.sh template', () => {
       expect(ivSection).toContain('$IRS_ADDRESS');
       expect(ivSection).toContain('$MANAGER');
     });
+
+    it('should serialize all configured non-manager role members into token constructor args', () => {
+      const config = createValidConfig({
+        accessControl: {
+          ownership: { type: 'single-owner', ownerAddress: 'GCOWNERADDR' },
+          roles: [
+            { name: 'Manager', symbol: 'manager', addresses: ['GCMANAGER1'] },
+            { name: 'minter', addresses: ['GCMINTER1', 'GCMINTER2'] },
+          ],
+        },
+      });
+      const script = generateDeploySh(config);
+      const tokenSection = extractDeploySection(script, 'RWA_TOKEN_ADDRESS');
+
+      expect(tokenSection).toContain(`--minter '["GCMINTER1", "GCMINTER2"]'`);
+      expect(tokenSection).not.toContain('--minter "GCMINTER1"');
+      expect(tokenSection).not.toContain('--minter "GCMINTER2"');
+    });
   });
 
   describe('error handling (exit code checks)', () => {
@@ -352,9 +370,11 @@ describe('deploy.sh template', () => {
 
       expect(script).toContain('Initial Supply');
       expect(script).toContain('Skipping automatic initial supply mint.');
-      expect(script).toContain('Requested: 1000000 (from config)');
+      expect(script).toContain('Requested: 1000000 base units (from config)');
+      expect(script).toContain('Decimals:  18 (1 whole token = 10^18 base units)');
+      expect(script).toContain('The mint amount must use on-chain base units, not display units.');
       expect(script).toContain('Deploy a Claim Issuer contract');
-      expect(script).toContain('--amount 1000000');
+      expect(script).toContain('--amount 1000000  # base units');
       expect(script).not.toMatch(/\n\s+mint\s+--to.*--amount/);
     });
 
@@ -371,7 +391,7 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
 
       expect(script).toContain('Skipping automatic initial supply mint.');
-      expect(script).toContain('Requested: 0 (from config)');
+      expect(script).toContain('Requested: 0 base units (from config)');
     });
 
     it('should omit initial supply guidance when initialSupply is undefined', () => {

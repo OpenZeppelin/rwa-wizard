@@ -132,5 +132,7 @@ describe('generateReadme', () => {
     expect(readme).toContain('trusted claim issuer contract');
     expect(readme).toContain('per-holder identity contract with claims');
     expect(readme).toContain('does not scaffold those investor-specific identity contracts');
+    expect(readme).toContain('expressed in on-chain base units (smallest token units)');
+    expect(readme).toContain('one whole token equals `10^18` base units');
   });
 });

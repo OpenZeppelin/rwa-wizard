@@ -53,7 +53,7 @@ describe('RWA Access Control Helpers', () => {
             ],
           })
         )
-      ).toEqual([{ name: 'Operator', symbol: 'ops', address: 'GOPS' }]);
+      ).toEqual([{ name: 'Operator', symbol: 'ops', addresses: ['GOPS'] }]);
     });
 
     it('uses shared default symbols for well-known roles', () => {
@@ -63,7 +63,7 @@ describe('RWA Access Control Helpers', () => {
             roles: [{ name: 'Manager', addresses: ['GMANAGER'] }],
           })
         )
-      ).toEqual([{ name: 'Manager', symbol: 'manager', address: 'GMANAGER' }]);
+      ).toEqual([{ name: 'Manager', symbol: 'manager', addresses: ['GMANAGER'] }]);
     });
 
     it('uses a generator callback for chain-specific fallback symbols', () => {
@@ -77,7 +77,7 @@ describe('RWA Access Control Helpers', () => {
           }
         )
       ).toEqual([
-        { name: 'Compliance Officer', symbol: 'compliance-officer', address: 'GCO' },
+        { name: 'Compliance Officer', symbol: 'compliance-officer', addresses: ['GCO'] },
       ]);
     });
 
@@ -89,6 +89,16 @@ describe('RWA Access Control Helpers', () => {
           })
         )
       ).toThrow('Role "Compliance Officer" is missing a symbol');
+    });
+
+    it('preserves multiple addresses for the same role', () => {
+      expect(
+        getResolvedRoleAssignments(
+          createConfig({
+            roles: [{ name: 'Minter', symbol: 'minter', addresses: ['GMINTER1', 'GMINTER2'] }],
+          })
+        )
+      ).toEqual([{ name: 'Minter', symbol: 'minter', addresses: ['GMINTER1', 'GMINTER2'] }]);
     });
   });
 
@@ -125,7 +135,7 @@ describe('RWA Access Control Helpers', () => {
             ],
           })
         )
-      ).toEqual([{ name: 'Operator', symbol: 'ops', address: 'GOPS' }]);
+      ).toEqual([{ name: 'Operator', symbol: 'ops', addresses: ['GOPS'] }]);
     });
   });
 });

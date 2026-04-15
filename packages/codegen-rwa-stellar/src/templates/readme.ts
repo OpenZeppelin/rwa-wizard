@@ -140,7 +140,7 @@ function renderInitialSupplyNote(config: RWAConfig): string {
     return '';
   }
 
-  return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. This generated project scaffolds CTI, IRS, and the Identity Verifier, but it does not scaffold those investor-specific identity contracts, so perform the mint manually after identity onboarding.\n`;
+  return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. This generated project scaffolds CTI, IRS, and the Identity Verifier, but it does not scaffold those investor-specific identity contracts, so perform the mint manually after identity onboarding. The configured initial supply is expressed in on-chain base units (smallest token units), not display units; with \`token.decimals = ${config.token.decimals}\`, one whole token equals \`10^${config.token.decimals}\` base units.\n`;
 }
 
 /**
