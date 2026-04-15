@@ -132,5 +132,59 @@ describe('generateReadme', () => {
     expect(readme).toContain('trusted claim issuer contract');
     expect(readme).toContain('per-holder identity contract with claims');
     expect(readme).toContain('does not scaffold those investor-specific identity contracts');
+    expect(readme).toContain('expressed in on-chain base units (smallest token units)');
+    expect(readme).toContain('one whole token equals `10^18` base units');
+  });
+
+  it('includes a config-driven Mermaid chart for the build and deploy script flow', () => {
+    const readme = generateReadme(createValidConfig(), createReadmeContext());
+
+    expect(readme).toContain('### End-to-end script flow');
+    expect(readme).toContain('```mermaid');
+    expect(readme).toContain('flowchart TD');
+    expect(readme).toContain('build.sh → stellar contract build');
+    expect(readme).toContain('Deploy: CTI → IRS → Identity Verifier → Compliance');
+    expect(readme).toContain('Post-deploy: add 2 claim topics on CTI');
+    expect(readme).toContain('Post-deploy: add trusted issuer on CTI');
+    expect(readme).toContain('Initial supply: manual mint guidance (stdout)');
+    expect(readme).toContain('Deployment summary');
+  });
+
+  it('omits compliance module nodes in the Mermaid chart when no modules are configured', () => {
+    const readme = generateReadme(
+      createValidConfig({
+        compliance: { modules: [] },
+        identityVerification: {
+          claimTopics: [],
+          trustedIssuers: [],
+        },
+        token: { initialSupply: undefined },
+      }),
+      createReadmeContext()
+    );
+
+    expect(readme).toContain('```mermaid');
+    expect(readme).not.toContain('Deploy compliance module');
+    expect(readme).not.toContain('configure modules and register hooks');
+    expect(readme).not.toContain('claim topics on CTI');
+    expect(readme).not.toContain('trusted issuer on CTI');
+    expect(readme).not.toContain('Initial supply: manual mint guidance');
+  });
+
+  it('uses plural compliance module labels in the Mermaid chart when multiple unique modules are configured', () => {
+    const readme = generateReadme(
+      createValidConfig({
+        compliance: {
+          modules: [
+            { moduleId: 'supply-limit', config: { limit: 1 } },
+            { moduleId: 'country-allow', config: { allowedCountries: ['CH'] } },
+          ],
+        },
+      }),
+      createReadmeContext()
+    );
+
+    expect(readme).toContain('Deploy 2 compliance modules');
+    expect(readme).toContain('configure modules and register hooks');
   });
 });

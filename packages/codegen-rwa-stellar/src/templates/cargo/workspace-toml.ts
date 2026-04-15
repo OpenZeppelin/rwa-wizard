@@ -2,7 +2,6 @@ import {
   SOROBAN_SDK_VERSION,
   STELLAR_CONTRACTS_AUTHORS,
   STELLAR_CONTRACTS_LICENSE,
-  STELLAR_CONTRACTS_REPOSITORY_URL,
   STELLAR_CONTRACTS_VERSION,
   WORKSPACE_CRATE_DEPS,
   WORKSPACE_CRATE_PACKAGE_PATHS,
@@ -16,6 +15,12 @@ export interface WorkspaceTomlConfig {
   members: string[];
   /** When set, resolve upstream contract crates via local path instead of git. */
   contractsLibraryPath?: string;
+  /** Source repository recorded in workspace package metadata. */
+  repositoryUrl?: string;
+}
+
+function toRepositoryMetadataUrl(sourceRepoUrl: string): string {
+  return sourceRepoUrl.replace(/\.git$/, '');
 }
 
 /**
@@ -28,6 +33,9 @@ export interface WorkspaceTomlConfig {
  */
 export function generateWorkspaceToml(config: WorkspaceTomlConfig): string {
   const membersBlock = config.members.map((m) => `    "${m}",`).join('\n');
+  const repositoryUrl = toRepositoryMetadataUrl(
+    config.repositoryUrl ?? GENERATED_STELLAR_SOURCE_REPO_URL
+  );
 
   let depsBlock: string;
   if (config.contractsLibraryPath) {
@@ -52,11 +60,11 @@ ${membersBlock}
 authors = ["${STELLAR_CONTRACTS_AUTHORS.join('", "')}"]
 edition = "2021"
 license = "${STELLAR_CONTRACTS_LICENSE}"
-repository = "${STELLAR_CONTRACTS_REPOSITORY_URL}"
+repository = "${repositoryUrl}"
 version = "${STELLAR_CONTRACTS_VERSION}"
 
 [workspace.dependencies]
-soroban-sdk = { version = "${SOROBAN_SDK_VERSION}", features = ["experimental_spec_shaking_v2"] }
+soroban-sdk = { version = "=${SOROBAN_SDK_VERSION}", features = ["experimental_spec_shaking_v2"] }
 ${depsBlock}
 
 [profile.release]

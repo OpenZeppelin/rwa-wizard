@@ -27,7 +27,7 @@ It does **not** own chain-specific symbol constraints or identifier formatting. 
 | Function                                         | Description                                                         |
 | ------------------------------------------------ | ------------------------------------------------------------------- |
 | `getAdminAddress(config)`                        | Resolve the effective admin address from `accessControl.ownership`  |
-| `getResolvedRoleAssignments(config, options?)`   | Normalize configured roles into `{ name, symbol, address }` records |
+| `getResolvedRoleAssignments(config, options?)`   | Normalize configured roles into `{ name, symbol, addresses }` records |
 | `getManagerAddress(config, options?)`            | Resolve the manager role address, falling back to the admin address |
 | `getAdditionalRoleAssignments(config, options?)` | Return role assignments excluding the manager role                  |
 | `getUniqueModuleSelections(selections)`          | Deduplicate module selections by `moduleId`, keeping first-seen order |
@@ -41,7 +41,7 @@ It does **not** own chain-specific symbol constraints or identifier formatting. 
 
 | Type                     | Description                                                                                |
 | ------------------------ | ------------------------------------------------------------------------------------------ |
-| `ResolvedRoleAssignment` | `{ name, symbol, address }`                                                                |
+| `ResolvedRoleAssignment` | `{ name, symbol, addresses }`                                                              |
 | `RoleResolutionOptions`  | Optional callbacks such as `generateRoleSymbol(name)` for chain-specific fallback behavior |
 | `SelectedModuleSummary`  | `{ id, name, hooks, configSummary, reviewSummary }` for display surfaces                  |
 | `UnderReviewModuleSummary` | `{ id, name, prUrl? }` for under-review notices                                         |

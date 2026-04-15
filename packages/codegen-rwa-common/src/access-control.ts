@@ -3,7 +3,7 @@ import { DEFAULT_ROLE_SYMBOLS, type OperatorRole, type RWAConfig } from '@openze
 export interface ResolvedRoleAssignment {
   name: string;
   symbol: string;
-  address: string;
+  addresses: string[];
 }
 
 export interface RoleResolutionOptions {
@@ -13,10 +13,12 @@ export interface RoleResolutionOptions {
 type AccessControlledConfig = Pick<RWAConfig, 'accessControl'>;
 
 /**
- * Pick the first non-empty address configured for a role.
+ * Normalize configured role members, trimming blanks and preserving order.
  */
-function getSingleRoleAddress(addresses: readonly string[]): string | undefined {
-  return addresses.find((address) => address.trim().length > 0);
+function getRoleAddresses(addresses: readonly string[]): string[] {
+  return [
+    ...new Set(addresses.map((address) => address.trim()).filter((address) => address.length > 0)),
+  ];
 }
 
 /**
@@ -58,8 +60,8 @@ export function getResolvedRoleAssignments(
   options?: RoleResolutionOptions
 ): ResolvedRoleAssignment[] {
   return config.accessControl.roles.flatMap((role) => {
-    const address = getSingleRoleAddress(role.addresses);
-    if (!address) {
+    const addresses = getRoleAddresses(role.addresses);
+    if (addresses.length === 0) {
       return [];
     }
 
@@ -67,7 +69,7 @@ export function getResolvedRoleAssignments(
       {
         name: role.name,
         symbol: resolveRoleSymbol(role, options),
-        address,
+        addresses,
       },
     ];
   });
@@ -84,7 +86,7 @@ export function getManagerAddress(
     (role) => role.symbol === 'manager' || role.name.toLowerCase() === 'manager'
   );
 
-  return managerRole?.address ?? getAdminAddress(config);
+  return managerRole?.addresses[0] ?? getAdminAddress(config);
 }
 
 /**

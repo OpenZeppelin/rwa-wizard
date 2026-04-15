@@ -1,6 +1,7 @@
 import {
   getSelectedModuleSummaries,
   getUnderReviewModules,
+  getUniqueModuleSelections,
 } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
@@ -112,6 +113,103 @@ function getNetworkDescription(config: RWAConfig): string {
 }
 
 /**
+ * Escape text for use inside Mermaid double-quoted node labels.
+ */
+function escapeMermaidNodeLabel(text: string): string {
+  return text.replace(/"/g, '#quot;');
+}
+
+/**
+ * Minimalist flowchart of the generated `build.sh` + `deploy.sh` pipeline, driven by config.
+ */
+function renderE2eScriptFlowMermaid(config: RWAConfig): string {
+  const networkDesc = getNetworkDescription(config);
+  const modules = getUniqueModuleSelections(config.compliance.modules);
+  const topicCount = config.identityVerification.claimTopics.length;
+  const issuerCount = config.identityVerification.trustedIssuers.length;
+  const hasInitialSupply = config.token.initialSupply !== undefined;
+
+  const lines: string[] = [];
+  lines.push('flowchart TD');
+  lines.push(`  %% Network: ${escapeMermaidNodeLabel(networkDesc)}`);
+
+  let step = 0;
+  const id = () => `s${step++}`;
+
+  const nBuild = id();
+  const nDeploy = id();
+  lines.push(
+    `  ${nBuild}["${escapeMermaidNodeLabel('build.sh → stellar contract build')}"] --> ${nDeploy}["${escapeMermaidNodeLabel(`deploy.sh (${networkDesc})`)}"]`
+  );
+
+  const nCore = id();
+  lines.push(
+    `  ${nDeploy} --> ${nCore}["${escapeMermaidNodeLabel('Deploy: CTI → IRS → Identity Verifier → Compliance')}"]`
+  );
+
+  let prev = nCore;
+  if (modules.length > 0) {
+    const nMods = id();
+    const modLabel =
+      modules.length === 1
+        ? 'Deploy compliance module'
+        : `Deploy ${modules.length} compliance modules`;
+    lines.push(`  ${prev} --> ${nMods}["${escapeMermaidNodeLabel(modLabel)}"]`);
+    prev = nMods;
+  }
+
+  const nToken = id();
+  lines.push(`  ${prev} --> ${nToken}["${escapeMermaidNodeLabel('Deploy RWA token')}"]`);
+
+  const nBind = id();
+  lines.push(
+    `  ${nToken} --> ${nBind}["${escapeMermaidNodeLabel('Post-deploy: bind token on Compliance and IRS')}"]`
+  );
+  prev = nBind;
+
+  if (modules.length > 0) {
+    const nWire = id();
+    lines.push(
+      `  ${prev} --> ${nWire}["${escapeMermaidNodeLabel('Post-deploy: configure modules and register hooks on Compliance')}"]`
+    );
+    prev = nWire;
+  }
+
+  if (topicCount > 0) {
+    const nTopics = id();
+    const label =
+      topicCount === 1
+        ? 'Post-deploy: add claim topic on CTI'
+        : `Post-deploy: add ${topicCount} claim topics on CTI`;
+    lines.push(`  ${prev} --> ${nTopics}["${escapeMermaidNodeLabel(label)}"]`);
+    prev = nTopics;
+  }
+
+  if (issuerCount > 0) {
+    const nIss = id();
+    const label =
+      issuerCount === 1
+        ? 'Post-deploy: add trusted issuer on CTI'
+        : `Post-deploy: add ${issuerCount} trusted issuers on CTI`;
+    lines.push(`  ${prev} --> ${nIss}["${escapeMermaidNodeLabel(label)}"]`);
+    prev = nIss;
+  }
+
+  if (hasInitialSupply) {
+    const nSup = id();
+    lines.push(
+      `  ${prev} --> ${nSup}["${escapeMermaidNodeLabel('Initial supply: manual mint guidance (stdout)')}"]`
+    );
+    prev = nSup;
+  }
+
+  const nSummary = id();
+  lines.push(`  ${prev} --> ${nSummary}["${escapeMermaidNodeLabel('Deployment summary')}"]`);
+
+  return ['```mermaid', ...lines, '```'].join('\n');
+}
+
+/**
  * Convert a git-style source URL into a browser-friendly repository URL.
  */
 function toRepositoryBrowserUrl(sourceRepoUrl: string): string {
@@ -140,7 +238,7 @@ function renderInitialSupplyNote(config: RWAConfig): string {
     return '';
   }
 
-  return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. This generated project scaffolds CTI, IRS, and the Identity Verifier, but it does not scaffold those investor-specific identity contracts, so perform the mint manually after identity onboarding.\n`;
+  return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. This generated project scaffolds CTI, IRS, and the Identity Verifier, but it does not scaffold those investor-specific identity contracts, so perform the mint manually after identity onboarding. The configured initial supply is expressed in on-chain base units (smallest token units), not display units; with \`token.decimals = ${config.token.decimals}\`, one whole token equals \`10^${config.token.decimals}\` base units.\n`;
 }
 
 /**
@@ -184,6 +282,12 @@ After building, run \`cargo fmt\` to apply canonical Rust formatting to the gene
 ## Deploy
 
 Deploy all contracts to ${networkDesc}:
+
+### End-to-end script flow
+
+\`build.sh\` compiles the workspace; \`deploy.sh\` deploys contracts and runs post-deploy configuration. The following diagram is generated from this project's config and matches the script order:
+
+${renderE2eScriptFlowMermaid(config)}
 
 \`\`\`bash
 chmod +x scripts/deploy.sh
