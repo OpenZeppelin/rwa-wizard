@@ -1,8 +1,8 @@
 # Codegen Compile Check
 # =====================
-# Verifies that generated Stellar/Soroban contracts actually compile
-# against the pinned stellar-contracts commit. Catches drift between
-# the codegen templates and the upstream library.
+# Verifies that the default bundled Stellar/Soroban artifact actually compiles
+# against the generated upstream pin. Catches drift between the bundled
+# template snapshot and the Cargo dependency revision shipped to users.
 
 name: Codegen Compile
 
@@ -10,9 +10,9 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "packages/codegen-rwa-stellar/**"
-      - "packages/rwa-config/**"
-      - ".github/workflows/codegen-compile.yml"
+      - 'packages/codegen-rwa-stellar/**'
+      - 'packages/rwa-config/**'
+      - '.github/workflows/codegen-compile.yml'
 
 permissions:
   contents: read
@@ -46,7 +46,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-stellar-${{ hashFiles('packages/codegen-rwa-stellar/src/constants.ts') }}
+          key: ${{ runner.os }}-cargo-stellar-${{ hashFiles('packages/codegen-rwa-stellar/src/upstream/generated-revision.ts') }}
           restore-keys: |
             ${{ runner.os }}-cargo-stellar-
 
