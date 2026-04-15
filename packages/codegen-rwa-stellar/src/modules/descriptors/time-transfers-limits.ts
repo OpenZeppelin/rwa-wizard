@@ -1,5 +1,6 @@
 import { PR_652 } from './review-urls';
 import {
+  createHookWiringVerificationInvocation,
   createModuleInvocation,
   defineComplianceModuleDescriptor,
   getOptionalScalarConfigValue,
@@ -44,6 +45,9 @@ export const timeTransfersLimitsModule = defineComplianceModuleDescriptor({
             ),
           ]
         : [];
+    },
+    getPostRegistrationInvocations() {
+      return [createHookWiringVerificationInvocation()];
     },
   },
 });

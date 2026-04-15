@@ -145,7 +145,9 @@ const generator = new StellarRwaGenerator();
  *   identityVerification: { claimTopics: [{ id: 1, name: 'KYC' }], trustedIssuers: [] },
  *   compliance: { modules: [] },
  *   accessControl: { ownership: { type: 'single-owner', ownerAddress: 'G...' }, roles: [] },
- *   deployment: { network: 'testnet' },
+ *   deployment: {
+ *     target: { kind: 'preset', ecosystem: 'stellar', networkId: 'stellar-testnet' },
+ *   },
  * });
  *
  * console.log(Object.keys(result.files)); // file paths

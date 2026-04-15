@@ -1,5 +1,6 @@
 import { PR_652 } from './review-urls';
 import {
+  createHookWiringVerificationInvocation,
   createModuleInvocation,
   defineComplianceModuleDescriptor,
   getOptionalScalarConfigValue,
@@ -34,6 +35,9 @@ export const initialLockupPeriodModule = defineComplianceModuleDescriptor({
             ),
           ]
         : [];
+    },
+    getPostRegistrationInvocations() {
+      return [createHookWiringVerificationInvocation()];
     },
   },
 });

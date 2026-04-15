@@ -1,6 +1,11 @@
+import {
+  getSelectedModuleSummaries,
+  getUnderReviewModules,
+} from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { CRATE_NAMES, SOROBAN_SDK_VERSION, STELLAR_CONTRACTS_REPOSITORY_URL } from '../constants';
+import { CRATE_NAMES, SOROBAN_SDK_VERSION } from '../constants';
+import { resolveStellarDeploymentTarget } from '../deployment/target';
 import { getModuleById } from '../modules/registry';
 import type { UpstreamTemplateSourceMetadata } from '../upstream/types';
 
@@ -9,14 +14,6 @@ interface ContractTableRow {
   name: string;
   purpose: string;
   traits: string[];
-}
-
-interface SelectedModuleRow {
-  id: string;
-  name: string;
-  hooks: string[];
-  configSummary: string;
-  reviewSummary: string;
 }
 
 export interface ReadmeGenerationContext {
@@ -82,93 +79,10 @@ function renderContractTable(rows: ContractTableRow[]): string {
 }
 
 /**
- * Return module rows for the selected compliance modules.
- */
-function getSelectedModuleRows(config: RWAConfig): SelectedModuleRow[] {
-  const seen = new Set<string>();
-  const rows: SelectedModuleRow[] = [];
-
-  for (const selection of config.compliance.modules) {
-    if (seen.has(selection.moduleId)) {
-      continue;
-    }
-    seen.add(selection.moduleId);
-
-    const entry = getModuleById(selection.moduleId);
-    if (!entry) {
-      continue;
-    }
-
-    rows.push({
-      id: entry.id,
-      name: entry.name,
-      hooks: [...entry.requiredHooks],
-      configSummary: formatModuleConfigSummary(
-        selection.config ?? {},
-        entry.configFields.map((f) => f.key)
-      ),
-      reviewSummary:
-        entry.review.state === 'under-review'
-          ? entry.review.prUrl
-            ? `Under review ([PR](${entry.review.prUrl}))`
-            : 'Under review'
-          : 'Stable',
-    });
-  }
-
-  return rows;
-}
-
-/**
- * Format module config values into a concise human-readable summary.
- */
-function formatModuleConfigSummary(
-  config: Record<string, unknown>,
-  preferredKeys: readonly string[]
-): string {
-  const configKeys = Object.keys(config);
-  if (configKeys.length === 0) {
-    return 'None';
-  }
-
-  const remainingKeys = configKeys.filter((key) => !preferredKeys.includes(key)).sort();
-  const orderedKeys = [...preferredKeys.filter((key) => key in config), ...remainingKeys];
-  const parts = orderedKeys.flatMap((key) => {
-    const value = config[key];
-    if (value === undefined || value === null) {
-      return [];
-    }
-    if (typeof value === 'string' && value.trim().length === 0) {
-      return [];
-    }
-    if (Array.isArray(value) && value.length === 0) {
-      return [];
-    }
-
-    return [`\`${key}=${formatModuleConfigValue(value)}\``];
-  });
-
-  return parts.length > 0 ? parts.join(', ') : 'None';
-}
-
-/**
- * Render one module config value for Markdown output.
- */
-function formatModuleConfigValue(value: unknown): string {
-  if (Array.isArray(value)) {
-    return value.map((entry) => String(entry)).join(', ');
-  }
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-  return String(value);
-}
-
-/**
  * Render the selected compliance modules section when modules are configured.
  */
 function renderSelectedModules(config: RWAConfig): string {
-  const rows = getSelectedModuleRows(config);
+  const rows = getSelectedModuleSummaries(config.compliance.modules, getModuleById);
   if (rows.length === 0) {
     return '';
   }
@@ -193,10 +107,15 @@ function renderSelectedModules(config: RWAConfig): string {
  * Format the configured deployment network for human-readable documentation.
  */
 function getNetworkDescription(config: RWAConfig): string {
-  const network = config.deployment.network;
-  if (network === 'testnet') return 'Stellar Testnet';
-  if (network === 'mainnet') return 'Stellar Mainnet';
-  return `Custom RPC: \`${network}\``;
+  const deployment = resolveStellarDeploymentTarget(config.deployment.target);
+  return deployment.displayName;
+}
+
+/**
+ * Convert a git-style source URL into a browser-friendly repository URL.
+ */
+function toRepositoryBrowserUrl(sourceRepoUrl: string): string {
+  return sourceRepoUrl.replace(/\.git$/, '');
 }
 
 /**
@@ -204,12 +123,24 @@ function getNetworkDescription(config: RWAConfig): string {
  */
 function renderUpstreamProvenance(metadata: UpstreamTemplateSourceMetadata): string {
   const shortCommit = metadata.sourceCommitHash.slice(0, 7);
+  const repoUrl = toRepositoryBrowserUrl(metadata.sourceRepoUrl);
 
   if (metadata.strategy === 'local-checkout') {
-    return `Contract source was generated from a local checkout of [OpenZeppelin Stellar Contracts](${STELLAR_CONTRACTS_REPOSITORY_URL}) at commit \`${shortCommit}\`. The workspace \`Cargo.toml\` resolves upstream crates via local path dependencies for this generation.`;
+    return `Contract source was generated from a local checkout of the [Stellar contracts source repository](${repoUrl}) at commit \`${shortCommit}\`. The workspace \`Cargo.toml\` resolves upstream crates via local path dependencies for this generation.`;
   }
 
-  return `Contract source was generated from a bundled snapshot of upstream [OpenZeppelin Stellar Contracts](${STELLAR_CONTRACTS_REPOSITORY_URL}) examples synced from commit \`${shortCommit}\`. See \`Cargo.toml\` for the exact dependency source used by this project.`;
+  return `Contract source was generated from a bundled snapshot of the [Stellar contracts source repository](${repoUrl}) examples synced from commit \`${shortCommit}\`. See \`Cargo.toml\` for the exact dependency source used by this project.`;
+}
+
+/**
+ * Explain why the requested initial supply is not auto-minted on Stellar.
+ */
+function renderInitialSupplyNote(config: RWAConfig): string {
+  if (config.token.initialSupply === undefined) {
+    return '';
+  }
+
+  return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. This generated project scaffolds CTI, IRS, and the Identity Verifier, but it does not scaffold those investor-specific identity contracts, so perform the mint manually after identity onboarding.\n`;
 }
 
 /**
@@ -237,7 +168,7 @@ export function generateReadme(config: RWAConfig, context: ReadmeGenerationConte
 - [Rust](https://www.rust-lang.org/tools/install) toolchain (edition 2021)
 - [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/install-cli) (\`stellar\` command)
 - \`soroban-sdk\` version: \`${SOROBAN_SDK_VERSION}\`
-- \`wasm32-unknown-unknown\` target: \`rustup target add wasm32-unknown-unknown\`
+- \`wasm32v1-none\` target: \`rustup target add wasm32v1-none\`
 
 ## Build
 
@@ -259,12 +190,22 @@ chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 \`\`\`
 
+Before running \`deploy.sh\`, set a signable Stellar CLI source account. The script resolves
+\`SOURCE_ACCOUNT\` first and falls back to \`STELLAR_ACCOUNT\`:
+
+\`\`\`bash
+export STELLAR_ACCOUNT=alice
+./scripts/deploy.sh
+\`\`\`
+
+The chosen source account must be able to authorize the configured admin/operator actions during deployment.
+
 The deploy script handles the complete lifecycle:
 1. Deploys contracts in dependency order
 2. Captures deployed contract addresses
 3. Performs post-deployment configuration (token binding, module registration, claim topics, trusted issuers)
-${config.token.initialSupply !== undefined ? '4. Mints initial token supply\n' : ''}
-Configuration values are read from \`config.json\`.
+${renderInitialSupplyNote(config)}
+\`config.json\` is an informational snapshot of the exact source config used to generate this project. You can reuse it to regenerate or re-import the project later, but \`deploy.sh\` does not read it at runtime.
 
 ## Architecture
 
@@ -279,6 +220,8 @@ The system follows a modular architecture where each concern is handled by a ded
 - **Identity Registry Storage (IRS)** — Persistent storage for identity data and country information
 
 Contracts communicate through address references established during deployment. The deploy script handles all cross-contract wiring automatically.
+
+This generated project does not currently scaffold the upstream **Claim Issuer** or per-holder **Identity** example contracts used to onboard verified investors. Those contracts must exist before a recipient can pass Stellar identity verification and receive minted tokens.
 
 ## Contracts
 
@@ -298,17 +241,14 @@ Shell scripts (\`build.sh\`, \`deploy.sh\`) target **Unix-like environments** (L
  * Render the under-review module warning section when relevant.
  */
 function renderUnderReviewWarning(config: RWAConfig): string {
-  const uniqueIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
-  const underReview = uniqueIds
-    .map((id) => getModuleById(id))
-    .filter((e) => e && e.review.state === 'under-review');
+  const underReview = getUnderReviewModules(config.compliance.modules, getModuleById);
 
   if (underReview.length === 0) return '';
 
   const items: string[] = [];
   for (const entry of underReview) {
-    const link = entry!.review.prUrl ? ` — [Review PR](${entry!.review.prUrl})` : '';
-    items.push(`- **${entry!.name}** (\`${entry!.id}\`)${link}`);
+    const link = entry.prUrl ? ` — [Review PR](${entry.prUrl})` : '';
+    items.push(`- **${entry.name}** (\`${entry.id}\`)${link}`);
   }
 
   const parts: string[] = [];

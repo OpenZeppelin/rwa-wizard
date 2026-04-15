@@ -60,6 +60,7 @@ export type ComplianceModuleSelection = RWAConfig['compliance']['modules'][numbe
 export interface ComplianceModuleDeploymentDescriptor {
   requiresIdentityRegistryStorage: boolean;
   getConfigurationInvocations(selection: ComplianceModuleSelection): ModuleInvocation[];
+  getPostRegistrationInvocations?(selection: ComplianceModuleSelection): ModuleInvocation[];
 }
 
 export interface ComplianceModuleDescriptor extends ComplianceModuleRegistryEntry {

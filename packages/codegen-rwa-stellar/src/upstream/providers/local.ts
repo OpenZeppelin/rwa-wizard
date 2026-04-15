@@ -3,7 +3,10 @@ import {
   createSnapshotTemplateSource,
 } from '@openzeppelin/codegen-core';
 
-import { STELLAR_CONTRACTS_COMMIT_HASH, STELLAR_CONTRACTS_GIT_URL } from '../../constants';
+import {
+  GENERATED_STELLAR_SOURCE_COMMIT_HASH,
+  GENERATED_STELLAR_SOURCE_REPO_URL,
+} from '../generated-revision';
 import { getUpstreamTemplateKey, getUpstreamTemplateManifest } from '../manifest';
 import type {
   UpstreamTemplateKind,
@@ -96,7 +99,7 @@ function resolveCommitHash(checkoutRoot: string): string {
       })
       .trim();
   } catch {
-    return STELLAR_CONTRACTS_COMMIT_HASH;
+    return GENERATED_STELLAR_SOURCE_COMMIT_HASH;
   }
 }
 
@@ -106,7 +109,7 @@ function resolveCommitHash(checkoutRoot: string): string {
 export function createLocalCheckoutTemplateSource(checkoutRoot: string): UpstreamTemplateSource {
   const snapshot: UpstreamTemplateSnapshot = {
     metadata: {
-      sourceRepoUrl: STELLAR_CONTRACTS_GIT_URL,
+      sourceRepoUrl: GENERATED_STELLAR_SOURCE_REPO_URL,
       sourceCommitHash: resolveCommitHash(checkoutRoot),
       syncedAt: new Date().toISOString(),
     },

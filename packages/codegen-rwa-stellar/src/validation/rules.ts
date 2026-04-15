@@ -2,6 +2,10 @@ import type { ValidationRule } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../constants';
+import {
+  getStellarPresetNetworkById,
+  getSupportedStellarPresetNetworkIds,
+} from '../deployment/target';
 import { getModuleById, getRegisteredModuleIds } from '../modules/registry';
 
 const I128_MAX = BigInt('170141183460469231731687303715884105727');
@@ -76,6 +80,7 @@ export const validateDecimals: ValidationRule<RWAConfig> = (config) => {
 
 export const validateInitialSupply: ValidationRule<RWAConfig> = (config) => {
   const errors = [];
+  const warnings = [];
   const { initialSupply } = config.token;
 
   if (initialSupply === undefined) {
@@ -108,7 +113,14 @@ export const validateInitialSupply: ValidationRule<RWAConfig> = (config) => {
     });
   }
 
-  return { errors, warnings: [] };
+  warnings.push({
+    field: 'token.initialSupply',
+    code: 'MANUAL_VERIFIED_MINT_REQUIRED',
+    message:
+      'Stellar deploy.sh does not auto-mint initial supply. The generated project does not scaffold the upstream claim-issuer and per-holder identity contracts required to onboard a verified mint recipient, so mint manually after identity bootstrap.',
+  });
+
+  return { errors, warnings };
 };
 
 // ---------------------------------------------------------------------------
@@ -252,13 +264,79 @@ export const validateRoles: ValidationRule<RWAConfig> = (config) => {
 
 export const validateDeployment: ValidationRule<RWAConfig> = (config) => {
   const errors = [];
-  const { network } = config.deployment;
+  const target = config.deployment?.target;
 
-  if (!network || network.trim().length === 0) {
+  if (!target) {
     errors.push({
-      field: 'deployment.network',
+      field: 'deployment.target',
       code: 'REQUIRED_FIELD',
-      message: 'Deployment network is required',
+      message: 'Deployment target is required',
+    });
+
+    return { errors, warnings: [] };
+  }
+
+  if (!target.ecosystem || target.ecosystem.trim().length === 0) {
+    errors.push({
+      field: 'deployment.target.ecosystem',
+      code: 'REQUIRED_FIELD',
+      message: 'Deployment target ecosystem is required',
+    });
+  } else if (target.ecosystem !== 'stellar') {
+    errors.push({
+      field: 'deployment.target.ecosystem',
+      code: 'UNSUPPORTED_ECOSYSTEM',
+      message: `codegen-rwa-stellar only supports deployment targets for the "stellar" ecosystem (got "${target.ecosystem}")`,
+    });
+  }
+
+  if (target.kind === 'preset') {
+    if (!target.networkId || target.networkId.trim().length === 0) {
+      errors.push({
+        field: 'deployment.target.networkId',
+        code: 'REQUIRED_FIELD',
+        message: 'Preset deployment target networkId is required',
+      });
+    } else if (!getStellarPresetNetworkById(target.networkId)) {
+      errors.push({
+        field: 'deployment.target.networkId',
+        code: 'UNSUPPORTED_NETWORK',
+        message: `Unsupported Stellar preset network "${target.networkId}". Supported networks: ${getSupportedStellarPresetNetworkIds().join(', ')}`,
+      });
+    }
+  } else if (target.kind === 'custom') {
+    if (!target.rpcUrl || target.rpcUrl.trim().length === 0) {
+      errors.push({
+        field: 'deployment.target.rpcUrl',
+        code: 'REQUIRED_FIELD',
+        message: 'Custom deployment target rpcUrl is required',
+      });
+    }
+
+    if (target.explorerUrl !== undefined) {
+      if (target.explorerUrl.trim().length === 0) {
+        errors.push({
+          field: 'deployment.target.explorerUrl',
+          code: 'INVALID_FORMAT',
+          message: 'Custom deployment target explorerUrl cannot be empty when provided',
+        });
+      } else {
+        try {
+          new URL(target.explorerUrl);
+        } catch {
+          errors.push({
+            field: 'deployment.target.explorerUrl',
+            code: 'INVALID_FORMAT',
+            message: `Custom deployment target explorerUrl must be a valid URL (got "${target.explorerUrl}")`,
+          });
+        }
+      }
+    }
+  } else {
+    errors.push({
+      field: 'deployment.target.kind',
+      code: 'INVALID_VALUE',
+      message: 'Deployment target kind must be "preset" or "custom"',
     });
   }
 

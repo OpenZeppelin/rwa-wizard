@@ -1,0 +1,119 @@
+{
+  "token": {
+    "name": "Manual E2E Token",
+    "symbol": "ME2E",
+    "decimals": 7,
+    "initialSupply": "1000000",
+    "administrativeControls": {
+      "burnable": true,
+      "mintable": true,
+      "pausable": true
+    },
+    "documentManager": {
+      "enabled": true
+    }
+  },
+  "identityVerification": {
+    "claimTopics": [
+      {
+        "id": 1,
+        "name": "KYC"
+      },
+      {
+        "id": 2,
+        "name": "AML"
+      }
+    ],
+    "trustedIssuers": [
+      {
+        "address": "__STELLAR_E2E_ADDRESS__",
+        "claimTopics": [1, 2]
+      }
+    ],
+    "controls": {
+      "addressFreezing": true,
+      "partialTokenFreezing": true,
+      "recovery": true,
+      "forcedTransfers": true
+    }
+  },
+  "compliance": {
+    "modules": [
+      {
+        "moduleId": "supply-limit",
+        "config": {
+          "limit": 1000000
+        }
+      },
+      {
+        "moduleId": "max-balance",
+        "config": {
+          "maxBalance": 50000
+        }
+      },
+      {
+        "moduleId": "country-restrict",
+        "config": {
+          "restrictedCountries": ["US"]
+        }
+      },
+      {
+        "moduleId": "country-allow",
+        "config": {
+          "allowedCountries": ["CH"]
+        }
+      },
+      {
+        "moduleId": "time-transfers-limits",
+        "config": {
+          "limitTime": 86400,
+          "limitValue": 25000
+        }
+      }
+    ]
+  },
+  "accessControl": {
+    "ownership": {
+      "type": "single-owner",
+      "ownerAddress": "__STELLAR_E2E_ADDRESS__"
+    },
+    "roles": [
+      {
+        "name": "Manager",
+        "symbol": "manager",
+        "addresses": ["__STELLAR_E2E_ADDRESS__"]
+      },
+      {
+        "name": "Minter",
+        "addresses": ["__STELLAR_E2E_ADDRESS__"]
+      },
+      {
+        "name": "Burner",
+        "addresses": ["__STELLAR_E2E_ADDRESS__"]
+      },
+      {
+        "name": "Freezer",
+        "addresses": ["__STELLAR_E2E_ADDRESS__"]
+      },
+      {
+        "name": "Partial-Freezer",
+        "addresses": ["__STELLAR_E2E_ADDRESS__"]
+      },
+      {
+        "name": "Forced-Transfer",
+        "addresses": ["__STELLAR_E2E_ADDRESS__"]
+      },
+      {
+        "name": "Document-Manager",
+        "addresses": ["__STELLAR_E2E_ADDRESS__"]
+      }
+    ]
+  },
+  "deployment": {
+    "target": {
+      "kind": "preset",
+      "ecosystem": "stellar",
+      "networkId": "stellar-testnet"
+    }
+  }
+}
