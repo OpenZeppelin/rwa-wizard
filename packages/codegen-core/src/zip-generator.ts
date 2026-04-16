@@ -13,6 +13,34 @@ export interface ZipOutput {
   fileName: string;
 }
 
+function assertSafeZipProjectName(projectName: string): string {
+  const base = projectName.endsWith('.zip') ? projectName.slice(0, -4) : projectName;
+  if (!base || base.includes('\0')) {
+    throw new Error('ZIP project name must be a non-empty string without null bytes');
+  }
+  if (base.includes('..') || base.includes('/') || base.includes('\\')) {
+    throw new Error(`ZIP project name contains unsafe path segments: ${JSON.stringify(base)}`);
+  }
+  return base;
+}
+
+function assertSafeZipRelativePath(relativePath: string): void {
+  if (relativePath.includes('\0')) {
+    throw new Error('FileTree path must not contain null bytes');
+  }
+  if (relativePath.startsWith('/') || relativePath.startsWith('\\')) {
+    throw new Error(`FileTree path must be relative: ${JSON.stringify(relativePath)}`);
+  }
+  if (relativePath.includes('\\')) {
+    throw new Error(`FileTree path must use forward slashes only: ${JSON.stringify(relativePath)}`);
+  }
+  for (const segment of relativePath.split('/')) {
+    if (segment === '..') {
+      throw new Error(`FileTree path must not contain "..": ${JSON.stringify(relativePath)}`);
+    }
+  }
+}
+
 /**
  * Generate a ZIP archive from a FileTree.
  *
@@ -36,11 +64,12 @@ export async function generateZipFromFileTree(
     if (leftPath > rightPath) return 1;
     return 0;
   });
-  const rootDir = projectName.endsWith('.zip') ? projectName.slice(0, -4) : projectName;
+  const rootDir = assertSafeZipProjectName(projectName);
   const fileName = rootDir.endsWith('.zip') ? rootDir : `${rootDir}.zip`;
 
   for (let i = 0; i < entries.length; i++) {
     const [path, content] = entries[i];
+    assertSafeZipRelativePath(path);
     const fullPath = `${rootDir}/${path}`;
 
     if (content instanceof Uint8Array) {

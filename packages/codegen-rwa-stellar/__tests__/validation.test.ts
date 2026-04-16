@@ -205,6 +205,26 @@ describe('RWA Config Validation (US5)', () => {
       );
     });
 
+    it('should error when symbol contains no letters or digits', () => {
+      const config = createValidConfig({
+        token: {
+          name: 'Test',
+          symbol: '!!!',
+          decimals: 18,
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'token.symbol',
+          code: 'INVALID_TOKEN_SYMBOL',
+        })
+      );
+    });
+
     it('should pass with symbol at exactly 12 chars', () => {
       const config = createValidConfig({
         token: {

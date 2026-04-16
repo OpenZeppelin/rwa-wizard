@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ComplianceModuleRegistryEntry } from '../../src/modules/types';
 import { COMPLIANCE_MODULE_REGISTRY, getAvailableModules } from '../../src/modules/registry';
 
 describe('Compliance Module Registry', () => {
@@ -8,6 +9,15 @@ describe('Compliance Module Registry', () => {
       expect(COMPLIANCE_MODULE_REGISTRY).toBeDefined();
       expect(Array.isArray(COMPLIANCE_MODULE_REGISTRY)).toBe(true);
       expect(COMPLIANCE_MODULE_REGISTRY.length).toBeGreaterThan(0);
+    });
+
+    it('should export a frozen registry array so consumers cannot mutate shared state', () => {
+      expect(Object.isFrozen(COMPLIANCE_MODULE_REGISTRY)).toBe(true);
+      expect(() => {
+        (COMPLIANCE_MODULE_REGISTRY as unknown as ComplianceModuleRegistryEntry[]).push(
+          {} as ComplianceModuleRegistryEntry
+        );
+      }).toThrow();
     });
 
     it('each entry should have required fields: id, name, description, requiredHooks', () => {

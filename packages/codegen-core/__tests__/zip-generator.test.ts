@@ -124,5 +124,22 @@ describe('ZipGenerator', () => {
     it('should not throw when no progress callback is provided', async () => {
       await expect(generateZipFromFileTree(sampleTree, 'test-project')).resolves.not.toThrow();
     });
+
+    it('should reject unsafe project names that could escape the archive root', async () => {
+      await expect(generateZipFromFileTree(sampleTree, '../evil')).rejects.toThrow(/unsafe/);
+      await expect(generateZipFromFileTree(sampleTree, 'a/b')).rejects.toThrow(/unsafe/);
+    });
+
+    it('should reject unsafe FileTree paths (zip-slip)', async () => {
+      await expect(
+        generateZipFromFileTree({ '../outside.txt': 'x' }, 'proj')
+      ).rejects.toThrow(/\.\./);
+      await expect(
+        generateZipFromFileTree({ '/abs.txt': 'x' }, 'proj')
+      ).rejects.toThrow(/relative/);
+      await expect(
+        generateZipFromFileTree({ 'a\\win.txt': 'x' }, 'proj')
+      ).rejects.toThrow(/forward slashes/);
+    });
   });
 });

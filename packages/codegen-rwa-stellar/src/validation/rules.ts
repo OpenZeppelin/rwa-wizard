@@ -55,6 +55,13 @@ export const validateTokenSymbol: ValidationRule<RWAConfig> = (config) => {
       code: 'MAX_LENGTH_EXCEEDED',
       message: `Token symbol exceeds ${STELLAR_VALIDATION_CONSTANTS.TOKEN_SYMBOL_MAX_LENGTH} characters (got ${symbol.length})`,
     });
+  } else if (!/[A-Za-z0-9]/.test(symbol)) {
+    errors.push({
+      field: 'token.symbol',
+      code: 'INVALID_TOKEN_SYMBOL',
+      message:
+        'Token symbol must contain at least one letter or digit so generated project names remain stable',
+    });
   }
 
   return { errors, warnings: [] };

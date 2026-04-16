@@ -39,8 +39,9 @@ function cloneRegistryEntry(entry: ComplianceModuleRegistryEntry): ComplianceMod
   };
 }
 
-export const COMPLIANCE_MODULE_REGISTRY: ComplianceModuleRegistryEntry[] =
-  COMPLIANCE_MODULE_DESCRIPTORS.map(toRegistryEntry);
+export const COMPLIANCE_MODULE_REGISTRY: readonly ComplianceModuleRegistryEntry[] = Object.freeze(
+  COMPLIANCE_MODULE_DESCRIPTORS.map(toRegistryEntry)
+);
 
 const descriptorById = new Map(COMPLIANCE_MODULE_DESCRIPTORS.map((entry) => [entry.id, entry]));
 const registryById = new Map(COMPLIANCE_MODULE_REGISTRY.map((entry) => [entry.id, entry]));
