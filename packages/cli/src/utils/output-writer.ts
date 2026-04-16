@@ -1,5 +1,5 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
+import { existsSync, lstatSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 import type { GenerationResult, ZipResult } from '@openzeppelin/codegen-core';
 
@@ -36,12 +36,37 @@ function resolveSafeChildPath(baseDir: string, filePath: string): string {
   return fullPath;
 }
 
+// Block writes that would follow symlink directories (or overwrite a symlink file)
+// inside the output tree — defense-in-depth alongside string-based path checks.
+function assertNoSymlinkSegmentsInOutputTree(outputRootAbs: string, targetFileAbs: string): void {
+  const base = resolve(outputRootAbs);
+  const target = resolve(targetFileAbs);
+  const rel = relative(base, target);
+
+  if (isAbsolute(rel)) {
+    return;
+  }
+
+  const segments = rel.split(sep).filter(Boolean);
+  let current = base;
+  for (const segment of segments) {
+    current = join(current, segment);
+    if (existsSync(current)) {
+      const st = lstatSync(current);
+      if (st.isSymbolicLink()) {
+        throw new Error(`Refusing to write through symbolic link in output directory: ${segment}`);
+      }
+    }
+  }
+}
+
 export function writeFileTree(result: GenerationResult, outputDir: string): WriteResult {
   const absoluteOut = resolve(outputDir);
   let fileCount = 0;
 
   for (const [filePath, content] of Object.entries(result.files)) {
     const fullPath = resolveSafeChildPath(absoluteOut, filePath);
+    assertNoSymlinkSegmentsInOutputTree(absoluteOut, fullPath);
     mkdirSync(dirname(fullPath), { recursive: true });
 
     if (typeof content === 'string') {

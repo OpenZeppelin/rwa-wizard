@@ -8,38 +8,32 @@ import type {
 } from '@openzeppelin/rwa-config';
 
 import type { ChainHints } from '../../generators/registry';
-
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { handleWizardCancel } from '../utils';
 
 async function collectIdentityControls(): Promise<IdentityControls> {
   const addressFreezing = await p.confirm({
     message: 'Enable address freezing? (freeze all tokens of a holder)',
     initialValue: true,
   });
-  handleCancel(addressFreezing);
+  handleWizardCancel(addressFreezing);
 
   const partialTokenFreezing = await p.confirm({
     message: 'Enable partial token freezing? (freeze a specific amount per holder)',
     initialValue: false,
   });
-  handleCancel(partialTokenFreezing);
+  handleWizardCancel(partialTokenFreezing);
 
   const recovery = await p.confirm({
     message: 'Enable wallet recovery? (recover tokens from a lost wallet)',
     initialValue: false,
   });
-  handleCancel(recovery);
+  handleWizardCancel(recovery);
 
   const forcedTransfers = await p.confirm({
     message: 'Enable forced transfers? (agent can move tokens between verified holders)',
     initialValue: false,
   });
-  handleCancel(forcedTransfers);
+  handleWizardCancel(forcedTransfers);
 
   return {
     addressFreezing: addressFreezing as boolean,
@@ -56,7 +50,7 @@ async function collectClaimTopics(): Promise<ClaimTopic[]> {
     message: 'Add a claim topic?',
     initialValue: true,
   });
-  handleCancel(addFirst);
+  handleWizardCancel(addFirst);
 
   if (!addFirst) return topics;
 
@@ -70,7 +64,7 @@ async function collectClaimTopics(): Promise<ClaimTopic[]> {
         if (topics.some((t) => t.id === n)) return `Topic ID ${n} already exists`;
       },
     });
-    handleCancel(id);
+    handleWizardCancel(id);
 
     const name = await p.text({
       message: `Claim topic #${topics.length + 1} — Name`,
@@ -79,7 +73,7 @@ async function collectClaimTopics(): Promise<ClaimTopic[]> {
         if (!v.trim()) return 'Name is required';
       },
     });
-    handleCancel(name);
+    handleWizardCancel(name);
 
     topics.push({ id: Number(id as string), name: (name as string).trim() });
 
@@ -87,7 +81,7 @@ async function collectClaimTopics(): Promise<ClaimTopic[]> {
       message: 'Add another claim topic?',
       initialValue: false,
     });
-    handleCancel(more);
+    handleWizardCancel(more);
     addMore = more as boolean;
   }
 
@@ -109,7 +103,7 @@ async function collectTrustedIssuers(
     message: 'Add a trusted issuer?',
     initialValue: true,
   });
-  handleCancel(addFirst);
+  handleWizardCancel(addFirst);
 
   if (!addFirst) return issuers;
 
@@ -122,14 +116,14 @@ async function collectTrustedIssuers(
         if (!v.trim()) return 'Address is required';
       },
     });
-    handleCancel(address);
+    handleWizardCancel(address);
 
     const selectedTopics = await p.multiselect({
       message: `Issuer #${issuers.length + 1} — Claim topics this issuer is trusted for`,
       options: topicIds.map((id) => ({ value: id, label: `Topic ${id}` })),
       required: true,
     });
-    handleCancel(selectedTopics);
+    handleWizardCancel(selectedTopics);
 
     issuers.push({
       address: (address as string).trim(),
@@ -140,7 +134,7 @@ async function collectTrustedIssuers(
       message: 'Add another trusted issuer?',
       initialValue: false,
     });
-    handleCancel(more);
+    handleWizardCancel(more);
     addMore = more as boolean;
   }
 

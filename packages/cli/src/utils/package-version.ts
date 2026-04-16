@@ -8,6 +8,10 @@ const PACKAGE_NAME = '@openzeppelin/rwa-wizard-cli';
  * Reads `version` from this package's `package.json`.
  * Walks up from the executing file (e.g. `dist/index.mjs` or `dist/utils/*.js`)
  * until it finds this package's manifest — works for single-file and split bundles.
+ *
+ * **CJS:** the tsdown/rolldown bundle rewrites `import.meta.url` in `dist/index.cjs`
+ * to a `__filename`-based file URL, so this remains valid when the package is loaded
+ * via `require()`, not only ESM.
  */
 export function getPackageVersion(): string {
   try {

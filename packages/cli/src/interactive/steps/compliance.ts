@@ -4,13 +4,7 @@ import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/
 
 import type { ComplianceModuleInfo } from '../../generators/registry';
 import { parseCommaSeparatedList } from '../../utils/comma-list';
-
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { handleWizardCancel } from '../utils';
 
 function hookList(entry: ComplianceModuleInfo): string {
   return entry.requiredHooks.join(', ');
@@ -35,7 +29,7 @@ export async function complianceStep(
     })),
     required: false,
   });
-  handleCancel(selected);
+  handleWizardCancel(selected);
 
   const selectedIds = selected as string[];
   if (selectedIds.length === 0) {
@@ -66,7 +60,7 @@ export async function complianceStep(
             return undefined;
           },
         });
-        handleCancel(val);
+        handleWizardCancel(val);
         const strVal = (val as string).trim();
         if (strVal) config[field.key] = Number(strVal);
       } else if (field.type === 'string[]') {
@@ -80,7 +74,7 @@ export async function complianceStep(
             return undefined;
           },
         });
-        handleCancel(val);
+        handleWizardCancel(val);
         const strVal = (val as string).trim();
         if (strVal) {
           config[field.key] = parseCommaSeparatedList(strVal);
@@ -94,7 +88,7 @@ export async function complianceStep(
             return undefined;
           },
         });
-        handleCancel(val);
+        handleWizardCancel(val);
         const strVal = (val as string).trim();
         if (strVal) config[field.key] = strVal;
       }

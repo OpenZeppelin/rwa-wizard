@@ -4,13 +4,7 @@ import type { AccessControlConfig, OperatorRole, OwnershipModel } from '@openzep
 
 import type { ChainHints } from '../../generators/registry';
 import { parseCommaSeparatedList } from '../../utils/comma-list';
-
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { handleWizardCancel } from '../utils';
 
 async function collectOwnership(hints: ChainHints): Promise<OwnershipModel> {
   const ownershipType = await p.select({
@@ -21,7 +15,7 @@ async function collectOwnership(hints: ChainHints): Promise<OwnershipModel> {
       { value: 'dao', label: 'DAO', hint: 'DAO contract as admin' },
     ],
   });
-  handleCancel(ownershipType);
+  handleWizardCancel(ownershipType);
 
   const address = await p.text({
     message:
@@ -35,7 +29,7 @@ async function collectOwnership(hints: ChainHints): Promise<OwnershipModel> {
       if (!v.trim()) return 'Address is required';
     },
   });
-  handleCancel(address);
+  handleWizardCancel(address);
 
   const addr = (address as string).trim();
   if (ownershipType === 'single-owner') {
@@ -52,7 +46,7 @@ async function collectRoles(hints: ChainHints): Promise<OperatorRole[]> {
     message: 'Add operator roles?',
     initialValue: true,
   });
-  handleCancel(addFirst);
+  handleWizardCancel(addFirst);
 
   if (!addFirst) return roles;
 
@@ -65,7 +59,7 @@ async function collectRoles(hints: ChainHints): Promise<OperatorRole[]> {
         if (!v.trim()) return 'Role name is required';
       },
     });
-    handleCancel(name);
+    handleWizardCancel(name);
 
     const symbolInput = await p.text({
       message: `Role #${roles.length + 1} — Symbol (max ${maxLen} chars, leave empty to auto-generate)`,
@@ -75,7 +69,7 @@ async function collectRoles(hints: ChainHints): Promise<OperatorRole[]> {
         if (t && t.length > maxLen) return `Symbol must be ${maxLen} characters or fewer`;
       },
     });
-    handleCancel(symbolInput);
+    handleWizardCancel(symbolInput);
 
     const addressesRaw = await p.text({
       message: `Role #${roles.length + 1} — Addresses (comma-separated)`,
@@ -84,7 +78,7 @@ async function collectRoles(hints: ChainHints): Promise<OperatorRole[]> {
         if (parseCommaSeparatedList(v).length === 0) return 'At least one address is required';
       },
     });
-    handleCancel(addressesRaw);
+    handleWizardCancel(addressesRaw);
 
     const addresses = parseCommaSeparatedList(addressesRaw as string);
 
@@ -104,7 +98,7 @@ async function collectRoles(hints: ChainHints): Promise<OperatorRole[]> {
       message: 'Add another role?',
       initialValue: false,
     });
-    handleCancel(more);
+    handleWizardCancel(more);
     addMore = more as boolean;
   }
 

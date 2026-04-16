@@ -10,13 +10,7 @@ import { reviewStep } from './steps/review';
 import { rolesStep } from './steps/roles';
 
 import type { GeneratorAdapter } from '../generators/registry';
-
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { handleWizardCancel } from './utils';
 
 export interface WizardResult {
   config: RWAConfig;
@@ -58,7 +52,7 @@ export async function runWizard(adapter: GeneratorAdapter): Promise<WizardResult
       { value: 'zip', label: 'ZIP archive', hint: 'Package as a downloadable ZIP file' },
     ],
   });
-  handleCancel(outputFormat);
+  handleWizardCancel(outputFormat);
 
   return { config, outputFormat: outputFormat as 'files' | 'zip' };
 }

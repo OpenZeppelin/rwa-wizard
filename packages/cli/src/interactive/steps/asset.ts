@@ -3,32 +3,26 @@ import * as p from '@clack/prompts';
 import type { AdministrativeControls, TokenConfig } from '@openzeppelin/rwa-config';
 
 import type { ChainHints } from '../../generators/registry';
-
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { handleWizardCancel } from '../utils';
 
 async function collectAdministrativeControls(): Promise<AdministrativeControls> {
   const burnable = await p.confirm({
     message: 'Allow the admin to burn tokens? (burnable)',
     initialValue: true,
   });
-  handleCancel(burnable);
+  handleWizardCancel(burnable);
 
   const mintable = await p.confirm({
     message: 'Allow the admin to mint new supply? (mintable)',
     initialValue: true,
   });
-  handleCancel(mintable);
+  handleWizardCancel(mintable);
 
   const pausable = await p.confirm({
     message: 'Allow the admin to pause the contract? (pausable)',
     initialValue: true,
   });
-  handleCancel(pausable);
+  handleWizardCancel(pausable);
 
   return {
     burnable: burnable as boolean,
@@ -50,7 +44,7 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
         return `Token name must be ${hints.tokenNameMaxLength} characters or fewer`;
     },
   });
-  handleCancel(name);
+  handleWizardCancel(name);
 
   const symbol = await p.text({
     message: 'Token symbol',
@@ -62,7 +56,7 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
         return `Token symbol must be ${hints.tokenSymbolMaxLength} characters or fewer`;
     },
   });
-  handleCancel(symbol);
+  handleWizardCancel(symbol);
 
   const decimalsStr = await p.text({
     message: `Decimals (${hints.decimalsMin}–${hints.decimalsMax})`,
@@ -73,13 +67,13 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
         return `Decimals must be an integer ${hints.decimalsMin}–${hints.decimalsMax}`;
     },
   });
-  handleCancel(decimalsStr);
+  handleWizardCancel(decimalsStr);
 
   const hasInitialSupply = await p.confirm({
     message: 'Set an initial supply?',
     initialValue: false,
   });
-  handleCancel(hasInitialSupply);
+  handleWizardCancel(hasInitialSupply);
 
   let initialSupply: string | undefined;
   if (hasInitialSupply) {
@@ -96,7 +90,7 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
         }
       },
     });
-    handleCancel(supplyValue);
+    handleWizardCancel(supplyValue);
     initialSupply = (supplyValue as string).trim();
   }
 
@@ -104,7 +98,7 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
     message: 'Enable Document Manager?',
     initialValue: true,
   });
-  handleCancel(docManager);
+  handleWizardCancel(docManager);
 
   const administrativeControls = await collectAdministrativeControls();
 

@@ -8,13 +8,7 @@ import type {
 } from '@openzeppelin/rwa-config';
 
 import type { ChainHints, GeneratorAdapter } from '../../generators/registry';
-
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { handleWizardCancel } from '../utils';
 
 const URL_PROTOCOLS = new Set(['http:', 'https:', 'ws:', 'wss:']);
 
@@ -47,7 +41,7 @@ async function collectPresetTarget(adapter: GeneratorAdapter): Promise<PresetDep
     message: 'Target network',
     options: networks.map((n) => ({ value: n.value, label: n.label, hint: n.hint })),
   });
-  handleCancel(networkId);
+  handleWizardCancel(networkId);
 
   return {
     kind: 'preset',
@@ -62,20 +56,20 @@ async function collectCustomTarget(adapter: GeneratorAdapter): Promise<CustomDep
     placeholder: adapter.hints.customRpcPlaceholder ?? 'https://example.com/rpc',
     validate: (v) => validateHttpUrl(v, true),
   });
-  handleCancel(rpcUrl);
+  handleWizardCancel(rpcUrl);
 
   const explorerInput = await p.text({
     message: 'Explorer URL (optional)',
     defaultValue: '',
     validate: (v) => validateHttpUrl(v, false),
   });
-  handleCancel(explorerInput);
+  handleWizardCancel(explorerInput);
 
   const labelInput = await p.text({
     message: 'Label shown in generated output (optional)',
     defaultValue: '',
   });
-  handleCancel(labelInput);
+  handleWizardCancel(labelInput);
 
   const target: CustomDeploymentTarget = {
     kind: 'custom',
@@ -99,7 +93,7 @@ async function collectSourceAccount(hints: ChainHints): Promise<string | undefin
     message: 'Specify a source account? (defaults to CLI signer)',
     initialValue: false,
   });
-  handleCancel(enabled);
+  handleWizardCancel(enabled);
   if (!enabled) return undefined;
 
   const account = await p.text({
@@ -107,7 +101,7 @@ async function collectSourceAccount(hints: ChainHints): Promise<string | undefin
     placeholder: hints.addressPlaceholder,
     validate: (v) => (!v.trim() ? 'Source account is required' : undefined),
   });
-  handleCancel(account);
+  handleWizardCancel(account);
   return (account as string).trim();
 }
 
@@ -132,7 +126,7 @@ async function collectDeploymentTarget(adapter: GeneratorAdapter): Promise<Deplo
       ],
       initialValue: 'preset',
     });
-    handleCancel(kind);
+    handleWizardCancel(kind);
     return kind === 'custom' ? collectCustomTarget(adapter) : collectPresetTarget(adapter);
   }
 

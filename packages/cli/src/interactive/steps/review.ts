@@ -8,12 +8,7 @@ import type {
   RWAConfig,
 } from '@openzeppelin/rwa-config';
 
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { handleWizardCancel } from '../utils';
 
 const CORE_CONTRACTS = [
   'RWA Token',
@@ -130,7 +125,7 @@ export async function reviewStep(config: RWAConfig): Promise<boolean> {
     message: 'Generate project with this configuration?',
     initialValue: true,
   });
-  handleCancel(confirmed);
+  handleWizardCancel(confirmed);
 
   return confirmed as boolean;
 }
