@@ -56,6 +56,7 @@ jobs:
       - name: Install Stellar CLI
         run: cargo binstall stellar-cli --no-confirm --log-level info
 
+      # Installs workspace dependencies via pnpm install --frozen-lockfile (see .github/actions/prepare).
       - name: Prepare pre-requisites
         uses: ./.github/actions/prepare
 

@@ -27,24 +27,35 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import urllib.error
           import urllib.request
 
-          request = urllib.request.Request(
-              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}",
-              headers={
-                  "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
-                  "Accept": "application/vnd.github+json",
-              },
-          )
-          with urllib.request.urlopen(request) as response:
-              payload = json.load(response)
+          status = "unknown"
+          supported = False
 
-          status = (
-              payload.get("security_and_analysis", {})
-              .get("code_security", {})
-              .get("status", "disabled")
-          )
-          supported = status == "enabled"
+          try:
+              request = urllib.request.Request(
+                  f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}",
+                  headers={
+                      "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                      "Accept": "application/vnd.github+json",
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+
+              status = (
+                  payload.get("security_and_analysis", {})
+                  .get("code_security", {})
+                  .get("status", "disabled")
+              )
+              supported = status == "enabled"
+          except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
+              print(
+                  "::warning::Could not read repository code security status from the GitHub API; "
+                  f"skipping dependency review ({exc})."
+              )
+              status = "unavailable"
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"supported={'true' if supported else 'false'}\n")
