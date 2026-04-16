@@ -11,18 +11,27 @@ export function createValidConfig(overrides?: Partial<RWAConfig>): RWAConfig {
       name: 'Test Token',
       symbol: 'TEST',
       decimals: 8,
+      administrativeControls: { burnable: true, mintable: true, pausable: true },
       documentManager: { enabled: true },
     },
     identityVerification: {
       claimTopics: [{ id: 1, name: 'KYC' }],
       trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1] }],
+      controls: {
+        addressFreezing: true,
+        partialTokenFreezing: false,
+        recovery: false,
+        forcedTransfers: false,
+      },
     },
     compliance: { modules: [] },
     accessControl: {
       ownership: { type: 'single-owner', ownerAddress: 'GCEXAMPLEOWNER' },
       roles: [{ name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] }],
     },
-    deployment: { network: 'testnet' },
+    deployment: {
+      target: { kind: 'preset', ecosystem: 'stellar', networkId: 'stellar-testnet' },
+    },
     ...overrides,
   };
 }
@@ -36,8 +45,8 @@ export function createMockHints(): ChainHints {
     decimalsMax: 18,
     roleSymbolMaxLength: 9,
     networks: [
-      { value: 'testnet', label: 'Testnet' },
-      { value: 'mainnet', label: 'Mainnet' },
+      { value: 'stellar-testnet', label: 'Testnet' },
+      { value: 'stellar-mainnet', label: 'Mainnet' },
     ],
   };
 }

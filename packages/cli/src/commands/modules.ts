@@ -25,6 +25,6 @@ export function modulesCommand(opts: ModulesOptions): void {
   logger.header(`Available compliance modules for ${opts.chain}:`);
 
   for (const mod of modules) {
-    logger.moduleEntry(mod.id, mod.name, mod.description, mod.supportedHooks);
+    logger.moduleEntry(mod.id, mod.name, mod.description, mod.requiredHooks);
   }
 }

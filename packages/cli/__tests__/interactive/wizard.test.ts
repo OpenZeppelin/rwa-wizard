@@ -40,12 +40,20 @@ function setupFullWizardMocks(): void {
   const confirmResponses = [
     false, // asset: no initial supply
     true, // asset: enable doc manager
+    true, // asset: administrativeControls.burnable
+    true, // asset: administrativeControls.mintable
+    true, // asset: administrativeControls.pausable
     true, // identity: add claim topic
     false, // identity: stop adding topics
     true, // identity: add trusted issuer
     false, // identity: stop adding issuers
+    true, // identity: controls.addressFreezing
+    false, // identity: controls.partialTokenFreezing
+    false, // identity: controls.recovery
+    false, // identity: controls.forcedTransfers
     true, // roles: add roles
     false, // roles: stop adding roles
+    false, // deployment: no source account override
     true, // review: confirm
   ];
   mockPrompts.confirm.mockImplementation(() =>
@@ -58,7 +66,8 @@ function setupFullWizardMocks(): void {
 
   mockPrompts.select
     .mockResolvedValueOnce('single-owner') // roles: ownership type (step 4)
-    .mockResolvedValueOnce('testnet') // deployment: network (step 4.5)
+    .mockResolvedValueOnce('preset') // deployment: target kind (step 5)
+    .mockResolvedValueOnce('stellar-testnet') // deployment: preset network (step 5)
     .mockResolvedValueOnce('files'); // output format (after review)
 }
 
@@ -78,7 +87,11 @@ describe('runWizard', () => {
     expect(result).not.toBeNull();
     expect(result!.config.token.name).toBe('Test Token');
     expect(result!.config.token.symbol).toBe('TEST');
-    expect(result!.config.deployment.network).toBe('testnet');
+    expect(result!.config.deployment.target).toEqual({
+      kind: 'preset',
+      ecosystem: 'mock',
+      networkId: 'stellar-testnet',
+    });
     expect(result!.outputFormat).toBe('files');
   });
 
@@ -110,14 +123,22 @@ describe('runWizard', () => {
 
     let confirmCallIndex = 0;
     const confirmResponses = [
-      false,
-      true,
-      true,
-      false,
-      true,
-      false,
-      true,
-      false,
+      false, // asset: no initial supply
+      true, // asset: enable doc manager
+      true, // asset: burnable
+      true, // asset: mintable
+      true, // asset: pausable
+      true, // identity: add topic
+      false, // identity: stop topics
+      true, // identity: add issuer
+      false, // identity: stop issuers
+      true, // identity: addressFreezing
+      false, // identity: partialTokenFreezing
+      false, // identity: recovery
+      false, // identity: forcedTransfers
+      true, // roles: add role
+      false, // roles: stop roles
+      false, // deployment: no source account override
       false, // review: DECLINE
     ];
     mockPrompts.confirm.mockImplementation(() =>
@@ -125,7 +146,10 @@ describe('runWizard', () => {
     );
 
     mockPrompts.multiselect.mockResolvedValueOnce([]).mockResolvedValueOnce([1]);
-    mockPrompts.select.mockResolvedValueOnce('single-owner').mockResolvedValueOnce('testnet');
+    mockPrompts.select
+      .mockResolvedValueOnce('single-owner')
+      .mockResolvedValueOnce('preset')
+      .mockResolvedValueOnce('stellar-testnet');
 
     const result = await runWizard(adapter);
 

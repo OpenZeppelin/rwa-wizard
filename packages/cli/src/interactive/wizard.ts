@@ -1,9 +1,10 @@
 import * as p from '@clack/prompts';
 
-import type { DeploymentConfig, RWAConfig } from '@openzeppelin/rwa-config';
+import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { assetStep } from './steps/asset';
 import { complianceStep } from './steps/compliance';
+import { deploymentStep } from './steps/deployment';
 import { identityStep } from './steps/identity';
 import { reviewStep } from './steps/review';
 import { rolesStep } from './steps/roles';
@@ -15,20 +16,6 @@ function handleCancel(value: unknown): void {
     p.cancel('Wizard cancelled.');
     process.exit(0);
   }
-}
-
-async function deploymentStep(adapter: GeneratorAdapter): Promise<DeploymentConfig> {
-  const network = await p.select({
-    message: 'Target network',
-    options: adapter.hints.networks.map((n) => ({
-      value: n.value,
-      label: n.label,
-      hint: n.hint,
-    })),
-  });
-  handleCancel(network);
-
-  return { network: network as string };
 }
 
 export interface WizardResult {

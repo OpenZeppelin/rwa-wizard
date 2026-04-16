@@ -1,7 +1,8 @@
 import * as p from '@clack/prompts';
 
-import type { ComplianceModuleRegistryEntry } from '@openzeppelin/codegen-rwa-stellar';
 import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
+
+import type { ComplianceModuleInfo } from '../../generators/registry';
 
 function handleCancel(value: unknown): void {
   if (p.isCancel(value)) {
@@ -10,14 +11,14 @@ function handleCancel(value: unknown): void {
   }
 }
 
-function hookList(entry: ComplianceModuleRegistryEntry): string {
+function hookList(entry: ComplianceModuleInfo): string {
   return entry.requiredHooks.join(', ');
 }
 
 export async function complianceStep(
-  availableModules: ComplianceModuleRegistryEntry[]
+  availableModules: ComplianceModuleInfo[]
 ): Promise<ComplianceConfig> {
-  p.log.step('Step 3/5 — Compliance Modules');
+  p.log.step('Step 3/6 — Compliance Modules');
 
   if (availableModules.length === 0) {
     p.log.info('No compliance modules available for this chain.');

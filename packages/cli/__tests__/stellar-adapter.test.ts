@@ -29,8 +29,8 @@ describe('Stellar Adapter', () => {
     it('should provide testnet and mainnet network options', () => {
       const { networks } = stellarAdapter.hints;
       expect(networks.length).toBeGreaterThanOrEqual(2);
-      expect(networks.find((n) => n.value === 'testnet')).toBeDefined();
-      expect(networks.find((n) => n.value === 'mainnet')).toBeDefined();
+      expect(networks.find((n) => n.value === 'stellar-testnet')).toBeDefined();
+      expect(networks.find((n) => n.value === 'stellar-mainnet')).toBeDefined();
     });
 
     it('should include an address placeholder', () => {
@@ -85,8 +85,12 @@ describe('Stellar Adapter', () => {
         expect(m).toHaveProperty('id');
         expect(m).toHaveProperty('name');
         expect(m).toHaveProperty('description');
-        expect(m).toHaveProperty('supportedHooks');
-        expect(Array.isArray(m.supportedHooks)).toBe(true);
+        expect(m).toHaveProperty('requiredHooks');
+        expect(Array.isArray(m.requiredHooks)).toBe(true);
+        expect(m).toHaveProperty('review');
+        expect(m.review).toHaveProperty('state');
+        expect(m).toHaveProperty('configFields');
+        expect(Array.isArray(m.configFields)).toBe(true);
       }
     });
   });

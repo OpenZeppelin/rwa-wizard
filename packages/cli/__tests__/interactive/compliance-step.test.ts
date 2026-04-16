@@ -6,12 +6,25 @@ import { complianceStep } from '../../src/interactive/steps/compliance';
 const mockPrompts = vi.hoisted(() => ({
   multiselect: vi.fn(),
   select: vi.fn(),
+  text: vi.fn(),
   isCancel: vi.fn().mockReturnValue(false),
   cancel: vi.fn(),
-  log: { step: vi.fn(), info: vi.fn() },
+  log: { step: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 vi.mock('@clack/prompts', () => mockPrompts);
+
+function makeModule(overrides: Partial<ComplianceModuleInfo> = {}): ComplianceModuleInfo {
+  return {
+    id: 'cap',
+    name: 'Supply Cap',
+    description: 'Limits supply',
+    requiredHooks: ['created'],
+    review: { state: 'stable' },
+    configFields: [],
+    ...overrides,
+  };
+}
 
 describe('complianceStep', () => {
   beforeEach(() => {
@@ -28,66 +41,73 @@ describe('complianceStep', () => {
   });
 
   it('should return empty modules when user selects none', async () => {
-    const modules: ComplianceModuleInfo[] = [
-      { id: 'cap', name: 'Supply Cap', description: 'Limits supply', supportedHooks: ['creation'] },
-    ];
     mockPrompts.multiselect.mockResolvedValueOnce([]);
 
-    const result = await complianceStep(modules);
+    const result = await complianceStep([makeModule()]);
 
     expect(result.modules).toEqual([]);
   });
 
-  it('should auto-assign hook when module has only one supported hook', async () => {
-    const modules: ComplianceModuleInfo[] = [
-      { id: 'cap', name: 'Supply Cap', description: 'Limits supply', supportedHooks: ['creation'] },
-    ];
+  it('should register selected module with no config fields and without a hook property', async () => {
     mockPrompts.multiselect.mockResolvedValueOnce(['cap']);
 
-    const result = await complianceStep(modules);
+    const result = await complianceStep([makeModule()]);
 
-    expect(result.modules).toEqual([{ moduleId: 'cap', hook: 'creation' }]);
+    expect(result.modules).toEqual([{ moduleId: 'cap', config: undefined }]);
     expect(mockPrompts.log.info).toHaveBeenCalledWith(
-      expect.stringContaining('auto-assigned to "creation"')
+      expect.stringContaining('auto-registered on hooks: created')
     );
-    expect(mockPrompts.select).not.toHaveBeenCalled();
   });
 
-  it('should prompt for hook selection when module supports multiple hooks', async () => {
-    const modules: ComplianceModuleInfo[] = [
-      {
-        id: 'limit',
-        name: 'Transfer Limit',
-        description: 'Limits transfers',
-        supportedHooks: ['transfer', 'creation'],
-      },
-    ];
+  it('should warn when the selected module is under review', async () => {
+    mockPrompts.multiselect.mockResolvedValueOnce(['cap']);
+
+    await complianceStep([
+      makeModule({
+        review: { state: 'under-review', prUrl: 'https://example.com/pr/42' },
+      }),
+    ]);
+
+    expect(mockPrompts.log.warn).toHaveBeenCalledWith(expect.stringContaining('under review'));
+    expect(mockPrompts.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining('https://example.com/pr/42')
+    );
+  });
+
+  it('should prompt for each configField and attach parsed values', async () => {
     mockPrompts.multiselect.mockResolvedValueOnce(['limit']);
-    mockPrompts.select.mockResolvedValueOnce('transfer');
+    mockPrompts.text
+      .mockResolvedValueOnce('100') // number field
+      .mockResolvedValueOnce('US, CA, UK'); // string[] field
 
-    const result = await complianceStep(modules);
+    const result = await complianceStep([
+      makeModule({
+        id: 'limit',
+        name: 'Country Limit',
+        description: 'Allowed countries',
+        requiredHooks: ['canTransfer', 'created'],
+        configFields: [
+          { key: 'maxSupply', label: 'Max supply', type: 'number', required: true },
+          { key: 'countries', label: 'Countries', type: 'string[]', required: true },
+        ],
+      }),
+    ]);
 
-    expect(result.modules).toEqual([{ moduleId: 'limit', hook: 'transfer' }]);
-    expect(mockPrompts.select).toHaveBeenCalledOnce();
+    expect(result.modules).toEqual([
+      { moduleId: 'limit', config: { maxSupply: 100, countries: ['US', 'CA', 'UK'] } },
+    ]);
   });
 
   it('should handle multiple selected modules', async () => {
-    const modules: ComplianceModuleInfo[] = [
-      { id: 'cap', name: 'Supply Cap', description: 'Limits supply', supportedHooks: ['creation'] },
-      {
-        id: 'limit',
-        name: 'Transfer Limit',
-        description: 'Limits transfers',
-        supportedHooks: ['transfer', 'creation'],
-      },
-    ];
     mockPrompts.multiselect.mockResolvedValueOnce(['cap', 'limit']);
-    mockPrompts.select.mockResolvedValueOnce('transfer');
 
-    const result = await complianceStep(modules);
+    const result = await complianceStep([
+      makeModule(),
+      makeModule({ id: 'limit', name: 'Transfer Limit', requiredHooks: ['canTransfer'] }),
+    ]);
 
     expect(result.modules).toHaveLength(2);
-    expect(result.modules[0]).toEqual({ moduleId: 'cap', hook: 'creation' });
-    expect(result.modules[1]).toEqual({ moduleId: 'limit', hook: 'transfer' });
+    expect(result.modules[0]).toEqual({ moduleId: 'cap', config: undefined });
+    expect(result.modules[1]).toEqual({ moduleId: 'limit', config: undefined });
   });
 });
