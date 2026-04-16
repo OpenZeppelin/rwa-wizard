@@ -39,21 +39,7 @@ import { rwaValidationRules } from './validation/rules';
 import { CRATE_NAMES } from './constants';
 import { StellarRwaProgressPhase } from './progress-phases';
 
-/**
- * Sanitize a token symbol into a valid directory name for the ZIP root.
- *
- * Algorithm: lowercase → replace non-alphanumeric with hyphens →
- * collapse consecutive hyphens → trim leading/trailing hyphens → append `-rwa`.
- */
-export function sanitizeDirectoryName(symbol: string): string {
-  const sanitized = symbol
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '-')
-    .replace(/-{2,}/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-  return `${sanitized}-rwa`;
-}
+export { sanitizeDirectoryName } from './sanitize-project-name';
 
 const GENERATOR_NAME = 'codegen-rwa-stellar';
 const GENERATOR_VERSION = '0.1.0';

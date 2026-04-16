@@ -38,6 +38,9 @@ function assertSafeZipRelativePath(relativePath: string): void {
     if (segment === '..') {
       throw new Error(`FileTree path must not contain "..": ${JSON.stringify(relativePath)}`);
     }
+    if (segment === '') {
+      throw new Error(`FileTree path must not contain empty segments (consecutive slashes): ${JSON.stringify(relativePath)}`);
+    }
   }
 }
 

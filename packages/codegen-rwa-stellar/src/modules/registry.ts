@@ -39,9 +39,29 @@ function cloneRegistryEntry(entry: ComplianceModuleRegistryEntry): ComplianceMod
   };
 }
 
-export const COMPLIANCE_MODULE_REGISTRY: readonly ComplianceModuleRegistryEntry[] = Object.freeze(
-  COMPLIANCE_MODULE_DESCRIPTORS.map(toRegistryEntry)
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+  Object.freeze(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      deepFreeze(item);
+    }
+    return value;
+  }
+  for (const key of Object.keys(value as object)) {
+    deepFreeze((value as Record<string, unknown>)[key]);
+  }
+  return value;
+}
+
+const registryEntries = COMPLIANCE_MODULE_DESCRIPTORS.map((descriptor) =>
+  deepFreeze(toRegistryEntry(descriptor))
 );
+
+export const COMPLIANCE_MODULE_REGISTRY: readonly ComplianceModuleRegistryEntry[] =
+  Object.freeze(registryEntries);
 
 const descriptorById = new Map(COMPLIANCE_MODULE_DESCRIPTORS.map((entry) => [entry.id, entry]));
 const registryById = new Map(COMPLIANCE_MODULE_REGISTRY.map((entry) => [entry.id, entry]));

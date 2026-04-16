@@ -138,6 +138,26 @@ describe('RWA Config Validation (US5)', () => {
       );
     });
 
+    it('should error when name contains control characters', () => {
+      const config = createValidConfig({
+        token: {
+          name: 'Bad\nName',
+          symbol: 'TST',
+          decimals: 18,
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'token.name',
+          code: 'INVALID_CONTROL_CHARACTERS',
+        })
+      );
+    });
+
     it('should check UTF-8 byte length for Unicode token name', () => {
       // Each emoji is 4 bytes in UTF-8. 9 emojis = 36 bytes > 32 max.
       const unicodeName = '🏠'.repeat(9);
@@ -205,7 +225,7 @@ describe('RWA Config Validation (US5)', () => {
       );
     });
 
-    it('should error when symbol contains no letters or digits', () => {
+    it('should error when symbol sanitizes to an empty directory name base', () => {
       const config = createValidConfig({
         token: {
           name: 'Test',
@@ -221,6 +241,26 @@ describe('RWA Config Validation (US5)', () => {
         expect.objectContaining({
           field: 'token.symbol',
           code: 'INVALID_TOKEN_SYMBOL',
+        })
+      );
+    });
+
+    it('should error when symbol contains control characters', () => {
+      const config = createValidConfig({
+        token: {
+          name: 'Test',
+          symbol: 'TS\nT',
+          decimals: 18,
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'token.symbol',
+          code: 'INVALID_CONTROL_CHARACTERS',
         })
       );
     });
@@ -752,6 +792,42 @@ describe('RWA Config Validation (US5)', () => {
 
       const result = generator.validate(config);
       expect(result.valid).toBe(true);
+    });
+
+    it('should error when custom rpcUrl contains control characters', () => {
+      const config = createValidConfig({
+        deployment: {
+          target: createCustomDeploymentTarget('https://evil.example.com\n'),
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'deployment.target.rpcUrl',
+          code: 'INVALID_CONTROL_CHARACTERS',
+        })
+      );
+    });
+
+    it('should error when custom label contains control characters', () => {
+      const config = createValidConfig({
+        deployment: {
+          target: createCustomDeploymentTarget('https://custom-rpc.example.com', {
+            label: 'My\nnet',
+          }),
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'deployment.target.label',
+          code: 'INVALID_CONTROL_CHARACTERS',
+        })
+      );
     });
 
     it('should error when custom explorerUrl is invalid', () => {

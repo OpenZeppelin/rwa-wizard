@@ -141,5 +141,11 @@ describe('ZipGenerator', () => {
         generateZipFromFileTree({ 'a\\win.txt': 'x' }, 'proj')
       ).rejects.toThrow(/forward slashes/);
     });
+
+    it('should reject paths with empty segments (consecutive slashes)', async () => {
+      await expect(
+        generateZipFromFileTree({ 'foo//bar.txt': 'x' }, 'proj')
+      ).rejects.toThrow(/empty segments/);
+    });
   });
 });

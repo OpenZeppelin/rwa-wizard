@@ -20,6 +20,14 @@ describe('Compliance Module Registry', () => {
       }).toThrow();
     });
 
+    it('should freeze each registry entry so nested fields cannot be mutated', () => {
+      const entry = COMPLIANCE_MODULE_REGISTRY[0];
+      expect(Object.isFrozen(entry)).toBe(true);
+      expect(() => {
+        (entry as { id: string }).id = 'tampered';
+      }).toThrow();
+    });
+
     it('each entry should have required fields: id, name, description, requiredHooks', () => {
       for (const entry of COMPLIANCE_MODULE_REGISTRY) {
         expect(entry).toHaveProperty('id');

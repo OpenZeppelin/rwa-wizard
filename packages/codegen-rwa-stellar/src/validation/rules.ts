@@ -2,12 +2,15 @@ import type { ValidationRule } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../constants';
+import { sanitizeTokenSymbolDirectoryBase } from '../sanitize-project-name';
 import {
   getStellarPresetNetworkById,
   getSupportedStellarPresetNetworkIds,
 } from '../deployment/target';
 import type { ModuleConfigField } from '../modules/registry';
 import { getModuleById, getRegisteredModuleIds } from '../modules/registry';
+
+import { containsAsciiControlCharacters } from './string-safety';
 
 const I128_MAX = BigInt('170141183460469231731687303715884105727');
 
@@ -24,6 +27,12 @@ export const validateTokenName: ValidationRule<RWAConfig> = (config) => {
       field: 'token.name',
       code: 'REQUIRED_FIELD',
       message: 'Token name is required',
+    });
+  } else if (containsAsciiControlCharacters(name)) {
+    errors.push({
+      field: 'token.name',
+      code: 'INVALID_CONTROL_CHARACTERS',
+      message: 'Token name must not contain control characters',
     });
   } else {
     const byteLength = new TextEncoder().encode(name).length;
@@ -55,12 +64,18 @@ export const validateTokenSymbol: ValidationRule<RWAConfig> = (config) => {
       code: 'MAX_LENGTH_EXCEEDED',
       message: `Token symbol exceeds ${STELLAR_VALIDATION_CONSTANTS.TOKEN_SYMBOL_MAX_LENGTH} characters (got ${symbol.length})`,
     });
-  } else if (!/[A-Za-z0-9]/.test(symbol)) {
+  } else if (containsAsciiControlCharacters(symbol)) {
+    errors.push({
+      field: 'token.symbol',
+      code: 'INVALID_CONTROL_CHARACTERS',
+      message: 'Token symbol must not contain control characters',
+    });
+  } else if (sanitizeTokenSymbolDirectoryBase(symbol).length === 0) {
     errors.push({
       field: 'token.symbol',
       code: 'INVALID_TOKEN_SYMBOL',
       message:
-        'Token symbol must contain at least one letter or digit so generated project names remain stable',
+        'Token symbol must produce a non-empty ZIP project directory name after sanitization',
     });
   }
 
@@ -169,6 +184,12 @@ export const validateTrustedIssuers: ValidationRule<RWAConfig> = (config) => {
         code: 'REQUIRED_FIELD',
         message: `Trusted issuer at index ${i} must have a non-empty address`,
       });
+    } else if (containsAsciiControlCharacters(issuer.address)) {
+      errors.push({
+        field: `identityVerification.trustedIssuers[${i}].address`,
+        code: 'INVALID_CONTROL_CHARACTERS',
+        message: `Trusted issuer at index ${i} address must not contain control characters`,
+      });
     }
 
     if (issuer.claimTopics.length === 0) {
@@ -207,6 +228,12 @@ export const validateOwnership: ValidationRule<RWAConfig> = (config) => {
         code: 'REQUIRED_FIELD',
         message: 'Owner address is required for single-owner model',
       });
+    } else if (containsAsciiControlCharacters(ownership.ownerAddress)) {
+      errors.push({
+        field: 'accessControl.ownership.ownerAddress',
+        code: 'INVALID_CONTROL_CHARACTERS',
+        message: 'Owner address must not contain control characters',
+      });
     }
   } else if (ownership.type === 'multi-sig' || ownership.type === 'dao') {
     if (!ownership.address || ownership.address.trim().length === 0) {
@@ -214,6 +241,12 @@ export const validateOwnership: ValidationRule<RWAConfig> = (config) => {
         field: 'accessControl.ownership.address',
         code: 'REQUIRED_FIELD',
         message: `Address is required for ${ownership.type} ownership model`,
+      });
+    } else if (containsAsciiControlCharacters(ownership.address)) {
+      errors.push({
+        field: 'accessControl.ownership.address',
+        code: 'INVALID_CONTROL_CHARACTERS',
+        message: 'Ownership address must not contain control characters',
       });
     }
   }
@@ -261,6 +294,20 @@ export const validateRoles: ValidationRule<RWAConfig> = (config) => {
       break;
     }
     symbolSet.add(sym);
+  }
+
+  for (let i = 0; i < roles.length; i++) {
+    const role = roles[i];
+    const addresses = role.addresses ?? [];
+    for (let j = 0; j < addresses.length; j++) {
+      if (containsAsciiControlCharacters(addresses[j])) {
+        errors.push({
+          field: `accessControl.roles[${i}].addresses[${j}]`,
+          code: 'INVALID_CONTROL_CHARACTERS',
+          message: `Role address at index ${j} for role ${i} must not contain control characters`,
+        });
+      }
+    }
   }
 
   return { errors, warnings: [] };
@@ -318,6 +365,20 @@ export const validateDeployment: ValidationRule<RWAConfig> = (config) => {
         field: 'deployment.target.rpcUrl',
         code: 'REQUIRED_FIELD',
         message: 'Custom deployment target rpcUrl is required',
+      });
+    } else if (containsAsciiControlCharacters(target.rpcUrl)) {
+      errors.push({
+        field: 'deployment.target.rpcUrl',
+        code: 'INVALID_CONTROL_CHARACTERS',
+        message: 'Custom deployment target rpcUrl must not contain control characters',
+      });
+    }
+
+    if (target.label !== undefined && containsAsciiControlCharacters(target.label)) {
+      errors.push({
+        field: 'deployment.target.label',
+        code: 'INVALID_CONTROL_CHARACTERS',
+        message: 'Custom deployment target label must not contain control characters',
       });
     }
 
