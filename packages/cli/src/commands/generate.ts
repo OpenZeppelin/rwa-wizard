@@ -86,14 +86,13 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
       const writeResult = await writeZip(zipResult, opts.output);
       s.stop('ZIP archive generated');
 
-      const sizeBytes = (await zipResult.data.arrayBuffer()).byteLength;
       logger.blank();
       logger.success('Generation complete');
       logger.summary([
         ['Output', writeResult.outputPath],
         ['Format', 'ZIP archive'],
         ['Files', String(writeResult.fileCount)],
-        ['Size', formatBytes(sizeBytes)],
+        ['Size', formatBytes(writeResult.sizeBytes)],
         ['Generator', adapter.name],
         ['Config hash', zipResult.metadata.configHash],
       ]);

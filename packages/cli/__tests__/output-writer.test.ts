@@ -111,6 +111,42 @@ describe('writeFileTree', () => {
 
     expect(result.fileCount).toBe(0);
   });
+
+  it('should refuse to write paths that escape outputDir via ..', () => {
+    expect(() =>
+      writeFileTree(
+        {
+          files: { '../escaped.txt': 'bad' },
+          metadata: {
+            generatorName: 't',
+            generatorVersion: '0',
+            generatedAt: '',
+            fileCount: 1,
+            configHash: 'x',
+          },
+        },
+        tmpDir
+      )
+    ).toThrow(/outside output directory/);
+  });
+
+  it('should refuse absolute file paths from generators', () => {
+    expect(() =>
+      writeFileTree(
+        {
+          files: { '/etc/malicious': 'bad' },
+          metadata: {
+            generatorName: 't',
+            generatorVersion: '0',
+            generatedAt: '',
+            fileCount: 1,
+            configHash: 'x',
+          },
+        },
+        tmpDir
+      )
+    ).toThrow(/absolute path/);
+  });
 });
 
 describe('writeZip', () => {

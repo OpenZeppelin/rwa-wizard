@@ -78,4 +78,4 @@ program
     modulesCommand({ chain: opts.chain });
   });
 
-program.parse();
+program.parseAsync(process.argv);

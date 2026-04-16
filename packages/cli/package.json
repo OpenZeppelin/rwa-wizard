@@ -51,7 +51,7 @@
     "build": "tsdown",
     "prepublishOnly": "[ \"$SKIP_PUBLISH_BUILD\" = \"true\" ] || pnpm build",
     "dev": "tsdown --watch",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo node_modules/.tmp/tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",

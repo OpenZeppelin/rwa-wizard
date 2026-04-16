@@ -2,11 +2,19 @@ import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 const CLI_ROOT = join(__dirname, '..');
 const CLI_BIN = join(CLI_ROOT, 'dist', 'index.mjs');
 const EXAMPLE_CONFIG = join(CLI_ROOT, 'examples', 'stellar-basic.json');
+
+// Builds the CLI once if `dist/index.mjs` is missing so running `pnpm test`
+// standalone (outside of CI, which builds first) works on a clean checkout.
+beforeAll(() => {
+  if (!existsSync(CLI_BIN)) {
+    execSync('pnpm build', { cwd: CLI_ROOT, stdio: 'inherit' });
+  }
+}, 180_000);
 
 function runCli(args: string): string {
   return execSync(`node ${CLI_BIN} ${args}`, {
