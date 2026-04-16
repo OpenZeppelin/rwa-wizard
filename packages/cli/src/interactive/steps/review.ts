@@ -122,7 +122,7 @@ function buildSummary(config: RWAConfig): string {
 }
 
 export async function reviewStep(config: RWAConfig): Promise<boolean> {
-  p.log.step('Step 5/5 — Review & Generate');
+  p.log.step('Step 6/6 — Review & Generate');
 
   p.note(buildSummary(config), 'Configuration Summary');
 

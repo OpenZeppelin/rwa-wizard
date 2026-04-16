@@ -38,6 +38,8 @@ export const stellarAdapter: GeneratorAdapter = {
         hint: 'Stellar mainnet (production)',
       },
     ],
+    supportsCustomRpc: true,
+    customRpcPlaceholder: 'https://soroban-testnet.stellar.org:443',
   },
 
   generate(config: RWAConfig, options?: GenerateOptions): GenerationResult {

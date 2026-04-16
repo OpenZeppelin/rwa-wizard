@@ -18,7 +18,7 @@ function hookList(entry: ComplianceModuleInfo): string {
 export async function complianceStep(
   availableModules: ComplianceModuleInfo[]
 ): Promise<ComplianceConfig> {
-  p.log.step('Step 3/5 — Compliance Modules');
+  p.log.step('Step 3/6 — Compliance Modules');
 
   if (availableModules.length === 0) {
     p.log.info('No compliance modules available for this chain.');

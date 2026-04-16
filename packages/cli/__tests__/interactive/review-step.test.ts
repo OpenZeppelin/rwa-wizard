@@ -25,7 +25,7 @@ describe('reviewStep', () => {
 
     expect(result).toBe(true);
     expect(mockPrompts.note).toHaveBeenCalledOnce();
-    expect(mockPrompts.log.step).toHaveBeenCalledWith('Step 5/5 — Review & Generate');
+    expect(mockPrompts.log.step).toHaveBeenCalledWith('Step 6/6 — Review & Generate');
   });
 
   it('should return false when user declines', async () => {

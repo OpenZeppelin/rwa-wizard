@@ -53,6 +53,7 @@ function setupFullWizardMocks(): void {
     false, // identity: controls.forcedTransfers
     true, // roles: add roles
     false, // roles: stop adding roles
+    false, // deployment: no source account override
     true, // review: confirm
   ];
   mockPrompts.confirm.mockImplementation(() =>
@@ -65,7 +66,8 @@ function setupFullWizardMocks(): void {
 
   mockPrompts.select
     .mockResolvedValueOnce('single-owner') // roles: ownership type (step 4)
-    .mockResolvedValueOnce('stellar-testnet') // deployment: network (step 4.5)
+    .mockResolvedValueOnce('preset') // deployment: target kind (step 5)
+    .mockResolvedValueOnce('stellar-testnet') // deployment: preset network (step 5)
     .mockResolvedValueOnce('files'); // output format (after review)
 }
 
@@ -136,6 +138,7 @@ describe('runWizard', () => {
       false, // identity: forcedTransfers
       true, // roles: add role
       false, // roles: stop roles
+      false, // deployment: no source account override
       false, // review: DECLINE
     ];
     mockPrompts.confirm.mockImplementation(() =>
@@ -145,6 +148,7 @@ describe('runWizard', () => {
     mockPrompts.multiselect.mockResolvedValueOnce([]).mockResolvedValueOnce([1]);
     mockPrompts.select
       .mockResolvedValueOnce('single-owner')
+      .mockResolvedValueOnce('preset')
       .mockResolvedValueOnce('stellar-testnet');
 
     const result = await runWizard(adapter);

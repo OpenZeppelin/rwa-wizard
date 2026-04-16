@@ -50,6 +50,13 @@ export interface ChainHints {
   decimalsMax: number;
   roleSymbolMaxLength: number;
   networks: NetworkOption[];
+  /**
+   * Whether the wizard should offer a custom RPC option in addition to presets.
+   * Defaults to `true` when omitted so adapters only need to opt out.
+   */
+  supportsCustomRpc?: boolean;
+  /** Optional placeholder shown when prompting for a custom RPC URL. */
+  customRpcPlaceholder?: string;
 }
 
 export interface GeneratorAdapter {

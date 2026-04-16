@@ -113,7 +113,7 @@ async function collectRoles(hints: ChainHints): Promise<OperatorRole[]> {
 }
 
 export async function rolesStep(hints: ChainHints): Promise<AccessControlConfig> {
-  p.log.step('Step 4/5 — Roles & Access Control');
+  p.log.step('Step 4/6 — Roles & Access Control');
 
   const ownership = await collectOwnership(hints);
   const roles = await collectRoles(hints);

@@ -148,7 +148,7 @@ async function collectTrustedIssuers(
 }
 
 export async function identityStep(hints: ChainHints): Promise<IdentityVerificationConfig> {
-  p.log.step('Step 2/5 — Identity Configuration');
+  p.log.step('Step 2/6 — Identity Configuration');
 
   const claimTopics = await collectClaimTopics();
   const trustedIssuers = await collectTrustedIssuers(

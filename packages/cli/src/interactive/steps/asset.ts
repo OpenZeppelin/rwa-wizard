@@ -38,7 +38,7 @@ async function collectAdministrativeControls(): Promise<AdministrativeControls> 
 }
 
 export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
-  p.log.step('Step 1/5 — Asset Configuration');
+  p.log.step('Step 1/6 — Asset Configuration');
 
   const name = await p.text({
     message: 'Token name',
