@@ -2,14 +2,13 @@ import type { ValidationRule } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../constants';
-import { sanitizeTokenSymbolDirectoryBase } from '../sanitize-project-name';
 import {
   getStellarPresetNetworkById,
   getSupportedStellarPresetNetworkIds,
 } from '../deployment/target';
 import type { ModuleConfigField } from '../modules/registry';
 import { getModuleById, getRegisteredModuleIds } from '../modules/registry';
-
+import { sanitizeTokenSymbolDirectoryBase } from '../sanitize-project-name';
 import { containsAsciiControlCharacters } from './string-safety';
 
 const I128_MAX = BigInt('170141183460469231731687303715884105727');
