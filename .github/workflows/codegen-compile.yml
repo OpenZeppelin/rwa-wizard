@@ -58,8 +58,6 @@ jobs:
 
       - name: Prepare pre-requisites
         uses: ./.github/actions/prepare
-        with:
-          token: ${{ github.token }}
 
       - name: Build codegen packages
         run: pnpm --filter @openzeppelin/codegen-rwa-stellar... build
