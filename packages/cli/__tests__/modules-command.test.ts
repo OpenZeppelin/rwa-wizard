@@ -47,13 +47,17 @@ describe('modulesCommand', () => {
         id: 'supply-cap',
         name: 'Supply Cap',
         description: 'Limits total supply',
-        supportedHooks: ['creation'],
+        requiredHooks: ['creation'],
+        review: { state: 'stable' as const },
+        configFields: [],
       },
       {
         id: 'transfer-limit',
         name: 'Transfer Limit',
         description: 'Limits transfer amounts',
-        supportedHooks: ['transfer'],
+        requiredHooks: ['transfer'],
+        review: { state: 'stable' as const },
+        configFields: [],
       },
     ];
     const adapter = createMockAdapter();

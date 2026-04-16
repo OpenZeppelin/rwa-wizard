@@ -27,8 +27,16 @@ export const stellarAdapter: GeneratorAdapter = {
     decimalsMax: STELLAR_VALIDATION_CONSTANTS.DECIMALS_MAX,
     roleSymbolMaxLength: STELLAR_VALIDATION_CONSTANTS.ROLE_SYMBOL_MAX_LENGTH,
     networks: [
-      { value: 'testnet', label: 'Testnet', hint: 'Stellar testnet (recommended for development)' },
-      { value: 'mainnet', label: 'Mainnet', hint: 'Stellar mainnet (production)' },
+      {
+        value: 'stellar-testnet',
+        label: 'Testnet',
+        hint: 'Stellar testnet (recommended for development)',
+      },
+      {
+        value: 'stellar-mainnet',
+        label: 'Mainnet',
+        hint: 'Stellar mainnet (production)',
+      },
     ],
   },
 
@@ -49,7 +57,16 @@ export const stellarAdapter: GeneratorAdapter = {
       id: m.id,
       name: m.name,
       description: m.description,
-      supportedHooks: [...m.supportedHooks],
+      requiredHooks: [...m.requiredHooks],
+      review: { state: m.review.state, ...(m.review.prUrl ? { prUrl: m.review.prUrl } : {}) },
+      configFields: m.configFields.map((f) => ({
+        key: f.key,
+        label: f.label,
+        type: f.type,
+        required: f.required,
+        ...(f.placeholder !== undefined ? { placeholder: f.placeholder } : {}),
+        ...(f.hint !== undefined ? { hint: f.hint } : {}),
+      })),
     }));
   },
 };

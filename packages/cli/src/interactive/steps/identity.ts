@@ -2,6 +2,7 @@ import * as p from '@clack/prompts';
 
 import type {
   ClaimTopic,
+  IdentityControls,
   IdentityVerificationConfig,
   TrustedIssuer,
 } from '@openzeppelin/rwa-config';
@@ -13,6 +14,39 @@ function handleCancel(value: unknown): void {
     p.cancel('Wizard cancelled.');
     process.exit(0);
   }
+}
+
+async function collectIdentityControls(): Promise<IdentityControls> {
+  const addressFreezing = await p.confirm({
+    message: 'Enable address freezing? (freeze all tokens of a holder)',
+    initialValue: true,
+  });
+  handleCancel(addressFreezing);
+
+  const partialTokenFreezing = await p.confirm({
+    message: 'Enable partial token freezing? (freeze a specific amount per holder)',
+    initialValue: false,
+  });
+  handleCancel(partialTokenFreezing);
+
+  const recovery = await p.confirm({
+    message: 'Enable wallet recovery? (recover tokens from a lost wallet)',
+    initialValue: false,
+  });
+  handleCancel(recovery);
+
+  const forcedTransfers = await p.confirm({
+    message: 'Enable forced transfers? (agent can move tokens between verified holders)',
+    initialValue: false,
+  });
+  handleCancel(forcedTransfers);
+
+  return {
+    addressFreezing: addressFreezing as boolean,
+    partialTokenFreezing: partialTokenFreezing as boolean,
+    recovery: recovery as boolean,
+    forcedTransfers: forcedTransfers as boolean,
+  };
 }
 
 async function collectClaimTopics(): Promise<ClaimTopic[]> {
@@ -121,6 +155,7 @@ export async function identityStep(hints: ChainHints): Promise<IdentityVerificat
     claimTopics.map((t) => t.id),
     hints
   );
+  const controls = await collectIdentityControls();
 
-  return { claimTopics, trustedIssuers };
+  return { claimTopics, trustedIssuers, controls };
 }

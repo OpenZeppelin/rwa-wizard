@@ -6,11 +6,34 @@ import type {
 } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+export type ModuleReviewState = 'stable' | 'under-review';
+
+export interface ModuleReviewInfo {
+  state: ModuleReviewState;
+  prUrl?: string;
+}
+
+export interface ModuleConfigFieldInfo {
+  key: string;
+  label: string;
+  type: 'number' | 'string' | 'string[]';
+  required: boolean;
+  placeholder?: string;
+  hint?: string;
+}
+
+/**
+ * Chain-agnostic metadata for a compliance module, exposed through the
+ * adapter surface so the CLI never has to import chain-specific registry types.
+ */
 export interface ComplianceModuleInfo {
   id: string;
   name: string;
   description: string;
-  supportedHooks: string[];
+  /** Hooks the module is automatically registered on at deploy time. */
+  requiredHooks: string[];
+  review: ModuleReviewInfo;
+  configFields: ModuleConfigFieldInfo[];
 }
 
 export interface NetworkOption {

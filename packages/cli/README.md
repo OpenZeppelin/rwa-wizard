@@ -104,11 +104,22 @@ The config file follows the `RWAConfig` type from `@openzeppelin/rwa-config`. He
     "symbol": "MRWA",
     "decimals": 8,
     "initialSupply": "1000000000",
+    "administrativeControls": {
+      "burnable": true,
+      "mintable": true,
+      "pausable": true
+    },
     "documentManager": { "enabled": true }
   },
   "identityVerification": {
     "claimTopics": [{ "id": 1, "name": "KYC" }],
-    "trustedIssuers": [{ "address": "GCEXAMPLEISSUER1", "claimTopics": [1] }]
+    "trustedIssuers": [{ "address": "GCEXAMPLEISSUER1", "claimTopics": [1] }],
+    "controls": {
+      "addressFreezing": true,
+      "partialTokenFreezing": false,
+      "recovery": false,
+      "forcedTransfers": false
+    }
   },
   "compliance": {
     "modules": []
@@ -121,7 +132,11 @@ The config file follows the `RWAConfig` type from `@openzeppelin/rwa-config`. He
     "roles": [{ "name": "Manager", "symbol": "manager", "addresses": ["GCMGR1"] }]
   },
   "deployment": {
-    "network": "testnet"
+    "target": {
+      "kind": "preset",
+      "ecosystem": "stellar",
+      "networkId": "stellar-testnet"
+    }
   }
 }
 ```
@@ -130,13 +145,13 @@ See `examples/stellar-basic.json` for a ready-to-use example.
 
 ### Config Sections
 
-| Section                  | Key Fields                                                                             |
-| ------------------------ | -------------------------------------------------------------------------------------- |
-| **token**                | `name`, `symbol`, `decimals`, `initialSupply?`, `documentManager.enabled`              |
-| **identityVerification** | `claimTopics[]` (id + name), `trustedIssuers[]` (address + claimTopics)                |
-| **compliance**           | `modules[]` — each with `moduleId`, `hook` (`transfer` \| `creation` \| `destruction`) |
-| **accessControl**        | `ownership` (type + address), `roles[]` (name, symbol?, addresses)                     |
-| **deployment**           | `network` (`testnet` \| `mainnet`)                                                     |
+| Section                  | Key Fields                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **token**                | `name`, `symbol`, `decimals`, `initialSupply?`, `administrativeControls` (burnable/mintable/pausable), `documentManager.enabled` |
+| **identityVerification** | `claimTopics[]` (id + name), `trustedIssuers[]` (address + claimTopics), `controls` (addressFreezing/partialTokenFreezing/recovery/forcedTransfers) |
+| **compliance**           | `modules[]` — each with `moduleId` and optional module-specific `config`; hooks are auto-derived from the registry |
+| **accessControl**        | `ownership` (type + address), `roles[]` (name, symbol?, addresses)                                           |
+| **deployment**           | `target` — either `{ kind: 'preset', ecosystem, networkId }` or `{ kind: 'custom', ecosystem, rpcUrl, explorerUrl?, label? }`, plus optional `sourceAccount` |
 
 ### Ownership Models
 

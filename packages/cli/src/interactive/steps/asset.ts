@@ -1,6 +1,6 @@
 import * as p from '@clack/prompts';
 
-import type { TokenConfig } from '@openzeppelin/rwa-config';
+import type { AdministrativeControls, TokenConfig } from '@openzeppelin/rwa-config';
 
 import type { ChainHints } from '../../generators/registry';
 
@@ -9,6 +9,32 @@ function handleCancel(value: unknown): void {
     p.cancel('Wizard cancelled.');
     process.exit(0);
   }
+}
+
+async function collectAdministrativeControls(): Promise<AdministrativeControls> {
+  const burnable = await p.confirm({
+    message: 'Allow the admin to burn tokens? (burnable)',
+    initialValue: true,
+  });
+  handleCancel(burnable);
+
+  const mintable = await p.confirm({
+    message: 'Allow the admin to mint new supply? (mintable)',
+    initialValue: true,
+  });
+  handleCancel(mintable);
+
+  const pausable = await p.confirm({
+    message: 'Allow the admin to pause the contract? (pausable)',
+    initialValue: true,
+  });
+  handleCancel(pausable);
+
+  return {
+    burnable: burnable as boolean,
+    mintable: mintable as boolean,
+    pausable: pausable as boolean,
+  };
 }
 
 export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
@@ -77,11 +103,14 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
   });
   handleCancel(docManager);
 
+  const administrativeControls = await collectAdministrativeControls();
+
   return {
     name: (name as string).trim(),
     symbol: (symbol as string).trim(),
     decimals: Number(decimalsStr as string),
     ...(initialSupply ? { initialSupply } : {}),
+    administrativeControls,
     documentManager: { enabled: docManager as boolean },
   };
 }

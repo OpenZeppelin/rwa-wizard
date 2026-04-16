@@ -1,7 +1,12 @@
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
+import type {
+  AdministrativeControls,
+  DeploymentTarget,
+  IdentityControls,
+  RWAConfig,
+} from '@openzeppelin/rwa-config';
 
 function handleCancel(value: unknown): void {
   if (p.isCancel(value)) {
@@ -18,6 +23,38 @@ const CORE_CONTRACTS = [
   'Identity Registry Storage',
 ];
 
+function formatEnabledFlags(flags: Record<string, boolean>): string {
+  const enabled = Object.entries(flags)
+    .filter(([, v]) => v)
+    .map(([k]) => k);
+  return enabled.length === 0 ? 'none' : enabled.join(', ');
+}
+
+function formatAdministrativeControls(controls: AdministrativeControls): string {
+  return formatEnabledFlags({
+    burnable: controls.burnable,
+    mintable: controls.mintable,
+    pausable: controls.pausable,
+  });
+}
+
+function formatIdentityControls(controls: IdentityControls): string {
+  return formatEnabledFlags({
+    addressFreezing: controls.addressFreezing,
+    partialTokenFreezing: controls.partialTokenFreezing,
+    recovery: controls.recovery,
+    forcedTransfers: controls.forcedTransfers,
+  });
+}
+
+function formatDeploymentTarget(target: DeploymentTarget): string {
+  if (target.kind === 'preset') {
+    return `preset ${target.ecosystem}/${target.networkId}`;
+  }
+  const label = target.label ? ` [${target.label}]` : '';
+  return `custom ${target.ecosystem}${label} — ${target.rpcUrl}`;
+}
+
 function buildSummary(config: RWAConfig): string {
   const lines: string[] = [];
 
@@ -29,6 +66,7 @@ function buildSummary(config: RWAConfig): string {
     lines.push(`  Supply:    ${config.token.initialSupply}`);
   }
   lines.push(`  Doc Mgr:   ${config.token.documentManager.enabled ? 'enabled' : 'disabled'}`);
+  lines.push(`  Admin:     ${formatAdministrativeControls(config.token.administrativeControls)}`);
 
   lines.push('');
   lines.push(pc.bold('Identity'));
@@ -40,6 +78,7 @@ function buildSummary(config: RWAConfig): string {
   for (const i of config.identityVerification.trustedIssuers) {
     lines.push(`    - ${i.address} (topics: ${i.claimTopics.join(', ')})`);
   }
+  lines.push(`  Controls:  ${formatIdentityControls(config.identityVerification.controls)}`);
 
   lines.push('');
   lines.push(pc.bold('Compliance'));
@@ -47,7 +86,7 @@ function buildSummary(config: RWAConfig): string {
     lines.push('  Modules:   none');
   } else {
     for (const m of config.compliance.modules) {
-      lines.push(`  - ${m.moduleId} (hook: ${m.hook})`);
+      lines.push(`  - ${m.moduleId}`);
     }
   }
 
@@ -63,7 +102,10 @@ function buildSummary(config: RWAConfig): string {
 
   lines.push('');
   lines.push(pc.bold('Deployment'));
-  lines.push(`  Network:   ${config.deployment.network}`);
+  lines.push(`  Target:    ${formatDeploymentTarget(config.deployment.target)}`);
+  if (config.deployment.sourceAccount) {
+    lines.push(`  Source:    ${config.deployment.sourceAccount}`);
+  }
 
   lines.push('');
   lines.push(pc.bold('Contracts to generate'));

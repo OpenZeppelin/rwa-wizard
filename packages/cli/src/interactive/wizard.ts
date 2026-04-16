@@ -18,7 +18,7 @@ function handleCancel(value: unknown): void {
 }
 
 async function deploymentStep(adapter: GeneratorAdapter): Promise<DeploymentConfig> {
-  const network = await p.select({
+  const networkId = await p.select({
     message: 'Target network',
     options: adapter.hints.networks.map((n) => ({
       value: n.value,
@@ -26,9 +26,15 @@ async function deploymentStep(adapter: GeneratorAdapter): Promise<DeploymentConf
       hint: n.hint,
     })),
   });
-  handleCancel(network);
+  handleCancel(networkId);
 
-  return { network: network as string };
+  return {
+    target: {
+      kind: 'preset',
+      ecosystem: adapter.chain,
+      networkId: networkId as string,
+    },
+  };
 }
 
 export interface WizardResult {
