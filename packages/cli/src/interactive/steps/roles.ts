@@ -3,6 +3,7 @@ import * as p from '@clack/prompts';
 import type { AccessControlConfig, OperatorRole, OwnershipModel } from '@openzeppelin/rwa-config';
 
 import type { ChainHints } from '../../generators/registry';
+import { parseCommaSeparatedList } from '../../utils/comma-list';
 
 function handleCancel(value: unknown): void {
   if (p.isCancel(value)) {
@@ -80,15 +81,12 @@ async function collectRoles(hints: ChainHints): Promise<OperatorRole[]> {
       message: `Role #${roles.length + 1} — Addresses (comma-separated)`,
       placeholder: hints.addressPlaceholder,
       validate: (v) => {
-        if (!v.trim()) return 'At least one address is required';
+        if (parseCommaSeparatedList(v).length === 0) return 'At least one address is required';
       },
     });
     handleCancel(addressesRaw);
 
-    const addresses = (addressesRaw as string)
-      .split(',')
-      .map((a) => a.trim())
-      .filter(Boolean);
+    const addresses = parseCommaSeparatedList(addressesRaw as string);
 
     const role: OperatorRole = {
       name: (name as string).trim(),

@@ -108,6 +108,25 @@ describe('rolesStep', () => {
     expect(ownerCall.placeholder).toBe(hints.addressPlaceholder);
   });
 
+  it('should reject address inputs that parse to no tokens', async () => {
+    mockPrompts.select.mockResolvedValueOnce('single-owner');
+    mockPrompts.text.mockResolvedValueOnce('GCOWNER');
+    mockPrompts.confirm.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+    mockPrompts.text
+      .mockResolvedValueOnce('Manager')
+      .mockResolvedValueOnce('mgr')
+      .mockResolvedValueOnce('GCMGR1');
+
+    await rolesStep(hints);
+
+    const addressPrompt = mockPrompts.text.mock.calls[3][0] as {
+      validate?: (v: string) => string | undefined;
+    };
+    expect(addressPrompt.validate?.(',')).toBe('At least one address is required');
+    expect(addressPrompt.validate?.(' , , ')).toBe('At least one address is required');
+    expect(addressPrompt.validate?.('G1')).toBeUndefined();
+  });
+
   it('should use roleSymbolMaxLength from hints for validation', async () => {
     mockPrompts.select.mockResolvedValueOnce('single-owner');
     mockPrompts.text.mockResolvedValueOnce('GCOWNER');

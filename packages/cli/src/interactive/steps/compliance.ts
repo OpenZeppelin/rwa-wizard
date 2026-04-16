@@ -3,6 +3,7 @@ import * as p from '@clack/prompts';
 import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 
 import type { ComplianceModuleInfo } from '../../generators/registry';
+import { parseCommaSeparatedList } from '../../utils/comma-list';
 
 function handleCancel(value: unknown): void {
   if (p.isCancel(value)) {
@@ -73,17 +74,16 @@ export async function complianceStep(
           message: `${entry.name} — ${field.label} (comma-separated)`,
           placeholder: field.placeholder,
           validate: (input) => {
-            if (field.required && !input.trim()) return `${field.label} is required`;
+            if (field.required && parseCommaSeparatedList(input).length === 0) {
+              return `${field.label} is required`;
+            }
             return undefined;
           },
         });
         handleCancel(val);
         const strVal = (val as string).trim();
         if (strVal) {
-          config[field.key] = strVal
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
+          config[field.key] = parseCommaSeparatedList(strVal);
         }
       } else {
         const val = await p.text({

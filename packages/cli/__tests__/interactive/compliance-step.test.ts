@@ -98,6 +98,31 @@ describe('complianceStep', () => {
     ]);
   });
 
+  it('should reject required string[] when input parses to no tokens', async () => {
+    mockPrompts.multiselect.mockResolvedValueOnce(['limit']);
+    mockPrompts.text.mockResolvedValueOnce('100').mockResolvedValueOnce('US, CA');
+
+    await complianceStep([
+      makeModule({
+        id: 'limit',
+        name: 'Country Limit',
+        description: 'Allowed countries',
+        requiredHooks: ['canTransfer', 'created'],
+        configFields: [
+          { key: 'maxSupply', label: 'Max supply', type: 'number', required: true },
+          { key: 'countries', label: 'Countries', type: 'string[]', required: true },
+        ],
+      }),
+    ]);
+
+    const countriesPrompt = mockPrompts.text.mock.calls[1][0] as {
+      validate?: (input: string) => string | undefined;
+    };
+    expect(countriesPrompt.validate?.(',')).toBe('Countries is required');
+    expect(countriesPrompt.validate?.(' , , ')).toBe('Countries is required');
+    expect(countriesPrompt.validate?.('US')).toBeUndefined();
+  });
+
   it('should handle multiple selected modules', async () => {
     mockPrompts.multiselect.mockResolvedValueOnce(['cap', 'limit']);
 
