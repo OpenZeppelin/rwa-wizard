@@ -1,3 +1,6 @@
+import { mkdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { generateCommand } from '../src/commands/generate';
@@ -21,6 +24,7 @@ vi.mock('../src/utils/logger', () => ({
   logger: {
     error: vi.fn(),
     warn: vi.fn(),
+    plain: vi.fn(),
     success: vi.fn(),
     blank: vi.fn(),
     summary: vi.fn(),
@@ -63,6 +67,7 @@ describe('generateCommand', () => {
       outputPath: '/out.zip',
       fileCount: 5,
       isZip: true,
+      sizeBytes: 128,
     });
   });
 
@@ -92,6 +97,28 @@ describe('generateCommand', () => {
       expect(mockAdapter.generateZip).toHaveBeenCalled();
       expect(writeZip).toHaveBeenCalled();
       expect(logger.success).toHaveBeenCalledWith('Generation complete');
+    });
+
+    it('should exit when --zip is combined with a directory --output', async () => {
+      vi.mocked(loadConfig).mockReturnValue(createValidConfig());
+      const dir = join(tmpdir(), `rwa-cli-zip-dir-${Date.now()}`);
+      mkdirSync(dir, { recursive: true });
+      try {
+        await expect(
+          generateCommand({
+            config: 'test.json',
+            output: dir,
+            zip: true,
+            chain: 'stellar',
+          })
+        ).rejects.toThrow(ExitError);
+        expect(logger.error).toHaveBeenCalledWith(
+          expect.stringContaining('When using --zip')
+        );
+        expect(mockAdapter.generateZip).not.toHaveBeenCalled();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     it('should pass allowUnderReviewModules to validate, generateZip, and generate', async () => {
@@ -149,7 +176,7 @@ describe('generateCommand', () => {
 
       await generateCommand({ config: 'test.json', output: '/output', chain: 'stellar' });
 
-      expect(logger.warn).toHaveBeenCalled();
+      expect(logger.plain).toHaveBeenCalledWith('Validation warnings:');
       expect(logger.validationWarning).toHaveBeenCalled();
       expect(mockAdapter.generate).toHaveBeenCalled();
     });
@@ -200,8 +227,21 @@ describe('generateCommand', () => {
 
       await generateCommand({ output: '/output', chain: 'stellar' });
 
-      expect(runWizard).toHaveBeenCalledWith(mockAdapter);
+      expect(runWizard).toHaveBeenCalledWith(mockAdapter, { outputFormat: undefined });
       expect(mockAdapter.generate).toHaveBeenCalled();
+    });
+
+    it('should pass --zip override to the wizard and skip the format prompt', async () => {
+      vi.mocked(runWizard).mockResolvedValue({
+        config: createValidConfig(),
+        outputFormat: 'zip',
+      });
+
+      await generateCommand({ output: '/out.zip', chain: 'stellar', zip: true });
+
+      expect(runWizard).toHaveBeenCalledWith(mockAdapter, { outputFormat: 'zip' });
+      expect(mockAdapter.generateZip).toHaveBeenCalled();
+      expect(writeZip).toHaveBeenCalled();
     });
 
     it('should exit gracefully when wizard is cancelled', async () => {
@@ -223,6 +263,23 @@ describe('generateCommand', () => {
 
       expect(mockAdapter.generateZip).toHaveBeenCalled();
       expect(writeZip).toHaveBeenCalled();
+    });
+
+    it('should prompt for a zip file path when the default output is a directory', async () => {
+      const prompts = await import('@clack/prompts');
+      vi.mocked(prompts.text).mockResolvedValueOnce('/tmp/rwa-out.zip');
+
+      vi.mocked(runWizard).mockResolvedValue({
+        config: createValidConfig(),
+        outputFormat: 'zip',
+      });
+
+      await generateCommand({ output: '.', chain: 'stellar' });
+
+      expect(prompts.text).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'ZIP archive output path' })
+      );
+      expect(writeZip).toHaveBeenCalledWith(expect.any(Object), '/tmp/rwa-out.zip');
     });
   });
 });

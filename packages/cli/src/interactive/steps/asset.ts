@@ -3,32 +3,26 @@ import * as p from '@clack/prompts';
 import type { AdministrativeControls, TokenConfig } from '@openzeppelin/rwa-config';
 
 import type { ChainHints } from '../../generators/registry';
-
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { handleWizardCancel } from '../utils';
 
 async function collectAdministrativeControls(): Promise<AdministrativeControls> {
   const burnable = await p.confirm({
     message: 'Allow the admin to burn tokens? (burnable)',
     initialValue: true,
   });
-  handleCancel(burnable);
+  handleWizardCancel(burnable);
 
   const mintable = await p.confirm({
     message: 'Allow the admin to mint new supply? (mintable)',
     initialValue: true,
   });
-  handleCancel(mintable);
+  handleWizardCancel(mintable);
 
   const pausable = await p.confirm({
     message: 'Allow the admin to pause the contract? (pausable)',
     initialValue: true,
   });
-  handleCancel(pausable);
+  handleWizardCancel(pausable);
 
   return {
     burnable: burnable as boolean,
@@ -44,23 +38,25 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
     message: 'Token name',
     placeholder: 'e.g. My RWA Token',
     validate: (v) => {
-      if (!v.trim()) return 'Token name is required';
-      if (v.length > hints.tokenNameMaxLength)
+      const t = v.trim();
+      if (!t) return 'Token name is required';
+      if (t.length > hints.tokenNameMaxLength)
         return `Token name must be ${hints.tokenNameMaxLength} characters or fewer`;
     },
   });
-  handleCancel(name);
+  handleWizardCancel(name);
 
   const symbol = await p.text({
     message: 'Token symbol',
     placeholder: 'e.g. MRWA',
     validate: (v) => {
-      if (!v.trim()) return 'Token symbol is required';
-      if (v.length > hints.tokenSymbolMaxLength)
+      const t = v.trim();
+      if (!t) return 'Token symbol is required';
+      if (t.length > hints.tokenSymbolMaxLength)
         return `Token symbol must be ${hints.tokenSymbolMaxLength} characters or fewer`;
     },
   });
-  handleCancel(symbol);
+  handleWizardCancel(symbol);
 
   const decimalsStr = await p.text({
     message: `Decimals (${hints.decimalsMin}–${hints.decimalsMax})`,
@@ -71,13 +67,13 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
         return `Decimals must be an integer ${hints.decimalsMin}–${hints.decimalsMax}`;
     },
   });
-  handleCancel(decimalsStr);
+  handleWizardCancel(decimalsStr);
 
   const hasInitialSupply = await p.confirm({
     message: 'Set an initial supply?',
     initialValue: false,
   });
-  handleCancel(hasInitialSupply);
+  handleWizardCancel(hasInitialSupply);
 
   let initialSupply: string | undefined;
   if (hasInitialSupply) {
@@ -85,23 +81,24 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
       message: 'Initial supply (whole units)',
       placeholder: 'e.g. 1000000',
       validate: (v) => {
-        if (!v.trim()) return 'Supply is required if enabled';
+        const t = v.trim();
+        if (!t) return 'Supply is required if enabled';
         try {
-          if (BigInt(v) <= 0n) return 'Supply must be positive';
+          if (BigInt(t) <= 0n) return 'Supply must be positive';
         } catch {
           return 'Supply must be a valid integer';
         }
       },
     });
-    handleCancel(supplyValue);
-    initialSupply = supplyValue as string;
+    handleWizardCancel(supplyValue);
+    initialSupply = (supplyValue as string).trim();
   }
 
   const docManager = await p.confirm({
     message: 'Enable Document Manager?',
     initialValue: true,
   });
-  handleCancel(docManager);
+  handleWizardCancel(docManager);
 
   const administrativeControls = await collectAdministrativeControls();
 

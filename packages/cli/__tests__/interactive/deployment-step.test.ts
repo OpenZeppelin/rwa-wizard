@@ -58,6 +58,37 @@ describe('deploymentStep', () => {
     });
   });
 
+  it('should allow wss:// for RPC URL but not for explorer URL', async () => {
+    const adapter = createMockAdapter({ chain: 'stellar' });
+    mockPrompts.select.mockResolvedValueOnce('custom');
+
+    const explorerValidators: Array<(v: string) => string | undefined> = [];
+    mockPrompts.text.mockImplementation(
+      (opts: { message: string; validate?: (v: string) => string | undefined }) => {
+        if (opts.message === 'RPC URL') return 'wss://rpc.example.com';
+        if (opts.message === 'Explorer URL (optional)') {
+          if (opts.validate) explorerValidators.push(opts.validate);
+          return '';
+        }
+        if (opts.message === 'Label shown in generated output (optional)') return '';
+        return '';
+      }
+    );
+    mockPrompts.confirm.mockResolvedValueOnce(false);
+
+    const result = await deploymentStep(adapter);
+
+    expect(result.target).toEqual({
+      kind: 'custom',
+      ecosystem: 'stellar',
+      rpcUrl: 'wss://rpc.example.com',
+    });
+    const explorerValidate = explorerValidators[0];
+    expect(explorerValidate).toBeDefined();
+    expect(explorerValidate!('wss://explorer.example.com')).toMatch(/http/i);
+    expect(explorerValidate!('https://explorer.example.com')).toBeUndefined();
+  });
+
   it('should include explorerUrl and label when provided on custom targets', async () => {
     const adapter = createMockAdapter({ chain: 'stellar' });
     mockPrompts.select.mockResolvedValueOnce('custom');

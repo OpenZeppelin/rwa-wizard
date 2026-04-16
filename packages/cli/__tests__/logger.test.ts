@@ -103,4 +103,9 @@ describe('logger', () => {
     expect(logSpy.mock.calls[0][0]).toContain('value');
     expect(logSpy.mock.calls[1][0]).toContain('42');
   });
+
+  it('summary is a no-op for an empty entries array', () => {
+    expect(() => logger.summary([])).not.toThrow();
+    expect(logSpy).not.toHaveBeenCalled();
+  });
 });

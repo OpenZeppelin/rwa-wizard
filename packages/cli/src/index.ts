@@ -6,6 +6,7 @@ import { validateCommand } from './commands/validate';
 import { registerGenerator } from './generators/registry';
 import { stellarAdapter } from './generators/stellar';
 import { logger } from './utils/logger';
+import { getPackageVersion } from './utils/package-version';
 
 registerGenerator(stellarAdapter);
 
@@ -14,7 +15,7 @@ const program = new Command();
 program
   .name('rwa-wizard')
   .description('CLI tool for generating RWA token projects')
-  .version('0.0.0');
+  .version(getPackageVersion());
 
 program
   .command('generate')
@@ -78,4 +79,7 @@ program
     modulesCommand({ chain: opts.chain });
   });
 
-program.parse();
+program.parseAsync(process.argv).catch((err: unknown) => {
+  logger.error(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});

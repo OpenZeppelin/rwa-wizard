@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -110,6 +110,84 @@ describe('writeFileTree', () => {
     );
 
     expect(result.fileCount).toBe(0);
+  });
+
+  it('should refuse to write paths that escape outputDir via ..', () => {
+    expect(() =>
+      writeFileTree(
+        {
+          files: { '../escaped.txt': 'bad' },
+          metadata: {
+            generatorName: 't',
+            generatorVersion: '0',
+            generatedAt: '',
+            fileCount: 1,
+            configHash: 'x',
+          },
+        },
+        tmpDir
+      )
+    ).toThrow(/outside output directory/);
+  });
+
+  it('should refuse to write through a symlink directory inside the output tree', () => {
+    const outside = join(tmpdir(), `cli-outside-${Date.now()}`);
+    const linkName = join(tmpDir, 'linkdir');
+    mkdirSync(tmpDir, { recursive: true });
+    mkdirSync(outside, { recursive: true });
+    symlinkSync(outside, linkName, 'dir');
+
+    expect(() =>
+      writeFileTree(
+        {
+          files: { 'linkdir/x.txt': 'x' },
+          metadata: {
+            generatorName: 't',
+            generatorVersion: '0',
+            generatedAt: '',
+            fileCount: 1,
+            configHash: 'x',
+          },
+        },
+        tmpDir
+      )
+    ).toThrow(/symbolic link/);
+  });
+
+  it('should allow filenames beginning with .. when they stay inside the output directory', () => {
+    writeFileTree(
+      {
+        files: { '..suffix.txt': 'ok' },
+        metadata: {
+          generatorName: 't',
+          generatorVersion: '0',
+          generatedAt: '',
+          fileCount: 1,
+          configHash: 'x',
+        },
+      },
+      tmpDir
+    );
+
+    expect(readFileSync(join(tmpDir, '..suffix.txt'), 'utf-8')).toBe('ok');
+  });
+
+  it('should refuse absolute file paths from generators', () => {
+    expect(() =>
+      writeFileTree(
+        {
+          files: { '/etc/malicious': 'bad' },
+          metadata: {
+            generatorName: 't',
+            generatorVersion: '0',
+            generatedAt: '',
+            fileCount: 1,
+            configHash: 'x',
+          },
+        },
+        tmpDir
+      )
+    ).toThrow(/absolute path/);
   });
 });
 

@@ -8,17 +8,20 @@ import type {
 } from '@openzeppelin/rwa-config';
 
 import type { ChainHints, GeneratorAdapter } from '../../generators/registry';
+import { handleWizardCancel } from '../utils';
 
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+/** RPC endpoints may be HTTP(S) or WebSocket(S). */
+const RPC_URL_PROTOCOLS = new Set(['http:', 'https:', 'ws:', 'wss:']);
 
-const URL_PROTOCOLS = new Set(['http:', 'https:', 'ws:', 'wss:']);
+/** Block explorer links are normal web URLs only. */
+const EXPLORER_URL_PROTOCOLS = new Set(['http:', 'https:']);
 
-function validateHttpUrl(input: string, required: boolean): string | undefined {
+function validateUrl(
+  input: string,
+  required: boolean,
+  allowedProtocols: Set<string>,
+  protocolHint: string
+): string | undefined {
   const trimmed = input.trim();
   if (!trimmed) {
     return required ? 'URL is required' : undefined;
@@ -29,10 +32,18 @@ function validateHttpUrl(input: string, required: boolean): string | undefined {
   } catch {
     return 'Invalid URL';
   }
-  if (!URL_PROTOCOLS.has(parsed.protocol)) {
-    return 'URL must use http(s) or ws(s)';
+  if (!allowedProtocols.has(parsed.protocol)) {
+    return `URL must use ${protocolHint}`;
   }
   return undefined;
+}
+
+function validateRpcUrl(input: string, required: boolean): string | undefined {
+  return validateUrl(input, required, RPC_URL_PROTOCOLS, 'http(s) or ws(s)');
+}
+
+function validateExplorerUrl(input: string, required: boolean): string | undefined {
+  return validateUrl(input, required, EXPLORER_URL_PROTOCOLS, 'http(s)');
 }
 
 async function collectPresetTarget(adapter: GeneratorAdapter): Promise<PresetDeploymentTarget> {
@@ -47,7 +58,7 @@ async function collectPresetTarget(adapter: GeneratorAdapter): Promise<PresetDep
     message: 'Target network',
     options: networks.map((n) => ({ value: n.value, label: n.label, hint: n.hint })),
   });
-  handleCancel(networkId);
+  handleWizardCancel(networkId);
 
   return {
     kind: 'preset',
@@ -60,22 +71,22 @@ async function collectCustomTarget(adapter: GeneratorAdapter): Promise<CustomDep
   const rpcUrl = await p.text({
     message: 'RPC URL',
     placeholder: adapter.hints.customRpcPlaceholder ?? 'https://example.com/rpc',
-    validate: (v) => validateHttpUrl(v, true),
+    validate: (v) => validateRpcUrl(v, true),
   });
-  handleCancel(rpcUrl);
+  handleWizardCancel(rpcUrl);
 
   const explorerInput = await p.text({
     message: 'Explorer URL (optional)',
     defaultValue: '',
-    validate: (v) => validateHttpUrl(v, false),
+    validate: (v) => validateExplorerUrl(v, false),
   });
-  handleCancel(explorerInput);
+  handleWizardCancel(explorerInput);
 
   const labelInput = await p.text({
     message: 'Label shown in generated output (optional)',
     defaultValue: '',
   });
-  handleCancel(labelInput);
+  handleWizardCancel(labelInput);
 
   const target: CustomDeploymentTarget = {
     kind: 'custom',
@@ -99,7 +110,7 @@ async function collectSourceAccount(hints: ChainHints): Promise<string | undefin
     message: 'Specify a source account? (defaults to CLI signer)',
     initialValue: false,
   });
-  handleCancel(enabled);
+  handleWizardCancel(enabled);
   if (!enabled) return undefined;
 
   const account = await p.text({
@@ -107,7 +118,7 @@ async function collectSourceAccount(hints: ChainHints): Promise<string | undefin
     placeholder: hints.addressPlaceholder,
     validate: (v) => (!v.trim() ? 'Source account is required' : undefined),
   });
-  handleCancel(account);
+  handleWizardCancel(account);
   return (account as string).trim();
 }
 
@@ -132,7 +143,7 @@ async function collectDeploymentTarget(adapter: GeneratorAdapter): Promise<Deplo
       ],
       initialValue: 'preset',
     });
-    handleCancel(kind);
+    handleWizardCancel(kind);
     return kind === 'custom' ? collectCustomTarget(adapter) : collectPresetTarget(adapter);
   }
 

@@ -1,5 +1,5 @@
-import { writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 
@@ -50,7 +50,9 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
     }
   } else {
     isInteractive = true;
-    const result = await runWizard(adapter);
+    const result = await runWizard(adapter, {
+      outputFormat: opts.zip ? 'zip' : undefined,
+    });
     if (!result) process.exit(0);
     config = result.config;
     useZip = result.outputFormat === 'zip';
@@ -63,7 +65,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
   const validation = adapter.validate(config, coreOptions);
 
   if (validation.warnings.length > 0) {
-    logger.warn('Validation warnings:');
+    logger.plain('Validation warnings:');
     for (const w of validation.warnings) {
       logger.validationWarning(w.field, w.code, w.message);
     }
@@ -77,23 +79,53 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
     process.exit(1);
   }
 
+  let resolvedOutput = opts.output;
+
+  if (useZip && isInteractive) {
+    const abs = resolve(resolvedOutput);
+    const needsZipPath = resolvedOutput === '.' || (existsSync(abs) && statSync(abs).isDirectory());
+
+    if (needsZipPath) {
+      const zipPath = await p.text({
+        message: 'ZIP archive output path',
+        placeholder: 'e.g. rwa-project.zip',
+        defaultValue: 'rwa-project.zip',
+        validate: (v) => {
+          if (!v.trim()) return 'Path is required';
+        },
+      });
+
+      if (p.isCancel(zipPath)) process.exit(0);
+      resolvedOutput = zipPath as string;
+    }
+  }
+
+  if (useZip && !isInteractive) {
+    const abs = resolve(resolvedOutput);
+    if (existsSync(abs) && statSync(abs).isDirectory()) {
+      logger.error(
+        'When using --zip, --output must be a file path (e.g. -o project.zip), not a directory.'
+      );
+      process.exit(1);
+    }
+  }
+
   const s = p.spinner();
 
   if (useZip) {
     s.start('Generating ZIP archive...');
     try {
       const zipResult = await adapter.generateZip(config, coreOptions);
-      const writeResult = await writeZip(zipResult, opts.output);
+      const writeResult = await writeZip(zipResult, resolvedOutput);
       s.stop('ZIP archive generated');
 
-      const sizeBytes = (await zipResult.data.arrayBuffer()).byteLength;
       logger.blank();
       logger.success('Generation complete');
       logger.summary([
         ['Output', writeResult.outputPath],
         ['Format', 'ZIP archive'],
         ['Files', String(writeResult.fileCount)],
-        ['Size', formatBytes(sizeBytes)],
+        ['Size', formatBytes(writeResult.sizeBytes)],
         ['Generator', adapter.name],
         ['Config hash', zipResult.metadata.configHash],
       ]);
@@ -106,7 +138,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
     s.start('Generating project files...');
     try {
       const result = adapter.generate(config, coreOptions);
-      const writeResult = writeFileTree(result, opts.output);
+      const writeResult = writeFileTree(result, resolvedOutput);
       s.stop('Project files generated');
 
       logger.blank();
@@ -152,6 +184,11 @@ async function offerConfigExport(config: RWAConfig): Promise<void> {
   if (p.isCancel(exportPath)) return;
 
   const absolutePath = resolve(exportPath as string);
-  writeFileSync(absolutePath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
-  logger.success(`Configuration exported to ${absolutePath}`);
+  try {
+    mkdirSync(dirname(absolutePath), { recursive: true });
+    writeFileSync(absolutePath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+    logger.success(`Configuration exported to ${absolutePath}`);
+  } catch (err) {
+    logger.error(`Failed to export configuration to ${absolutePath}: ${(err as Error).message}`);
+  }
 }

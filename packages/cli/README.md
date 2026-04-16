@@ -28,13 +28,14 @@ Run without a config file to launch the step-by-step wizard:
 rwa-wizard generate
 ```
 
-The wizard walks through five steps matching the RWA Wizard web UI:
+The wizard walks through six steps matching the RWA Wizard web UI:
 
 1. **Asset Configuration** — token name, symbol, decimals, initial supply, Document Manager toggle
 2. **Identity Configuration** — claim topics and trusted issuers
 3. **Compliance Modules** — select and assign modules to compliance hooks
 4. **Roles & Access Control** — ownership model (single-owner / multi-sig / DAO) and operator roles
-5. **Review & Generate** — summary of all contracts to be generated, confirm, choose output format
+5. **Deployment Target** — preset network (e.g. testnet) or custom RPC / explorer URLs
+6. **Review & Generate** — summary of all contracts to be generated, confirm, choose output format
 
 After generation, you can optionally export the configuration as a JSON file for future headless runs.
 
@@ -60,12 +61,13 @@ Generate an RWA token project.
 rwa-wizard generate [options]
 ```
 
-| Option                | Description                                                    | Default   |
-| --------------------- | -------------------------------------------------------------- | --------- |
-| `-c, --config <path>` | JSON config file (headless mode). Omit for interactive wizard. | —         |
-| `-o, --output <path>` | Output directory (file tree) or file path (ZIP).               | `.`       |
-| `--zip`               | Output as a ZIP archive instead of a file tree.                | `false`   |
-| `--chain <name>`      | Target chain.                                                  | `stellar` |
+| Option                           | Description                                                                                         | Default   |
+| -------------------------------- | --------------------------------------------------------------------------------------------------- | --------- |
+| `-c, --config <path>`            | JSON config file (headless mode). Omit for interactive wizard.                                      | —         |
+| `-o, --output <path>`            | Output directory (file tree) or file path (ZIP).                                                    | `.`       |
+| `--zip`                          | Output as a ZIP archive instead of a file tree.                                                       | `false`   |
+| `--allow-under-review-modules`   | Allow compliance modules marked under review upstream. **Not for production.**                      | `false`   |
+| `--chain <name>`                 | Target chain.                                                                                       | `stellar` |
 
 ### `validate`
 
@@ -75,10 +77,11 @@ Validate a config file without generating any output.
 rwa-wizard validate -c config.json
 ```
 
-| Option                | Description                                  | Default   |
-| --------------------- | -------------------------------------------- | --------- |
-| `-c, --config <path>` | JSON config file to validate. **(required)** | —         |
-| `--chain <name>`      | Target chain.                                | `stellar` |
+| Option                           | Description                                                                                       | Default   |
+| -------------------------------- | ------------------------------------------------------------------------------------------------- | --------- |
+| `-c, --config <path>`            | JSON config file to validate. **(required)**                                                      | —         |
+| `--allow-under-review-modules`   | Allow compliance modules marked under review upstream. **Not for production.**                    | `false`   |
+| `--chain <name>`                 | Target chain.                                                                                     | `stellar` |
 
 ### `modules`
 
@@ -233,7 +236,7 @@ node packages/cli/dist/index.mjs generate -c packages/cli/examples/stellar-basic
 ### Tests
 
 ```bash
-# Run all tests (115 tests across 15 files)
+# Run all tests (130+ tests across 16 files)
 pnpm --filter @openzeppelin/rwa-wizard-cli test
 
 # Watch mode

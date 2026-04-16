@@ -27,7 +27,8 @@ export const logger = {
   },
 
   summary: (entries: Array<[string, string | number]>) => {
-    const maxKeyLen = Math.max(...entries.map(([k]) => k.length));
+    if (entries.length === 0) return;
+    const maxKeyLen = entries.reduce((max, [k]) => Math.max(max, k.length), 0);
     for (const [key, value] of entries) {
       console.log(`  ${pc.bold(key.padEnd(maxKeyLen))}  ${value}`);
     }

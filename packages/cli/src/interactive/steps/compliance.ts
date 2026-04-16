@@ -3,13 +3,8 @@ import * as p from '@clack/prompts';
 import type { ComplianceConfig, ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 
 import type { ComplianceModuleInfo } from '../../generators/registry';
-
-function handleCancel(value: unknown): void {
-  if (p.isCancel(value)) {
-    p.cancel('Wizard cancelled.');
-    process.exit(0);
-  }
-}
+import { parseCommaSeparatedList } from '../../utils/comma-list';
+import { handleWizardCancel } from '../utils';
 
 function hookList(entry: ComplianceModuleInfo): string {
   return entry.requiredHooks.join(', ');
@@ -34,7 +29,7 @@ export async function complianceStep(
     })),
     required: false,
   });
-  handleCancel(selected);
+  handleWizardCancel(selected);
 
   const selectedIds = selected as string[];
   if (selectedIds.length === 0) {
@@ -60,12 +55,13 @@ export async function complianceStep(
           message: `${entry.name} — ${field.label}`,
           placeholder: field.placeholder,
           validate: (input) => {
-            if (field.required && !input.trim()) return `${field.label} is required`;
-            if (input.trim() && isNaN(Number(input))) return 'Must be a number';
+            const t = input.trim();
+            if (field.required && !t) return `${field.label} is required`;
+            if (t && !Number.isFinite(Number(t))) return 'Must be a finite number';
             return undefined;
           },
         });
-        handleCancel(val);
+        handleWizardCancel(val);
         const strVal = (val as string).trim();
         if (strVal) config[field.key] = Number(strVal);
       } else if (field.type === 'string[]') {
@@ -73,17 +69,16 @@ export async function complianceStep(
           message: `${entry.name} — ${field.label} (comma-separated)`,
           placeholder: field.placeholder,
           validate: (input) => {
-            if (field.required && !input.trim()) return `${field.label} is required`;
+            if (field.required && parseCommaSeparatedList(input).length === 0) {
+              return `${field.label} is required`;
+            }
             return undefined;
           },
         });
-        handleCancel(val);
+        handleWizardCancel(val);
         const strVal = (val as string).trim();
         if (strVal) {
-          config[field.key] = strVal
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
+          config[field.key] = parseCommaSeparatedList(strVal);
         }
       } else {
         const val = await p.text({
@@ -94,7 +89,7 @@ export async function complianceStep(
             return undefined;
           },
         });
-        handleCancel(val);
+        handleWizardCancel(val);
         const strVal = (val as string).trim();
         if (strVal) config[field.key] = strVal;
       }
