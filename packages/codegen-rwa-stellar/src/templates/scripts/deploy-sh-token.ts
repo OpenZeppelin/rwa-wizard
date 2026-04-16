@@ -8,7 +8,8 @@ import { shellEscape } from './deploy-sh-helpers';
 const roleResolutionOptions = { generateRoleSymbol };
 
 function serializeAddressVectorArg(addresses: readonly string[]): string {
-  return `'[${addresses.map((address) => `"${address}"`).join(', ')}]'`;
+  const json = `[${addresses.map((address) => JSON.stringify(address)).join(', ')}]`;
+  return `"${shellEscape(json)}"`;
 }
 
 export function getManagerDeploymentAddress(config: RWAConfig): string {

@@ -99,6 +99,28 @@ describe('ZipGenerator', () => {
       }
     });
 
+    it('should emit file progress in sorted path order for deterministic packaging', async () => {
+      const unsortedTree: FileTree = {
+        'src/main.rs': '#![no_std]\nfn main() {}',
+        'README.md': '# Test Project',
+        'Cargo.toml': '[package]\nname = "test"',
+      };
+      const onProgress: ProgressCallback = vi.fn();
+
+      await generateZipFromFileTree(unsortedTree, 'test-project', { onProgress });
+
+      const calls = (onProgress as ReturnType<typeof vi.fn>).mock.calls;
+      const addedMessages = calls
+        .map(([event]) => event.message)
+        .filter((message): message is string => typeof message === 'string' && message.startsWith('Added '));
+
+      expect(addedMessages).toEqual([
+        'Added Cargo.toml',
+        'Added README.md',
+        'Added src/main.rs',
+      ]);
+    });
+
     it('should not throw when no progress callback is provided', async () => {
       await expect(generateZipFromFileTree(sampleTree, 'test-project')).resolves.not.toThrow();
     });

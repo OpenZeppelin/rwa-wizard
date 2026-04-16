@@ -40,11 +40,20 @@ function getBuiltinModuleProcess(): BuiltinModuleProcess | undefined {
 }
 
 /**
+ * Report whether the current runtime is Node.js, even if local-checkout
+ * template loading is not supported.
+ */
+export function isNodeRuntime(): boolean {
+  const proc = getBuiltinModuleProcess();
+  return typeof proc?.versions?.node === 'string';
+}
+
+/**
  * Report whether the current runtime can safely read from a local checkout.
  */
 export function canUseLocalCheckoutTemplateSource(): boolean {
   const proc = getBuiltinModuleProcess();
-  return !!proc?.versions?.node && typeof proc.getBuiltinModule === 'function';
+  return isNodeRuntime() && typeof proc?.getBuiltinModule === 'function';
 }
 
 /**

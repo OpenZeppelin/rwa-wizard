@@ -113,10 +113,31 @@ describe('deploy.sh template', () => {
       });
       const script = generateDeploySh(config);
       const tokenSection = extractDeploySection(script, 'RWA_TOKEN_ADDRESS');
+      const expectedMinterAddresses = shellEscape('["GCMINTER1", "GCMINTER2"]');
 
-      expect(tokenSection).toContain(`--minter '["GCMINTER1", "GCMINTER2"]'`);
+      expect(tokenSection).toContain(`--minter "${expectedMinterAddresses}"`);
       expect(tokenSection).not.toContain('--minter "GCMINTER1"');
       expect(tokenSection).not.toContain('--minter "GCMINTER2"');
+    });
+
+    it('should shell-escape role address vectors before embedding them in deploy args', () => {
+      const minterAddresses = ['GCROLE$ONE"1', "GCROLE'TWO\\\\2"];
+      const config = createValidConfig({
+        accessControl: {
+          ownership: { type: 'single-owner', ownerAddress: 'GCOWNERADDR' },
+          roles: [
+            { name: 'Manager', symbol: 'manager', addresses: ['GCMANAGER1'] },
+            { name: 'minter', addresses: minterAddresses },
+          ],
+        },
+      });
+      const script = generateDeploySh(config);
+      const tokenSection = extractDeploySection(script, 'RWA_TOKEN_ADDRESS');
+      const expectedSerializedAddresses = shellEscape(
+        `[${minterAddresses.map((address) => JSON.stringify(address)).join(', ')}]`
+      );
+
+      expect(tokenSection).toContain(`--minter "${expectedSerializedAddresses}"`);
     });
   });
 

@@ -31,7 +31,11 @@ export async function generateZipFromFileTree(
 
   progress(createProgressEvent(CoreProgressPhase.packaging, 0, 'Starting ZIP assembly'));
 
-  const entries = Object.entries(fileTree);
+  const entries = Object.entries(fileTree).sort(([leftPath], [rightPath]) => {
+    if (leftPath < rightPath) return -1;
+    if (leftPath > rightPath) return 1;
+    return 0;
+  });
   const rootDir = projectName.endsWith('.zip') ? projectName.slice(0, -4) : projectName;
   const fileName = rootDir.endsWith('.zip') ? rootDir : `${rootDir}.zip`;
 
