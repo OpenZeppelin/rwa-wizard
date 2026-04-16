@@ -24,6 +24,7 @@ vi.mock('../src/utils/logger', () => ({
   logger: {
     error: vi.fn(),
     warn: vi.fn(),
+    plain: vi.fn(),
     success: vi.fn(),
     blank: vi.fn(),
     summary: vi.fn(),
@@ -175,7 +176,7 @@ describe('generateCommand', () => {
 
       await generateCommand({ config: 'test.json', output: '/output', chain: 'stellar' });
 
-      expect(logger.warn).toHaveBeenCalled();
+      expect(logger.plain).toHaveBeenCalledWith('Validation warnings:');
       expect(logger.validationWarning).toHaveBeenCalled();
       expect(mockAdapter.generate).toHaveBeenCalled();
     });

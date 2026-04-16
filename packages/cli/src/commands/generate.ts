@@ -63,7 +63,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
   const validation = adapter.validate(config, coreOptions);
 
   if (validation.warnings.length > 0) {
-    logger.warn('Validation warnings:');
+    logger.plain('Validation warnings:');
     for (const w of validation.warnings) {
       logger.validationWarning(w.field, w.code, w.message);
     }

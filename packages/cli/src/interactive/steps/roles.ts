@@ -70,7 +70,8 @@ async function collectRoles(hints: ChainHints): Promise<OperatorRole[]> {
       message: `Role #${roles.length + 1} — Symbol (max ${maxLen} chars, leave empty to auto-generate)`,
       defaultValue: '',
       validate: (v) => {
-        if (v && v.length > maxLen) return `Symbol must be ${maxLen} characters or fewer`;
+        const t = v.trim();
+        if (t && t.length > maxLen) return `Symbol must be ${maxLen} characters or fewer`;
       },
     });
     handleCancel(symbolInput);

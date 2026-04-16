@@ -44,8 +44,9 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
     message: 'Token name',
     placeholder: 'e.g. My RWA Token',
     validate: (v) => {
-      if (!v.trim()) return 'Token name is required';
-      if (v.length > hints.tokenNameMaxLength)
+      const t = v.trim();
+      if (!t) return 'Token name is required';
+      if (t.length > hints.tokenNameMaxLength)
         return `Token name must be ${hints.tokenNameMaxLength} characters or fewer`;
     },
   });
@@ -55,8 +56,9 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
     message: 'Token symbol',
     placeholder: 'e.g. MRWA',
     validate: (v) => {
-      if (!v.trim()) return 'Token symbol is required';
-      if (v.length > hints.tokenSymbolMaxLength)
+      const t = v.trim();
+      if (!t) return 'Token symbol is required';
+      if (t.length > hints.tokenSymbolMaxLength)
         return `Token symbol must be ${hints.tokenSymbolMaxLength} characters or fewer`;
     },
   });
@@ -85,16 +87,17 @@ export async function assetStep(hints: ChainHints): Promise<TokenConfig> {
       message: 'Initial supply (whole units)',
       placeholder: 'e.g. 1000000',
       validate: (v) => {
-        if (!v.trim()) return 'Supply is required if enabled';
+        const t = v.trim();
+        if (!t) return 'Supply is required if enabled';
         try {
-          if (BigInt(v) <= 0n) return 'Supply must be positive';
+          if (BigInt(t) <= 0n) return 'Supply must be positive';
         } catch {
           return 'Supply must be a valid integer';
         }
       },
     });
     handleCancel(supplyValue);
-    initialSupply = supplyValue as string;
+    initialSupply = (supplyValue as string).trim();
   }
 
   const docManager = await p.confirm({

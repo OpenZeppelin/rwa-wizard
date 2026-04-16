@@ -15,7 +15,9 @@ export interface WriteResult {
 // cannot write outside the user-selected output directory via `..` or absolute paths.
 function resolveSafeChildPath(baseDir: string, filePath: string): string {
   if (isAbsolute(filePath)) {
-    throw new Error(`Refusing to write absolute path outside output directory: ${filePath}`);
+    throw new Error(
+      `Generator file paths must be relative; absolute paths are not allowed: ${filePath}`
+    );
   }
 
   const fullPath = resolve(baseDir, filePath);
