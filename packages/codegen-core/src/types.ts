@@ -47,7 +47,10 @@ export interface ValidationResult {
 // ---------------------------------------------------------------------------
 
 export interface ProgressEvent {
-  /** Current pipeline phase, e.g., "validating", "generating-contracts" */
+  /**
+   * Current pipeline phase. Generators use their own names; core ZIP steps use
+   * `packaging` (see `CoreProgressPhase` in `@openzeppelin/codegen-core`).
+   */
   phase: string;
   /** Completion percentage (0–100) */
   percentage: number;

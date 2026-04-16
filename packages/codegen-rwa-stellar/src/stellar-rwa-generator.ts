@@ -37,6 +37,7 @@ import type { UpstreamTemplateSource } from './upstream/types';
 import { rwaValidationRules } from './validation/rules';
 
 import { CRATE_NAMES } from './constants';
+import { StellarRwaProgressPhase } from './progress-phases';
 
 /**
  * Sanitize a token symbol into a valid directory name for the ZIP root.
@@ -182,7 +183,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     const progress = resolveProgressCallback(options?.onProgress);
     const templateSource = resolveUpstreamTemplateSource(options);
 
-    progress(createProgressEvent('validating', 10));
+    progress(createProgressEvent(StellarRwaProgressPhase.validating, 10));
 
     const validation = this.validate(config, options);
     if (!validation.valid) {
@@ -191,7 +192,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
       );
     }
 
-    progress(createProgressEvent('generating-contracts', 30));
+    progress(createProgressEvent(StellarRwaProgressPhase.generatingContracts, 30));
 
     const crates = getCoreContractCrates();
     const members = crates.map((c) => c.dirPath);
@@ -226,7 +227,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
       );
     }
 
-    progress(createProgressEvent('generating-scripts', 60));
+    progress(createProgressEvent(StellarRwaProgressPhase.generatingScripts, 60));
 
     const workspaceToml = generateWorkspaceToml({
       members,
@@ -258,7 +259,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
 
     const configHash = computeConfigHash(config);
 
-    progress(createProgressEvent('complete', 100));
+    progress(createProgressEvent(StellarRwaProgressPhase.complete, 100));
 
     return {
       files,

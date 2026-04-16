@@ -1,6 +1,7 @@
 import JSZip from 'jszip';
 
 import { createProgressEvent, resolveProgressCallback } from './progress';
+import { CoreProgressPhase } from './progress-phases';
 import type { FileTree, ProgressCallback } from './types';
 
 export interface ZipOptions {
@@ -28,7 +29,7 @@ export async function generateZipFromFileTree(
   const progress = resolveProgressCallback(options?.onProgress);
   const zip = new JSZip();
 
-  progress(createProgressEvent('assembling-zip', 0, 'Starting ZIP assembly'));
+  progress(createProgressEvent(CoreProgressPhase.packaging, 0, 'Starting ZIP assembly'));
 
   const entries = Object.entries(fileTree);
   const rootDir = projectName.endsWith('.zip') ? projectName.slice(0, -4) : projectName;
@@ -45,14 +46,14 @@ export async function generateZipFromFileTree(
     }
 
     const percentage = Math.round(((i + 1) / entries.length) * 80);
-    progress(createProgressEvent('assembling-zip', percentage, `Added ${path}`));
+    progress(createProgressEvent(CoreProgressPhase.packaging, percentage, `Added ${path}`));
   }
 
-  progress(createProgressEvent('assembling-zip', 80, 'Compressing'));
+  progress(createProgressEvent(CoreProgressPhase.packaging, 80, 'Compressing'));
 
   const blob = await zip.generateAsync({ type: 'blob' });
 
-  progress(createProgressEvent('assembling-zip', 100, 'ZIP assembly complete'));
+  progress(createProgressEvent(CoreProgressPhase.packaging, 100, 'ZIP assembly complete'));
 
   return { data: blob, fileName };
 }

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { extractFilesFromZip, findFileContent } from './utils/zip-inspector';
 
+import { CoreProgressPhase } from '../src/progress-phases';
 import type { FileTree, ProgressCallback } from '../src/types';
 import { generateZipFromFileTree } from '../src/zip-generator';
 
@@ -91,7 +92,7 @@ describe('ZipGenerator', () => {
       expect(onProgress).toHaveBeenCalled();
       const calls = (onProgress as ReturnType<typeof vi.fn>).mock.calls;
       for (const [event] of calls) {
-        expect(event).toHaveProperty('phase');
+        expect(event.phase).toBe(CoreProgressPhase.packaging);
         expect(event).toHaveProperty('percentage');
         expect(event.percentage).toBeGreaterThanOrEqual(0);
         expect(event.percentage).toBeLessThanOrEqual(100);
