@@ -22,6 +22,7 @@ import { getManagerDeploymentAddress } from './deploy-sh-token';
 export function generateDeploySh(config: RWAConfig): string {
   const deployment = resolveStellarDeploymentTarget(config.deployment.target);
   const networkFlag = deployment.networkFlag;
+  const shellSafeDeploymentName = shellEscape(deployment.displayName);
   const adminAddress = getAdminAddress(config);
   const managerAddress = getManagerDeploymentAddress(config);
   const explorerUrlTemplate = deployment.explorerUrlTemplate;
@@ -47,9 +48,11 @@ export function generateDeploySh(config: RWAConfig): string {
   sections.push('');
 
   sections.push(
-    ...shellSection(`Deploying ${config.token.name} (${config.token.symbol}) — RWA Token System`)
+    ...shellSection(
+      `Deploying ${shellEscape(config.token.name)} (${shellEscape(config.token.symbol)}) — RWA Token System`
+    )
   );
-  sections.push(shellEcho(`  Network:        ${deployment.displayName}`));
+  sections.push(shellEcho(`  Network:        ${shellSafeDeploymentName}`));
   sections.push(shellEcho('  Source Account: $SOURCE_ACCOUNT'));
   sections.push(shellEcho('  Admin:          $ADMIN'));
   sections.push('');

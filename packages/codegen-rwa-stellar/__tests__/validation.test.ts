@@ -775,6 +775,52 @@ describe('RWA Config Validation (US5)', () => {
         })
       );
     });
+
+    it('should error when a numeric module config field has the wrong type', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'supply-limit', config: { limit: '1000000' } }],
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'compliance.modules[0].config.limit',
+          code: 'INVALID_MODULE_CONFIG_TYPE',
+        })
+      );
+    });
+
+    it('should error when a string-array module config field has the wrong type', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'country-allow', config: { allowedCountries: 123 } }],
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'compliance.modules[0].config.allowedCountries',
+          code: 'INVALID_MODULE_CONFIG_TYPE',
+        })
+      );
+    });
+
+    it('should allow comma-delimited strings for string-array module config fields', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'country-allow', config: { allowedCountries: 'CH, SG' } }],
+        },
+      });
+
+      const result = generator.validate(config, { allowUnderReviewModules: true });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -826,6 +872,19 @@ describe('RWA Config Validation (US5)', () => {
       });
 
       expect(() => generator.generate(config)).toThrow('Invalid configuration');
+    });
+
+    it('should reject invalid module config types before deployment descriptors run', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'supply-limit', config: { limit: '1000000' } }],
+        },
+      });
+
+      expect(() => generator.generate(config)).toThrow('Invalid configuration');
+      expect(() => generator.generate(config)).not.toThrow(
+        'Unsupported config value for supply-limit.limit'
+      );
     });
 
     it('should not throw when config is valid', () => {

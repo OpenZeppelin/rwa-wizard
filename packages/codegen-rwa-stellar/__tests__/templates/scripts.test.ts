@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { CRATE_NAMES } from '../../src/constants';
 import { generateBuildSh } from '../../src/templates/scripts/build-sh';
 import { generateDeploySh } from '../../src/templates/scripts/deploy-sh';
+import { shellEscape } from '../../src/templates/scripts/deploy-sh-helpers';
 import {
   createCustomDeploymentTarget,
   createPresetDeploymentTarget,
@@ -561,6 +562,41 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
 
       expect(script).toContain('Network:  Stellar Testnet');
+    });
+
+    it('should shell-escape config-derived labels in deploy output and summary', () => {
+      const tokenName = 'Acme "$HOME"';
+      const tokenSymbol = 'TOK`!';
+      const networkLabel = 'Sandbox "$HOME"';
+      const claimTopicName = 'KYC "$HOME"';
+      const issuerAddress = 'GC$ISSUER"1';
+      const config = createValidConfig({
+        token: {
+          name: tokenName,
+          symbol: tokenSymbol,
+        },
+        identityVerification: {
+          claimTopics: [{ id: 1, name: claimTopicName }],
+          trustedIssuers: [{ address: issuerAddress, claimTopics: [1] }],
+        },
+        deployment: {
+          target: createCustomDeploymentTarget('https://custom-rpc.example.com', {
+            label: networkLabel,
+          }),
+        },
+      });
+      const script = generateDeploySh(config);
+
+      expect(script).toContain(
+        `Deploying ${shellEscape(tokenName)} (${shellEscape(tokenSymbol)}) — RWA Token System`
+      );
+      expect(script).toContain(
+        `Deployment Complete — ${shellEscape(tokenName)} (${shellEscape(tokenSymbol)})`
+      );
+      expect(script).toContain(`Network:        ${shellEscape(networkLabel)}`);
+      expect(script).toContain(`Network:  ${shellEscape(networkLabel)}`);
+      expect(script).toContain(`Claim topic 1 (${shellEscape(claimTopicName)})`);
+      expect(script).toContain(`--trusted_issuer "${shellEscape(issuerAddress)}"`);
     });
   });
 

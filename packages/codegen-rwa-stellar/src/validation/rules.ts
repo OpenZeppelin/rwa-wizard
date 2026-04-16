@@ -6,6 +6,7 @@ import {
   getStellarPresetNetworkById,
   getSupportedStellarPresetNetworkIds,
 } from '../deployment/target';
+import type { ModuleConfigField } from '../modules/registry';
 import { getModuleById, getRegisteredModuleIds } from '../modules/registry';
 
 const I128_MAX = BigInt('170141183460469231731687303715884105727');
@@ -347,6 +348,55 @@ export const validateDeployment: ValidationRule<RWAConfig> = (config) => {
 // Compliance module validation rules
 // ---------------------------------------------------------------------------
 
+function assertNeverModuleConfigFieldType(value: never): never {
+  throw new Error(`Unhandled module config field type: ${value}`);
+}
+
+function isMissingModuleConfigValue(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length === 0;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+
+  return false;
+}
+
+function isValidModuleConfigValueType(value: unknown, type: ModuleConfigField['type']): boolean {
+  switch (type) {
+    case 'number':
+      return typeof value === 'number' && Number.isFinite(value);
+    case 'string':
+      return typeof value === 'string';
+    case 'string[]':
+      return (
+        typeof value === 'string' ||
+        (Array.isArray(value) && value.every((entry) => typeof entry === 'string'))
+      );
+    default:
+      return assertNeverModuleConfigFieldType(type);
+  }
+}
+
+function describeModuleConfigFieldType(type: ModuleConfigField['type']): string {
+  switch (type) {
+    case 'number':
+      return 'a finite number';
+    case 'string':
+      return 'a string';
+    case 'string[]':
+      return 'a comma-delimited string or string[]';
+    default:
+      return assertNeverModuleConfigFieldType(type);
+  }
+}
+
 export const validateComplianceModules: ValidationRule<RWAConfig> = (config) => {
   const errors: Array<{ field: string; code: string; message: string }> = [];
   const warnings: Array<{ field: string; code: string; message: string }> = [];
@@ -388,15 +438,24 @@ export const validateComplianceModules: ValidationRule<RWAConfig> = (config) => 
     }
 
     for (const field of entry.configFields) {
-      if (field.required) {
-        const val = mod.config?.[field.key];
-        if (val === undefined || val === null || val === '') {
+      const value = mod.config?.[field.key];
+      if (isMissingModuleConfigValue(value)) {
+        if (field.required) {
           errors.push({
             field: `compliance.modules[${i}].config.${field.key}`,
             code: 'REQUIRED_MODULE_CONFIG',
             message: `Module "${entry.name}" requires config field "${field.label}"`,
           });
         }
+        continue;
+      }
+
+      if (!isValidModuleConfigValueType(value, field.type)) {
+        errors.push({
+          field: `compliance.modules[${i}].config.${field.key}`,
+          code: 'INVALID_MODULE_CONFIG_TYPE',
+          message: `Module "${entry.name}" config field "${field.label}" must be ${describeModuleConfigFieldType(field.type)}`,
+        });
       }
     }
   }

@@ -20,7 +20,6 @@
 import type {
   GenerateOptions,
   GenerationResult,
-  ProgressCallback,
   ValidationResult,
   ZipResult,
 } from './codegen-core-api';
@@ -86,7 +85,7 @@ export interface ComplianceModuleRegistryEntry {
  * Validate an RWA configuration without generating output.
  * Returns structured, machine-readable validation results.
  */
-export declare function validate(config: RWAConfig): ValidationResult;
+export declare function validate(config: RWAConfig, options?: GenerateOptions): ValidationResult;
 
 /**
  * Generate a complete Stellar/Soroban RWA token project.
@@ -102,10 +101,12 @@ export declare function generate(config: RWAConfig, options?: GenerateOptions): 
  * Convenience wrapper: calls generate() internally, then delegates to
  * codegen-core's generateZip() for ZIP assembly. Accepts an RWAConfig
  * directly (unlike codegen-core's generateZip which takes a GenerationResult).
+ * Supports the same GenerateOptions surface as generate(), including
+ * progress callbacks, local contract-library overrides, and review gating.
  */
 export declare function generateZip(
   config: RWAConfig,
-  options?: { onProgress?: ProgressCallback }
+  options?: GenerateOptions
 ): Promise<ZipResult>;
 
 /**
