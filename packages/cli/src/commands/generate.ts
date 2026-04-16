@@ -1,5 +1,5 @@
-import { existsSync, statSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 
@@ -50,7 +50,9 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
     }
   } else {
     isInteractive = true;
-    const result = await runWizard(adapter);
+    const result = await runWizard(adapter, {
+      outputFormat: opts.zip ? 'zip' : undefined,
+    });
     if (!result) process.exit(0);
     config = result.config;
     useZip = result.outputFormat === 'zip';
@@ -182,6 +184,11 @@ async function offerConfigExport(config: RWAConfig): Promise<void> {
   if (p.isCancel(exportPath)) return;
 
   const absolutePath = resolve(exportPath as string);
-  writeFileSync(absolutePath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
-  logger.success(`Configuration exported to ${absolutePath}`);
+  try {
+    mkdirSync(dirname(absolutePath), { recursive: true });
+    writeFileSync(absolutePath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+    logger.success(`Configuration exported to ${absolutePath}`);
+  } catch (err) {
+    logger.error(`Failed to export configuration to ${absolutePath}: ${(err as Error).message}`);
+  }
 }

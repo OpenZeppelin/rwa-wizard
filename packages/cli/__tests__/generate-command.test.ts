@@ -227,8 +227,21 @@ describe('generateCommand', () => {
 
       await generateCommand({ output: '/output', chain: 'stellar' });
 
-      expect(runWizard).toHaveBeenCalledWith(mockAdapter);
+      expect(runWizard).toHaveBeenCalledWith(mockAdapter, { outputFormat: undefined });
       expect(mockAdapter.generate).toHaveBeenCalled();
+    });
+
+    it('should pass --zip override to the wizard and skip the format prompt', async () => {
+      vi.mocked(runWizard).mockResolvedValue({
+        config: createValidConfig(),
+        outputFormat: 'zip',
+      });
+
+      await generateCommand({ output: '/out.zip', chain: 'stellar', zip: true });
+
+      expect(runWizard).toHaveBeenCalledWith(mockAdapter, { outputFormat: 'zip' });
+      expect(mockAdapter.generateZip).toHaveBeenCalled();
+      expect(writeZip).toHaveBeenCalled();
     });
 
     it('should exit gracefully when wizard is cancelled', async () => {

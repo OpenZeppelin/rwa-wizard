@@ -55,8 +55,9 @@ export async function complianceStep(
           message: `${entry.name} — ${field.label}`,
           placeholder: field.placeholder,
           validate: (input) => {
-            if (field.required && !input.trim()) return `${field.label} is required`;
-            if (input.trim() && isNaN(Number(input))) return 'Must be a number';
+            const t = input.trim();
+            if (field.required && !t) return `${field.label} is required`;
+            if (t && !Number.isFinite(Number(t))) return 'Must be a finite number';
             return undefined;
           },
         });

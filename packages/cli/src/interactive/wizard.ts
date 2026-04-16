@@ -17,7 +17,15 @@ export interface WizardResult {
   outputFormat: 'files' | 'zip';
 }
 
-export async function runWizard(adapter: GeneratorAdapter): Promise<WizardResult | null> {
+export interface WizardOptions {
+  /** When set, skips the interactive output-format prompt (e.g. from `--zip`). */
+  outputFormat?: 'files' | 'zip';
+}
+
+export async function runWizard(
+  adapter: GeneratorAdapter,
+  options: WizardOptions = {}
+): Promise<WizardResult | null> {
   p.intro(`RWA Wizard — ${adapter.name}`);
 
   const { hints } = adapter;
@@ -43,6 +51,10 @@ export async function runWizard(adapter: GeneratorAdapter): Promise<WizardResult
   if (!confirmed) {
     p.cancel('Generation cancelled.');
     return null;
+  }
+
+  if (options.outputFormat) {
+    return { config, outputFormat: options.outputFormat };
   }
 
   const outputFormat = await p.select({
