@@ -130,6 +130,24 @@ describe('writeFileTree', () => {
     ).toThrow(/outside output directory/);
   });
 
+  it('should allow filenames beginning with .. when they stay inside the output directory', () => {
+    writeFileTree(
+      {
+        files: { '..suffix.txt': 'ok' },
+        metadata: {
+          generatorName: 't',
+          generatorVersion: '0',
+          generatedAt: '',
+          fileCount: 1,
+          configHash: 'x',
+        },
+      },
+      tmpDir
+    );
+
+    expect(readFileSync(join(tmpDir, '..suffix.txt'), 'utf-8')).toBe('ok');
+  });
+
   it('should refuse absolute file paths from generators', () => {
     expect(() =>
       writeFileTree(

@@ -21,7 +21,13 @@ function resolveSafeChildPath(baseDir: string, filePath: string): string {
   const fullPath = resolve(baseDir, filePath);
   const rel = relative(baseDir, fullPath);
 
-  if (rel.startsWith('..') || isAbsolute(rel) || rel.split(sep).includes('..')) {
+  // Reject only `..` path segments — not filenames like `..foo.txt`.
+  if (isAbsolute(rel)) {
+    throw new Error(`Refusing to write path outside output directory: ${filePath}`);
+  }
+
+  const segments = rel.split(sep).filter(Boolean);
+  if (segments.some((segment) => segment === '..')) {
     throw new Error(`Refusing to write path outside output directory: ${filePath}`);
   }
 

@@ -1,8 +1,11 @@
 import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const CLI_ROOT = join(__dirname, '..');
 const CLI_BIN = join(CLI_ROOT, 'dist', 'index.mjs');

@@ -1,3 +1,6 @@
+import { mkdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { generateCommand } from '../src/commands/generate';
@@ -63,6 +66,7 @@ describe('generateCommand', () => {
       outputPath: '/out.zip',
       fileCount: 5,
       isZip: true,
+      sizeBytes: 128,
     });
   });
 
@@ -92,6 +96,28 @@ describe('generateCommand', () => {
       expect(mockAdapter.generateZip).toHaveBeenCalled();
       expect(writeZip).toHaveBeenCalled();
       expect(logger.success).toHaveBeenCalledWith('Generation complete');
+    });
+
+    it('should exit when --zip is combined with a directory --output', async () => {
+      vi.mocked(loadConfig).mockReturnValue(createValidConfig());
+      const dir = join(tmpdir(), `rwa-cli-zip-dir-${Date.now()}`);
+      mkdirSync(dir, { recursive: true });
+      try {
+        await expect(
+          generateCommand({
+            config: 'test.json',
+            output: dir,
+            zip: true,
+            chain: 'stellar',
+          })
+        ).rejects.toThrow(ExitError);
+        expect(logger.error).toHaveBeenCalledWith(
+          expect.stringContaining('When using --zip')
+        );
+        expect(mockAdapter.generateZip).not.toHaveBeenCalled();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     it('should pass allowUnderReviewModules to validate, generateZip, and generate', async () => {
@@ -223,6 +249,23 @@ describe('generateCommand', () => {
 
       expect(mockAdapter.generateZip).toHaveBeenCalled();
       expect(writeZip).toHaveBeenCalled();
+    });
+
+    it('should prompt for a zip file path when the default output is a directory', async () => {
+      const prompts = await import('@clack/prompts');
+      vi.mocked(prompts.text).mockResolvedValueOnce('/tmp/rwa-out.zip');
+
+      vi.mocked(runWizard).mockResolvedValue({
+        config: createValidConfig(),
+        outputFormat: 'zip',
+      });
+
+      await generateCommand({ output: '.', chain: 'stellar' });
+
+      expect(prompts.text).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'ZIP archive output path' })
+      );
+      expect(writeZip).toHaveBeenCalledWith(expect.any(Object), '/tmp/rwa-out.zip');
     });
   });
 });
