@@ -10,9 +10,18 @@ import type {
 import type { ChainHints, GeneratorAdapter } from '../../generators/registry';
 import { handleWizardCancel } from '../utils';
 
-const URL_PROTOCOLS = new Set(['http:', 'https:', 'ws:', 'wss:']);
+/** RPC endpoints may be HTTP(S) or WebSocket(S). */
+const RPC_URL_PROTOCOLS = new Set(['http:', 'https:', 'ws:', 'wss:']);
 
-function validateHttpUrl(input: string, required: boolean): string | undefined {
+/** Block explorer links are normal web URLs only. */
+const EXPLORER_URL_PROTOCOLS = new Set(['http:', 'https:']);
+
+function validateUrl(
+  input: string,
+  required: boolean,
+  allowedProtocols: Set<string>,
+  protocolHint: string
+): string | undefined {
   const trimmed = input.trim();
   if (!trimmed) {
     return required ? 'URL is required' : undefined;
@@ -23,10 +32,18 @@ function validateHttpUrl(input: string, required: boolean): string | undefined {
   } catch {
     return 'Invalid URL';
   }
-  if (!URL_PROTOCOLS.has(parsed.protocol)) {
-    return 'URL must use http(s) or ws(s)';
+  if (!allowedProtocols.has(parsed.protocol)) {
+    return `URL must use ${protocolHint}`;
   }
   return undefined;
+}
+
+function validateRpcUrl(input: string, required: boolean): string | undefined {
+  return validateUrl(input, required, RPC_URL_PROTOCOLS, 'http(s) or ws(s)');
+}
+
+function validateExplorerUrl(input: string, required: boolean): string | undefined {
+  return validateUrl(input, required, EXPLORER_URL_PROTOCOLS, 'http(s)');
 }
 
 async function collectPresetTarget(adapter: GeneratorAdapter): Promise<PresetDeploymentTarget> {
@@ -54,14 +71,14 @@ async function collectCustomTarget(adapter: GeneratorAdapter): Promise<CustomDep
   const rpcUrl = await p.text({
     message: 'RPC URL',
     placeholder: adapter.hints.customRpcPlaceholder ?? 'https://example.com/rpc',
-    validate: (v) => validateHttpUrl(v, true),
+    validate: (v) => validateRpcUrl(v, true),
   });
   handleWizardCancel(rpcUrl);
 
   const explorerInput = await p.text({
     message: 'Explorer URL (optional)',
     defaultValue: '',
-    validate: (v) => validateHttpUrl(v, false),
+    validate: (v) => validateExplorerUrl(v, false),
   });
   handleWizardCancel(explorerInput);
 
