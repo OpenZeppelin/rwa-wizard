@@ -3,7 +3,7 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { resolveStellarDeploymentTarget } from '../../deployment/target';
 import { buildDeploymentSections } from './deploy-sh-deployments';
-import { buildColorPreamble, shellEcho, shellSection } from './deploy-sh-helpers';
+import { buildColorPreamble, shellEcho, shellEscape, shellSection } from './deploy-sh-helpers';
 import { buildInitialSupplyGuidance, buildPostDeployConfig } from './deploy-sh-post-deploy';
 import { buildDeploymentSummary } from './deploy-sh-summary';
 import { getManagerDeploymentAddress } from './deploy-sh-token';
@@ -22,6 +22,7 @@ import { getManagerDeploymentAddress } from './deploy-sh-token';
 export function generateDeploySh(config: RWAConfig): string {
   const deployment = resolveStellarDeploymentTarget(config.deployment.target);
   const networkFlag = deployment.networkFlag;
+  const shellSafeDeploymentName = shellEscape(deployment.displayName);
   const adminAddress = getAdminAddress(config);
   const managerAddress = getManagerDeploymentAddress(config);
   const explorerUrlTemplate = deployment.explorerUrlTemplate;
@@ -32,8 +33,8 @@ export function generateDeploySh(config: RWAConfig): string {
   sections.push('');
   sections.push(...buildColorPreamble());
   sections.push('');
-  sections.push(`ADMIN="${adminAddress}"`);
-  sections.push(`MANAGER="${managerAddress}"`);
+  sections.push(`ADMIN="${shellEscape(adminAddress)}"`);
+  sections.push(`MANAGER="${shellEscape(managerAddress)}"`);
   sections.push('SOURCE_ACCOUNT="${SOURCE_ACCOUNT:-${STELLAR_ACCOUNT:-}}"');
   sections.push('');
   sections.push('if [ -z "$SOURCE_ACCOUNT" ]; then');
@@ -47,9 +48,11 @@ export function generateDeploySh(config: RWAConfig): string {
   sections.push('');
 
   sections.push(
-    ...shellSection(`Deploying ${config.token.name} (${config.token.symbol}) — RWA Token System`)
+    ...shellSection(
+      `Deploying ${shellEscape(config.token.name)} (${shellEscape(config.token.symbol)}) — RWA Token System`
+    )
   );
-  sections.push(shellEcho(`  Network:        ${deployment.displayName}`));
+  sections.push(shellEcho(`  Network:        ${shellSafeDeploymentName}`));
   sections.push(shellEcho('  Source Account: $SOURCE_ACCOUNT'));
   sections.push(shellEcho('  Admin:          $ADMIN'));
   sections.push('');

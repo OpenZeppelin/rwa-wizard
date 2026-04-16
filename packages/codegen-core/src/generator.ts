@@ -1,4 +1,5 @@
 import { createProgressEvent, resolveProgressCallback } from './progress';
+import { CoreProgressPhase } from './progress-phases';
 import type { GenerationResult, ProgressCallback, ZipResult } from './types';
 import { generateZipFromFileTree } from './zip-generator';
 
@@ -20,13 +21,13 @@ export async function generateZip(
 ): Promise<ZipResult> {
   const progress = resolveProgressCallback(options?.onProgress);
 
-  progress(createProgressEvent('packaging', 0, 'Starting ZIP packaging'));
+  progress(createProgressEvent(CoreProgressPhase.packaging, 0, 'Starting ZIP packaging'));
 
   const zipOutput = await generateZipFromFileTree(result.files, fileName, {
     onProgress: options?.onProgress,
   });
 
-  progress(createProgressEvent('packaging', 100, 'ZIP packaging complete'));
+  progress(createProgressEvent(CoreProgressPhase.packaging, 100, 'ZIP packaging complete'));
 
   return {
     data: zipOutput.data,

@@ -8,6 +8,7 @@ import {
   CLR,
   moduleVarName,
   shellEcho,
+  shellEscape,
   shellSection,
   shellSubsection,
 } from './deploy-sh-helpers';
@@ -51,8 +52,9 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
       if (!descriptor) continue;
 
       const modVar = `$${moduleVarName(selection.moduleId)}`;
+      const shellSafeDescriptorName = shellEscape(descriptor.name);
       lines.push('echo ""');
-      lines.push(shellEcho(`${CLR.bold}  Configuring ${descriptor.name}...${CLR.rst}`));
+      lines.push(shellEcho(`${CLR.bold}  Configuring ${shellSafeDescriptorName}...${CLR.rst}`));
 
       if (descriptor.deployment.requiresIdentityRegistryStorage) {
         lines.push(
@@ -100,7 +102,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
 
       lines.push(
         shellEcho(
-          `${CLR.green}  ✓ ${descriptor.name} registered on hooks: ${descriptor.requiredHooks.map(serializeStellarComplianceHookForCli).join(', ')}${CLR.rst}`
+          `${CLR.green}  ✓ ${shellSafeDescriptorName} registered on hooks: ${descriptor.requiredHooks.map(serializeStellarComplianceHookForCli).join(', ')}${CLR.rst}`
         )
       );
     }
@@ -119,7 +121,9 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
           networkFlag
         )
       );
-      lines.push(shellEcho(`${CLR.green}  ✓ Claim topic ${topic.id} (${topic.name})${CLR.rst}`));
+      lines.push(
+        shellEcho(`${CLR.green}  ✓ Claim topic ${topic.id} (${shellEscape(topic.name)})${CLR.rst}`)
+      );
     }
   }
 
@@ -129,17 +133,19 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
     );
     for (const issuer of config.identityVerification.trustedIssuers) {
       const topicsArg = `'[${issuer.claimTopics.map(String).join(', ')}]'`;
+      const shellSafeIssuerAddress = shellEscape(issuer.address);
+      const issuerPreview = shellEscape(issuer.address.slice(0, 8));
       lines.push(
         buildInvokeCommand(
           '$CTI_ADDRESS',
           'add_trusted_issuer',
-          `--trusted_issuer "${issuer.address}" --claim_topics ${topicsArg} --operator "$MANAGER"`,
+          `--trusted_issuer "${shellSafeIssuerAddress}" --claim_topics ${topicsArg} --operator "$MANAGER"`,
           networkFlag
         )
       );
       lines.push(
         shellEcho(
-          `${CLR.green}  ✓ Issuer ${issuer.address.slice(0, 8)}... → topics [${issuer.claimTopics.join(', ')}]${CLR.rst}`
+          `${CLR.green}  ✓ Issuer ${issuerPreview}... → topics [${issuer.claimTopics.join(', ')}]${CLR.rst}`
         )
       );
     }

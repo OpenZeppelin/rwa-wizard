@@ -27,7 +27,7 @@ export const RUST_EDITION = '2021';
 export const DEFAULT_TOKEN_VERSION = '1.0.0';
 
 export const CRATE_NAMES = {
-  rwaTtoken: 'rwa-token',
+  rwaToken: 'rwa-token',
   compliance: 'compliance',
   identityVerifier: 'identity-verifier',
   claimTopicsIssuers: 'claim-topics-issuers',

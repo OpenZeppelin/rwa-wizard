@@ -37,22 +37,9 @@ import type { UpstreamTemplateSource } from './upstream/types';
 import { rwaValidationRules } from './validation/rules';
 
 import { CRATE_NAMES } from './constants';
+import { StellarRwaProgressPhase } from './progress-phases';
 
-/**
- * Sanitize a token symbol into a valid directory name for the ZIP root.
- *
- * Algorithm: lowercase → replace non-alphanumeric with hyphens →
- * collapse consecutive hyphens → trim leading/trailing hyphens → append `-rwa`.
- */
-export function sanitizeDirectoryName(symbol: string): string {
-  const sanitized = symbol
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '-')
-    .replace(/-{2,}/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-  return `${sanitized}-rwa`;
-}
+export { sanitizeDirectoryName } from './sanitize-project-name';
 
 const GENERATOR_NAME = 'codegen-rwa-stellar';
 const GENERATOR_VERSION = '0.1.0';
@@ -71,8 +58,8 @@ interface ContractCrate {
 function getCoreContractCrates(): ContractCrate[] {
   return [
     {
-      name: CRATE_NAMES.rwaTtoken,
-      dirPath: `contracts/${CRATE_NAMES.rwaTtoken}`,
+      name: CRATE_NAMES.rwaToken,
+      dirPath: `contracts/${CRATE_NAMES.rwaToken}`,
       dependencies: [
         'soroban-sdk',
         'stellar-access',
@@ -182,7 +169,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
     const progress = resolveProgressCallback(options?.onProgress);
     const templateSource = resolveUpstreamTemplateSource(options);
 
-    progress(createProgressEvent('validating', 10));
+    progress(createProgressEvent(StellarRwaProgressPhase.validating, 10));
 
     const validation = this.validate(config, options);
     if (!validation.valid) {
@@ -191,7 +178,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
       );
     }
 
-    progress(createProgressEvent('generating-contracts', 30));
+    progress(createProgressEvent(StellarRwaProgressPhase.generatingContracts, 30));
 
     const crates = getCoreContractCrates();
     const members = crates.map((c) => c.dirPath);
@@ -226,7 +213,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
       );
     }
 
-    progress(createProgressEvent('generating-scripts', 60));
+    progress(createProgressEvent(StellarRwaProgressPhase.generatingScripts, 60));
 
     const workspaceToml = generateWorkspaceToml({
       members,
@@ -258,7 +245,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
 
     const configHash = computeConfigHash(config);
 
-    progress(createProgressEvent('complete', 100));
+    progress(createProgressEvent(StellarRwaProgressPhase.complete, 100));
 
     return {
       files,

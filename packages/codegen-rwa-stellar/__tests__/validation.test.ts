@@ -138,6 +138,26 @@ describe('RWA Config Validation (US5)', () => {
       );
     });
 
+    it('should error when name contains control characters', () => {
+      const config = createValidConfig({
+        token: {
+          name: 'Bad\nName',
+          symbol: 'TST',
+          decimals: 18,
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'token.name',
+          code: 'INVALID_CONTROL_CHARACTERS',
+        })
+      );
+    });
+
     it('should check UTF-8 byte length for Unicode token name', () => {
       // Each emoji is 4 bytes in UTF-8. 9 emojis = 36 bytes > 32 max.
       const unicodeName = '🏠'.repeat(9);
@@ -201,6 +221,46 @@ describe('RWA Config Validation (US5)', () => {
         expect.objectContaining({
           field: 'token.symbol',
           code: 'MAX_LENGTH_EXCEEDED',
+        })
+      );
+    });
+
+    it('should error when symbol sanitizes to an empty directory name base', () => {
+      const config = createValidConfig({
+        token: {
+          name: 'Test',
+          symbol: '!!!',
+          decimals: 18,
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'token.symbol',
+          code: 'INVALID_TOKEN_SYMBOL',
+        })
+      );
+    });
+
+    it('should error when symbol contains control characters', () => {
+      const config = createValidConfig({
+        token: {
+          name: 'Test',
+          symbol: 'TS\nT',
+          decimals: 18,
+          documentManager: { enabled: false },
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'token.symbol',
+          code: 'INVALID_CONTROL_CHARACTERS',
         })
       );
     });
@@ -734,6 +794,42 @@ describe('RWA Config Validation (US5)', () => {
       expect(result.valid).toBe(true);
     });
 
+    it('should error when custom rpcUrl contains control characters', () => {
+      const config = createValidConfig({
+        deployment: {
+          target: createCustomDeploymentTarget('https://evil.example.com\n'),
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'deployment.target.rpcUrl',
+          code: 'INVALID_CONTROL_CHARACTERS',
+        })
+      );
+    });
+
+    it('should error when custom label contains control characters', () => {
+      const config = createValidConfig({
+        deployment: {
+          target: createCustomDeploymentTarget('https://custom-rpc.example.com', {
+            label: 'My\nnet',
+          }),
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'deployment.target.label',
+          code: 'INVALID_CONTROL_CHARACTERS',
+        })
+      );
+    });
+
     it('should error when custom explorerUrl is invalid', () => {
       const config = createValidConfig({
         deployment: {
@@ -774,6 +870,52 @@ describe('RWA Config Validation (US5)', () => {
           code: 'UNSUPPORTED_MODULE',
         })
       );
+    });
+
+    it('should error when a numeric module config field has the wrong type', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'supply-limit', config: { limit: '1000000' } }],
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'compliance.modules[0].config.limit',
+          code: 'INVALID_MODULE_CONFIG_TYPE',
+        })
+      );
+    });
+
+    it('should error when a string-array module config field has the wrong type', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'country-allow', config: { allowedCountries: 123 } }],
+        },
+      });
+
+      const result = generator.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'compliance.modules[0].config.allowedCountries',
+          code: 'INVALID_MODULE_CONFIG_TYPE',
+        })
+      );
+    });
+
+    it('should allow comma-delimited strings for string-array module config fields', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'country-allow', config: { allowedCountries: 'CH, SG' } }],
+        },
+      });
+
+      const result = generator.validate(config, { allowUnderReviewModules: true });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
   });
 
@@ -826,6 +968,19 @@ describe('RWA Config Validation (US5)', () => {
       });
 
       expect(() => generator.generate(config)).toThrow('Invalid configuration');
+    });
+
+    it('should reject invalid module config types before deployment descriptors run', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'supply-limit', config: { limit: '1000000' } }],
+        },
+      });
+
+      expect(() => generator.generate(config)).toThrow('Invalid configuration');
+      expect(() => generator.generate(config)).not.toThrow(
+        'Unsupported config value for supply-limit.limit'
+      );
     });
 
     it('should not throw when config is valid', () => {

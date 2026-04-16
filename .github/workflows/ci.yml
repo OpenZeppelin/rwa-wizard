@@ -29,8 +29,6 @@ jobs:
 
       - name: Prepare pre-requisites
         uses: ./.github/actions/prepare
-        with:
-          token: ${{ github.token }}
 
       - name: Build all packages
         run: pnpm build
