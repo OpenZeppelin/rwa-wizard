@@ -87,7 +87,7 @@ export function resolveStellarDeploymentTarget(
       const networkConfig = createMinimalCustomStellarNetworkConfig(target);
       return {
         displayName: target.label?.trim() || `Custom RPC (${target.rpcUrl})`,
-        networkFlag: `--rpc-url ${target.rpcUrl}`,
+        networkFlag: `--rpc-url '${target.rpcUrl.replace(/'/g, "'\\''")}'`,
         explorerUrlTemplate: createExplorerUrlTemplate(networkConfig),
       };
     }

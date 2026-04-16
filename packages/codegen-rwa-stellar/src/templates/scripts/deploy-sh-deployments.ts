@@ -105,7 +105,7 @@ function buildTokenDeploymentDescriptor(config: RWAConfig): DeploymentDescriptor
   return {
     varName: 'RWA_TOKEN_ADDRESS',
     displayName: `${config.token.symbol} Token`,
-    crateName: CRATE_NAMES.rwaTtoken,
+    crateName: CRATE_NAMES.rwaToken,
     constructorArgs: buildTokenConstructorArgs(config),
   };
 }

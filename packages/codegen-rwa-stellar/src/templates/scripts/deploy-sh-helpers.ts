@@ -1,3 +1,11 @@
+/**
+ * Escape a string for safe embedding inside double-quoted shell strings.
+ * Prevents shell injection via user-controlled config values.
+ */
+export function shellEscape(value: string): string {
+  return value.replace(/[\\"$`!]/g, '\\$&');
+}
+
 export const SEPARATOR = '═══════════════════════════════════════════════════════════════';
 export const THIN_SEPARATOR = '───────────────────────────────────────────────────────────────';
 
@@ -36,6 +44,13 @@ export function buildColorPreamble(): string[] {
   ];
 }
 
+/**
+ * Emit an `echo "..."` command for content that is already shell-safe.
+ *
+ * Escape any user-controlled text with `shellEscape()` before passing it here.
+ * Leave ANSI placeholders and runtime shell variables unescaped when they are
+ * intentionally meant to expand during script execution.
+ */
 export function shellEcho(msg: string): string {
   return `echo "${msg}"`;
 }
@@ -44,6 +59,9 @@ export function shellEchoRaw(msg: string): string {
   return `echo '${msg}'`;
 }
 
+/**
+ * Build a section header. `title` must already be safe for double-quoted echo output.
+ */
 export function shellSection(title: string): string[] {
   return [
     'echo ""',
@@ -55,6 +73,9 @@ export function shellSection(title: string): string[] {
   ];
 }
 
+/**
+ * Build a subsection header. `title` must already be safe for double-quoted echo output.
+ */
 export function shellSubsection(title: string): string[] {
   return [
     'echo ""',
@@ -64,10 +85,17 @@ export function shellSubsection(title: string): string[] {
   ];
 }
 
+export function renderExplorerUrlForEcho(explorerUrlTemplate: string, varName: string): string {
+  const contractAddressSentinel = '__CONTRACT_ADDRESS_SENTINEL__';
+  return shellEscape(
+    explorerUrlTemplate.replace('__CONTRACT_ADDRESS__', contractAddressSentinel)
+  ).replace(contractAddressSentinel, `\${${varName}}`);
+}
+
 function buildExplorerLine(explorerUrlTemplate: string | undefined, varName: string): string {
   if (!explorerUrlTemplate) return '';
   return shellEcho(
-    `${CLR.dim}    Explorer: ${explorerUrlTemplate.replace('__CONTRACT_ADDRESS__', `\${${varName}}`)}${CLR.rst}`
+    `${CLR.dim}    Explorer: ${renderExplorerUrlForEcho(explorerUrlTemplate, varName)}${CLR.rst}`
   );
 }
 
@@ -100,14 +128,17 @@ export function buildDeploySection(
 ): string {
   const lines: string[] = [];
   const prefix = stepLabel ? `${stepLabel} ` : '';
+  const shellSafeDisplayName = shellEscape(displayName);
 
-  lines.push(shellEcho(`${CLR.bold}  ${prefix}Deploying ${displayName} ...${CLR.rst}`));
+  lines.push(shellEcho(`${CLR.bold}  ${prefix}Deploying ${shellSafeDisplayName} ...${CLR.rst}`));
   lines.push(`${varName}=$(${buildDeployCommand(crateName, constructorArgs, networkFlag)})`);
   lines.push(`if [ $? -ne 0 ] || [ -z "$${varName}" ]; then`);
-  lines.push(`  echo "${CLR.red}  ✗ Failed to deploy ${displayName} (${crateName})${CLR.rst}"`);
+  lines.push(
+    `  echo "${CLR.red}  ✗ Failed to deploy ${shellSafeDisplayName} (${crateName})${CLR.rst}"`
+  );
   lines.push('  exit 1');
   lines.push('fi');
-  lines.push(shellEcho(`${CLR.green}  ✓ ${displayName}: \${${varName}}${CLR.rst}`));
+  lines.push(shellEcho(`${CLR.green}  ✓ ${shellSafeDisplayName}: \${${varName}}${CLR.rst}`));
   const explorerLine = buildExplorerLine(explorerUrlTemplate, varName);
   if (explorerLine) {
     lines.push(explorerLine);

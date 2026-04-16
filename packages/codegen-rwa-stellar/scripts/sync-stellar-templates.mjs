@@ -67,13 +67,31 @@ function normalizeGitRemoteUrl(value) {
   }
 }
 
+const CANONICAL_REPO_OWNER = 'OpenZeppelin';
+
 function resolveSourceRepoUrl(checkoutRoot) {
   const originUrl = readGitValue(
     checkoutRoot,
     ['remote', 'get-url', 'origin'],
     SOURCE_REPO_URL_FALLBACK
   );
-  return normalizeGitRemoteUrl(originUrl);
+  const normalized = normalizeGitRemoteUrl(originUrl);
+
+  try {
+    const parsed = new URL(normalized);
+    const owner = parsed.pathname.split('/').filter(Boolean)[0];
+    if (owner !== CANONICAL_REPO_OWNER) {
+      process.stderr.write(
+        `Warning: checkout remote "${normalized}" is not under ${CANONICAL_REPO_OWNER}. ` +
+        `Using canonical URL: ${SOURCE_REPO_URL_FALLBACK}\n`
+      );
+      return SOURCE_REPO_URL_FALLBACK;
+    }
+  } catch {
+    return SOURCE_REPO_URL_FALLBACK;
+  }
+
+  return normalized;
 }
 
 function buildSnapshotMetadata(checkoutRoot) {

@@ -3,11 +3,13 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { roleSymbolToRustIdentifier } from '../../access-control';
 import { generateRoleSymbol } from '../../constants';
+import { shellEscape } from './deploy-sh-helpers';
 
 const roleResolutionOptions = { generateRoleSymbol };
 
 function serializeAddressVectorArg(addresses: readonly string[]): string {
-  return `'[${addresses.map((address) => `"${address}"`).join(', ')}]'`;
+  const json = `[${addresses.map((address) => JSON.stringify(address)).join(', ')}]`;
+  return `"${shellEscape(json)}"`;
 }
 
 export function getManagerDeploymentAddress(config: RWAConfig): string {
@@ -19,8 +21,8 @@ export function getManagerDeploymentAddress(config: RWAConfig): string {
  */
 export function buildTokenConstructorArgs(config: RWAConfig): string {
   const args: string[] = [];
-  args.push(`--name "${config.token.name}"`);
-  args.push(`--symbol "${config.token.symbol}"`);
+  args.push(`--name "${shellEscape(config.token.name)}"`);
+  args.push(`--symbol "${shellEscape(config.token.symbol)}"`);
   args.push('--admin "$ADMIN"');
   args.push('--manager "$MANAGER"');
   args.push('--compliance "$COMPLIANCE_ADDRESS"');

@@ -48,6 +48,8 @@ export {
 
 // Progress utilities
 export { noopProgress, createProgressEvent, resolveProgressCallback } from './progress';
+export { CoreProgressPhase } from './progress-phases';
+export type { CoreProgressPhaseName } from './progress-phases';
 
 // Source patch helpers
 export { insertAfterExact, insertBeforeExact, replaceExact } from './source-patch';

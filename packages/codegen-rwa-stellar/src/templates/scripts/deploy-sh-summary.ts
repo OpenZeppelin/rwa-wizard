@@ -3,8 +3,10 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 import { resolveStellarDeploymentTarget } from '../../deployment/target';
 import {
   CLR,
+  renderExplorerUrlForEcho,
   shellEcho,
   shellEchoRaw,
+  shellEscape,
   shellSection,
   THIN_SEPARATOR,
   type DeployedContract,
@@ -17,12 +19,15 @@ export function buildDeploymentSummary(
 ): string[] {
   const lines: string[] = [];
   const deployment = resolveStellarDeploymentTarget(config.deployment.target);
+  const shellSafeDeploymentName = shellEscape(deployment.displayName);
 
   lines.push(
-    ...shellSection(`Deployment Complete — ${config.token.name} (${config.token.symbol})`)
+    ...shellSection(
+      `Deployment Complete — ${shellEscape(config.token.name)} (${shellEscape(config.token.symbol)})`
+    )
   );
 
-  lines.push(shellEcho('  Network:  ' + deployment.displayName));
+  lines.push(shellEcho('  Network:  ' + shellSafeDeploymentName));
   lines.push(shellEcho('  Admin:    $ADMIN'));
   lines.push(shellEcho('  Signer:   $SOURCE_ACCOUNT'));
   lines.push('echo ""');
@@ -32,7 +37,8 @@ export function buildDeploymentSummary(
   lines.push(shellEcho(`${CLR.dim}${THIN_SEPARATOR}${CLR.rst}`));
 
   for (const contract of contracts) {
-    const paddedName = contract.name.padEnd(30);
+    const shellSafeContractName = shellEscape(contract.name);
+    const paddedName = shellSafeContractName.padEnd(30);
     lines.push(shellEcho(`  ${CLR.green}${paddedName}${CLR.rst} \${${contract.varName}}`));
   }
 
@@ -42,10 +48,10 @@ export function buildDeploymentSummary(
     lines.push('echo ""');
     lines.push(shellEcho(`  ${CLR.bold}Contract Explorer Links:${CLR.rst}`));
     for (const contract of contracts) {
-      lines.push(shellEcho(`    ${contract.name}:`));
+      lines.push(shellEcho(`    ${shellEscape(contract.name)}:`));
       lines.push(
         shellEcho(
-          `${CLR.dim}      ${explorerUrlTemplate.replace('__CONTRACT_ADDRESS__', `\${${contract.varName}}`)}${CLR.rst}`
+          `${CLR.dim}      ${renderExplorerUrlForEcho(explorerUrlTemplate, contract.varName)}${CLR.rst}`
         )
       );
     }

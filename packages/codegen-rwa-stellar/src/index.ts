@@ -60,6 +60,13 @@ export { generateRoleSymbol } from './constants';
 export { StellarRwaGenerator } from './stellar-rwa-generator';
 
 /**
+ * Canonical progress phase strings for `StellarRwaGenerator.generate()`.
+ * ZIP packaging uses `packaging` from `@openzeppelin/codegen-core` via `generateZip()`.
+ */
+export { StellarRwaProgressPhase } from './progress-phases';
+export type { StellarRwaProgressPhaseName } from './progress-phases';
+
+/**
  * Metadata describing an available compliance module in the Stellar registry.
  *
  * Includes the module's unique ID, human-readable name, description,

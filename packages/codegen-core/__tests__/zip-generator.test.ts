@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { extractFilesFromZip, findFileContent } from './utils/zip-inspector';
 
+import { CoreProgressPhase } from '../src/progress-phases';
 import type { FileTree, ProgressCallback } from '../src/types';
 import { generateZipFromFileTree } from '../src/zip-generator';
 
@@ -91,15 +92,60 @@ describe('ZipGenerator', () => {
       expect(onProgress).toHaveBeenCalled();
       const calls = (onProgress as ReturnType<typeof vi.fn>).mock.calls;
       for (const [event] of calls) {
-        expect(event).toHaveProperty('phase');
+        expect(event.phase).toBe(CoreProgressPhase.packaging);
         expect(event).toHaveProperty('percentage');
         expect(event.percentage).toBeGreaterThanOrEqual(0);
         expect(event.percentage).toBeLessThanOrEqual(100);
       }
     });
 
+    it('should emit file progress in sorted path order for deterministic packaging', async () => {
+      const unsortedTree: FileTree = {
+        'src/main.rs': '#![no_std]\nfn main() {}',
+        'README.md': '# Test Project',
+        'Cargo.toml': '[package]\nname = "test"',
+      };
+      const onProgress: ProgressCallback = vi.fn();
+
+      await generateZipFromFileTree(unsortedTree, 'test-project', { onProgress });
+
+      const calls = (onProgress as ReturnType<typeof vi.fn>).mock.calls;
+      const addedMessages = calls
+        .map(([event]) => event.message)
+        .filter((message): message is string => typeof message === 'string' && message.startsWith('Added '));
+
+      expect(addedMessages).toEqual([
+        'Added Cargo.toml',
+        'Added README.md',
+        'Added src/main.rs',
+      ]);
+    });
+
     it('should not throw when no progress callback is provided', async () => {
       await expect(generateZipFromFileTree(sampleTree, 'test-project')).resolves.not.toThrow();
+    });
+
+    it('should reject unsafe project names that could escape the archive root', async () => {
+      await expect(generateZipFromFileTree(sampleTree, '../evil')).rejects.toThrow(/unsafe/);
+      await expect(generateZipFromFileTree(sampleTree, 'a/b')).rejects.toThrow(/unsafe/);
+    });
+
+    it('should reject unsafe FileTree paths (zip-slip)', async () => {
+      await expect(
+        generateZipFromFileTree({ '../outside.txt': 'x' }, 'proj')
+      ).rejects.toThrow(/\.\./);
+      await expect(
+        generateZipFromFileTree({ '/abs.txt': 'x' }, 'proj')
+      ).rejects.toThrow(/relative/);
+      await expect(
+        generateZipFromFileTree({ 'a\\win.txt': 'x' }, 'proj')
+      ).rejects.toThrow(/forward slashes/);
+    });
+
+    it('should reject paths with empty segments (consecutive slashes)', async () => {
+      await expect(
+        generateZipFromFileTree({ 'foo//bar.txt': 'x' }, 'proj')
+      ).rejects.toThrow(/empty segments/);
     });
   });
 });

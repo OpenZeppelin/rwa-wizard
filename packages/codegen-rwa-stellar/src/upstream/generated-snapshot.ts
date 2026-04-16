@@ -3,7 +3,7 @@ import type { UpstreamTemplateSnapshot } from './types';
 
 export const GENERATED_STELLAR_TEMPLATE_SNAPSHOT: UpstreamTemplateSnapshot = {
   metadata: {
-    sourceRepoUrl: 'https://github.com/pasevin/stellar-contracts.git',
+    sourceRepoUrl: 'https://github.com/OpenZeppelin/stellar-contracts.git',
     sourceCommitHash: '7ceb527018b07336620e105c877efca15790f8ee',
     syncedAt: '2026-04-14T21:10:58.560Z',
   },

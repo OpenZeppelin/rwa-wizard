@@ -4,6 +4,7 @@ import { createValidConfig } from './helpers/config';
 
 import { CRATE_NAMES } from '../src/constants';
 import { StellarRwaGenerator } from '../src/stellar-rwa-generator';
+import { shellEscape } from '../src/templates/scripts/deploy-sh-helpers';
 
 describe('StellarRwaGenerator', () => {
   const generator = new StellarRwaGenerator();
@@ -34,7 +35,7 @@ describe('StellarRwaGenerator', () => {
       const paths = Object.keys(result.files);
 
       const expectedContracts = [
-        CRATE_NAMES.rwaTtoken,
+        CRATE_NAMES.rwaToken,
         CRATE_NAMES.compliance,
         CRATE_NAMES.identityVerifier,
         CRATE_NAMES.claimTopicsIssuers,
@@ -317,11 +318,12 @@ describe('StellarRwaGenerator', () => {
       const result = generator.generate(config);
       const contract = result.files['contracts/rwa-token/src/contract.rs'] as string;
       const deploySh = result.files['scripts/deploy.sh'] as string;
+      const expectedMinterAddresses = shellEscape('["GCMINTER1", "GCMINTER2"]');
 
       expect(contract).toContain('minter: Vec<Address>,');
       expect(contract).toContain('grant_role_members(e, minter, &MINTER_ROLE, &admin);');
       expect(contract).toContain('#[only_role(operator, "minter")]');
-      expect(deploySh).toContain(`--minter '["GCMINTER1", "GCMINTER2"]'`);
+      expect(deploySh).toContain(`--minter "${expectedMinterAddresses}"`);
     });
 
     it('should list selected compliance modules in README.md', () => {

@@ -13,7 +13,7 @@ npm install @openzeppelin/codegen-rwa-stellar
 This generator uses contract templates synced from a public Stellar contracts repository.
 
 - By default it reads from a bundled snapshot so generation stays deterministic and browser-safe. The bundled snapshot records the exact source repo and commit that the generated `Cargo.toml` points to.
-- In Node.js, you can pass `contractsLibraryPath` to read templates and local Cargo path dependencies directly from a local `stellar-contracts` checkout.
+- In Node.js runtimes with `process.getBuiltinModule()` support, you can pass `contractsLibraryPath` to read templates and local Cargo path dependencies directly from a local `stellar-contracts` checkout.
 - Compliance modules currently come from public upstream work that is still under review; generation requires `allowUnderReviewModules: true` when those modules are selected.
 
 ## Quickstart
@@ -98,7 +98,7 @@ const zip = await generateZip(
 writeFileSync(zip.fileName, Buffer.from(await zip.data.arrayBuffer()));
 ```
 
-`contractsLibraryPath` is optional and only used in runtimes that can read from the local filesystem. Browser callers automatically fall back to the bundled snapshot.
+`contractsLibraryPath` is optional and only used in runtimes that can read from the local filesystem. Browser callers automatically fall back to the bundled snapshot. Node callers that request a local checkout now fail fast with a clear error when the runtime lacks `process.getBuiltinModule()` support, instead of silently ignoring the override.
 
 For non-preset environments, switch `deployment.target` to `kind: 'custom'` and provide `rpcUrl`. You can also include `explorerUrl` and `label` so the generated deploy output keeps showing friendly names and explorer links on custom infrastructure.
 
@@ -157,7 +157,7 @@ for (const mod of getAvailableModules()) {
 `GenerateOptions` is re-exported from `@openzeppelin/codegen-core`. The most relevant options for this package are:
 
 - `onProgress`: receive generation progress updates
-- `contractsLibraryPath`: use a local `stellar-contracts` checkout in Node.js
+- `contractsLibraryPath`: use a local `stellar-contracts` checkout in supported Node.js runtimes
 - `allowUnderReviewModules`: explicitly allow generation with under-review compliance modules
 
 ### Constants
