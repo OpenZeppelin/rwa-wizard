@@ -71,8 +71,8 @@ interface ContractCrate {
 function getCoreContractCrates(): ContractCrate[] {
   return [
     {
-      name: CRATE_NAMES.rwaTtoken,
-      dirPath: `contracts/${CRATE_NAMES.rwaTtoken}`,
+      name: CRATE_NAMES.rwaToken,
+      dirPath: `contracts/${CRATE_NAMES.rwaToken}`,
       dependencies: [
         'soroban-sdk',
         'stellar-access',

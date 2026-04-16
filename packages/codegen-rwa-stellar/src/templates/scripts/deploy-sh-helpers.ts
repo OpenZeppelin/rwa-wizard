@@ -1,3 +1,11 @@
+/**
+ * Escape a string for safe embedding inside double-quoted shell strings.
+ * Prevents shell injection via user-controlled config values.
+ */
+export function shellEscape(value: string): string {
+  return value.replace(/[\\"$`!]/g, '\\$&');
+}
+
 export const SEPARATOR = '═══════════════════════════════════════════════════════════════';
 export const THIN_SEPARATOR = '───────────────────────────────────────────────────────────────';
 

@@ -32,7 +32,7 @@ function getCoreContractTable(config: RWAConfig): ContractTableRow[] {
 
   return [
     {
-      crate: CRATE_NAMES.rwaTtoken,
+      crate: CRATE_NAMES.rwaToken,
       name: 'RWA Token',
       purpose: 'Primary tokenized asset with transfer restrictions',
       traits: tokenTraits,

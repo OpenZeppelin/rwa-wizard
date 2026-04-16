@@ -50,7 +50,7 @@ describe('deploy.sh template', () => {
       const irsPos = script.indexOf(CRATE_NAMES.identityRegistryStorage);
       const ivPos = script.indexOf(CRATE_NAMES.identityVerifier);
       const compPos = script.indexOf(CRATE_NAMES.compliance);
-      const tokenPos = script.indexOf(CRATE_NAMES.rwaTtoken);
+      const tokenPos = script.indexOf(CRATE_NAMES.rwaToken);
 
       expect(ctiPos).toBeLessThan(irsPos);
       expect(irsPos).toBeLessThan(ivPos);

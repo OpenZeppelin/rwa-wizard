@@ -3,7 +3,7 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { resolveStellarDeploymentTarget } from '../../deployment/target';
 import { buildDeploymentSections } from './deploy-sh-deployments';
-import { buildColorPreamble, shellEcho, shellSection } from './deploy-sh-helpers';
+import { buildColorPreamble, shellEcho, shellEscape, shellSection } from './deploy-sh-helpers';
 import { buildInitialSupplyGuidance, buildPostDeployConfig } from './deploy-sh-post-deploy';
 import { buildDeploymentSummary } from './deploy-sh-summary';
 import { getManagerDeploymentAddress } from './deploy-sh-token';
@@ -32,8 +32,8 @@ export function generateDeploySh(config: RWAConfig): string {
   sections.push('');
   sections.push(...buildColorPreamble());
   sections.push('');
-  sections.push(`ADMIN="${adminAddress}"`);
-  sections.push(`MANAGER="${managerAddress}"`);
+  sections.push(`ADMIN="${shellEscape(adminAddress)}"`);
+  sections.push(`MANAGER="${shellEscape(managerAddress)}"`);
   sections.push('SOURCE_ACCOUNT="${SOURCE_ACCOUNT:-${STELLAR_ACCOUNT:-}}"');
   sections.push('');
   sections.push('if [ -z "$SOURCE_ACCOUNT" ]; then');

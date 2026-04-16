@@ -34,7 +34,7 @@ describe('StellarRwaGenerator', () => {
       const paths = Object.keys(result.files);
 
       const expectedContracts = [
-        CRATE_NAMES.rwaTtoken,
+        CRATE_NAMES.rwaToken,
         CRATE_NAMES.compliance,
         CRATE_NAMES.identityVerifier,
         CRATE_NAMES.claimTopicsIssuers,
