@@ -19,65 +19,11 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Detect dependency review support
-        id: dependency-review-support
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          import urllib.error
-          import urllib.request
-
-          status = "unknown"
-          supported = False
-
-          try:
-              request = urllib.request.Request(
-                  f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}",
-                  headers={
-                      "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
-                      "Accept": "application/vnd.github+json",
-                  },
-              )
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  payload = json.load(response)
-
-              status = (
-                  payload.get("security_and_analysis", {})
-                  .get("code_security", {})
-                  .get("status", "disabled")
-              )
-              supported = status == "enabled"
-          except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
-              print(
-                  "::warning::Could not read repository code security status from the GitHub API; "
-                  f"skipping dependency review ({exc})."
-              )
-              status = "unavailable"
-
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"supported={'true' if supported else 'false'}\n")
-              output.write(f"code_security_status={status}\n")
-
-          print(f"Dependency review support status: {status}")
-          PY
-
       - name: Checkout code
-        if: steps.dependency-review-support.outputs.supported == 'true'
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Dependency Review
-        if: steps.dependency-review-support.outputs.supported == 'true'
         uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
         with:
           fail-on-severity: high
           deny-licenses: AGPL-1.0-only, AGPL-1.0-or-later, AGPL-3.0-only, AGPL-3.0-or-later
-
-      - name: Skip unsupported dependency review
-        if: steps.dependency-review-support.outputs.supported != 'true'
-        run: |
-          echo "::warning::Skipping dependency review because GitHub code security is ${{
-            steps.dependency-review-support.outputs.code_security_status
-          }} for this repository."
