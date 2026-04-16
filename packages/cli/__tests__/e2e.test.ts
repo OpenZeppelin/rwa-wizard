@@ -11,6 +11,10 @@ const CLI_ROOT = join(__dirname, '..');
 const CLI_BIN = join(CLI_ROOT, 'dist', 'index.mjs');
 const EXAMPLE_CONFIG = join(CLI_ROOT, 'examples', 'stellar-basic.json');
 
+const CLI_PACKAGE_VERSION = (
+  JSON.parse(readFileSync(join(CLI_ROOT, 'package.json'), 'utf-8')) as { version: string }
+).version;
+
 // Builds the CLI once if `dist/index.mjs` is missing so running `pnpm test`
 // standalone (outside of CI, which builds first) works on a clean checkout.
 beforeAll(() => {
@@ -62,7 +66,7 @@ describe('CLI E2E', () => {
   describe('--version', () => {
     it('should display the package version', () => {
       const output = runCli('--version');
-      expect(output.trim()).toBe('0.0.0');
+      expect(output.trim()).toBe(CLI_PACKAGE_VERSION);
     });
   });
 
