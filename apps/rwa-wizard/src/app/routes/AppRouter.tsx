@@ -359,6 +359,10 @@ function WizardPage() {
     void generate();
   }, [generate]);
 
+  const handleLastStepSecondary = useCallback(async () => {
+    await exportAllDraftsAsJson(storage);
+  }, [storage]);
+
   useEffect(() => {
     const id = storeState.activeDraftId;
     if (isSaving && id) {
@@ -494,6 +498,8 @@ function WizardPage() {
           onCancel={handleCancel}
           lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
           onLastStepPrimary={handleLastStepPrimary}
+          lastStepSecondaryLabel="Export drafts"
+          onLastStepSecondary={handleLastStepSecondary}
         />
         <GenerationDialog
           jobState={generationFlow.jobState}
