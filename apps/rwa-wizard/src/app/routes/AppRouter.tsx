@@ -1,11 +1,11 @@
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
-  BookOpen,
   ExternalLink,
   LayoutDashboard,
-  Settings,
-  Sparkles,
+  LayoutTemplate,
+  ShieldCheck,
+  Wallet,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
@@ -20,6 +20,7 @@ import {
   type WizardStepConfig,
 } from '@openzeppelin/ui-components';
 
+import ContractsWizardIconSvg from '../../assets/icons/contracts-wizard-icon.svg';
 import { DraftImportDialog } from '../../features/draft-management/components/DraftImportDialog';
 import { DraftList } from '../../features/draft-management/components/DraftList';
 import { useDraftAutosave } from '../../features/draft-management/hooks/useDraftAutosave';
@@ -128,10 +129,23 @@ function AppSidebar({
   const recentAssetsTitle = `Recent Assets${draftList.items.length > 0 ? `  ${draftList.items.length}` : ''}`;
 
   const footerContent = (
-    <SidebarSection title="Tools">
+    <SidebarSection title="Other Tools">
       <SidebarButton
-        icon={<Settings className="size-4" />}
-        href="https://roles.openzeppelin.com"
+        icon={<img src={ContractsWizardIconSvg} alt="Contracts Wizard" className="size-4" />}
+        href="https://wizard.openzeppelin.com"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span className="flex items-center gap-1.5">
+          Contracts Wizard <ExternalLink className="size-3 text-gray-400" />
+        </span>
+      </SidebarButton>
+      <SidebarButton icon={<Wallet className="size-4" />} disabled>
+        Open Accounts
+      </SidebarButton>
+      <SidebarButton
+        icon={<ShieldCheck className="size-4" />}
+        href="https://rolemanager.openzeppelin.com"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -140,23 +154,13 @@ function AppSidebar({
         </span>
       </SidebarButton>
       <SidebarButton
-        icon={<BookOpen className="size-4" />}
-        href="https://accounts.openzeppelin.com"
+        icon={<LayoutTemplate className="size-4" />}
+        href="https://builder.openzeppelin.com"
         target="_blank"
         rel="noopener noreferrer"
       >
         <span className="flex items-center gap-1.5">
-          Open Accounts <ExternalLink className="size-3 text-gray-400" />
-        </span>
-      </SidebarButton>
-      <SidebarButton
-        icon={<Sparkles className="size-4" />}
-        href="https://wizard.openzeppelin.com"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="flex items-center gap-1.5">
-          Contract Wizard <ExternalLink className="size-3 text-gray-400" />
+          UI Builder <ExternalLink className="size-3 text-gray-400" />
         </span>
       </SidebarButton>
     </SidebarSection>
