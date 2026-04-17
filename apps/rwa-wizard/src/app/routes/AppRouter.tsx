@@ -37,7 +37,10 @@ import { isStepValid } from '../../features/wizard/validation/stepValidators';
 import { getTargetCapabilitySnapshot, loadRuntime } from '../../registry/targetManager';
 import { listTargets } from '../../registry/targets';
 import type { RwaCodegenService } from '../../services/codegen/types';
-import { exportAllDraftsAsJson } from '../../services/download/exportDraftAsJson';
+import {
+  exportAllDraftsAsJson,
+  exportDraftAsJson,
+} from '../../services/download/exportDraftAsJson';
 import type { TargetAdapterCapabilities } from '../../services/runtime';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useDraftList, useWizardDraftStorage } from '../../storage';
@@ -360,8 +363,10 @@ function WizardPage() {
   }, [generate]);
 
   const handleLastStepSecondary = useCallback(async () => {
-    await exportAllDraftsAsJson(storage);
-  }, [storage]);
+    const id = storeState.activeDraftId;
+    if (!id) return;
+    await exportDraftAsJson(id, storage);
+  }, [storage, storeState.activeDraftId]);
 
   useEffect(() => {
     const id = storeState.activeDraftId;
@@ -498,8 +503,9 @@ function WizardPage() {
           onCancel={handleCancel}
           lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
           onLastStepPrimary={handleLastStepPrimary}
-          lastStepSecondaryLabel="Export drafts"
+          lastStepSecondaryLabel="Export Configuration"
           onLastStepSecondary={handleLastStepSecondary}
+          lastStepSecondaryDisabled={!storeState.activeDraftId}
         />
         <GenerationDialog
           jobState={generationFlow.jobState}
