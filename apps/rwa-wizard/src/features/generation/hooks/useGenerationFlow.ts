@@ -121,9 +121,11 @@ export function useGenerationFlow({
 
       setPhase('generating');
 
-      // Track whether the streaming callback reported an error so we do not
-      // promote a failed generation into `packaging`/`success` if `generateZip`
-      // still happens to resolve.
+      // The streaming callback is used *only* to surface mid-flight errors.
+      // We deliberately ignore non-error phase events because the hook itself
+      // authors phase transitions (with pacing), and the codegen service can
+      // emit several phases synchronously — forwarding those would overwrite
+      // our current phase and skip rows in the UI.
       let streamErrored = false;
       const [artifact] = await Promise.all([
         codegenService.generateZip(config, {
@@ -134,8 +136,6 @@ export function useGenerationFlow({
                 errorMessage: status.message ?? 'Generation failed',
                 completedAt: new Date(),
               });
-            } else if (status.phase !== 'success' && !streamErrored) {
-              setPhase(status.phase as GenerationPhase);
             }
           },
         }),

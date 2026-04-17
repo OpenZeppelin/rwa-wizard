@@ -23,16 +23,20 @@ interface GenerationDialogProps {
 }
 
 /**
- * Header copy derived from the current phase so the modal frames the state
- * without duplicating the phase log rendered in the body.
+ * Header copy derived from the current phase. The description is kept stable
+ * across all non-error phases so the dialog header does not reflow between
+ * progress and success — only the (single-line) title shifts.
  */
+const NON_ERROR_DESCRIPTION = "We'll package your project into a downloadable archive.";
+
 function getDialogCopy(phase: GenerationPhase): { title: string; description: string } {
   switch (phase) {
     case 'success':
-      return {
-        title: 'Project ready',
-        description: 'Your project has been generated. Download it to your machine below.',
-      };
+      return { title: 'Project ready', description: NON_ERROR_DESCRIPTION };
+    case 'validating':
+    case 'generating':
+    case 'packaging':
+      return { title: 'Generating project', description: NON_ERROR_DESCRIPTION };
     case 'error':
       return {
         title: 'Generation failed',
@@ -40,13 +44,6 @@ function getDialogCopy(phase: GenerationPhase): { title: string; description: st
       };
     case 'idle':
       return { title: '', description: '' };
-    case 'validating':
-    case 'generating':
-    case 'packaging':
-      return {
-        title: 'Generating project',
-        description: 'Please wait while we validate, generate, and package your project.',
-      };
   }
 }
 
@@ -57,7 +54,7 @@ export function GenerationDialog({
   onRetry,
   onReset,
 }: GenerationDialogProps) {
-  const { phase, phaseLog, zipFileName, errorMessage } = jobState;
+  const { phase, zipFileName, errorMessage } = jobState;
   const isError = phase === 'error';
   const isSuccess = phase === 'success';
   const { title, description } = getDialogCopy(phase);
@@ -87,16 +84,16 @@ export function GenerationDialog({
               onReset={onReset}
             />
           ) : (
-            <GenerationStatusPanel phase={phase} phaseLog={phaseLog} zipFileName={zipFileName} />
+            <GenerationStatusPanel phase={phase} zipFileName={zipFileName} />
           )}
         </div>
 
-        {isSuccess && (
+        {!isError && (
           <DialogFooter>
-            <Button variant="outline" onClick={onReset}>
+            <Button variant="outline" onClick={onReset} disabled={isGenerating}>
               Close
             </Button>
-            <Button onClick={onDownload}>
+            <Button onClick={onDownload} disabled={!isSuccess}>
               <Download className="mr-2 size-4" />
               Download
             </Button>
