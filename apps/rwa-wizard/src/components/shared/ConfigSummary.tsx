@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { Coins, KeyRound, Scale, ShieldCheck } from 'lucide-react';
+import { useMemo, type ReactNode } from 'react';
 
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 import {
@@ -7,20 +8,68 @@ import {
   AccordionItem,
   AccordionTrigger,
   AddressDisplay,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Label,
 } from '@openzeppelin/ui-components';
+import { cn } from '@openzeppelin/ui-utils';
 
 import type { ComplianceModuleOption } from '../../types/wizard';
 import { Badge } from './Badge';
 import { Table, TableBody, TableCell, TableRow } from './Table';
 
 // ---------------------------------------------------------------------------
-// Section renderers
+// Shared primitives
+// ---------------------------------------------------------------------------
+
+interface SectionProps {
+  icon: ReactNode;
+  title: string;
+  children: ReactNode;
+}
+
+/**
+ * Top-level section: icon + title header, then the section body. Sections are
+ * peers on the page (no nested Card) so the visual hierarchy is
+ * page → section → rows, not page → card → card → rows.
+ */
+function Section({ icon, title, children }: SectionProps) {
+  return (
+    <section>
+      <header className="flex items-center gap-2 text-foreground">
+        <span className="text-muted-foreground">{icon}</span>
+        <h3 className="text-base font-semibold">{title}</h3>
+      </header>
+      <div className="mt-3">{children}</div>
+    </section>
+  );
+}
+
+/**
+ * Row key/value pair with consistent emphasis: the key reads as secondary
+ * (muted) and the value as primary (foreground). Pass `muted` for
+ * zero/disabled/empty values so noise visually recedes.
+ */
+function Field({
+  label,
+  children,
+  muted,
+}: {
+  label: string;
+  children: ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <TableRow>
+      <TableCell className="w-2/5 text-muted-foreground">{label}</TableCell>
+      <TableCell
+        className={cn('font-medium text-foreground', muted && 'font-normal text-muted-foreground')}
+      >
+        {children}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sections
 // ---------------------------------------------------------------------------
 
 function AssetSection({ config }: { config: RWAConfig }) {
@@ -29,53 +78,39 @@ function AssetSection({ config }: { config: RWAConfig }) {
     string,
     boolean,
   ][];
+  const docEnabled = token.documentManager.enabled;
 
   return (
-    <div>
-      <Label className="text-sm font-semibold">Asset Configuration</Label>
+    <Section icon={<Coins className="size-4" />} title="Asset Configuration">
       <Table>
         <TableBody>
-          <TableRow>
-            <TableCell className="font-medium">Token Name</TableCell>
-            <TableCell>{token.name || '—'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="font-medium">Token Symbol</TableCell>
-            <TableCell>{token.symbol || '—'}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="font-medium">Decimals</TableCell>
-            <TableCell>{token.decimals}</TableCell>
-          </TableRow>
-          {token.initialSupply && (
-            <TableRow>
-              <TableCell className="font-medium">Initial Supply</TableCell>
-              <TableCell>{token.initialSupply}</TableCell>
-            </TableRow>
-          )}
-          <TableRow>
-            <TableCell className="font-medium">Administrative Controls</TableCell>
-            <TableCell>
-              {enabledControls.length > 0 ? (
-                <div className="flex gap-2">
-                  {enabledControls.map(([key]) => (
-                    <Badge key={key} variant="secondary">
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-muted-foreground">None</span>
-              )}
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="font-medium">Document Manager</TableCell>
-            <TableCell>{token.documentManager.enabled ? 'Enabled' : 'Disabled'}</TableCell>
-          </TableRow>
+          <Field label="Token Name" muted={!token.name}>
+            {token.name || '—'}
+          </Field>
+          <Field label="Token Symbol" muted={!token.symbol}>
+            {token.symbol || '—'}
+          </Field>
+          <Field label="Decimals">{token.decimals}</Field>
+          {token.initialSupply && <Field label="Initial Supply">{token.initialSupply}</Field>}
+          <Field label="Administrative Controls" muted={enabledControls.length === 0}>
+            {enabledControls.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {enabledControls.map(([key]) => (
+                  <Badge key={key} variant="secondary">
+                    {key.charAt(0).toUpperCase() + key.slice(1)}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              'None'
+            )}
+          </Field>
+          <Field label="Document Manager" muted={!docEnabled}>
+            {docEnabled ? 'Enabled' : 'Disabled'}
+          </Field>
         </TableBody>
       </Table>
-    </div>
+    </Section>
   );
 }
 
@@ -87,46 +122,35 @@ function IdentitySection({ config }: { config: RWAConfig }) {
   ][];
 
   return (
-    <div>
-      <Label className="text-sm font-semibold">Identity Configuration</Label>
+    <Section icon={<ShieldCheck className="size-4" />} title="Identity Configuration">
       <Table>
         <TableBody>
-          <TableRow>
-            <TableCell className="font-medium">Verification Strategy</TableCell>
-            <TableCell className="capitalize">Claim-Based</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="font-medium">Claim Topics</TableCell>
-            <TableCell>
-              {id.claimTopics.length > 0 ? id.claimTopics.map((t) => t.name).join(', ') : 'None'}
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="font-medium">Trusted Issuers</TableCell>
-            <TableCell>{id.trustedIssuers.length}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="font-medium">Identity Controls</TableCell>
-            <TableCell>
-              {enabledControls.length > 0 ? (
-                <div className="flex gap-2">
-                  {enabledControls.map(([key]) => (
-                    <Badge key={key} variant="secondary">
-                      {key
-                        .replace(/([A-Z])/g, ' $1')
-                        .replace(/^./, (s) => s.toUpperCase())
-                        .trim()}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-muted-foreground">None</span>
-              )}
-            </TableCell>
-          </TableRow>
+          <Field label="Verification Strategy">Claim-Based</Field>
+          <Field label="Claim Topics" muted={id.claimTopics.length === 0}>
+            {id.claimTopics.length > 0 ? id.claimTopics.map((t) => t.name).join(', ') : 'None'}
+          </Field>
+          <Field label="Trusted Issuers" muted={id.trustedIssuers.length === 0}>
+            {id.trustedIssuers.length}
+          </Field>
+          <Field label="Identity Controls" muted={enabledControls.length === 0}>
+            {enabledControls.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {enabledControls.map(([key]) => (
+                  <Badge key={key} variant="secondary">
+                    {key
+                      .replace(/([A-Z])/g, ' $1')
+                      .replace(/^./, (s) => s.toUpperCase())
+                      .trim()}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              'None'
+            )}
+          </Field>
         </TableBody>
       </Table>
-    </div>
+    </Section>
   );
 }
 
@@ -145,17 +169,15 @@ function ComplianceSection({
 
   if (selected.length === 0) {
     return (
-      <div>
-        <Label className="text-sm font-semibold">Compliance Configuration</Label>
-        <p className="mt-2 text-sm text-muted-foreground">No compliance modules selected.</p>
-      </div>
+      <Section icon={<Scale className="size-4" />} title="Compliance Configuration">
+        <p className="text-sm text-muted-foreground">No compliance modules selected.</p>
+      </Section>
     );
   }
 
   return (
-    <div>
-      <Label className="text-sm font-semibold">Compliance Configuration</Label>
-      <Accordion type="multiple" variant="card" className="mt-2">
+    <Section icon={<Scale className="size-4" />} title="Compliance Configuration">
+      <Accordion type="multiple" variant="card">
         {selected.map((sel) => {
           const meta = moduleMap.get(sel.moduleId);
           const params = sel.config ? Object.entries(sel.config) : [];
@@ -192,7 +214,7 @@ function ComplianceSection({
           );
         })}
       </Accordion>
-    </div>
+    </Section>
   );
 }
 
@@ -219,18 +241,13 @@ function AccessControlSection({
   const hasRoles = accessControl.roles.length > 0;
 
   return (
-    <div>
-      <Label className="text-sm font-semibold">Roles & Access Control</Label>
+    <Section icon={<KeyRound className="size-4" />} title="Roles & Access Control">
       <Table>
         <TableBody>
-          <TableRow>
-            <TableCell className="font-medium">Ownership Model</TableCell>
-            <TableCell>{ownershipLabel}</TableCell>
-          </TableRow>
+          <Field label="Ownership Model">{ownershipLabel}</Field>
           {ownerAddress && (
-            <TableRow>
-              <TableCell className="font-medium">Owner Address</TableCell>
-              <TableCell>
+            <Field label="Owner Address">
+              <div className="min-w-0 break-all">
                 <AddressDisplay
                   address={ownerAddress}
                   variant="inline"
@@ -238,18 +255,17 @@ function AccessControlSection({
                   showCopyButton
                   explorerUrl={getExplorerUrl?.(ownerAddress) ?? undefined}
                 />
-              </TableCell>
-            </TableRow>
+              </div>
+            </Field>
           )}
-          <TableRow>
-            <TableCell className="font-medium">Operator Roles</TableCell>
-            <TableCell>{hasRoles ? `${accessControl.roles.length} configured` : 'None'}</TableCell>
-          </TableRow>
+          <Field label="Operator Roles" muted={!hasRoles}>
+            {hasRoles ? `${accessControl.roles.length} configured` : 'None'}
+          </Field>
         </TableBody>
       </Table>
 
       {hasRoles && (
-        <Accordion type="multiple" variant="card" className="mt-2">
+        <Accordion type="multiple" variant="card" className="mt-3">
           {accessControl.roles.map((role) => (
             <AccordionItem key={role.name} value={role.name}>
               <AccordionTrigger>
@@ -286,7 +302,7 @@ function AccessControlSection({
           ))}
         </Accordion>
       )}
-    </div>
+    </Section>
   );
 }
 
@@ -301,27 +317,18 @@ interface ConfigSummaryProps {
 }
 
 /**
- * Read-only summary of an RWAConfig, rendered inside a Card with table-based
- * sections matching the prototype design.
+ * Read-only summary of an RWAConfig. Sections are rendered as peers on the
+ * page (the enclosing WizardFrame already owns the page heading), with
+ * icon-anchored section headers, muted field labels, and emphasized values
+ * so meaningful configuration reads above zero/disabled defaults.
  */
 export function ConfigSummary({ config, availableModules, getExplorerUrl }: ConfigSummaryProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Configuration Summary</CardTitle>
-        <CardDescription>
-          Review all selected options and settings for your RWA token.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <AssetSection config={config} />
-        <hr className="border-border" />
-        <IdentitySection config={config} />
-        <hr className="border-border" />
-        <ComplianceSection config={config} availableModules={availableModules} />
-        <hr className="border-border" />
-        <AccessControlSection config={config} getExplorerUrl={getExplorerUrl} />
-      </CardContent>
-    </Card>
+    <div className="space-y-8">
+      <AssetSection config={config} />
+      <IdentitySection config={config} />
+      <ComplianceSection config={config} availableModules={availableModules} />
+      <AccessControlSection config={config} getExplorerUrl={getExplorerUrl} />
+    </div>
   );
 }
