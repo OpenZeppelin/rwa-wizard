@@ -3,13 +3,7 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@openzeppelin/ui-utils';
 
-type BadgeVariant =
-  | 'default'
-  | 'outline'
-  | 'secondary'
-  | 'destructive'
-  | 'success'
-  | 'success-text';
+type BadgeVariant = 'default' | 'outline' | 'secondary' | 'destructive' | 'success';
 
 interface BadgeProps {
   children: ReactNode;
@@ -24,7 +18,6 @@ const variantStyles: Record<BadgeVariant, string> = {
   secondary: 'bg-secondary text-secondary-foreground',
   destructive: 'bg-destructive text-destructive-foreground',
   success: 'bg-green-100 text-green-700',
-  'success-text': 'text-sm font-medium text-green-600',
 };
 
 export function Badge({ children, variant = 'default', className, onRemove }: BadgeProps) {

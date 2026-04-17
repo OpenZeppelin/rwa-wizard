@@ -133,6 +133,88 @@ describe('useDraftAutosave', () => {
     expect(storage.save).toHaveBeenCalledTimes(1);
   });
 
+  it('reschedules a save when new edits land during an in-flight save', async () => {
+    // Regression: the hook previously returned early when a save was already in
+    // flight, dropping any edits made during that window. We now mark the
+    // write as pending and flush it as soon as the active save resolves.
+    let resolveFirstSave: () => void = () => undefined;
+    const storage = createMockStorage();
+    (storage.save as ReturnType<typeof vi.fn>).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveFirstSave = resolve;
+        })
+    );
+
+    const { rerender } = renderHook(
+      ({ config }) =>
+        useDraftAutosave({
+          draftId: 'existing-id',
+          config,
+          targetId: 'stellar',
+          currentStep: 'asset',
+          storage,
+        }),
+      {
+        initialProps: { config: makeConfig('First') },
+      }
+    );
+
+    rerender({ config: makeConfig('Second') });
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(storage.save).toHaveBeenCalledTimes(1);
+
+    // Edit again while the first save is still pending.
+    rerender({ config: makeConfig('Third') });
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+    // Still only one save — the new debounce fires while the first is in flight
+    // and is captured via the pending flag.
+    expect(storage.save).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveFirstSave();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(storage.save).toHaveBeenCalledTimes(2);
+    const calls = (storage.save as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCallArgs = calls[calls.length - 1];
+    expect(lastCallArgs?.[1]?.config?.token?.name).toBe('Third');
+  });
+
+  it('invokes onPersistError when create() rejects', async () => {
+    const storage = createMockStorage();
+    (storage.create as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('quota exceeded'));
+    const onPersistError = vi.fn();
+    const { rerender } = renderHook(
+      ({ config, draftId }) =>
+        useDraftAutosave({
+          draftId,
+          config,
+          targetId: 'stellar',
+          currentStep: 'asset',
+          storage,
+          onPersistError,
+        }),
+      {
+        initialProps: { config: createDefaultRwaConfig(), draftId: null as string | null },
+      }
+    );
+
+    rerender({ config: makeConfig('Named'), draftId: null });
+
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(onPersistError).toHaveBeenCalledWith('create', expect.any(Error));
+  });
+
   it('invokes onPersistSuccess after a successful save', async () => {
     const storage = createMockStorage();
     const onPersistSuccess = vi.fn();

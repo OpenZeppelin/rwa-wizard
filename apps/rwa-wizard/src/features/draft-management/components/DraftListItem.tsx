@@ -11,7 +11,7 @@ import {
 } from '@openzeppelin/ui-components';
 import { cn } from '@openzeppelin/ui-utils';
 
-import type { DraftListItem as DraftListItemType } from '../../../types/wizard';
+import type { DraftListItem as DraftListItemType, WizardDraftStatus } from '../../../types/wizard';
 import { useTypewriterEffect } from '../hooks/useTypewriterEffect';
 import { DraftDeleteDialog } from './DraftDeleteDialog';
 
@@ -25,7 +25,7 @@ interface DraftListItemProps {
   onExport: () => Promise<void>;
 }
 
-const STATUS_STYLES: Record<string, string> = {
+const STATUS_STYLES: Record<WizardDraftStatus, string> = {
   draft: 'text-gray-500',
   ready: 'text-blue-600',
   generating: 'text-amber-600',
@@ -34,7 +34,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 /** Maps draft lifecycle to Alert variants from ui-components. */
-const STATUS_ALERT_VARIANT: Record<string, 'default' | 'destructive' | 'success'> = {
+const STATUS_ALERT_VARIANT: Record<WizardDraftStatus, 'default' | 'destructive' | 'success'> = {
   draft: 'default',
   ready: 'default',
   generating: 'default',

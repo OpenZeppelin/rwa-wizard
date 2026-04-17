@@ -9,7 +9,8 @@ import type { GenerationJobState, GenerationPhase } from '../../../types/wizard'
 export interface UseGenerationFlowOptions {
   draftId: string | null;
   config: RWAConfig;
-  codegenService: RwaCodegenService;
+  /** The codegen service for the active target. When `null`, `generate()` reports an error. */
+  codegenService: RwaCodegenService | null;
   /** When true, the download step is triggered automatically on success. */
   autoDownload?: boolean;
 }
@@ -70,6 +71,14 @@ export function useGenerationFlow({
     });
 
     try {
+      if (!codegenService) {
+        setPhase('error', {
+          errorMessage: 'No codegen service is configured for the selected target.',
+          completedAt: new Date(),
+        });
+        return;
+      }
+
       const validation = await codegenService.validate(config);
 
       if (!validation.valid) {
@@ -83,18 +92,25 @@ export function useGenerationFlow({
 
       setPhase('generating');
 
+      // Track whether the streaming callback reported an error so we do not
+      // promote a failed generation into `packaging`/`success` if `generateZip`
+      // still happens to resolve.
+      let streamErrored = false;
       const artifact = await codegenService.generateZip(config, {
         onStatus: (status) => {
           if (status.phase === 'error') {
+            streamErrored = true;
             setPhase('error', {
               errorMessage: status.message ?? 'Generation failed',
               completedAt: new Date(),
             });
-          } else if (status.phase !== 'success') {
+          } else if (status.phase !== 'success' && !streamErrored) {
             setPhase(status.phase as GenerationPhase);
           }
         },
       });
+
+      if (streamErrored) return;
 
       setPhase('packaging');
       setPhase('success', {

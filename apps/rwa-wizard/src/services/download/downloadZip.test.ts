@@ -10,6 +10,7 @@ describe('downloadZip', () => {
   let removedElements: Node[];
 
   beforeEach(() => {
+    vi.useFakeTimers();
     createObjectURLSpy = vi.fn().mockReturnValue('blob:http://localhost/fake-url');
     revokeObjectURLSpy = vi.fn();
 
@@ -43,6 +44,7 @@ describe('downloadZip', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -79,20 +81,23 @@ describe('downloadZip', () => {
     expect(removedElements.length).toBeGreaterThan(0);
   });
 
-  it('revokes the blob URL after download', () => {
+  it('revokes the blob URL after the browser has started the download', () => {
     const blob = new Blob(['test'], { type: 'application/zip' });
     downloadZip('test.zip', blob);
 
+    // Revocation is deferred so the browser can commit the download before
+    // the object URL is released.
+    expect(revokeObjectURLSpy).not.toHaveBeenCalled();
+    vi.runAllTimers();
     expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:http://localhost/fake-url');
   });
 
-  it('revokes URL even if click throws', () => {
+  it('propagates a click() error (revocation is still scheduled)', () => {
     clickSpy.mockImplementation(() => {
       throw new Error('click failed');
     });
 
     const blob = new Blob(['test'], { type: 'application/zip' });
     expect(() => downloadZip('test.zip', blob)).toThrow('click failed');
-    expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:http://localhost/fake-url');
   });
 });

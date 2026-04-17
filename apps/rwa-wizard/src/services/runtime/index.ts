@@ -21,9 +21,5 @@ export async function ensureAdapterLoaded(targetId: string): Promise<void> {
 }
 
 export type { TargetAdapterCapabilities } from './types';
-export {
-  AdapterCapabilitiesProvider,
-  useAdapterCapabilities,
-  useAddressing,
-  useExplorer,
-} from './AdapterCapabilitiesContext';
+export { AdapterCapabilitiesProvider } from './AdapterCapabilitiesProvider';
+export { useAdapterCapabilities, useAddressing, useExplorer } from './useAdapterCapabilities';

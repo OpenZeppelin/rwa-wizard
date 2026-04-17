@@ -54,20 +54,24 @@ export function TopicToggleGroup({
   );
 
   const parsedId = typeof watchedId === 'number' ? watchedId : parseInt(String(watchedId), 10);
+  // Guard against colliding with *any* predefined topic id, not just the ones
+  // currently selected, so a future addition to PREDEFINED_CLAIM_TOPICS cannot
+  // create ambiguous duplicates at runtime.
+  const isIdTaken = selectedIds.has(parsedId) || predefinedIds.has(parsedId);
   const canAddCustom =
     !!String(watchedName).trim() &&
     !isNaN(parsedId) &&
     parsedId >= MIN_CUSTOM_CLAIM_TOPIC_ID &&
-    !selectedIds.has(parsedId) &&
+    !isIdTaken &&
     !atLimit;
 
   const handleAddCustom = useCallback(() => {
     const name = String(watchedName).trim();
     if (!name || isNaN(parsedId) || parsedId < MIN_CUSTOM_CLAIM_TOPIC_ID) return;
-    if (selectedIds.has(parsedId)) return;
+    if (selectedIds.has(parsedId) || predefinedIds.has(parsedId)) return;
     onAddCustom({ id: parsedId, name, isCustom: true });
     reset({ name: '', id: '' });
-  }, [watchedName, parsedId, selectedIds, onAddCustom, reset]);
+  }, [watchedName, parsedId, selectedIds, predefinedIds, onAddCustom, reset]);
 
   return (
     <div className="space-y-4">

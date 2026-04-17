@@ -1,19 +1,23 @@
 import type { WizardDraftStorageApi } from '../../storage/wizardDraftStorageContext';
+import { triggerBlobDownload } from './triggerBlobDownload';
+
+/**
+ * Best-effort slug derivation from a draft title/symbol for the filename.
+ * Falls back to the draft id prefix when nothing useful is available.
+ */
+function draftSlug(
+  title: string | undefined,
+  symbol: string | undefined,
+  fallbackId: string
+): string {
+  const candidate = (title || symbol || '').toLowerCase().trim();
+  const normalized = candidate.replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+  return normalized || fallbackId.slice(0, 8);
+}
 
 function downloadJsonFile(json: string, filename: string): void {
   const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  try {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+  triggerBlobDownload(filename, blob);
 }
 
 /**
@@ -22,10 +26,12 @@ function downloadJsonFile(json: string, filename: string): void {
  */
 export async function exportDraftAsJson(
   draftId: string,
-  storage: Pick<WizardDraftStorageApi, 'export'>
+  storage: Pick<WizardDraftStorageApi, 'export' | 'get'>
 ): Promise<void> {
   const json = await storage.export([draftId]);
-  downloadJsonFile(json, `rwa-draft-${draftId.slice(0, 8)}.json`);
+  const record = await storage.get(draftId);
+  const slug = draftSlug(record?.title, record?.config.token.symbol, draftId);
+  downloadJsonFile(json, `rwa-draft-${slug}.json`);
 }
 
 /**

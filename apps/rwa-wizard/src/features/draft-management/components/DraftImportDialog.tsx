@@ -21,6 +21,27 @@ interface DraftImportDialogProps {
   onImported?: () => void;
 }
 
+/**
+ * Maps WizardDraftStorage error codes to human-readable copy; falls back to the
+ * raw message when we don't recognize the code.
+ */
+function formatImportError(err: unknown): string {
+  const message = err instanceof Error ? err.message : '';
+  if (message.startsWith('draft-storage/import-invalid-json')) {
+    return 'This file is not valid JSON.';
+  }
+  if (message.startsWith('draft-storage/import-invalid-envelope')) {
+    return 'This file is missing the expected export envelope.';
+  }
+  if (message.startsWith('draft-storage/import-unsupported-version')) {
+    return 'This file uses a schema version that is not supported by this version of the wizard.';
+  }
+  if (message.startsWith('draft-storage/import-invalid-draft:')) {
+    return 'One or more drafts in this file are missing required fields.';
+  }
+  return message || 'Failed to import projects.';
+}
+
 export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImportDialogProps) {
   const storage = useWizardDraftStorage();
   const [isImporting, setIsImporting] = useState(false);
@@ -55,9 +76,11 @@ export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImpor
       return;
     }
 
-    const MAX_FILE_SIZE = 200 * 1024 * 1024;
+    // A realistic upper bound for configuration-only JSON; keeps us far below
+    // browser IndexedDB quotas and avoids stalling the main thread while parsing.
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
-      setError('File size exceeds maximum limit of 200MB');
+      setError('File size exceeds maximum limit of 5MB');
       return;
     }
 
@@ -71,7 +94,7 @@ export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImpor
       resetFileInput();
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to import projects');
+      setError(formatImportError(err));
     } finally {
       setIsImporting(false);
     }
@@ -120,7 +143,7 @@ export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImpor
             <ul className="mt-1 space-y-1 text-muted-foreground">
               <li>• JSON format (.json extension)</li>
               <li>• Must be a valid RWA Wizard export (single project or full backup)</li>
-              <li>• Maximum size: 200MB</li>
+              <li>• Maximum size: 5MB</li>
             </ul>
           </div>
         </div>

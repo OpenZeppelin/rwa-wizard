@@ -33,7 +33,7 @@ export function ReviewStep({
   const generationFlow = useGenerationFlow({
     draftId,
     config,
-    codegenService: codegenService!,
+    codegenService,
     autoDownload: true,
   });
 
@@ -63,9 +63,9 @@ export function ReviewStep({
         />
       )}
 
-      {jobState.phase === 'error' && jobState.errorMessage && (
+      {jobState.phase === 'error' && (
         <GenerationErrorState
-          errorMessage={jobState.errorMessage}
+          errorMessage={jobState.errorMessage ?? 'Generation failed.'}
           onRetry={handleGenerate}
           onReset={reset}
         />

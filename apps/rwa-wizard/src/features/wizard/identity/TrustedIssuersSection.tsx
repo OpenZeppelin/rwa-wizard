@@ -49,13 +49,18 @@ export function TrustedIssuersSection({
   });
 
   const draftAddress = watch('address');
+  const trimmedDraft = draftAddress?.trim() ?? '';
 
-  const isDuplicate = identity.trustedIssuers.some((iss) => iss.address === draftAddress?.trim());
+  const isDuplicate = identity.trustedIssuers.some((iss) => iss.address === trimmedDraft);
+  // Treat "no addressing adapter" as pass-through so we do not hard-block users
+  // when the adapter capability snapshot has not resolved yet.
+  const isValidAddress = !trimmedDraft || !addressing || addressing.isValidAddress(trimmedDraft);
 
   const handleAdd = useCallback(
     (data: IssuerDraftForm) => {
       const address = data.address.trim();
       if (!address || atLimit || isDuplicate) return;
+      if (addressing && !addressing.isValidAddress(address)) return;
       const newIssuer: TrustedIssuer = {
         address,
         claimTopics: availableTopics.map((t) => t.id),
@@ -63,7 +68,7 @@ export function TrustedIssuersSection({
       onUpdate({ trustedIssuers: [...identity.trustedIssuers, newIssuer] });
       reset({ address: '' });
     },
-    [atLimit, isDuplicate, availableTopics, identity.trustedIssuers, onUpdate, reset]
+    [atLimit, isDuplicate, addressing, availableTopics, identity.trustedIssuers, onUpdate, reset]
   );
 
   const handleRemove = useCallback(
@@ -93,7 +98,11 @@ export function TrustedIssuersSection({
     [identity.trustedIssuers, onUpdate]
   );
 
-  const duplicateValidation = isDuplicate ? 'Issuer already added' : undefined;
+  const validationMessage = isDuplicate
+    ? 'Issuer already added'
+    : trimmedDraft && !isValidAddress
+      ? 'Invalid address format for this network'
+      : undefined;
 
   return (
     <Card>
@@ -107,7 +116,7 @@ export function TrustedIssuersSection({
       <CardContent className="space-y-4">
         {identity.trustedIssuers.map((issuer, index) => (
           <IssuerRow
-            key={index}
+            key={issuer.address}
             issuer={issuer}
             index={index}
             availableTopics={availableTopics}
@@ -134,16 +143,21 @@ export function TrustedIssuersSection({
               type="button"
               onClick={handleSubmit(handleAdd)}
               size="sm"
-              disabled={!draftAddress?.trim() || atLimit || isDuplicate}
+              disabled={!trimmedDraft || atLimit || isDuplicate || !isValidAddress}
               className="mb-0.5"
             >
               <Plus className="mr-1 size-4" />
               Add
             </Button>
           </div>
-          {(duplicateValidation || availableTopics.length > 0) && (
-            <p className="text-xs text-muted-foreground">
-              {duplicateValidation ?? 'New issuers are auto-permitted for all claim topics.'}
+          {(validationMessage || availableTopics.length > 0) && (
+            <p
+              className={cn(
+                'text-xs',
+                validationMessage ? 'text-destructive' : 'text-muted-foreground'
+              )}
+            >
+              {validationMessage ?? 'New issuers are auto-permitted for all claim topics.'}
             </p>
           )}
         </div>

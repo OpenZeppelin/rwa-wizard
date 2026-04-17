@@ -7,19 +7,42 @@ export type { RWAConfig } from '@openzeppelin/rwa-config';
 // Wizard steps (data-model WizardStepId)
 // ---------------------------------------------------------------------------
 
-export type WizardStepId =
-  | 'asset'
-  | 'identity'
-  | 'compliance'
-  | 'access-control'
-  | 'deployment'
-  | 'review';
+/**
+ * Canonical ordered list of wizard step ids.
+ *
+ * This is the single source of truth for wizard steps: the {@link WizardStepId}
+ * type is derived from this tuple, and runtime validators (e.g. import
+ * sanitization) iterate over it. Adding or removing a step is a one-line
+ * change here that the typechecker will propagate across the codebase.
+ */
+export const WIZARD_STEP_IDS = [
+  'asset',
+  'identity',
+  'compliance',
+  'access-control',
+  'deployment',
+  'review',
+] as const;
+
+export type WizardStepId = (typeof WIZARD_STEP_IDS)[number];
 
 // ---------------------------------------------------------------------------
 // Draft lifecycle
 // ---------------------------------------------------------------------------
 
-export type WizardDraftStatus = 'draft' | 'ready' | 'generating' | 'generated' | 'error';
+/**
+ * Canonical list of wizard draft statuses.
+ * See {@link WIZARD_STEP_IDS} for the rationale behind the tuple-as-truth pattern.
+ */
+export const WIZARD_DRAFT_STATUSES = [
+  'draft',
+  'ready',
+  'generating',
+  'generated',
+  'error',
+] as const;
+
+export type WizardDraftStatus = (typeof WIZARD_DRAFT_STATUSES)[number];
 
 export type DraftImportSource = 'manual' | 'imported' | 'template';
 

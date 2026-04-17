@@ -5,10 +5,23 @@ import type {
   DraftListItem,
   SaveDraftPatch,
   WizardDraftRecord,
+  WizardDraftStatus,
+  WizardStepId,
 } from '../types/wizard';
+import { WIZARD_DRAFT_STATUSES, WIZARD_STEP_IDS } from '../types/wizard';
 import { db, WIZARD_DRAFTS_TABLE_NAME } from './database';
 
 const EXPORT_SCHEMA_VERSION = '1.0';
+
+/** Major versions this build knows how to import. */
+const SUPPORTED_IMPORT_MAJORS = new Set(['1']);
+
+const VALID_STATUSES: ReadonlySet<WizardDraftStatus> = new Set(WIZARD_DRAFT_STATUSES);
+const VALID_STEPS: ReadonlySet<WizardStepId> = new Set(WIZARD_STEP_IDS);
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
 
 interface WizardDraftRecordPersisted extends WizardDraftRecord {
   id: string;
@@ -137,63 +150,123 @@ export class WizardDraftStorage extends EntityStorage<WizardDraftRecordPersisted
     const envelope = {
       schemaVersion: EXPORT_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
-      drafts: records.map((r) => ({
-        ...r,
-        id: undefined,
-        createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
-        updatedAt: r.updatedAt instanceof Date ? r.updatedAt.toISOString() : r.updatedAt,
-        metadata: {
-          ...r.metadata,
-          lastOpenedAt:
-            r.metadata.lastOpenedAt instanceof Date
-              ? r.metadata.lastOpenedAt.toISOString()
-              : r.metadata.lastOpenedAt,
-        },
-      })),
+      drafts: records.map((r) => {
+        // Strip id/createdAt/updatedAt — importer assigns fresh values.
+        const { id: _id, createdAt, updatedAt, metadata, ...rest } = r;
+        return {
+          ...rest,
+          createdAt: createdAt instanceof Date ? createdAt.toISOString() : createdAt,
+          updatedAt: updatedAt instanceof Date ? updatedAt.toISOString() : updatedAt,
+          metadata: {
+            ...metadata,
+            lastOpenedAt:
+              metadata.lastOpenedAt instanceof Date
+                ? metadata.lastOpenedAt.toISOString()
+                : metadata.lastOpenedAt,
+          },
+        };
+      }),
     };
     return JSON.stringify(envelope, null, 2);
   }
 
   /**
    * Imports from a versioned JSON envelope. Creates new drafts with new IDs; does not merge.
+   *
+   * Performs strict validation so a hand-crafted or truncated payload cannot
+   * silently write malformed rows into IndexedDB.
    */
   async import(json: string): Promise<string[]> {
-    let envelope: {
-      schemaVersion?: string;
-      drafts?: Array<Omit<WizardDraftRecordPersisted, 'id' | 'createdAt' | 'updatedAt'>>;
-    };
+    let parsed: unknown;
     try {
-      envelope = JSON.parse(json) as typeof envelope;
+      parsed = JSON.parse(json);
     } catch {
       throw new Error('draft-storage/import-invalid-json');
     }
-    if (!envelope.schemaVersion || !envelope.drafts?.length) {
+
+    if (!isRecord(parsed)) {
       throw new Error('draft-storage/import-invalid-envelope');
     }
+
+    const schemaVersion = parsed['schemaVersion'];
+    const drafts = parsed['drafts'];
+    if (typeof schemaVersion !== 'string' || !Array.isArray(drafts) || drafts.length === 0) {
+      throw new Error('draft-storage/import-invalid-envelope');
+    }
+
+    const major = schemaVersion.split('.')[0];
+    if (!SUPPORTED_IMPORT_MAJORS.has(major)) {
+      throw new Error('draft-storage/import-unsupported-version');
+    }
+
+    const sanitizedDrafts = drafts.map((raw, index) =>
+      sanitizeImportDraft(raw, index, schemaVersion)
+    );
     const ids: string[] = [];
-    for (const d of envelope.drafts) {
-      const metadata = {
-        ...d.metadata,
-        importSource: 'imported' as const,
-        schemaVersion: envelope.schemaVersion ?? EXPORT_SCHEMA_VERSION,
-        lastOpenedAt: d.metadata?.lastOpenedAt
-          ? typeof d.metadata.lastOpenedAt === 'string'
-            ? new Date(d.metadata.lastOpenedAt)
-            : d.metadata.lastOpenedAt
-          : undefined,
-      };
-      const id = await super.save({
-        title: d.title || 'Imported',
-        targetId: d.targetId,
-        status: d.status ?? 'draft',
-        currentStep: d.currentStep ?? 'asset',
-        config: d.config,
-        metadata,
-      });
+    for (const draft of sanitizedDrafts) {
+      const id = await super.save(draft);
       ids.push(id);
     }
     return ids;
   }
+}
+
+type SanitizedImportDraft = Omit<WizardDraftRecordPersisted, 'id' | 'createdAt' | 'updatedAt'>;
+
+/**
+ * Validates a single draft entry from an import envelope and returns a
+ * sanitized record suitable for `super.save`. Throws with a diagnostic
+ * message when a required field is missing or malformed.
+ */
+function sanitizeImportDraft(
+  raw: unknown,
+  index: number,
+  schemaVersion: string
+): SanitizedImportDraft {
+  if (!isRecord(raw)) {
+    throw new Error(`draft-storage/import-invalid-draft:${index}:not-an-object`);
+  }
+  const { title, targetId, config, status, currentStep, metadata } = raw;
+
+  if (typeof targetId !== 'string' || !targetId) {
+    throw new Error(`draft-storage/import-invalid-draft:${index}:missing-target`);
+  }
+  if (!isRecord(config) || !isRecord((config as Record<string, unknown>)['token'])) {
+    throw new Error(`draft-storage/import-invalid-draft:${index}:invalid-config`);
+  }
+
+  const resolvedStatus: WizardDraftStatus =
+    typeof status === 'string' && VALID_STATUSES.has(status as WizardDraftStatus)
+      ? (status as WizardDraftStatus)
+      : 'draft';
+
+  const resolvedStep: WizardStepId =
+    typeof currentStep === 'string' && VALID_STEPS.has(currentStep as WizardStepId)
+      ? (currentStep as WizardStepId)
+      : 'asset';
+
+  const incomingMetadata = isRecord(metadata) ? metadata : {};
+  const lastOpenedAtRaw = incomingMetadata['lastOpenedAt'];
+  const sanitizedMetadata = {
+    isManuallyRenamed: Boolean(incomingMetadata['isManuallyRenamed']),
+    importSource: 'imported' as const,
+    schemaVersion,
+    lastOpenedAt:
+      typeof lastOpenedAtRaw === 'string'
+        ? new Date(lastOpenedAtRaw)
+        : lastOpenedAtRaw instanceof Date
+          ? lastOpenedAtRaw
+          : undefined,
+  };
+
+  return {
+    title: typeof title === 'string' && title.trim() ? title : 'Imported',
+    targetId,
+    status: resolvedStatus,
+    currentStep: resolvedStep,
+    config: config as unknown as WizardDraftRecordPersisted['config'],
+    metadata: sanitizedMetadata,
+  };
 }
 
 export const wizardDraftStorage = new WizardDraftStorage();

@@ -31,6 +31,7 @@ import { DeploymentPlaceholder } from '../../features/wizard/deployment/Deployme
 import { IdentityStep } from '../../features/wizard/identity/IdentityStep';
 import { ReviewStep } from '../../features/wizard/review/ReviewStep';
 import { useWizardDraftState } from '../../features/wizard/state/useWizardDraftState';
+import { isStepValid } from '../../features/wizard/validation/stepValidators';
 import { getTargetCapabilitySnapshot, loadRuntime } from '../../registry/targetManager';
 import { listTargets } from '../../registry/targets';
 import type { RwaCodegenService } from '../../services/codegen/types';
@@ -238,6 +239,7 @@ function WizardPage() {
   const [targetSnapshot, setTargetSnapshot] = useState<TargetCapabilitySnapshot | null>(null);
   const [adapterCaps, setAdapterCaps] = useState<TargetAdapterCapabilities | null>(null);
   const [codegenService, setCodegenService] = useState<RwaCodegenService | null>(null);
+  const [persistError, setPersistError] = useState<string | null>(null);
 
   const selectedTargetId = storeState.targetId ?? 'stellar';
   const draftState = useWizardDraftState();
@@ -246,7 +248,10 @@ function WizardPage() {
   const effectiveStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
 
   // Load the draft record when activeDraftId changes; clear form state when id is cleared (e.g. delete).
+  // `isActive` guards against races when the user switches drafts while a prior `get` is still pending.
   useEffect(() => {
+    let isActive = true;
+
     async function syncDraftFromStorage() {
       const id = storeState.activeDraftId;
       if (!id) {
@@ -254,12 +259,22 @@ function WizardPage() {
         return;
       }
       const draft = await storage.get(id);
-      if (!draft) return;
+      if (!isActive) return;
+      if (!draft) {
+        // Draft was deleted (e.g. from another tab). Clear the active id and reset the form.
+        wizardStore.setActiveDraft(null);
+        draftState.resetConfig();
+        return;
+      }
       wizardStore.setTargetId(draft.targetId);
       wizardStore.setCurrentStep(draft.currentStep);
       draftState.setConfig(draft.config);
     }
     void syncDraftFromStorage();
+
+    return () => {
+      isActive = false;
+    };
     // Only re-run when the active draft id changes, not on every config edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeState.activeDraftId]);
@@ -300,6 +315,16 @@ function WizardPage() {
 
   const handlePersistSuccess = useCallback(() => {
     wizardStore.bumpDraftListRefresh();
+    setPersistError(null);
+  }, []);
+
+  const handlePersistError = useCallback((kind: 'create' | 'save', err: unknown) => {
+    const detail = err instanceof Error ? err.message : String(err);
+    setPersistError(
+      kind === 'create'
+        ? `Unable to save this draft to your browser: ${detail}`
+        : `Unable to update this draft: ${detail}`
+    );
   }, []);
 
   const { isSaving } = useDraftAutosave({
@@ -310,6 +335,7 @@ function WizardPage() {
     storage,
     onDraftCreated: handleDraftCreated,
     onPersistSuccess: handlePersistSuccess,
+    onPersistError: handlePersistError,
   });
 
   useEffect(() => {
@@ -332,8 +358,9 @@ function WizardPage() {
   const handleExportDraft = useCallback(() => {
     const id = storeState.activeDraftId;
     if (!id) return;
-    void exportDraftAsJson(id, storage).catch(() => {
-      // Export failure is non-destructive; silently ignore.
+    void exportDraftAsJson(id, storage).catch((err: unknown) => {
+      const detail = err instanceof Error ? err.message : String(err);
+      setPersistError(`Unable to export this draft: ${detail}`);
     });
   }, [storeState.activeDraftId, storage]);
 
@@ -344,9 +371,19 @@ function WizardPage() {
     const identityControlsMeta = ecosystemMetadata?.identityControls ?? [];
     const operatorRoles = ecosystemMetadata?.operatorRoles ?? [];
     const complianceHooks = ecosystemMetadata?.complianceHooks ?? [];
-    const maxModulesPerHook = ecosystemMetadata?.limits.maxModulesPerHook ?? 0;
-    const maxTrustedIssuers = ecosystemMetadata?.limits.maxTrustedIssuers ?? 0;
+    // Use Infinity while metadata is loading so the UI never falsely reports
+    // "limit reached" during the initial render; the real limit replaces this
+    // as soon as the adapter capability snapshot resolves.
+    const maxTrustedIssuers =
+      ecosystemMetadata?.limits.maxTrustedIssuers ?? Number.POSITIVE_INFINITY;
     const documentManagerEnabled = draftState.config.token.documentManager.enabled;
+
+    const validationCtx = {
+      addressing: adapterCaps?.addressing,
+      availableModules,
+    };
+    const validityFor = (id: WizardStepId) => isStepValid(id, draftState.config, validationCtx);
+
     const steps: WizardStepConfig[] = [
       {
         id: 'asset',
@@ -358,7 +395,7 @@ function WizardPage() {
             onUpdate={draftState.updateToken}
           />
         ),
-        isValid: !!(draftState.config.token.name.trim() && draftState.config.token.symbol.trim()),
+        isValid: validityFor('asset'),
       },
       {
         id: 'identity',
@@ -371,6 +408,7 @@ function WizardPage() {
             onUpdate={draftState.updateIdentity}
           />
         ),
+        isValid: validityFor('identity'),
       },
       {
         id: 'compliance',
@@ -380,10 +418,10 @@ function WizardPage() {
             compliance={draftState.config.compliance}
             availableModules={availableModules}
             complianceHooks={complianceHooks}
-            maxModulesPerHook={maxModulesPerHook}
             onUpdate={draftState.updateCompliance}
           />
         ),
+        isValid: validityFor('compliance'),
       },
       {
         id: 'access-control',
@@ -396,6 +434,7 @@ function WizardPage() {
             onUpdate={draftState.updateAccessControl}
           />
         ),
+        isValid: validityFor('access-control'),
       },
       {
         id: 'review',
@@ -409,6 +448,7 @@ function WizardPage() {
             onExport={handleExportDraft}
           />
         ),
+        isValid: validityFor('review'),
       },
     ];
 
@@ -417,11 +457,19 @@ function WizardPage() {
         id: 'deployment',
         title: 'Deployment',
         component: <DeploymentPlaceholder />,
+        isValid: validityFor('deployment'),
       });
     }
 
     return steps;
-  }, [draftState, targetSnapshot, codegenService, storeState.activeDraftId, handleExportDraft]);
+  }, [
+    draftState,
+    targetSnapshot,
+    adapterCaps,
+    codegenService,
+    storeState.activeDraftId,
+    handleExportDraft,
+  ]);
 
   const [resetKey, setResetKey] = useState(0);
 
@@ -436,6 +484,9 @@ function WizardPage() {
   return (
     <AdapterCapabilitiesProvider value={adapterCaps}>
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {persistError && (
+          <PersistErrorBanner message={persistError} onDismiss={() => setPersistError(null)} />
+        )}
         <WizardLayout
           key={layoutKey}
           variant="vertical"
@@ -446,6 +497,24 @@ function WizardPage() {
         />
       </main>
     </AdapterCapabilitiesProvider>
+  );
+}
+
+function PersistErrorBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  return (
+    <div
+      role="alert"
+      className="mx-4 mt-3 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-foreground"
+    >
+      <span className="flex-1 text-muted-foreground">{message}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        Dismiss
+      </button>
+    </div>
   );
 }
 

@@ -11,7 +11,6 @@ interface ComplianceStepProps {
   compliance: ComplianceConfig;
   availableModules: ComplianceModuleOption[];
   complianceHooks: readonly ComplianceHookMeta[];
-  maxModulesPerHook: number;
   onUpdate: (patch: Partial<ComplianceConfig>) => void;
 }
 

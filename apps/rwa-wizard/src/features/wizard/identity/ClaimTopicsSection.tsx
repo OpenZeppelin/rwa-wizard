@@ -18,12 +18,27 @@ interface ClaimTopicsSectionProps {
 }
 
 export function ClaimTopicsSection({ identity, onUpdate }: ClaimTopicsSectionProps) {
+  /**
+   * When a topic is removed we also prune it from every trusted issuer so the
+   * persisted config never references orphaned topic ids.
+   */
+  const pruneIssuerTopics = useCallback(
+    (topicId: number) =>
+      identity.trustedIssuers.map((iss) =>
+        iss.claimTopics.includes(topicId)
+          ? { ...iss, claimTopics: iss.claimTopics.filter((id) => id !== topicId) }
+          : iss
+      ),
+    [identity.trustedIssuers]
+  );
+
   const handleToggle = useCallback(
     (topic: ClaimTopic) => {
       const exists = identity.claimTopics.some((t) => t.id === topic.id);
       if (exists) {
         onUpdate({
           claimTopics: identity.claimTopics.filter((t) => t.id !== topic.id),
+          trustedIssuers: pruneIssuerTopics(topic.id),
         });
       } else {
         onUpdate({
@@ -31,7 +46,7 @@ export function ClaimTopicsSection({ identity, onUpdate }: ClaimTopicsSectionPro
         });
       }
     },
-    [identity.claimTopics, onUpdate]
+    [identity.claimTopics, onUpdate, pruneIssuerTopics]
   );
 
   const handleAddCustom = useCallback(
@@ -47,9 +62,10 @@ export function ClaimTopicsSection({ identity, onUpdate }: ClaimTopicsSectionPro
     (topicId: number) => {
       onUpdate({
         claimTopics: identity.claimTopics.filter((t) => t.id !== topicId),
+        trustedIssuers: pruneIssuerTopics(topicId),
       });
     },
-    [identity.claimTopics, onUpdate]
+    [identity.claimTopics, onUpdate, pruneIssuerTopics]
   );
 
   return (

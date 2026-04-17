@@ -37,9 +37,7 @@ export function ReadOnlyFeatureCard({
         </p>
         {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
       </div>
-      <Badge variant={enabled ? 'success-text' : 'outline'}>
-        {enabled ? 'Enabled' : 'Disabled'}
-      </Badge>
+      <Badge variant={enabled ? 'success' : 'outline'}>{enabled ? 'Enabled' : 'Disabled'}</Badge>
     </div>
   );
 }

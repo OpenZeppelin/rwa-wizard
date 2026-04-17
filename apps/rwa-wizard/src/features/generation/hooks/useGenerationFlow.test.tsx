@@ -186,6 +186,59 @@ describe('useGenerationFlow', () => {
     expect(result.current.jobState.completedAt).toBeInstanceOf(Date);
   });
 
+  it('does not promote to success when onStatus reports an error', async () => {
+    // Regression: if the streaming callback reports `error` but the underlying
+    // promise still resolves (e.g. generator returns a partial artifact), we
+    // must keep the job in the error phase instead of overwriting it.
+    const bogusService: RwaCodegenService = {
+      ...testService,
+      async generateZip(_config, options) {
+        options?.onStatus?.({ phase: 'error', message: 'partial failure' });
+        return { fileName: 'bogus.zip', data: new Blob(['x']) };
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useGenerationFlow({
+        draftId: 'draft-1',
+        config: validConfig(),
+        codegenService: bogusService,
+      })
+    );
+
+    await act(async () => {
+      await result.current.generate();
+    });
+
+    await waitFor(() => {
+      expect(result.current.jobState.phase).toBe('error');
+    });
+
+    expect(result.current.jobState.errorMessage).toBe('partial failure');
+    expect(result.current.jobState.zipFileName).toBeUndefined();
+    expect(result.current.jobState.phaseLog).not.toContain('success');
+  });
+
+  it('reports an error when codegenService is null', async () => {
+    const { result } = renderHook(() =>
+      useGenerationFlow({
+        draftId: 'draft-1',
+        config: validConfig(),
+        codegenService: null,
+      })
+    );
+
+    await act(async () => {
+      await result.current.generate();
+    });
+
+    await waitFor(() => {
+      expect(result.current.jobState.phase).toBe('error');
+    });
+
+    expect(result.current.jobState.errorMessage).toMatch(/no codegen service/i);
+  });
+
   it('prevents concurrent generate() calls', async () => {
     let resolveGenerate: () => void;
     const slowService: RwaCodegenService = {

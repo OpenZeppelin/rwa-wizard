@@ -29,18 +29,20 @@ export function SelectableCard({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex cursor-pointer flex-col items-start rounded-lg border-2 p-4 text-left transition-colors',
-        isSelected ? 'border-blue-600 bg-blue-50' : 'border-zinc-200 hover:border-blue-300',
+        'flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors',
+        isSelected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40',
         disabled && 'cursor-not-allowed opacity-50',
         className
       )}
     >
-      {icon && <div className="mb-2">{icon}</div>}
-      <div className="flex w-full items-center justify-between gap-2">
-        <span className="mb-1 font-medium">{title}</span>
-        {badge}
+      <div className="flex min-w-0 flex-1 flex-col items-start">
+        <span className="inline-flex items-center gap-1.5 font-medium">
+          {title}
+          {icon && <span className="inline-flex items-center text-muted-foreground">{icon}</span>}
+        </span>
+        {description && <span className="mt-0.5 text-sm text-muted-foreground">{description}</span>}
       </div>
-      {description && <span className="text-sm text-muted-foreground">{description}</span>}
+      {badge && <div className="flex-shrink-0">{badge}</div>}
     </button>
   );
 }

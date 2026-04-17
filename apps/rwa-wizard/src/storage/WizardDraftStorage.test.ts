@@ -196,5 +196,72 @@ describe('WizardDraftStorage', () => {
         'draft-storage/import-invalid-envelope'
       );
     });
+
+    it('rejects envelopes whose top-level value is not an object', async () => {
+      await expect(storage.import(JSON.stringify([]))).rejects.toThrow(
+        'draft-storage/import-invalid-envelope'
+      );
+    });
+
+    it('rejects envelopes from an unsupported major schema version', async () => {
+      await expect(
+        storage.import(
+          JSON.stringify({
+            schemaVersion: '99.0',
+            drafts: [
+              {
+                title: 'x',
+                targetId: 'stellar',
+                config: makeConfig(),
+                metadata: {},
+              },
+            ],
+          })
+        )
+      ).rejects.toThrow('draft-storage/import-unsupported-version');
+    });
+
+    it('rejects drafts missing required fields', async () => {
+      await expect(
+        storage.import(
+          JSON.stringify({
+            schemaVersion: '1.0',
+            drafts: [{ title: 'Missing target' }],
+          })
+        )
+      ).rejects.toThrow(/import-invalid-draft:0:missing-target/);
+    });
+
+    it('rejects drafts with a missing or malformed config', async () => {
+      await expect(
+        storage.import(
+          JSON.stringify({
+            schemaVersion: '1.0',
+            drafts: [{ title: 't', targetId: 'stellar', config: null }],
+          })
+        )
+      ).rejects.toThrow(/import-invalid-draft:0:invalid-config/);
+    });
+
+    it('sanitizes unknown status and currentStep to safe defaults', async () => {
+      const ids = await storage.import(
+        JSON.stringify({
+          schemaVersion: '1.0',
+          drafts: [
+            {
+              title: 'Sanitized',
+              targetId: 'stellar',
+              config: makeConfig(),
+              metadata: {},
+              status: 'not-a-status',
+              currentStep: 'not-a-step',
+            },
+          ],
+        })
+      );
+      const imported = await storage.get(ids[0]);
+      expect(imported?.status).toBe('draft');
+      expect(imported?.currentStep).toBe('asset');
+    });
   });
 });

@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type { WizardDraftStorageApi } from '../../../storage/wizardDraftStorageContext';
 import type { WizardStepId } from '../../../types/wizard';
 import { hasMeaningfulContent } from '../../../utils/meaningfulDraft';
+import { autosaveReducer, initialAutosaveState, isAutosaveBusy } from './autosaveMachine';
 
 const AUTOSAVE_DEBOUNCE_MS = 1000;
+
+export type AutosaveErrorKind = 'create' | 'save';
 
 export interface UseDraftAutosaveOptions {
   draftId: string | null;
@@ -17,17 +20,32 @@ export interface UseDraftAutosaveOptions {
   onDraftCreated?: (id: string) => void;
   /** Called after a draft is successfully persisted (create or update). */
   onPersistSuccess?: () => void;
+  /** Called when a persist attempt fails. The hook preserves in-memory state regardless. */
+  onPersistError?: (kind: AutosaveErrorKind, error: unknown) => void;
 }
 
 export interface UseDraftAutosaveResult {
   isSaving: boolean;
 }
 
+interface LatestInputs {
+  draftId: string | null;
+  config: RWAConfig;
+  targetId: string;
+  currentStep: WizardStepId;
+}
+
 /**
  * Debounced autosave hook for wizard drafts.
- * Creates a new draft when meaningful content is entered and no draftId exists.
- * Saves to the existing draft when draftId is set.
- * Keeps the draft title in sync with the token name (unless manually renamed).
+ *
+ * Creates a new draft when meaningful content is entered and no draftId exists;
+ * saves to the existing draft when draftId is set. Keeps the draft title in
+ * sync with the token name (unless manually renamed).
+ *
+ * Internally driven by the {@link autosaveReducer} state machine
+ * (`idle → debouncing → saving → saving-pending → error`) which makes edge
+ * cases — in-flight edits, retry-after-error, cancel-on-unmount — explicit
+ * and unit-testable.
  */
 export function useDraftAutosave({
   draftId,
@@ -37,65 +55,97 @@ export function useDraftAutosave({
   storage,
   onDraftCreated,
   onPersistSuccess,
+  onPersistError,
 }: UseDraftAutosaveOptions): UseDraftAutosaveResult {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const savingRef = useRef(false);
-  const latestRef = useRef({ draftId, config, targetId, currentStep });
-  const [isSaving, setIsSaving] = useState(false);
+  const [state, dispatch] = useReducer(autosaveReducer, initialAutosaveState);
 
+  // Capture the freshest inputs so the save effect always operates on the
+  // most recent config/targetId/step, even if it was queued while previous
+  // renders were still in flight.
+  const latestRef = useRef<LatestInputs>({ draftId, config, targetId, currentStep });
   latestRef.current = { draftId, config, targetId, currentStep };
 
   // Destructure only the methods used so `persist` does not re-create when
   // `storage.drafts` (the live list) updates — which would cause an infinite
-  // save loop: save → IndexedDB write → liveDrafts update → new storage ref →
-  // new persist → autosave effect re-fires → save again.
+  // save loop.
   const { get, create, save } = storage;
 
-  const persist = useCallback(async () => {
-    if (savingRef.current) return;
+  // Callbacks via refs so we can invoke the latest version without retriggering
+  // effects when the parent re-creates closures.
+  const onDraftCreatedRef = useRef(onDraftCreated);
+  onDraftCreatedRef.current = onDraftCreated;
+  const onPersistSuccessRef = useRef(onPersistSuccess);
+  onPersistSuccessRef.current = onPersistSuccess;
+  const onPersistErrorRef = useRef(onPersistError);
+  onPersistErrorRef.current = onPersistError;
+
+  // Dispatch EDIT whenever meaningful inputs change. Skipping empty configs
+  // keeps the machine in `idle` until the user has actually typed something.
+  useEffect(() => {
+    if (!hasMeaningfulContent(config)) return;
+    dispatch({ type: 'EDIT' });
+  }, [config, currentStep, draftId, targetId]);
+
+  // Debounce effect: while phase === 'debouncing', schedule a timer. Each edit
+  // bumps `editTick`, which restarts the timer via the dep array.
+  useEffect(() => {
+    if (state.phase !== 'debouncing') return;
+    const timer = setTimeout(() => {
+      dispatch({ type: 'DEBOUNCE_ELAPSED' });
+    }, AUTOSAVE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [state.phase, state.editTick]);
+
+  const persist = useCallback(async (): Promise<void> => {
     const { draftId: id, config: cfg, targetId: tid, currentStep: step } = latestRef.current;
 
+    // Guard against racing clears of the token name between debounce and save.
     if (!hasMeaningfulContent(cfg)) return;
 
-    savingRef.current = true;
-    setIsSaving(true);
-    try {
-      const derivedTitle = cfg.token.name.trim() || cfg.token.symbol.trim() || 'Untitled';
+    const derivedTitle = cfg.token.name.trim() || cfg.token.symbol.trim() || 'Untitled';
 
-      if (id) {
-        // Sync title from token name unless the user has manually renamed the draft.
-        const existing = await get(id);
-        const titlePatch =
-          existing && !existing.metadata?.isManuallyRenamed ? { title: derivedTitle } : {};
-        await save(id, { config: cfg, currentStep: step, ...titlePatch });
-      } else {
-        const newId = await create({
-          title: derivedTitle,
-          targetId: tid,
-          config: cfg,
-          currentStep: step,
-          metadata: { isManuallyRenamed: false, importSource: 'manual' },
-        });
-        onDraftCreated?.(newId);
-      }
-      onPersistSuccess?.();
-    } catch {
-      // Storage failures must not destroy the in-memory session (contract).
-    } finally {
-      savingRef.current = false;
-      setIsSaving(false);
+    if (id) {
+      const existing = await get(id);
+      const titlePatch =
+        existing && !existing.metadata?.isManuallyRenamed ? { title: derivedTitle } : {};
+      await save(id, { config: cfg, currentStep: step, ...titlePatch });
+    } else {
+      const newId = await create({
+        title: derivedTitle,
+        targetId: tid,
+        config: cfg,
+        currentStep: step,
+        metadata: { isManuallyRenamed: false, importSource: 'manual' },
+      });
+      onDraftCreatedRef.current?.(newId);
     }
-  }, [get, save, create, onDraftCreated, onPersistSuccess]);
+  }, [get, save, create]);
 
+  // Persist effect: fires every time saveRunId changes (i.e. on each entry
+  // into `saving`). We skip the initial render where saveRunId === 0.
   useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      void persist();
-    }, AUTOSAVE_DEBOUNCE_MS);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [config, currentStep, persist]);
+    if (state.saveRunId === 0) return;
+    const id = latestRef.current.draftId;
+    let cancelled = false;
 
-  return { isSaving };
+    persist()
+      .then(() => {
+        if (cancelled) return;
+        onPersistSuccessRef.current?.();
+        dispatch({ type: 'PERSIST_SUCCEEDED' });
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        // `id` reflects the draftId at save-start; if it was null we attempted
+        // a create, otherwise a save. This preserves the prior API contract.
+        onPersistErrorRef.current?.(id ? 'save' : 'create', err);
+        dispatch({ type: 'PERSIST_FAILED', error: err });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [state.saveRunId, persist]);
+
+  return { isSaving: isAutosaveBusy(state) };
 }

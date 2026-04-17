@@ -1,5 +1,5 @@
 import { Plus, X } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AddressDisplay, AddressField, Button } from '@openzeppelin/ui-components';
@@ -31,6 +31,7 @@ export function AddressListInput({
   label,
 }: AddressListInputProps) {
   const atLimit = maxItems != null && addresses.length >= maxItems;
+  const fieldId = useId();
 
   const { control, handleSubmit, reset, watch } = useForm<AddressDraftForm>({
     defaultValues: { address: '' },
@@ -64,7 +65,7 @@ export function AddressListInput({
       <div className="flex items-end gap-2">
         <div className="flex-1">
           <AddressField
-            id={`address-list-${label ?? 'input'}`}
+            id={`address-list-${fieldId}`}
             name="address"
             label={label ?? ''}
             placeholder={placeholder}
@@ -88,7 +89,10 @@ export function AddressListInput({
       {addresses.length > 0 && (
         <div className="space-y-1">
           {addresses.map((address, index) => (
-            <div key={index} className="flex items-center justify-between rounded bg-muted p-2">
+            <div
+              key={`${address}-${index}`}
+              className="flex items-center justify-between rounded bg-muted p-2"
+            >
               <AddressDisplay
                 address={address}
                 variant="inline"

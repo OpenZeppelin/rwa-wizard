@@ -1,12 +1,9 @@
-import { createContext, useContext, useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 
 import type { AddressingCapability, ExplorerCapability } from '@openzeppelin/ui-types';
 
+import { AdapterCapabilitiesContext } from './adapterCapabilitiesContext';
 import type { TargetAdapterCapabilities } from './types';
-
-const AdapterCapabilitiesContext = createContext<TargetAdapterCapabilities | null>(null);
-
-export const AdapterCapabilitiesProvider = AdapterCapabilitiesContext.Provider;
 
 /**
  * Returns the full adapter capabilities for the active target, or null if

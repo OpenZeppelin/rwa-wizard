@@ -24,7 +24,7 @@ export function ImplementationApproach() {
           description="Uses cryptographic claims from trusted authorities (Recommended for RWA)"
           isSelected={true}
           onClick={() => {}}
-          icon={<Lock className="size-4 text-muted-foreground" />}
+          icon={<Lock className="size-3.5" />}
           badge={<Badge variant="success">Selected</Badge>}
         />
       </CardContent>

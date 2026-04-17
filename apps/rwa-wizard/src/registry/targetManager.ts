@@ -30,12 +30,11 @@ const EMPTY_ECOSYSTEM_METADATA: TargetEcosystemMetadata = {
  * unavailable — callers should disable generation in that case.
  */
 export async function loadRuntime(targetId: string): Promise<LoadedTargetRuntime> {
+  // `getTarget` already filters on `showInUI`, so hidden entries surface as
+  // `unknown` here. An explicit hidden check would be unreachable.
   const entry = getTarget(targetId);
   if (!entry) {
     throw new Error(`target/unknown: ${targetId}`);
-  }
-  if (!entry.showInUI) {
-    throw new Error(`target/hidden: ${targetId}`);
   }
   const cached = runtimeCache.get(targetId);
   if (cached) return cached;

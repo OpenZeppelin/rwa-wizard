@@ -97,10 +97,10 @@ function ModuleRow({ module, selected, config, onToggle, onConfigChange }: Modul
   return (
     <div
       className={cn(
-        'group rounded-lg border transition-colors',
+        'group rounded-lg border-2 transition-colors',
         selected
-          ? 'border-primary/40 bg-primary/[0.03]'
-          : 'border-border hover:border-border/80 hover:bg-muted/30'
+          ? 'border-primary bg-primary/5'
+          : 'border-border hover:border-primary/40 hover:bg-muted/30'
       )}
     >
       <div
