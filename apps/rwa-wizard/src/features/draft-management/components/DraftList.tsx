@@ -6,6 +6,12 @@ import { DraftListItem } from './DraftListItem';
 
 interface DraftListProps {
   activeDraftId: string | null;
+  /**
+   * Which draft row shows the sidebar “selected” style. Mirrors UI Builder’s
+   * `currentLoadedConfigurationId` — parent derives this (e.g. only on `/wizard`) so it can stay
+   * in sync with top nav selection without clearing `activeDraftId` when visiting Dashboard.
+   */
+  sidebarDraftSelectionId: string | null;
   savingDraftId?: string | null;
   onLoadDraft: (id: string) => void;
   items: DraftListItemType[];
@@ -16,6 +22,7 @@ interface DraftListProps {
 
 export function DraftList({
   activeDraftId,
+  sidebarDraftSelectionId,
   savingDraftId = null,
   onLoadDraft,
   items: drafts,
@@ -64,7 +71,7 @@ export function DraftList({
         <DraftListItem
           key={draft.id}
           draft={draft}
-          isActive={draft.id === activeDraftId}
+          isActive={draft.id === sidebarDraftSelectionId}
           isSaving={draft.id === savingDraftId}
           onLoad={() => onLoadDraft(draft.id)}
           onDelete={() => handleDelete(draft.id)}

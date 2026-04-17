@@ -130,7 +130,7 @@ export function DraftListItem({
           'group relative flex w-full cursor-pointer flex-col gap-0.5 rounded-lg px-3 py-2 text-left transition-all duration-300 ease-in-out outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           showSavingAnimation && 'animate-pulse bg-muted opacity-30 [animation-duration:1200ms]',
           !showSavingAnimation &&
-            (isActive ? 'bg-neutral-100 text-[#111928]' : 'text-gray-600 hover:bg-muted/50')
+            (isActive ? 'bg-selected/10 text-selected' : 'text-muted-foreground hover:bg-muted/50')
         )}
       >
         <div className="flex w-full items-center justify-between gap-2">
@@ -144,7 +144,9 @@ export function DraftListItem({
               role="status"
               className={cn(
                 'inline-flex w-fit shrink-0 items-center rounded-md p-0 px-2 py-0.5 text-[11px] font-medium leading-none shadow-none',
-                STATUS_STYLES[draft.status]
+                STATUS_STYLES[draft.status],
+                // Layered tint of `selected`: row is bg-selected/10; badge is darker so it reads clearly without a white chip.
+                isActive && 'border border-selected/25 bg-selected/15 shadow-none'
               )}
             >
               <span className="truncate capitalize">{draft.status}</span>

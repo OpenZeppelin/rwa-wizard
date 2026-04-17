@@ -77,6 +77,8 @@ function AppSidebar({
   );
   const location = useLocation();
   const navigate = useNavigate();
+  const isWizardRoute = location.pathname === '/wizard' || location.pathname.startsWith('/wizard/');
+  const sidebarDraftSelectionId = isWizardRoute ? storeState.activeDraftId : null;
 
   const refreshDraftList = draftList.refresh;
 
@@ -205,6 +207,7 @@ function AppSidebar({
         <SidebarSection title={recentAssetsTitle} grow>
           <DraftList
             activeDraftId={storeState.activeDraftId}
+            sidebarDraftSelectionId={sidebarDraftSelectionId}
             savingDraftId={storeState.savingDraftId}
             onLoadDraft={handleLoadDraft}
             items={draftList.items}
