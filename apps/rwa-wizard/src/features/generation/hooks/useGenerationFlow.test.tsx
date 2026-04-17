@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
@@ -237,6 +237,96 @@ describe('useGenerationFlow', () => {
     });
 
     expect(result.current.jobState.errorMessage).toMatch(/no codegen service/i);
+  });
+
+  describe('download()', () => {
+    let createObjectURLSpy: ReturnType<typeof vi.fn>;
+    let revokeObjectURLSpy: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      createObjectURLSpy = vi.fn().mockReturnValue('blob:http://localhost/fake-url');
+      revokeObjectURLSpy = vi.fn();
+      URL.createObjectURL = createObjectURLSpy;
+      URL.revokeObjectURL = revokeObjectURLSpy;
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('is a no-op before a successful generation', () => {
+      const { result } = renderHook(() =>
+        useGenerationFlow({
+          draftId: 'draft-1',
+          config: validConfig(),
+          codegenService: testService,
+          autoDownload: false,
+        })
+      );
+
+      act(() => {
+        result.current.download();
+      });
+
+      expect(createObjectURLSpy).not.toHaveBeenCalled();
+    });
+
+    it('triggers a browser download after success when autoDownload is off', async () => {
+      const { result } = renderHook(() =>
+        useGenerationFlow({
+          draftId: 'draft-1',
+          config: validConfig(),
+          codegenService: testService,
+          autoDownload: false,
+        })
+      );
+
+      await act(async () => {
+        await result.current.generate();
+      });
+
+      await waitFor(() => {
+        expect(result.current.jobState.phase).toBe('success');
+      });
+
+      // Generation alone must not trigger a download when autoDownload is off.
+      expect(createObjectURLSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.download();
+      });
+
+      expect(createObjectURLSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('is a no-op after reset()', async () => {
+      const { result } = renderHook(() =>
+        useGenerationFlow({
+          draftId: 'draft-1',
+          config: validConfig(),
+          codegenService: testService,
+          autoDownload: false,
+        })
+      );
+
+      await act(async () => {
+        await result.current.generate();
+      });
+
+      await waitFor(() => {
+        expect(result.current.jobState.phase).toBe('success');
+      });
+
+      act(() => {
+        result.current.reset();
+      });
+
+      act(() => {
+        result.current.download();
+      });
+
+      expect(createObjectURLSpy).not.toHaveBeenCalled();
+    });
   });
 
   it('prevents concurrent generate() calls', async () => {

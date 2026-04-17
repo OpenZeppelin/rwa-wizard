@@ -1,48 +1,17 @@
-import { Download } from 'lucide-react';
-import { useCallback } from 'react';
-
 import type { RWAConfig } from '@openzeppelin/rwa-config';
-import { Button } from '@openzeppelin/ui-components';
 
 import { ConfigSummary } from '../../../components/shared/ConfigSummary';
 import { WizardFrame } from '../../../components/shared/WizardFrame';
-import type { RwaCodegenService } from '../../../services/codegen/types';
 import { useExplorer } from '../../../services/runtime';
 import type { ComplianceModuleOption } from '../../../types/wizard';
-import { GenerationErrorState } from '../../generation/components/GenerationErrorState';
-import { GenerationStatusPanel } from '../../generation/components/GenerationStatusPanel';
-import { useGenerationFlow } from '../../generation/hooks/useGenerationFlow';
 
 interface ReviewStepProps {
   config: RWAConfig;
-  draftId: string | null;
-  codegenService: RwaCodegenService | null;
   availableModules: ComplianceModuleOption[];
-  onExport: () => void;
 }
 
-export function ReviewStep({
-  config,
-  draftId,
-  codegenService,
-  availableModules,
-  onExport,
-}: ReviewStepProps) {
+export function ReviewStep({ config, availableModules }: ReviewStepProps) {
   const explorer = useExplorer();
-
-  const generationFlow = useGenerationFlow({
-    draftId,
-    config,
-    codegenService,
-    autoDownload: true,
-  });
-
-  const { jobState, generate, reset, isGenerating } = generationFlow;
-  const canGenerate = codegenService != null && !isGenerating;
-
-  const handleGenerate = useCallback(() => {
-    void generate();
-  }, [generate]);
 
   return (
     <WizardFrame
@@ -54,39 +23,6 @@ export function ReviewStep({
         availableModules={availableModules}
         getExplorerUrl={explorer ? (addr) => explorer.getExplorerUrl(addr) : undefined}
       />
-
-      {jobState.phase !== 'idle' && jobState.phase !== 'error' && (
-        <GenerationStatusPanel
-          phase={jobState.phase}
-          phaseLog={jobState.phaseLog}
-          zipFileName={jobState.zipFileName}
-        />
-      )}
-
-      {jobState.phase === 'error' && (
-        <GenerationErrorState
-          errorMessage={jobState.errorMessage ?? 'Generation failed.'}
-          onRetry={handleGenerate}
-          onReset={reset}
-        />
-      )}
-
-      <div className="flex flex-col gap-4 md:flex-row">
-        <Button variant="outline" className="flex-1" onClick={onExport} disabled={isGenerating}>
-          <Download className="mr-2 size-4" />
-          Export Configuration
-        </Button>
-        <Button className="flex-1" disabled={!canGenerate} onClick={handleGenerate}>
-          {isGenerating ? (
-            <>
-              <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Generating…
-            </>
-          ) : (
-            'Generate Project'
-          )}
-        </Button>
-      </div>
     </WizardFrame>
   );
 }

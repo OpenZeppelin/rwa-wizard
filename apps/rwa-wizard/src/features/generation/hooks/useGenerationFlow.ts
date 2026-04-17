@@ -13,11 +13,23 @@ export interface UseGenerationFlowOptions {
   codegenService: RwaCodegenService | null;
   /** When true, the download step is triggered automatically on success. */
   autoDownload?: boolean;
+  /**
+   * Minimum time (ms) to keep each phase on screen before advancing. Real work
+   * can complete in single-digit milliseconds, which makes the progress list
+   * flash past unreadably; a small pace delay smooths the perceived progress.
+   * Defaults to 0 to keep the hook deterministic for tests.
+   */
+  minPhaseDurationMs?: number;
 }
 
 export interface UseGenerationFlowResult {
   jobState: GenerationJobState;
   generate: () => Promise<void>;
+  /**
+   * Triggers a browser download of the most recently generated artifact.
+   * No-op when no artifact is available (e.g. before success, after reset).
+   */
+  download: () => void;
   reset: () => void;
   isGenerating: boolean;
 }
@@ -37,17 +49,27 @@ function createIdleJob(draftId: string): GenerationJobState {
  * phases matching the data-model lifecycle. `generate()` is guarded against
  * concurrent invocations; call `reset()` to return to idle.
  */
+function delay(ms: number): Promise<void> {
+  if (ms <= 0) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function useGenerationFlow({
   draftId,
   config,
   codegenService,
   autoDownload = true,
+  minPhaseDurationMs = 0,
 }: UseGenerationFlowOptions): UseGenerationFlowResult {
   const effectiveDraftId = draftId ?? '';
   const [jobState, setJobState] = useState<GenerationJobState>(() =>
     createIdleJob(effectiveDraftId)
   );
   const generatingRef = useRef(false);
+  // Cached so the consumer can trigger a browser download on demand (e.g. from
+  // a user-initiated button click) without forcing auto-download at generation
+  // time — we cannot detect whether the user actually saves the file.
+  const artifactRef = useRef<{ fileName: string; data: Blob } | null>(null);
 
   const setPhase = useCallback((phase: GenerationPhase, extra?: Partial<GenerationJobState>) => {
     setJobState((prev) => ({
@@ -79,7 +101,14 @@ export function useGenerationFlow({
         return;
       }
 
-      const validation = await codegenService.validate(config);
+      // Pacing: run real work in parallel with a minimum phase delay so each
+      // phase stays on screen long enough to be perceived. The phase duration
+      // is `max(realWork, minPhaseDurationMs)` — we never slow down real work,
+      // we only prevent it from blinking past the user.
+      const [validation] = await Promise.all([
+        codegenService.validate(config),
+        delay(minPhaseDurationMs),
+      ]);
 
       if (!validation.valid) {
         const firstError = validation.errors[0];
@@ -96,23 +125,29 @@ export function useGenerationFlow({
       // promote a failed generation into `packaging`/`success` if `generateZip`
       // still happens to resolve.
       let streamErrored = false;
-      const artifact = await codegenService.generateZip(config, {
-        onStatus: (status) => {
-          if (status.phase === 'error') {
-            streamErrored = true;
-            setPhase('error', {
-              errorMessage: status.message ?? 'Generation failed',
-              completedAt: new Date(),
-            });
-          } else if (status.phase !== 'success' && !streamErrored) {
-            setPhase(status.phase as GenerationPhase);
-          }
-        },
-      });
+      const [artifact] = await Promise.all([
+        codegenService.generateZip(config, {
+          onStatus: (status) => {
+            if (status.phase === 'error') {
+              streamErrored = true;
+              setPhase('error', {
+                errorMessage: status.message ?? 'Generation failed',
+                completedAt: new Date(),
+              });
+            } else if (status.phase !== 'success' && !streamErrored) {
+              setPhase(status.phase as GenerationPhase);
+            }
+          },
+        }),
+        delay(minPhaseDurationMs),
+      ]);
 
       if (streamErrored) return;
 
       setPhase('packaging');
+      artifactRef.current = { fileName: artifact.fileName, data: artifact.data };
+      await delay(minPhaseDurationMs);
+
       setPhase('success', {
         zipFileName: artifact.fileName,
         completedAt: new Date(),
@@ -129,15 +164,22 @@ export function useGenerationFlow({
     } finally {
       generatingRef.current = false;
     }
-  }, [effectiveDraftId, config, codegenService, autoDownload, setPhase]);
+  }, [effectiveDraftId, config, codegenService, autoDownload, minPhaseDurationMs, setPhase]);
+
+  const download = useCallback(() => {
+    const artifact = artifactRef.current;
+    if (!artifact) return;
+    downloadZip(artifact.fileName, artifact.data);
+  }, []);
 
   const reset = useCallback(() => {
     generatingRef.current = false;
+    artifactRef.current = null;
     setJobState(createIdleJob(effectiveDraftId));
   }, [effectiveDraftId]);
 
   const isGenerating =
     jobState.phase !== 'idle' && jobState.phase !== 'success' && jobState.phase !== 'error';
 
-  return { jobState, generate, reset, isGenerating };
+  return { jobState, generate, download, reset, isGenerating };
 }

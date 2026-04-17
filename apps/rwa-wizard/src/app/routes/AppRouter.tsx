@@ -23,6 +23,8 @@ import {
 import { DraftImportDialog } from '../../features/draft-management/components/DraftImportDialog';
 import { DraftList } from '../../features/draft-management/components/DraftList';
 import { useDraftAutosave } from '../../features/draft-management/hooks/useDraftAutosave';
+import { GenerationDialog } from '../../features/generation/components/GenerationDialog';
+import { useGenerationFlow } from '../../features/generation/hooks/useGenerationFlow';
 import { TargetSelectorSidebar } from '../../features/target-catalog/components/TargetSelectorSidebar';
 import { AccessControlStep } from '../../features/wizard/access-control/AccessControlStep';
 import { AssetStep } from '../../features/wizard/asset/AssetStep';
@@ -35,10 +37,7 @@ import { isStepValid } from '../../features/wizard/validation/stepValidators';
 import { getTargetCapabilitySnapshot, loadRuntime } from '../../registry/targetManager';
 import { listTargets } from '../../registry/targets';
 import type { RwaCodegenService } from '../../services/codegen/types';
-import {
-  exportAllDraftsAsJson,
-  exportDraftAsJson,
-} from '../../services/download/exportDraftAsJson';
+import { exportAllDraftsAsJson } from '../../services/download/exportDraftAsJson';
 import type { TargetAdapterCapabilities } from '../../services/runtime';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useDraftList, useWizardDraftStorage } from '../../storage';
@@ -338,6 +337,28 @@ function WizardPage() {
     onPersistError: handlePersistError,
   });
 
+  const generationFlow = useGenerationFlow({
+    draftId: storeState.activeDraftId,
+    config: draftState.config,
+    codegenService,
+    // The user explicitly saves the file from the success dialog — browsers
+    // don't tell us whether a download actually lands on disk, so forcing an
+    // auto-download would let the UI claim "downloaded" when the user could
+    // have canceled the browser save dialog.
+    autoDownload: false,
+    // Real codegen often completes in single-digit ms, which makes the phase
+    // list in the dialog flash by unreadably. A small per-phase floor turns
+    // the progress into a perceptible animation without noticeably slowing
+    // real generation (phases with real work still reflect actual duration).
+    minPhaseDurationMs: 450,
+  });
+
+  const { generate, isGenerating } = generationFlow;
+
+  const handleLastStepPrimary = useCallback(() => {
+    void generate();
+  }, [generate]);
+
   useEffect(() => {
     const id = storeState.activeDraftId;
     if (isSaving && id) {
@@ -354,15 +375,6 @@ function WizardPage() {
     const stepId = STEP_IDS[index];
     if (stepId) wizardStore.setCurrentStep(stepId);
   }, []);
-
-  const handleExportDraft = useCallback(() => {
-    const id = storeState.activeDraftId;
-    if (!id) return;
-    void exportDraftAsJson(id, storage).catch((err: unknown) => {
-      const detail = err instanceof Error ? err.message : String(err);
-      setPersistError(`Unable to export this draft: ${detail}`);
-    });
-  }, [storeState.activeDraftId, storage]);
 
   const wizardSteps: WizardStepConfig[] = useMemo(() => {
     const availableModules = targetSnapshot?.availableModules ?? [];
@@ -383,6 +395,7 @@ function WizardPage() {
       availableModules,
     };
     const validityFor = (id: WizardStepId) => isStepValid(id, draftState.config, validationCtx);
+    const reviewStepCanProceed = codegenService != null && !generationFlow.isGenerating;
 
     const steps: WizardStepConfig[] = [
       {
@@ -439,16 +452,8 @@ function WizardPage() {
       {
         id: 'review',
         title: 'Review',
-        component: (
-          <ReviewStep
-            config={draftState.config}
-            draftId={storeState.activeDraftId}
-            codegenService={codegenService}
-            availableModules={availableModules}
-            onExport={handleExportDraft}
-          />
-        ),
-        isValid: validityFor('review'),
+        component: <ReviewStep config={draftState.config} availableModules={availableModules} />,
+        isValid: validityFor('review') && reviewStepCanProceed,
       },
     ];
 
@@ -462,14 +467,7 @@ function WizardPage() {
     }
 
     return steps;
-  }, [
-    draftState,
-    targetSnapshot,
-    adapterCaps,
-    codegenService,
-    storeState.activeDraftId,
-    handleExportDraft,
-  ]);
+  }, [draftState, targetSnapshot, adapterCaps, codegenService, generationFlow]);
 
   const [resetKey, setResetKey] = useState(0);
 
@@ -494,6 +492,15 @@ function WizardPage() {
           currentStepIndex={effectiveStepIndex}
           onStepChange={handleStepChange}
           onCancel={handleCancel}
+          lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
+          onLastStepPrimary={handleLastStepPrimary}
+        />
+        <GenerationDialog
+          jobState={generationFlow.jobState}
+          isGenerating={generationFlow.isGenerating}
+          onDownload={generationFlow.download}
+          onRetry={handleLastStepPrimary}
+          onReset={generationFlow.reset}
         />
       </main>
     </AdapterCapabilitiesProvider>
