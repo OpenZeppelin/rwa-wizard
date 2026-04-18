@@ -1,16 +1,11 @@
 import { useCallback } from 'react';
 
 import type { AccessControlConfig, OperatorRole } from '@openzeppelin/rwa-config';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Label,
-} from '@openzeppelin/ui-components';
+import { Card, CardContent, Label } from '@openzeppelin/ui-components';
 
+import { useSectionCopy } from '../../../app/providers/useStepCopy';
 import { AddressListInput } from '../../../components/shared/AddressListInput';
+import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
 import { useAddressing, useExplorer } from '../../../services/runtime';
 import type { OperatorRoleMeta } from '../../../types/wizard';
 
@@ -29,6 +24,7 @@ export function OperatorRolesSection({
 }: OperatorRolesSectionProps) {
   const addressing = useAddressing();
   const explorer = useExplorer();
+  const sectionCopy = useSectionCopy('operator-roles');
   const visibleRoles = operatorRoles.filter(
     (role) => role.id !== 'document-manager' || documentManagerEnabled
   );
@@ -68,12 +64,7 @@ export function OperatorRolesSection({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Operator Roles</CardTitle>
-        <CardDescription>
-          Assign operator addresses for specific roles and permissions.
-        </CardDescription>
-      </CardHeader>
+      <SectionCardHeader {...sectionCopy} />
       <CardContent className="space-y-6">
         {visibleRoles.map((roleDef) => {
           const addresses = getAddressesForRole(roleDef.id);

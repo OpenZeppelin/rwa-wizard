@@ -233,9 +233,25 @@ function DashboardPage() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">RWA Wizard</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Welcome to the RWA Wizard. Select a target and create a new project from the sidebar.
+          Scaffold a production-ready{' '}
+          <a
+            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+            href="https://eips.ethereum.org/EIPS/eip-3643"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ERC-3643 / T-REX
+          </a>{' '}
+          real-world-asset token project. The wizard walks you through the five pieces of a T-REX
+          deployment — token metadata, identity verification (claim topics &amp; trusted issuers),
+          modular compliance rules, role-based access control, and a final review — and generates a
+          project you can audit, customize, and deploy to your chosen target ecosystem.
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Pick a target and start a new project from the sidebar, or reopen a draft from Recent
+          Assets. Drafts are stored only in your browser; nothing is sent to a server.
         </p>
       </div>
     </div>

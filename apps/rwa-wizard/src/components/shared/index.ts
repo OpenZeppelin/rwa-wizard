@@ -1,6 +1,8 @@
 export { AddressListInput } from './AddressListInput';
 export { Badge } from './Badge';
+export { InfoTooltip } from './InfoTooltip';
 export { ReadOnlyFeatureCard } from './ReadOnlyFeatureCard';
+export { SectionCardHeader } from './SectionCardHeader';
 export { SelectableCard } from './SelectableCard';
 export { TogglePill } from './TogglePill';
 export { TopicToggleGroup } from './TopicToggleGroup';

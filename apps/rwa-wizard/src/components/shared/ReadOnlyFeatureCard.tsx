@@ -1,13 +1,22 @@
-import { Info, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@openzeppelin/ui-utils';
 
 import { Badge } from './Badge';
+import { InfoTooltip } from './InfoTooltip';
 
 interface ReadOnlyFeatureCardProps {
   title: string;
   description?: string;
+  /**
+   * Content shown when the user hovers / focuses the info icon next to the
+   * title. The icon is only rendered when this is provided — we never fall
+   * back to `description` to avoid a tooltip that just duplicates the
+   * visible line underneath.
+   */
+  infoTooltip?: ReactNode;
+  /** Overrides the default lock glyph rendered next to the title. */
   icon?: ReactNode;
   enabled?: boolean;
   className?: string;
@@ -16,6 +25,7 @@ interface ReadOnlyFeatureCardProps {
 export function ReadOnlyFeatureCard({
   title,
   description,
+  infoTooltip,
   icon,
   enabled = true,
   className,
@@ -32,7 +42,11 @@ export function ReadOnlyFeatureCard({
           {title}
           <span className="inline-flex items-center gap-1 text-muted-foreground">
             {icon ?? <Lock className="size-3.5" />}
-            <Info className="size-3.5" />
+            {infoTooltip && (
+              <InfoTooltip label={`About ${title}`} maxWidthClassName="max-w-sm">
+                {infoTooltip}
+              </InfoTooltip>
+            )}
           </span>
         </p>
         {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
