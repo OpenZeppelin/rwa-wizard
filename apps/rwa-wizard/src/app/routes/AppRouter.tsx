@@ -47,6 +47,8 @@ import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useDraftList, useWizardDraftStorage } from '../../storage';
 import type { TargetCapabilitySnapshot, WizardStepId } from '../../types/wizard';
 import { isFeatureEnabled } from '../config/featureFlags';
+import { CopyProvider } from '../providers/CopyProvider';
+import { useCopy } from '../providers/useCopy';
 import { wizardStore } from '../state/wizardStore';
 
 const STEP_IDS: WizardStepId[] = ['asset', 'identity', 'compliance', 'access-control', 'review'];
@@ -229,30 +231,37 @@ function AppSidebar({
 // Pages
 // ---------------------------------------------------------------------------
 
+const ERC_3643_LINK_TEXT = 'ERC-3643 / T-REX';
+const ERC_3643_URL = 'https://eips.ethereum.org/EIPS/eip-3643';
+
 function DashboardPage() {
+  const copy = useCopy();
+  const intro = copy.notice('dashboard.intro').description;
+  const subIntro = copy.notice('dashboard.sub-intro').description;
+
+  const linkIndex = intro.indexOf(ERC_3643_LINK_TEXT);
+  const introBefore = linkIndex >= 0 ? intro.slice(0, linkIndex) : intro;
+  const introAfter = linkIndex >= 0 ? intro.slice(linkIndex + ERC_3643_LINK_TEXT.length) : '';
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
         <h1 className="text-2xl font-bold text-foreground">RWA Wizard</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Scaffold a production-ready{' '}
-          <a
-            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-            href="https://eips.ethereum.org/EIPS/eip-3643"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            ERC-3643 / T-REX
-          </a>{' '}
-          real-world-asset token project. The wizard walks you through the five pieces of a T-REX
-          deployment — token metadata, identity verification (claim topics &amp; trusted issuers),
-          modular compliance rules, role-based access control, and a final review — and generates a
-          project you can audit, customize, and deploy to your chosen target ecosystem.
+          {introBefore}
+          {linkIndex >= 0 && (
+            <a
+              className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+              href={ERC_3643_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {ERC_3643_LINK_TEXT}
+            </a>
+          )}
+          {introAfter}
         </p>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Pick a target and start a new project from the sidebar, or reopen a draft from Recent
-          Assets. Drafts are stored only in your browser; nothing is sent to a server.
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground">{subIntro}</p>
       </div>
     </div>
   );
@@ -512,33 +521,35 @@ function WizardPage() {
   const layoutKey = `${storeState.activeDraftId ?? 'new'}-${resetKey}`;
 
   return (
-    <AdapterCapabilitiesProvider value={adapterCaps}>
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {persistError && (
-          <PersistErrorBanner message={persistError} onDismiss={() => setPersistError(null)} />
-        )}
-        <WizardLayout
-          key={layoutKey}
-          variant="vertical"
-          steps={wizardSteps}
-          currentStepIndex={effectiveStepIndex}
-          onStepChange={handleStepChange}
-          onCancel={handleCancel}
-          lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
-          onLastStepPrimary={handleLastStepPrimary}
-          lastStepSecondaryLabel="Export Configuration"
-          onLastStepSecondary={handleLastStepSecondary}
-          lastStepSecondaryDisabled={!storeState.activeDraftId}
-        />
-        <GenerationDialog
-          jobState={generationFlow.jobState}
-          isGenerating={generationFlow.isGenerating}
-          onDownload={generationFlow.download}
-          onRetry={handleLastStepPrimary}
-          onReset={generationFlow.reset}
-        />
-      </main>
-    </AdapterCapabilitiesProvider>
+    <CopyProvider targetId={selectedTargetId}>
+      <AdapterCapabilitiesProvider value={adapterCaps}>
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          {persistError && (
+            <PersistErrorBanner message={persistError} onDismiss={() => setPersistError(null)} />
+          )}
+          <WizardLayout
+            key={layoutKey}
+            variant="vertical"
+            steps={wizardSteps}
+            currentStepIndex={effectiveStepIndex}
+            onStepChange={handleStepChange}
+            onCancel={handleCancel}
+            lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
+            onLastStepPrimary={handleLastStepPrimary}
+            lastStepSecondaryLabel="Export Configuration"
+            onLastStepSecondary={handleLastStepSecondary}
+            lastStepSecondaryDisabled={!storeState.activeDraftId}
+          />
+          <GenerationDialog
+            jobState={generationFlow.jobState}
+            isGenerating={generationFlow.isGenerating}
+            onDownload={generationFlow.download}
+            onRetry={handleLastStepPrimary}
+            onReset={generationFlow.reset}
+          />
+        </main>
+      </AdapterCapabilitiesProvider>
+    </CopyProvider>
   );
 }
 

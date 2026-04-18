@@ -1,10 +1,10 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
-  ComplianceModuleOption,
   GeneratedZipArtifact,
   GenerationStatus,
-  TargetEcosystemMetadata,
+  StructuralComplianceModuleOption,
+  StructuralEcosystemMetadata,
 } from '../../types/wizard';
 
 /** Normalized validation result for UI (field paths, codes, messages). */
@@ -20,8 +20,19 @@ export interface ValidationResultDTO {
  */
 export interface RwaCodegenService {
   validate(config: RWAConfig): Promise<ValidationResultDTO>;
-  getAvailableModules(): Promise<ComplianceModuleOption[]>;
-  getEcosystemMetadata?: () => TargetEcosystemMetadata;
+  /**
+   * Returns structural compliance-module descriptors (ids, hooks, review
+   * state, config field keys). UI prose is joined in the app layer via
+   * `enrichAvailableModules`.
+   */
+  getAvailableModules(): Promise<StructuralComplianceModuleOption[]>;
+  /**
+   * Returns structural ecosystem metadata (ids, names, locks, defaults,
+   * operator roles, hooks, limits). User-facing copy is joined from
+   * `@openzeppelin/rwa-wizard-copy` in the app layer — codegen packages
+   * never carry description or tooltip prose.
+   */
+  getEcosystemMetadata?: () => StructuralEcosystemMetadata;
   generateZip(
     config: RWAConfig,
     options?: { onStatus?: (status: GenerationStatus) => void }

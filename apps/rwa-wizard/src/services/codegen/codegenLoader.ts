@@ -3,10 +3,10 @@ import type { GenerateOptions } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
-  ComplianceModuleOption,
   GeneratedZipArtifact,
   GenerationStatus,
-  TargetEcosystemMetadata,
+  StructuralComplianceModuleOption,
+  StructuralEcosystemMetadata,
 } from '../../types/wizard';
 import { getCodegenRuntimeOptions, type RuntimeGenerateOptions } from './runtimeOptions';
 import type { RwaCodegenService, ValidationResultDTO } from './types';
@@ -20,7 +20,6 @@ interface CodegenPackageModule {
   getAvailableModules: () => Array<{
     id: string;
     name: string;
-    description: string;
     requiredHooks: string[];
     review: { state: string; prUrl?: string };
     configFields: Array<{
@@ -29,14 +28,13 @@ interface CodegenPackageModule {
       type: string;
       required: boolean;
       placeholder?: string;
-      hint?: string;
     }>;
   }>;
   generateZip: (
     config: RWAConfig,
     options?: GenerateOptions
   ) => Promise<{ fileName: string; data: Blob }>;
-  getEcosystemMetadata?: () => TargetEcosystemMetadata;
+  getEcosystemMetadata?: () => StructuralEcosystemMetadata;
 }
 
 function getDefaultGenerateOptions(targetId: string): RuntimeGenerateOptions | undefined {
@@ -83,15 +81,14 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
       };
     },
 
-    async getAvailableModules(): Promise<ComplianceModuleOption[]> {
+    async getAvailableModules(): Promise<StructuralComplianceModuleOption[]> {
       const modules = pkg.getAvailableModules();
       return modules.map((m) => ({
         id: m.id,
         name: m.name,
-        description: m.description,
         requiredHooks: [...m.requiredHooks],
         review: {
-          state: m.review.state as ComplianceModuleOption['review']['state'],
+          state: m.review.state as StructuralComplianceModuleOption['review']['state'],
           prUrl: m.review.prUrl,
         },
         configFields: m.configFields.map((f) => ({
@@ -100,7 +97,6 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
           type: f.type as 'number' | 'string' | 'string[]',
           required: f.required,
           placeholder: f.placeholder,
-          hint: f.hint,
         })),
       }));
     },

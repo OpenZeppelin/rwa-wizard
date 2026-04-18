@@ -2,14 +2,10 @@ import { useCallback } from 'react';
 
 import type { ClaimTopic, IdentityVerificationConfig } from '@openzeppelin/rwa-config';
 import { MAX_CLAIM_TOPICS, PREDEFINED_CLAIM_TOPICS } from '@openzeppelin/rwa-config';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@openzeppelin/ui-components';
+import { Card, CardContent } from '@openzeppelin/ui-components';
 
+import { useSectionCopy } from '../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
 import { TopicToggleGroup } from '../../../components/shared/TopicToggleGroup';
 
 interface ClaimTopicsSectionProps {
@@ -18,6 +14,7 @@ interface ClaimTopicsSectionProps {
 }
 
 export function ClaimTopicsSection({ identity, onUpdate }: ClaimTopicsSectionProps) {
+  const sectionCopy = useSectionCopy('claim-topics');
   /**
    * When a topic is removed we also prune it from every trusted issuer so the
    * persisted config never references orphaned topic ids.
@@ -70,13 +67,7 @@ export function ClaimTopicsSection({ identity, onUpdate }: ClaimTopicsSectionPro
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Claim Topics</CardTitle>
-        <CardDescription>
-          Select the claim topics your token will require for identity verification, or add your own
-          custom topics.
-        </CardDescription>
-      </CardHeader>
+      <SectionCardHeader {...sectionCopy} />
       <CardContent>
         <TopicToggleGroup
           predefinedTopics={PREDEFINED_CLAIM_TOPICS}

@@ -1,5 +1,6 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import { useStepCopy } from '../../../app/providers/useStepCopy';
 import { ConfigSummary } from '../../../components/shared/ConfigSummary';
 import { WizardFrame } from '../../../components/shared/WizardFrame';
 import { useExplorer } from '../../../services/runtime';
@@ -12,12 +13,10 @@ interface ReviewStepProps {
 
 export function ReviewStep({ config, availableModules }: ReviewStepProps) {
   const explorer = useExplorer();
+  const stepCopy = useStepCopy('review');
 
   return (
-    <WizardFrame
-      title="Review & Generate"
-      description="Review your configuration and generate your project."
-    >
+    <WizardFrame {...stepCopy}>
       <ConfigSummary
         config={config}
         availableModules={availableModules}

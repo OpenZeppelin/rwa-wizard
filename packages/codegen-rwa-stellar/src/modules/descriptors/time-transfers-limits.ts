@@ -10,7 +10,6 @@ import {
 export const timeTransfersLimitsModule = defineComplianceModuleDescriptor({
   id: 'time-transfers-limits',
   name: 'Time-based Transfer Limits',
-  description: 'Limits the volume of tokens an identity can transfer within rolling time windows',
   requiredHooks: ['canTransfer', 'transferred'],
   crateName: 'time-transfers-limits',
   review: { state: 'under-review', prUrl: PR_652 },
@@ -21,7 +20,6 @@ export const timeTransfersLimitsModule = defineComplianceModuleDescriptor({
       type: 'number',
       required: true,
       placeholder: 'e.g. 86400',
-      hint: 'Rolling time window in seconds (1 day = 86400)',
     },
     {
       key: 'limitValue',
@@ -29,7 +27,6 @@ export const timeTransfersLimitsModule = defineComplianceModuleDescriptor({
       type: 'number',
       required: true,
       placeholder: 'e.g. 100000',
-      hint: 'Maximum transfer volume within the time window (in smallest token units)',
     },
   ],
   deployment: {

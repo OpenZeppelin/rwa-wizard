@@ -1,16 +1,12 @@
 import type { Control } from 'react-hook-form';
 
 import type { TokenConfig } from '@openzeppelin/rwa-config';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  NumberField,
-  TextField,
-} from '@openzeppelin/ui-components';
+import { formatCopy } from '@openzeppelin/rwa-wizard-copy';
+import { Card, CardContent, NumberField, TextField } from '@openzeppelin/ui-components';
 
+import { useCopy } from '../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
 import {
   TOKEN_DECIMALS_MAX,
   TOKEN_DECIMALS_MIN,
@@ -23,20 +19,22 @@ interface TokenBasicsProps {
 }
 
 export function TokenBasics({ control }: TokenBasicsProps) {
+  const sectionCopy = useSectionCopy('token-information');
+  const fieldHelper = useCopy().fieldHelper;
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Token Information</CardTitle>
-        <CardDescription>Define the basic properties of your token.</CardDescription>
-      </CardHeader>
+      <SectionCardHeader {...sectionCopy} />
       <CardContent>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
             id="token-name"
             name="name"
             label="Token Name"
-            placeholder="MyRWAToken"
-            helperText={`Up to ${TOKEN_NAME_MAX_LENGTH} characters`}
+            placeholder="My Real Estate Token"
+            helperText={formatCopy(fieldHelper('token.name').description, {
+              maxLength: TOKEN_NAME_MAX_LENGTH,
+            })}
             control={control}
             validation={{ required: true, maxLength: TOKEN_NAME_MAX_LENGTH }}
           />
@@ -44,8 +42,10 @@ export function TokenBasics({ control }: TokenBasicsProps) {
             id="token-symbol"
             name="symbol"
             label="Token Symbol"
-            placeholder="RWA"
-            helperText={`Up to ${TOKEN_SYMBOL_MAX_LENGTH} characters`}
+            placeholder="MRET"
+            helperText={formatCopy(fieldHelper('token.symbol').description, {
+              maxLength: TOKEN_SYMBOL_MAX_LENGTH,
+            })}
             control={control}
             validation={{ required: true, maxLength: TOKEN_SYMBOL_MAX_LENGTH }}
           />
@@ -54,7 +54,7 @@ export function TokenBasics({ control }: TokenBasicsProps) {
             name="decimals"
             label="Decimals"
             control={control}
-            helperText="Typically 7 for Stellar/Soroban tokens"
+            helperText={fieldHelper('token.decimals').description}
             validation={{ required: true, min: TOKEN_DECIMALS_MIN, max: TOKEN_DECIMALS_MAX }}
           />
           <TextField
@@ -62,7 +62,7 @@ export function TokenBasics({ control }: TokenBasicsProps) {
             name="initialSupply"
             label="Initial Supply (Optional)"
             placeholder="0"
-            helperText="Leave empty if no initial supply"
+            helperText={fieldHelper('token.initial-supply').description}
             control={control}
           />
         </div>

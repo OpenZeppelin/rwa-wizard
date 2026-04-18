@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import type { ComplianceConfig } from '@openzeppelin/rwa-config';
 
+import { useStepCopy } from '../../../app/providers/useStepCopy';
 import { WizardFrame } from '../../../components/shared/WizardFrame';
 import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../types/wizard';
 import { HookWiringPreview } from './HookWiringPreview';
@@ -20,6 +21,7 @@ export function ComplianceStep({
   complianceHooks,
   onUpdate,
 }: ComplianceStepProps) {
+  const stepCopy = useStepCopy('compliance');
   const selectedModuleIds = useMemo(
     () => new Set(compliance.modules.map((m) => m.moduleId)),
     [compliance.modules]
@@ -64,11 +66,7 @@ export function ComplianceStep({
   }, [compliance.modules, availableModules]);
 
   return (
-    <WizardFrame
-      title="Compliance Modules"
-      description="Select which compliance policies to enforce. Each module is automatically registered on the hooks it requires — you don't need to wire them manually."
-      spacing="space-y-8"
-    >
+    <WizardFrame {...stepCopy} spacing="space-y-8">
       <ModuleCatalog
         availableModules={availableModules}
         selectedModuleIds={selectedModuleIds}

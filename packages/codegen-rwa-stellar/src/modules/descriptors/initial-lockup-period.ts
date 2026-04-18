@@ -9,7 +9,6 @@ import {
 export const initialLockupPeriodModule = defineComplianceModuleDescriptor({
   id: 'initial-lockup-period',
   name: 'Initial Lockup Period',
-  description: 'Locks minted tokens for a configurable period before they become transferable',
   requiredHooks: ['canTransfer', 'created', 'transferred', 'destroyed'],
   crateName: 'initial-lockup-period',
   review: { state: 'under-review', prUrl: PR_652 },
@@ -20,7 +19,6 @@ export const initialLockupPeriodModule = defineComplianceModuleDescriptor({
       type: 'number',
       required: true,
       placeholder: 'e.g. 2592000',
-      hint: 'Number of seconds tokens are locked after minting (30 days = 2592000)',
     },
   ],
   deployment: {

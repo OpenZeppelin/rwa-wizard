@@ -11,7 +11,6 @@ function createEntry(
   return {
     id: 'supply-limit',
     name: 'Supply Limit',
-    description: 'Enforces a maximum total supply for the token',
     requiredHooks: ['canCreate', 'created', 'destroyed'],
     crateName: 'supply-limit',
     review: { state: 'stable' },

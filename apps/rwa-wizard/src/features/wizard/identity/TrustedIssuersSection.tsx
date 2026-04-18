@@ -13,13 +13,13 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Label,
 } from '@openzeppelin/ui-components';
 import { cn } from '@openzeppelin/ui-utils';
 
+import { useCopy } from '../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
 import { TogglePill } from '../../../components/shared/TogglePill';
 import { useAddressing, useExplorer } from '../../../services/runtime';
 
@@ -40,6 +40,12 @@ export function TrustedIssuersSection({
 }: TrustedIssuersSectionProps) {
   const addressing = useAddressing();
   const explorer = useExplorer();
+  const sectionCopy = useSectionCopy('trusted-issuers');
+  const copy = useCopy();
+  const issuerAddressHelper = copy.fieldHelper('trusted-issuer.address').description;
+  const duplicateMessage = copy.notice('trusted-issuer.duplicate').description;
+  const invalidAddressMessage = copy.notice('trusted-issuer.invalid-address').description;
+  const noTopicsMessage = copy.notice('trusted-issuer.no-topics').description;
   const atLimit = identity.trustedIssuers.length >= maxTrustedIssuers;
   const availableTopics = identity.claimTopics;
 
@@ -99,20 +105,14 @@ export function TrustedIssuersSection({
   );
 
   const validationMessage = isDuplicate
-    ? 'Issuer already added'
+    ? duplicateMessage
     : trimmedDraft && !isValidAddress
-      ? 'Invalid address format for this network'
+      ? invalidAddressMessage
       : undefined;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Trusted Issuers</CardTitle>
-        <CardDescription>
-          Configure trusted authorities that can issue identity claims. Each issuer must be
-          permitted to verify at least one claim topic.
-        </CardDescription>
-      </CardHeader>
+      <SectionCardHeader {...sectionCopy} />
       <CardContent className="space-y-4">
         {identity.trustedIssuers.map((issuer, index) => (
           <IssuerRow
@@ -123,6 +123,7 @@ export function TrustedIssuersSection({
             onRemove={handleRemove}
             onToggleTopic={toggleIssuerTopic}
             getExplorerUrl={explorer ? (addr) => explorer.getExplorerUrl(addr) : undefined}
+            noTopicsMessage={noTopicsMessage}
           />
         ))}
 
@@ -132,8 +133,8 @@ export function TrustedIssuersSection({
               <AddressField
                 id="trusted-issuer-address"
                 name="address"
-                label="Issuer Contract Address"
-                placeholder="Enter issuer contract address"
+                label="Claim Issuer Contract Address"
+                placeholder="Address of the deployed Claim Issuer contract"
                 control={control}
                 addressing={addressing ?? undefined}
                 validation={{ required: false }}
@@ -157,7 +158,7 @@ export function TrustedIssuersSection({
                 validationMessage ? 'text-destructive' : 'text-muted-foreground'
               )}
             >
-              {validationMessage ?? 'New issuers are auto-permitted for all claim topics.'}
+              {validationMessage ?? issuerAddressHelper}
             </p>
           )}
         </div>
@@ -173,6 +174,7 @@ function IssuerRow({
   onRemove,
   onToggleTopic,
   getExplorerUrl,
+  noTopicsMessage,
 }: {
   issuer: TrustedIssuer;
   index: number;
@@ -180,6 +182,7 @@ function IssuerRow({
   onRemove: (index: number) => void;
   onToggleTopic: (issuerIndex: number, topicId: number) => void;
   getExplorerUrl?: (address: string) => string | null;
+  noTopicsMessage: string;
 }) {
   const hasNoTopics = issuer.claimTopics.length === 0;
 
@@ -226,7 +229,7 @@ function IssuerRow({
       {hasNoTopics && (
         <div className="flex items-center gap-1.5 text-xs text-destructive">
           <AlertTriangle className="size-3.5 shrink-0" />
-          <span>Select at least one claim topic for this issuer</span>
+          <span>{noTopicsMessage}</span>
         </div>
       )}
     </div>

@@ -28,18 +28,25 @@ describe('Compliance Module Registry', () => {
       }).toThrow();
     });
 
-    it('each entry should have required fields: id, name, description, requiredHooks', () => {
+    it('each entry should have required fields: id, name, requiredHooks', () => {
       for (const entry of COMPLIANCE_MODULE_REGISTRY) {
         expect(entry).toHaveProperty('id');
         expect(entry).toHaveProperty('name');
-        expect(entry).toHaveProperty('description');
         expect(entry).toHaveProperty('requiredHooks');
 
         expect(typeof entry.id).toBe('string');
         expect(typeof entry.name).toBe('string');
-        expect(typeof entry.description).toBe('string');
         expect(Array.isArray(entry.requiredHooks)).toBe(true);
         expect(entry.requiredHooks.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('entries do NOT expose UI prose (description / config hint)', () => {
+      for (const entry of COMPLIANCE_MODULE_REGISTRY) {
+        expect(entry).not.toHaveProperty('description');
+        for (const field of entry.configFields) {
+          expect(field).not.toHaveProperty('hint');
+        }
       }
     });
 
@@ -70,7 +77,6 @@ describe('Compliance Module Registry', () => {
       for (const entry of available) {
         expect(entry).toHaveProperty('id');
         expect(entry).toHaveProperty('name');
-        expect(entry).toHaveProperty('description');
         expect(entry).toHaveProperty('requiredHooks');
       }
     });

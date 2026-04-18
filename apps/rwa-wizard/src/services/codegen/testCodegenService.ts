@@ -1,9 +1,9 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
-  ComplianceModuleOption,
   GeneratedZipArtifact,
   GenerationStatus,
+  StructuralComplianceModuleOption,
 } from '../../types/wizard';
 import type { RwaCodegenService, ValidationResultDTO } from './types';
 
@@ -18,12 +18,11 @@ export function createTestCodegenService(): RwaCodegenService {
       return { valid: true, errors: [], warnings: [] };
     },
 
-    async getAvailableModules(): Promise<ComplianceModuleOption[]> {
+    async getAvailableModules(): Promise<StructuralComplianceModuleOption[]> {
       return [
         {
           id: 'supply-limit',
           name: 'Supply Limit',
-          description: 'Enforces a maximum total supply for the token',
           requiredHooks: ['canCreate', 'created', 'destroyed'],
           review: {
             state: 'under-review',
@@ -42,7 +41,6 @@ export function createTestCodegenService(): RwaCodegenService {
         {
           id: 'max-balance',
           name: 'Max Balance',
-          description: 'Limits the maximum token balance per identity',
           requiredHooks: ['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed'],
           review: {
             state: 'under-review',
@@ -61,7 +59,6 @@ export function createTestCodegenService(): RwaCodegenService {
         {
           id: 'country-restrict',
           name: 'Country Restriction',
-          description: 'Blocks transfers to holders from restricted countries',
           requiredHooks: ['canTransfer'],
           review: {
             state: 'under-review',

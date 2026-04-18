@@ -1,0 +1,135 @@
+import { getCopyForChain, isChainId, type ChainCopy } from '@openzeppelin/rwa-wizard-copy';
+
+import type {
+  ComplianceHookMeta,
+  ComplianceModuleOption,
+  FeatureControlMeta,
+  ModuleConfigFieldMeta,
+  OperatorRoleMeta,
+  StructuralComplianceHookMeta,
+  StructuralComplianceModuleOption,
+  StructuralEcosystemMetadata,
+  StructuralFeatureControlMeta,
+  StructuralOperatorRoleMeta,
+  TargetEcosystemMetadata,
+} from '../types/wizard';
+
+/**
+ * Joins structural codegen metadata with the chain-appropriate copy dictionary
+ * and produces the enriched `TargetEcosystemMetadata` the wizard UI renders.
+ *
+ * This is the single seam where the two packages meet — keeping the join
+ * here (rather than inside each step component) means the lookup happens
+ * once per target-load, not per render.
+ */
+export function enrichEcosystemMetadata(
+  targetId: string,
+  structural: StructuralEcosystemMetadata
+): TargetEcosystemMetadata {
+  if (!isChainId(targetId)) {
+    return {
+      ...structural,
+      administrativeControls: structural.administrativeControls.map(toPlaceholderControl),
+      identityControls: structural.identityControls.map(toPlaceholderControl),
+      operatorRoles: structural.operatorRoles.map(toPlaceholderRole),
+      complianceHooks: structural.complianceHooks.map(toPlaceholderHook),
+    };
+  }
+
+  const copy = getCopyForChain(targetId);
+
+  return {
+    ...structural,
+    administrativeControls: structural.administrativeControls.map((meta) =>
+      enrichControl(meta, copy.adminControl(meta.id))
+    ),
+    identityControls: structural.identityControls.map((meta) =>
+      enrichControl(meta, copy.identityControl(meta.id))
+    ),
+    operatorRoles: structural.operatorRoles.map((role) => enrichRole(role, copy.role(role.id))),
+    complianceHooks: structural.complianceHooks.map((meta) =>
+      enrichHook(meta, copy.hook(meta.hook))
+    ),
+  };
+}
+
+/**
+ * Joins structural compliance-module descriptors with module-level and
+ * field-level copy. Separate from `enrichEcosystemMetadata` because modules
+ * are loaded through a different service call (`getAvailableModules`).
+ */
+export function enrichAvailableModules(
+  targetId: string,
+  structural: readonly StructuralComplianceModuleOption[]
+): ComplianceModuleOption[] {
+  if (!isChainId(targetId)) {
+    return structural.map(toPlaceholderModule);
+  }
+  const copy = getCopyForChain(targetId);
+  return structural.map((mod) => enrichModule(mod, copy));
+}
+
+// ---------------------------------------------------------------------------
+// Per-entry join helpers
+// ---------------------------------------------------------------------------
+
+function enrichControl(
+  meta: StructuralFeatureControlMeta,
+  entry: { description: string; infoCopy?: string }
+): FeatureControlMeta {
+  return { ...meta, description: entry.description, infoCopy: entry.infoCopy };
+}
+
+function enrichRole(
+  role: StructuralOperatorRoleMeta,
+  entry: { description: string; infoCopy?: string }
+): OperatorRoleMeta {
+  return { ...role, description: entry.description, infoCopy: entry.infoCopy };
+}
+
+function enrichHook(
+  meta: StructuralComplianceHookMeta,
+  entry: { description: string; infoCopy?: string }
+): ComplianceHookMeta {
+  return { ...meta, description: entry.description, infoCopy: entry.infoCopy };
+}
+
+function enrichModule(
+  mod: StructuralComplianceModuleOption,
+  copy: ChainCopy
+): ComplianceModuleOption {
+  const moduleEntry = copy.module(mod.id);
+  return {
+    ...mod,
+    description: moduleEntry.description,
+    infoCopy: moduleEntry.infoCopy,
+    configFields: mod.configFields.map((field): ModuleConfigFieldMeta => {
+      const fieldEntry = copy.moduleField(mod.id, field.key);
+      return { ...field, hint: fieldEntry.description || undefined };
+    }),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Placeholders for unknown targets (keep render path alive)
+// ---------------------------------------------------------------------------
+
+function toPlaceholderControl(meta: StructuralFeatureControlMeta): FeatureControlMeta {
+  return { ...meta, description: '' };
+}
+
+function toPlaceholderRole(role: StructuralOperatorRoleMeta): OperatorRoleMeta {
+  return { ...role, description: '' };
+}
+
+function toPlaceholderHook(meta: StructuralComplianceHookMeta): ComplianceHookMeta {
+  return { ...meta, description: '' };
+}
+
+function toPlaceholderModule(mod: StructuralComplianceModuleOption): ComplianceModuleOption {
+  return {
+    ...mod,
+    description: '',
+    configFields: mod.configFields.map((field): ModuleConfigFieldMeta => ({ ...field })),
+  };
+}

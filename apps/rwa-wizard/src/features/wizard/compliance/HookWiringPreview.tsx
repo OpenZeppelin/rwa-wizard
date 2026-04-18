@@ -1,4 +1,6 @@
+import { useCopy } from '../../../app/providers/useCopy';
 import { Badge } from '../../../components/shared/Badge';
+import { renderInlineCopy } from '../../../components/shared/renderInlineCopy';
 import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../types/wizard';
 
 interface HookWiringPreviewProps {
@@ -17,16 +19,16 @@ export function HookWiringPreview({
   availableModules,
 }: HookWiringPreviewProps) {
   const activeHooks = complianceHooks.filter((h) => hookRegistrations.has(h.hook));
+  const notice = useCopy().notice('compliance.hook-wiring-preview');
 
   if (activeHooks.length === 0) return null;
 
   return (
     <div className="space-y-3">
       <div>
-        <h3 className="text-sm font-medium text-foreground">Hook Wiring Preview</h3>
+        <h3 className="text-sm font-medium text-foreground">{notice.title}</h3>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          This shows which compliance hooks will fire when token operations occur. Each module
-          registers itself on the hooks it needs.
+          {renderInlineCopy(notice.description)}
         </p>
       </div>
 

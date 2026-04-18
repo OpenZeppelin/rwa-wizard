@@ -1,35 +1,28 @@
 import type { Control } from 'react-hook-form';
 
 import type { TokenConfig } from '@openzeppelin/rwa-config';
-import {
-  BooleanField,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@openzeppelin/ui-components';
+import { BooleanField, Card, CardContent } from '@openzeppelin/ui-components';
+
+import { useCopy } from '../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
 
 interface DocumentManagerSectionProps {
   control: Control<TokenConfig>;
 }
 
 export function DocumentManagerSection({ control }: DocumentManagerSectionProps) {
+  const sectionCopy = useSectionCopy('document-manager');
+  const fieldHelper = useCopy().fieldHelper;
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Document Manager</CardTitle>
-        <CardDescription>
-          Enable ERC-1643 Document Management for attaching legal documents, prospectuses, and
-          reports.
-        </CardDescription>
-      </CardHeader>
+      <SectionCardHeader {...sectionCopy} />
       <CardContent>
         <BooleanField
           id="doc-manager-enabled"
           name="documentManager.enabled"
           label="Document Management"
-          helperText="Enable document management for attaching legal documents, prospectuses, reports (max 5,000 documents)"
+          helperText={fieldHelper('document-manager.enabled').description}
           control={control}
         />
       </CardContent>

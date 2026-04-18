@@ -6,6 +6,7 @@ import type {
 } from '@openzeppelin/rwa-config';
 import { Form } from '@openzeppelin/ui-components';
 
+import { useStepCopy } from '../../../app/providers/useStepCopy';
 import { WizardFrame } from '../../../components/shared/WizardFrame';
 import { useStepForm } from '../../../hooks/useStepForm';
 import type { FeatureControlMeta } from '../../../types/wizard';
@@ -21,6 +22,7 @@ interface AssetStepProps {
 
 export function AssetStep({ token, adminControlsMeta, onUpdate }: AssetStepProps) {
   const form = useStepForm(token, onUpdate);
+  const stepCopy = useStepCopy('asset');
 
   const handleAdminToggle = useCallback(
     (id: string, value: boolean) => {
@@ -36,10 +38,7 @@ export function AssetStep({ token, adminControlsMeta, onUpdate }: AssetStepProps
 
   return (
     <Form {...form}>
-      <WizardFrame
-        title="Asset Configuration"
-        description="Define the fundamental token properties and administrative controls for your RWA token."
-      >
+      <WizardFrame {...stepCopy}>
         <TokenBasics control={form.control} />
         <AdministrativeControls
           controls={token.administrativeControls}

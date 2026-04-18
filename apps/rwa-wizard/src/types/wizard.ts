@@ -109,53 +109,134 @@ export interface ModuleReviewInfo {
   prUrl?: string;
 }
 
-export interface ModuleConfigFieldMeta {
+/**
+ * Structural descriptor for a module's configurable parameter as emitted by
+ * the codegen package. Helper text (`hint`) is joined in the app layer from
+ * `@openzeppelin/rwa-wizard-copy` keyed on
+ * `moduleField.<moduleId>.<fieldKey>`.
+ */
+export interface StructuralModuleConfigFieldMeta {
   key: string;
   label: string;
   type: 'number' | 'string' | 'string[]';
   required: boolean;
   placeholder?: string;
+}
+
+/** UI-ready config field metadata: structural fields + joined helper text. */
+export interface ModuleConfigFieldMeta extends StructuralModuleConfigFieldMeta {
   hint?: string;
 }
 
-export type ComplianceModuleOption = {
+/**
+ * Structural compliance-module entry as emitted by the codegen package.
+ * Copy (description, info tooltip) lives in `@openzeppelin/rwa-wizard-copy`.
+ */
+export interface StructuralComplianceModuleOption {
   id: string;
   name: string;
-  description: string;
   requiredHooks: string[];
   review: ModuleReviewInfo;
-  configFields: ModuleConfigFieldMeta[];
-};
+  configFields: StructuralModuleConfigFieldMeta[];
+}
 
-export interface FeatureControlMeta {
+/**
+ * UI-ready compliance-module entry: structural facts plus educational copy
+ * joined from the copy package.
+ */
+export interface ComplianceModuleOption extends StructuralComplianceModuleOption {
+  description: string;
+  /** Longer tooltip copy. Omitted when no `infoCopy` entry is defined. */
+  infoCopy?: string;
+  configFields: ModuleConfigFieldMeta[];
+}
+
+/**
+ * Structural facts about a feature control emitted by a codegen package.
+ * Copy (description, tooltip prose) is joined in the app layer from
+ * `@openzeppelin/rwa-wizard-copy` — see `registry/enrichEcosystemMetadata.ts`.
+ */
+export interface StructuralFeatureControlMeta {
   id: string;
   name: string;
-  description: string;
   locked: boolean;
   defaultValue: boolean;
 }
 
-export interface OperatorRoleMeta {
+/**
+ * UI-ready feature control metadata: the structural facts plus joined copy.
+ * This is what step components receive and render.
+ */
+export interface FeatureControlMeta extends StructuralFeatureControlMeta {
+  /** Short one-line label shown beneath the title. */
+  description: string;
+  /**
+   * Longer educational copy surfaced behind an info-icon tooltip. When
+   * absent, the tooltip (and its icon) is suppressed — we never duplicate
+   * `description` just to have something to show.
+   */
+  infoCopy?: string;
+}
+
+/**
+ * Structural operator-role descriptor emitted by a codegen package.
+ * Copy (description, info tooltip) is joined in the app layer from
+ * `@openzeppelin/rwa-wizard-copy` keyed on `role.<id>`.
+ */
+export interface StructuralOperatorRoleMeta {
   id: string;
   name: string;
-  description: string;
 }
 
-export interface ComplianceHookMeta {
+/** UI-ready operator role: structural fields plus joined educational copy. */
+export interface OperatorRoleMeta extends StructuralOperatorRoleMeta {
+  description: string;
+  infoCopy?: string;
+}
+
+/**
+ * Structural compliance-hook descriptor emitted by a codegen package.
+ * Copy (description, info tooltip) is joined in the app layer from
+ * `@openzeppelin/rwa-wizard-copy` keyed on `hook.<hook>`.
+ */
+export interface StructuralComplianceHookMeta {
   hook: string;
   displayName: string;
-  description: string;
 }
 
+/** UI-ready compliance hook: structural fields plus joined educational copy. */
+export interface ComplianceHookMeta extends StructuralComplianceHookMeta {
+  description: string;
+  infoCopy?: string;
+}
+
+/**
+ * Structural metadata emitted by codegen packages. Roles, hooks, and control
+ * descriptors only carry structural labels; user-facing prose lives in
+ * `@openzeppelin/rwa-wizard-copy` and is joined in the app layer.
+ */
+export interface StructuralEcosystemMetadata {
+  administrativeControls: readonly StructuralFeatureControlMeta[];
+  identityControls: readonly StructuralFeatureControlMeta[];
+  operatorRoles: readonly StructuralOperatorRoleMeta[];
+  complianceHooks: readonly StructuralComplianceHookMeta[];
+  limits: {
+    maxModulesPerHook: number;
+    maxTrustedIssuers: number;
+  };
+}
+
+/**
+ * UI-ready ecosystem metadata — structural data joined with chain-appropriate
+ * educational copy. Produced by `enrichEcosystemMetadata` and consumed by
+ * step components.
+ */
 export interface TargetEcosystemMetadata {
   administrativeControls: readonly FeatureControlMeta[];
   identityControls: readonly FeatureControlMeta[];
   operatorRoles: readonly OperatorRoleMeta[];
   complianceHooks: readonly ComplianceHookMeta[];
-  limits: {
-    maxModulesPerHook: number;
-    maxTrustedIssuers: number;
-  };
+  limits: StructuralEcosystemMetadata['limits'];
 }
 
 export interface TargetNetworkOption {

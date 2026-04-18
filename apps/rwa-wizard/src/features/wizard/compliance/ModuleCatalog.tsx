@@ -4,7 +4,9 @@ import { useCallback } from 'react';
 import type { ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 import { cn } from '@openzeppelin/ui-utils';
 
+import { useCopy } from '../../../app/providers/useCopy';
 import { Badge } from '../../../components/shared/Badge';
+import { InfoTooltip } from '../../../components/shared/InfoTooltip';
 import type { ComplianceModuleOption } from '../../../types/wizard';
 import { ModuleConfigPanel } from './ModuleConfigPanel';
 
@@ -36,13 +38,7 @@ export function ModuleCatalog({
   onConfigChange,
 }: ModuleCatalogProps) {
   if (availableModules.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-border p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          No compliance modules are available for the selected target.
-        </p>
-      </div>
-    );
+    return <EmptyModuleCatalog />;
   }
 
   return (
@@ -74,7 +70,17 @@ interface ModuleRowProps {
   onConfigChange: (moduleId: string, config: Record<string, unknown>) => void;
 }
 
+function EmptyModuleCatalog() {
+  const emptyNotice = useCopy().notice('compliance.module-catalog.empty');
+  return (
+    <div className="rounded-lg border border-dashed border-border p-8 text-center">
+      <p className="text-sm text-muted-foreground">{emptyNotice.description}</p>
+    </div>
+  );
+}
+
 function ModuleRow({ module, selected, config, onToggle, onConfigChange }: ModuleRowProps) {
+  const underReviewNotice = useCopy().notice('compliance.module-catalog.under-review-label');
   const handleClick = useCallback(() => onToggle(module.id), [module.id, onToggle]);
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -124,9 +130,18 @@ function ModuleRow({ module, selected, config, onToggle, onConfigChange }: Modul
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-foreground">{module.name}</p>
             {isUnderReview && (
-              <Badge variant="outline" className="border-amber-500/40 text-[10px] text-amber-600">
-                Under Review
-              </Badge>
+              <span
+                className="inline-flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+              >
+                <Badge variant="outline" className="border-amber-500/40 text-[10px] text-amber-600">
+                  {underReviewNotice.description}
+                </Badge>
+                <InfoTooltip label="About the Under Review badge">
+                  {underReviewNotice.infoCopy}
+                </InfoTooltip>
+              </span>
             )}
           </div>
           <p className="mt-0.5 text-sm text-muted-foreground">{module.description}</p>

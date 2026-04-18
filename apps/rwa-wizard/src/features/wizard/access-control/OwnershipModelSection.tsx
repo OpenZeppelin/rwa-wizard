@@ -3,15 +3,11 @@ import type { FieldValues } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 
 import type { OwnershipModel } from '@openzeppelin/rwa-config';
-import {
-  AddressField,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@openzeppelin/ui-components';
+import { AddressField, Card, CardContent } from '@openzeppelin/ui-components';
 
+import { useCopy } from '../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
 import { SelectableCard } from '../../../components/shared/SelectableCard';
 import { useAddressing } from '../../../services/runtime';
 
@@ -20,22 +16,10 @@ interface OwnershipModelSectionProps {
   onUpdate: (model: OwnershipModel) => void;
 }
 
-const OWNERSHIP_OPTIONS = [
-  {
-    type: 'single-owner' as const,
-    title: 'Single Owner',
-    description: 'One address controls everything',
-  },
-  {
-    type: 'multi-sig' as const,
-    title: 'Multi-Sig Owner',
-    description: 'Multiple signatures required',
-  },
-  {
-    type: 'dao' as const,
-    title: 'DAO Owner',
-    description: 'Governance contract',
-  },
+const OWNERSHIP_OPTION_TYPES: readonly OwnershipModel['type'][] = [
+  'single-owner',
+  'multi-sig',
+  'dao',
 ];
 
 interface AddressFormValues {
@@ -44,6 +28,8 @@ interface AddressFormValues {
 
 export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSectionProps) {
   const addressing = useAddressing();
+  const copy = useCopy();
+  const sectionCopy = useSectionCopy('ownership-model');
   const currentAddress =
     ownership.type === 'single-owner' ? ownership.ownerAddress : ownership.address;
 
@@ -90,37 +76,27 @@ export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSec
     }
   };
 
-  const addressLabel =
-    ownership.type === 'single-owner'
-      ? 'Owner Address'
-      : ownership.type === 'multi-sig'
-        ? 'Multi-Sig Contract Address'
-        : 'DAO Contract Address';
-
-  const addressHint =
-    ownership.type === 'single-owner'
-      ? 'This address will have full control over the token contract'
-      : ownership.type === 'multi-sig'
-        ? 'Multi-signature wallet address that will control the token contract'
-        : 'DAO governance contract address that will control the token contract';
+  const ownerHelper = copy.fieldHelper(`owner-address.${ownership.type}`);
+  const addressLabel = ownerHelper.title ?? 'Owner Address';
+  const addressHint = ownerHelper.description;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Ownership Model</CardTitle>
-        <CardDescription>Choose the ownership structure for your token contract.</CardDescription>
-      </CardHeader>
+      <SectionCardHeader {...sectionCopy} />
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">
-          {OWNERSHIP_OPTIONS.map((option) => (
-            <SelectableCard
-              key={option.type}
-              title={option.title}
-              description={option.description}
-              isSelected={ownership.type === option.type}
-              onClick={() => handleModelChange(option.type)}
-            />
-          ))}
+          {OWNERSHIP_OPTION_TYPES.map((type) => {
+            const entry = copy.ownershipModel(type);
+            return (
+              <SelectableCard
+                key={type}
+                title={entry.title ?? ''}
+                description={entry.description}
+                isSelected={ownership.type === type}
+                onClick={() => handleModelChange(type)}
+              />
+            );
+          })}
         </div>
 
         <AddressField

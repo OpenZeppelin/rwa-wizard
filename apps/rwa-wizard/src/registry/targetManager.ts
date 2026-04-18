@@ -2,7 +2,8 @@ import type { RwaCodegenService } from '../services/codegen';
 import { ensureCodegenLoaded, getCodegenService } from '../services/codegen';
 import type { TargetAdapterCapabilities } from '../services/runtime';
 import { ensureAdapterLoaded, getAdapterCapabilities } from '../services/runtime';
-import type { TargetCapabilitySnapshot, TargetEcosystemMetadata } from '../types/wizard';
+import type { StructuralEcosystemMetadata, TargetCapabilitySnapshot } from '../types/wizard';
+import { enrichAvailableModules, enrichEcosystemMetadata } from './enrichEcosystemMetadata';
 import { getTarget, listTargets } from './targets';
 
 export interface LoadedTargetRuntime {
@@ -13,7 +14,7 @@ export interface LoadedTargetRuntime {
 
 const runtimeCache = new Map<string, LoadedTargetRuntime>();
 
-const EMPTY_ECOSYSTEM_METADATA: TargetEcosystemMetadata = {
+const EMPTY_ECOSYSTEM_METADATA: StructuralEcosystemMetadata = {
   administrativeControls: [],
   identityControls: [],
   operatorRoles: [],
@@ -56,16 +57,21 @@ export async function getTargetCapabilitySnapshot(
   targetId: string
 ): Promise<TargetCapabilitySnapshot> {
   const runtime = await loadRuntime(targetId);
-  const modules = runtime.codegenService ? await runtime.codegenService.getAvailableModules() : [];
+  const structuralModules = runtime.codegenService
+    ? await runtime.codegenService.getAvailableModules()
+    : [];
 
   const networkOptions = runtime.adapterCapabilities?.networkCatalog
     .getNetworks()
     .map((n) => ({ value: n.id, label: n.name, hint: n.isTestnet ? 'Testnet' : undefined }));
 
+  const structuralMetadata =
+    runtime.codegenService?.getEcosystemMetadata?.() ?? EMPTY_ECOSYSTEM_METADATA;
+
   return {
     targetId,
-    availableModules: modules,
-    ecosystemMetadata: runtime.codegenService?.getEcosystemMetadata?.() ?? EMPTY_ECOSYSTEM_METADATA,
+    availableModules: enrichAvailableModules(targetId, structuralModules),
+    ecosystemMetadata: enrichEcosystemMetadata(targetId, structuralMetadata),
     networkOptions,
   };
 }
