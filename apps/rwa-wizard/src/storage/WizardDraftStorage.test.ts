@@ -1,13 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
+import { makeConfig } from '../test/fixtures/wizardFixtures';
 import { createDefaultRwaConfig } from '../utils/defaultRwaConfig';
 import { WizardDraftStorage } from './WizardDraftStorage';
-
-function makeConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return { ...createDefaultRwaConfig(), ...overrides };
-}
 
 describe('WizardDraftStorage', () => {
   let storage: WizardDraftStorage;

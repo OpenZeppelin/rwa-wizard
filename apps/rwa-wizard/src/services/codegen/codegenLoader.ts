@@ -1,5 +1,5 @@
 import { toSummaryPhase } from '@openzeppelin/codegen-core';
-import type { GenerateOptions } from '@openzeppelin/codegen-core';
+import type { GenerateOptions, ProgressCallback } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
@@ -77,7 +77,7 @@ function resolveGenerateOptions(targetId: string): RuntimeGenerateOptions | unde
  */
 function buildGenerateOptions(
   base: RuntimeGenerateOptions | undefined,
-  onProgress: ((event: { phase: string; percentage: number; message?: string }) => void) | undefined
+  onProgress: ProgressCallback | undefined
 ): GenerateOptions | undefined {
   if (!base && !onProgress) return undefined;
   return {
@@ -131,8 +131,8 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
       config: RWAConfig,
       options?: { onStatus?: (status: GenerationStatus) => void }
     ): Promise<GeneratedZipArtifact> {
-      const onProgress = options?.onStatus
-        ? (event: { phase: string; percentage: number; message?: string }) => {
+      const onProgress: ProgressCallback | undefined = options?.onStatus
+        ? (event) => {
             options.onStatus?.({
               phase: toSummaryPhase(event.phase),
               message: event.message,

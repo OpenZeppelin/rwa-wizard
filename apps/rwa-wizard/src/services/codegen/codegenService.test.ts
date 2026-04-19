@@ -1,14 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
+import { makeConfig } from '../../test/fixtures/wizardFixtures';
 import { createDefaultRwaConfig } from '../../utils/defaultRwaConfig';
 import { createTestCodegenService, getCodegenService } from './index';
 import type { RwaCodegenService, ValidationResultDTO } from './types';
-
-function makeConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return { ...createDefaultRwaConfig(), ...overrides };
-}
 
 describe('Codegen Service Contract Parity', () => {
   let testService: RwaCodegenService;

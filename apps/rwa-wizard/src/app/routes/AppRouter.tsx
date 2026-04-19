@@ -21,6 +21,7 @@ import {
 } from '@openzeppelin/ui-components';
 
 import ContractsWizardIconSvg from '../../assets/icons/contracts-wizard-icon.svg';
+import { ErrorBannerStack } from '../../components/shared';
 import { DraftImportDialog } from '../../features/draft-management/components/DraftImportDialog';
 import { DraftList } from '../../features/draft-management/components/DraftList';
 import { useDraftAutosave } from '../../features/draft-management/hooks/useDraftAutosave';
@@ -588,15 +589,20 @@ function WizardPage() {
     <CopyProvider targetId={selectedTargetId}>
       <AdapterCapabilitiesProvider value={adapterCaps}>
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          {targetLoadError && (
-            <PersistErrorBanner
-              message={targetLoadError}
-              onDismiss={() => setTargetLoadError(null)}
-            />
-          )}
-          {persistError && (
-            <PersistErrorBanner message={persistError} onDismiss={() => setPersistError(null)} />
-          )}
+          <ErrorBannerStack
+            entries={[
+              targetLoadError && {
+                id: 'target-load',
+                message: targetLoadError,
+                onDismiss: () => setTargetLoadError(null),
+              },
+              persistError && {
+                id: 'persist',
+                message: persistError,
+                onDismiss: () => setPersistError(null),
+              },
+            ]}
+          />
           <WizardLayout
             key={layoutKey}
             variant="vertical"
@@ -620,24 +626,6 @@ function WizardPage() {
         </main>
       </AdapterCapabilitiesProvider>
     </CopyProvider>
-  );
-}
-
-function PersistErrorBanner({ message, onDismiss }: { message: string; onDismiss: () => void }) {
-  return (
-    <div
-      role="alert"
-      className="mx-4 mt-3 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-foreground"
-    >
-      <span className="flex-1 text-muted-foreground">{message}</span>
-      <button
-        type="button"
-        onClick={onDismiss}
-        className="text-xs font-medium text-muted-foreground hover:text-foreground"
-      >
-        Dismiss
-      </button>
-    </div>
   );
 }
 

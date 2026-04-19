@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
-import { createDefaultRwaConfig } from '../../utils/defaultRwaConfig';
+import { makeConfig } from '../../test/fixtures/wizardFixtures';
 import { loadCodegenService } from './codegenLoader';
 
 interface MockGenerateZipOptions {
@@ -41,10 +39,6 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   generateZip: generateZipMock,
   getEcosystemMetadata: getEcosystemMetadataMock,
 }));
-
-function makeConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return { ...createDefaultRwaConfig(), ...overrides };
-}
 
 describe('loadCodegenService', () => {
   beforeEach(() => {

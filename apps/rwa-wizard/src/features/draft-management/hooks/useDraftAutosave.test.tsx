@@ -1,30 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
-import type { WizardDraftStorageApi } from '../../../storage/wizardDraftStorageContext';
+import { createMockStorage, makeConfigWithTokenName } from '../../../test/fixtures/wizardFixtures';
 import { createDefaultRwaConfig } from '../../../utils/defaultRwaConfig';
 import { useDraftAutosave } from './useDraftAutosave';
-
-function makeConfig(name = ''): RWAConfig {
-  const base = createDefaultRwaConfig();
-  return { ...base, token: { ...base.token, name } };
-}
-
-function createMockStorage(): WizardDraftStorageApi {
-  return {
-    list: vi.fn().mockResolvedValue([]),
-    get: vi.fn().mockResolvedValue(undefined),
-    create: vi.fn().mockResolvedValue('new-id'),
-    save: vi.fn().mockResolvedValue(undefined),
-    rename: vi.fn().mockResolvedValue(undefined),
-    remove: vi.fn().mockResolvedValue(undefined),
-    duplicate: vi.fn().mockResolvedValue('duplicated-id'),
-    export: vi.fn().mockResolvedValue('{}'),
-    import: vi.fn().mockResolvedValue([]),
-  };
-}
 
 describe('useDraftAutosave', () => {
   beforeEach(() => {
@@ -70,7 +49,7 @@ describe('useDraftAutosave', () => {
       }
     );
 
-    rerender({ config: makeConfig('My Token'), draftId: null });
+    rerender({ config: makeConfigWithTokenName('My Token'), draftId: null });
 
     await act(async () => {
       vi.advanceTimersByTime(2000);
@@ -91,11 +70,11 @@ describe('useDraftAutosave', () => {
           storage,
         }),
       {
-        initialProps: { config: makeConfig('First') },
+        initialProps: { config: makeConfigWithTokenName('First') },
       }
     );
 
-    rerender({ config: makeConfig('Updated') });
+    rerender({ config: makeConfigWithTokenName('Updated') });
 
     await act(async () => {
       vi.advanceTimersByTime(2000);
@@ -117,15 +96,15 @@ describe('useDraftAutosave', () => {
           storage,
         }),
       {
-        initialProps: { config: makeConfig('A') },
+        initialProps: { config: makeConfigWithTokenName('A') },
       }
     );
 
-    rerender({ config: makeConfig('AB') });
+    rerender({ config: makeConfigWithTokenName('AB') });
     await act(async () => {
       vi.advanceTimersByTime(200);
     });
-    rerender({ config: makeConfig('ABC') });
+    rerender({ config: makeConfigWithTokenName('ABC') });
     await act(async () => {
       vi.advanceTimersByTime(2000);
     });
@@ -156,18 +135,18 @@ describe('useDraftAutosave', () => {
           storage,
         }),
       {
-        initialProps: { config: makeConfig('First') },
+        initialProps: { config: makeConfigWithTokenName('First') },
       }
     );
 
-    rerender({ config: makeConfig('Second') });
+    rerender({ config: makeConfigWithTokenName('Second') });
     await act(async () => {
       vi.advanceTimersByTime(2000);
     });
     expect(storage.save).toHaveBeenCalledTimes(1);
 
     // Edit again while the first save is still pending.
-    rerender({ config: makeConfig('Third') });
+    rerender({ config: makeConfigWithTokenName('Third') });
     await act(async () => {
       vi.advanceTimersByTime(2000);
     });
@@ -206,7 +185,7 @@ describe('useDraftAutosave', () => {
       }
     );
 
-    rerender({ config: makeConfig('Named'), draftId: null });
+    rerender({ config: makeConfigWithTokenName('Named'), draftId: null });
 
     await act(async () => {
       vi.advanceTimersByTime(2000);
@@ -248,7 +227,7 @@ describe('useDraftAutosave', () => {
     );
 
     // First meaningful edit → triggers create().
-    rerender({ config: makeConfig('First'), draftId: null });
+    rerender({ config: makeConfigWithTokenName('First'), draftId: null });
     await act(async () => {
       vi.advanceTimersByTime(2000);
     });
@@ -257,7 +236,7 @@ describe('useDraftAutosave', () => {
     // Second edit lands while create() is still pending. Without the inline
     // id adoption, the saving-pending → saving transition would read
     // `latestRef.draftId === null` and fire another create().
-    rerender({ config: makeConfig('FirstAndMore'), draftId: null });
+    rerender({ config: makeConfigWithTokenName('FirstAndMore'), draftId: null });
     await act(async () => {
       vi.advanceTimersByTime(2000);
     });
@@ -292,11 +271,11 @@ describe('useDraftAutosave', () => {
           onPersistSuccess,
         }),
       {
-        initialProps: { config: makeConfig('First') },
+        initialProps: { config: makeConfigWithTokenName('First') },
       }
     );
 
-    rerender({ config: makeConfig('Second') });
+    rerender({ config: makeConfigWithTokenName('Second') });
 
     await act(async () => {
       vi.advanceTimersByTime(2000);

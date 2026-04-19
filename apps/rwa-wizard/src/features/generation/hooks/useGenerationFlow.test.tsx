@@ -1,22 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { RWAConfig } from '@openzeppelin/rwa-config';
-
 import { createTestCodegenService } from '../../../services/codegen';
 import type { RwaCodegenService } from '../../../services/codegen/types';
-import { createDefaultRwaConfig } from '../../../utils/defaultRwaConfig';
+import { makeConfig, validConfig } from '../../../test/fixtures/wizardFixtures';
 import { useGenerationFlow } from './useGenerationFlow';
-
-function makeConfig(overrides: Partial<RWAConfig> = {}): RWAConfig {
-  return { ...createDefaultRwaConfig(), ...overrides };
-}
-
-function validConfig(): RWAConfig {
-  return makeConfig({
-    token: { ...createDefaultRwaConfig().token, name: 'Test Token', symbol: 'TST' },
-  });
-}
 
 describe('useGenerationFlow', () => {
   let testService: RwaCodegenService;
