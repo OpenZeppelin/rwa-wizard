@@ -7,7 +7,7 @@ import {
   ShieldCheck,
   Wallet,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import {
@@ -54,13 +54,10 @@ import {
 import { isFeatureEnabled } from '../config/featureFlags';
 import { CopyProvider } from '../providers/CopyProvider';
 import { useCopy } from '../providers/useCopy';
+import { useWizardStore } from '../state/useWizardStore';
 import { wizardStore } from '../state/wizardStore';
 
 const DEFAULT_TARGET_ID: TargetId = 'stellar';
-
-function useWizardStoreState() {
-  return useSyncExternalStore(wizardStore.subscribe, wizardStore.getState, wizardStore.getState);
-}
 
 // ---------------------------------------------------------------------------
 // Sidebar
@@ -73,20 +70,21 @@ function AppSidebar({
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
 }) {
-  const storeState = useWizardStoreState();
+  // Narrow selectors so sidebar re-renders only when its own inputs change —
+  // edits to `currentStep` / `targetId` (driven by the wizard page) no longer
+  // force the sidebar tree back through React.
+  const activeDraftId = useWizardStore((s) => s.activeDraftId);
+  const savingDraftId = useWizardStore((s) => s.savingDraftId);
+  const draftListRefreshTick = useWizardStore((s) => s.draftListRefreshTick);
+
   const targets = useMemo(() => listTargets(), []);
   const draftList = useDraftList();
   const storage = useWizardDraftStorage();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const draftListRefreshTick = useSyncExternalStore(
-    wizardStore.subscribe,
-    () => wizardStore.getState().draftListRefreshTick,
-    () => 0
-  );
   const location = useLocation();
   const navigate = useNavigate();
   const isWizardRoute = location.pathname === '/wizard' || location.pathname.startsWith('/wizard/');
-  const sidebarDraftSelectionId = isWizardRoute ? storeState.activeDraftId : null;
+  const sidebarDraftSelectionId = isWizardRoute ? activeDraftId : null;
 
   const refreshDraftList = draftList.refresh;
 
@@ -221,9 +219,9 @@ function AppSidebar({
         {/* Recent Assets */}
         <SidebarSection title={recentAssetsTitle} grow>
           <DraftList
-            activeDraftId={storeState.activeDraftId}
+            activeDraftId={activeDraftId}
             sidebarDraftSelectionId={sidebarDraftSelectionId}
-            savingDraftId={storeState.savingDraftId}
+            savingDraftId={savingDraftId}
             onLoadDraft={handleLoadDraft}
             items={draftList.items}
             isLoading={draftList.isLoading}
@@ -277,7 +275,14 @@ function DashboardPage() {
 }
 
 function WizardPage() {
-  const storeState = useWizardStoreState();
+  // Narrow selectors so keystrokes that only update local draft state do not
+  // cause the whole page to re-subscribe just because the full store object
+  // was returned. Each read is its own subscription and re-renders only on
+  // its own slice changing.
+  const activeDraftId = useWizardStore((s) => s.activeDraftId);
+  const currentStep = useWizardStore((s) => s.currentStep);
+  const targetId = useWizardStore((s) => s.targetId);
+
   const storage = useWizardDraftStorage();
   const [targetSnapshot, setTargetSnapshot] = useState<TargetCapabilitySnapshot | null>(null);
   const [adapterCaps, setAdapterCaps] = useState<TargetAdapterCapabilities | null>(null);
@@ -285,7 +290,7 @@ function WizardPage() {
   const [persistError, setPersistError] = useState<string | null>(null);
   const [targetLoadError, setTargetLoadError] = useState<string | null>(null);
 
-  const selectedTargetId: TargetId = storeState.targetId ?? DEFAULT_TARGET_ID;
+  const selectedTargetId: TargetId = targetId ?? DEFAULT_TARGET_ID;
   const draftState = useWizardDraftState();
 
   // Draft ids that were created locally in this session via autosave. When
@@ -302,7 +307,7 @@ function WizardPage() {
     let isActive = true;
 
     async function syncDraftFromStorage() {
-      const id = storeState.activeDraftId;
+      const id = activeDraftId;
       if (!id) {
         draftState.resetConfig();
         return;
@@ -338,7 +343,7 @@ function WizardPage() {
     };
     // Only re-run when the active draft id changes, not on every config edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeState.activeDraftId]);
+  }, [activeDraftId]);
 
   useEffect(() => {
     let isActive = true;
@@ -404,10 +409,10 @@ function WizardPage() {
   }, []);
 
   const { isSaving } = useDraftAutosave({
-    draftId: storeState.activeDraftId,
+    draftId: activeDraftId,
     config: draftState.config,
     targetId: selectedTargetId,
-    currentStep: storeState.currentStep,
+    currentStep,
     storage,
     onDraftCreated: handleDraftCreated,
     onPersistSuccess: handlePersistSuccess,
@@ -415,7 +420,7 @@ function WizardPage() {
   });
 
   const generationFlow = useGenerationFlow({
-    draftId: storeState.activeDraftId,
+    draftId: activeDraftId,
     config: draftState.config,
     codegenService,
     // The user explicitly saves the file from the success dialog — browsers
@@ -437,22 +442,20 @@ function WizardPage() {
   }, [generate]);
 
   const handleLastStepSecondary = useCallback(async () => {
-    const id = storeState.activeDraftId;
-    if (!id) return;
-    await exportDraftAsJson(id, storage);
-  }, [storage, storeState.activeDraftId]);
+    if (!activeDraftId) return;
+    await exportDraftAsJson(activeDraftId, storage);
+  }, [storage, activeDraftId]);
 
   useEffect(() => {
-    const id = storeState.activeDraftId;
-    if (isSaving && id) {
-      wizardStore.setSavingDraftId(id);
+    if (isSaving && activeDraftId) {
+      wizardStore.setSavingDraftId(activeDraftId);
     } else {
       wizardStore.setSavingDraftId(null);
     }
     return () => {
       wizardStore.setSavingDraftId(null);
     };
-  }, [isSaving, storeState.activeDraftId]);
+  }, [isSaving, activeDraftId]);
 
   const wizardSteps: WizardStepConfig[] = useMemo(() => {
     const availableModules = targetSnapshot?.availableModules ?? [];
@@ -560,7 +563,7 @@ function WizardPage() {
     [wizardSteps]
   );
 
-  const currentStepIndex = orderedStepIds.indexOf(storeState.currentStep);
+  const currentStepIndex = orderedStepIds.indexOf(currentStep);
   const effectiveStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
 
   const handleStepChange = useCallback(
@@ -579,7 +582,7 @@ function WizardPage() {
     setResetKey((k) => k + 1);
   }, [draftState]);
 
-  const layoutKey = `${storeState.activeDraftId ?? 'new'}-${resetKey}`;
+  const layoutKey = `${activeDraftId ?? 'new'}-${resetKey}`;
 
   return (
     <CopyProvider targetId={selectedTargetId}>
@@ -605,7 +608,7 @@ function WizardPage() {
             onLastStepPrimary={handleLastStepPrimary}
             lastStepSecondaryLabel="Export Configuration"
             onLastStepSecondary={handleLastStepSecondary}
-            lastStepSecondaryDisabled={!storeState.activeDraftId}
+            lastStepSecondaryDisabled={!activeDraftId}
           />
           <GenerationDialog
             jobState={generationJobState}
