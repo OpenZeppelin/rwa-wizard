@@ -30,10 +30,9 @@ describe('STELLAR_ADMIN_CONTROLS', () => {
     }
   });
 
-  it('has non-empty names and descriptions', () => {
+  it('has non-empty names', () => {
     for (const ctrl of STELLAR_ADMIN_CONTROLS) {
       expect(ctrl.name.trim().length).toBeGreaterThan(0);
-      expect(ctrl.description.trim().length).toBeGreaterThan(0);
     }
   });
 });
@@ -57,10 +56,9 @@ describe('STELLAR_IDENTITY_CONTROLS', () => {
     }
   });
 
-  it('has non-empty names and descriptions', () => {
+  it('has non-empty names', () => {
     for (const ctrl of STELLAR_IDENTITY_CONTROLS) {
       expect(ctrl.name.trim().length).toBeGreaterThan(0);
-      expect(ctrl.description.trim().length).toBeGreaterThan(0);
     }
   });
 });
@@ -75,10 +73,10 @@ describe('STELLAR_OPERATOR_ROLES', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('has non-empty names and descriptions', () => {
+  it('has non-empty names and no embedded UI copy', () => {
     for (const role of STELLAR_OPERATOR_ROLES) {
       expect(role.name.trim().length).toBeGreaterThan(0);
-      expect(role.description.trim().length).toBeGreaterThan(0);
+      expect(role).not.toHaveProperty('description');
     }
   });
 
@@ -102,10 +100,10 @@ describe('STELLAR_COMPLIANCE_HOOKS', () => {
     expect(hooks).toEqual(['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed']);
   });
 
-  it('has non-empty display names and descriptions', () => {
+  it('has non-empty display names and no embedded UI copy', () => {
     for (const meta of STELLAR_COMPLIANCE_HOOKS) {
       expect(meta.displayName.trim().length).toBeGreaterThan(0);
-      expect(meta.description.trim().length).toBeGreaterThan(0);
+      expect(meta).not.toHaveProperty('description');
     }
   });
 

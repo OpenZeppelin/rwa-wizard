@@ -28,7 +28,6 @@ export function generateUnderReviewModulesMd(config: RWAConfig): string | null {
   for (const entry of underReview) {
     sections.push(`## ${entry!.name} (\`${entry!.id}\`)`);
     sections.push('');
-    sections.push(`- **Description:** ${entry!.description}`);
     sections.push(`- **Required hooks:** ${entry!.requiredHooks.join(', ')}`);
     if (entry!.review.prUrl) {
       sections.push(`- **Review PR:** ${entry!.review.prUrl}`);

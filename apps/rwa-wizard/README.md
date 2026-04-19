@@ -43,27 +43,50 @@ pnpm test:coverage
 
 ### Core Modules
 
+
 | Module  | Description                                               | Documentation                              |
 | ------- | --------------------------------------------------------- | ------------------------------------------ |
 | Storage | IndexedDB persistence layer for contracts and preferences | [Storage Docs](src/core/storage/README.md) |
+
 
 ## Project Structure
 
 ```text
 apps/rwa-wizard/src/
-├── components/           # React components
-│   ├── Dashboard/       # Dashboard-related components
-│   ├── Layout/          # Layout components (Header, Sidebar, etc.)
-│   └── Shared/          # Shared/reusable components
-├── core/                # Core business logic
-│   ├── ecosystems/      # Blockchain ecosystem registry
-│   └── storage/         # Storage services
-├── hooks/               # React hooks
-├── pages/               # Page components
-└── types/               # TypeScript type definitions
+├── app/                       # Cross-cutting app concerns
+│   ├── config/                # Feature flags, AppConfigService bootstrap
+│   ├── providers/             # React context providers (copy, adapter caps, …)
+│   ├── routes/                # AppRouter, AppSidebar, DashboardPage, constants
+│   └── state/                 # External wizardStore + useWizardStore selector hook
+├── assets/                    # Static assets (icons, images)
+├── components/                # Shared presentational components
+│   └── shared/                # ErrorBanner(Stack), AddressListInput, …
+├── features/                  # Feature-sliced modules
+│   ├── draft-management/      # IndexedDB draft list + import/export
+│   ├── generation/            # Codegen flow + dialog
+│   ├── target-catalog/        # Target selector sidebar
+│   └── wizard/                # Wizard shell
+│       ├── WizardPage.tsx     # Presentational page (consumes hooks below)
+│       ├── hooks/             # useWizardSession, useWizardSteps, useTargetRuntime
+│       ├── state/             # useWizardDraftState (local form state)
+│       ├── steps/             # One folder per wizard step
+│       │   ├── access-control/
+│       │   ├── asset/
+│       │   ├── compliance/
+│       │   ├── deployment/
+│       │   ├── identity/
+│       │   └── review/
+│       └── validation/        # Per-step validators + constraints
+├── registry/                  # Target registry (Stellar, EVM, …)
+├── services/                  # Pure services (codegen loader, downloads, runtime)
+├── storage/                   # WizardDraftStorage (IndexedDB) + React hooks
+├── test/                      # Shared test fixtures
+├── types/                     # Wizard domain types (TargetId, WizardStepId, …)
+└── utils/                     # Small helpers (errorReporting, defaultRwaConfig, …)
 ```
 
 ## Scripts
+
 
 | Script               | Description               |
 | -------------------- | ------------------------- |
@@ -79,17 +102,18 @@ apps/rwa-wizard/src/
 | `pnpm format`        | Format code with Prettier |
 | `pnpm format:check`  | Check code formatting     |
 
-## Local Development with UI Kit
 
-When developing against local changes to `@openzeppelin/ui-*` packages:
+## Local Development with UI Kit and Adapters
+
+When developing against local changes to `@openzeppelin/ui-*` and/or `@openzeppelin/adapter-*` packages:
 
 ```bash
-# From the monorepo root, enable local packages
+# From the monorepo root, enable local packages (UI + adapters)
 pnpm dev:local
 
-# This uses packages from ../openzeppelin-ui and ../ui-builder
-# Make sure those repos are built first:
-# cd ../openzeppelin-ui && pnpm install && pnpm build
+# UI-only or adapters-only (see root package.json scripts):
+# pnpm dev:uikit:local
+# pnpm dev:adapters:local
 
 # To switch back to npm registry packages
 pnpm dev:npm
@@ -97,20 +121,34 @@ pnpm dev:npm
 
 ### How It Works
 
-The local development workflow uses pnpm's [`readPackage` hook](https://pnpm.io/pnpmfile#hooksreadpackagepkg-context) via `.pnpmfile.cjs` to dynamically resolve packages at install time:
+The local development workflow uses the published `oz-ui-dev` CLI together with pnpm's `[readPackage` hook](https://pnpm.io/pnpmfile#hooksreadpackagepkg-context) via `.pnpmfile.cjs` and `.openzeppelin-dev.json` at the monorepo root:
 
-1. When `LOCAL_UI=true` is set (via `pnpm dev:local`), the hook intercepts package resolution
-2. Any `@openzeppelin/ui-*` dependency is rewritten to `file:../openzeppelin-ui/packages/*`
-3. Any `@openzeppelin/ui-builder-adapter-*` dependency is rewritten to `file:../ui-builder/packages/*`
+1. `oz-ui-dev use local` builds and packs the selected families from your sibling checkouts.
+2. The generated manifests are written under `.packed-packages/local-dev`.
+3. During install, `.pnpmfile.cjs` rewrites `@openzeppelin/ui-*` and `@openzeppelin/adapter-*` dependencies to those packed artifacts, or falls back to configured repo paths when needed.
 
 **Benefits:**
 
-- `package.json` stays unchanged (no `file:` references committed)
-- Switching between local and npm is instant — just re-run install
-- Transitive dependencies are also resolved locally
-- Environment variables (`LOCAL_UI_PATH`, `LOCAL_UI_BUILDER_PATH`) allow custom paths
+- `package.json` stays unchanged (no committed `file:` overrides)
+- Switching between local and npm is a single command
+- Paths are configurable via `LOCAL_UI_PATH` and `LOCAL_ADAPTERS_PATH`
 
-See `.pnpmfile.cjs` at the monorepo root for the full implementation.
+See the root `[docs/LOCAL_DEVELOPMENT.md](../../docs/LOCAL_DEVELOPMENT.md)` guide for clone layout, troubleshooting, and workflow details.
+
+## Codegen Runtime Overrides
+
+The app can forward build-time runtime options into `@openzeppelin/codegen-rwa-stellar` so the browser shell can exercise the upstream-enabled generator features during local development.
+
+```bash
+RWA_WIZARD_STELLAR_CONTRACTS_LIBRARY_PATH=/absolute/path/to/stellar-contracts \
+RWA_WIZARD_STELLAR_ALLOW_UNDER_REVIEW_MODULES=true \
+pnpm dev
+```
+
+These variables are read when the Vite dev server starts:
+
+- `RWA_WIZARD_STELLAR_CONTRACTS_LIBRARY_PATH`: forwards `contractsLibraryPath` to the Stellar codegen package.
+- `RWA_WIZARD_STELLAR_ALLOW_UNDER_REVIEW_MODULES=true`: forwards `allowUnderReviewModules` so under-review compliance modules can be exercised from the UI shell.
 
 ## Dependencies
 
@@ -123,8 +161,8 @@ See `.pnpmfile.cjs` at the monorepo root for the full implementation.
 - `@openzeppelin/ui-renderer` - Transaction form rendering
 - `@openzeppelin/ui-react` - React context providers and hooks
 - `@openzeppelin/ui-storage` - IndexedDB storage utilities
-- `@openzeppelin/ui-builder-adapter-evm` - EVM blockchain adapter
-- `@openzeppelin/ui-builder-adapter-stellar` - Stellar blockchain adapter
+- `@openzeppelin/adapter-evm` - EVM blockchain adapter (runtime / capabilities)
+- `@openzeppelin/adapter-stellar` - Stellar blockchain adapter (runtime / capabilities)
 - `react` - React framework
 - `react-dom` - React DOM bindings
 - `react-router-dom` - Routing
@@ -136,3 +174,4 @@ See `.pnpmfile.cjs` at the monorepo root for the full implementation.
 - `vitest` - Testing framework
 - `tailwindcss` - CSS framework
 - `fake-indexeddb` - IndexedDB mock for testing
+

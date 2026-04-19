@@ -9,7 +9,6 @@ import {
 export const maxBalanceModule = defineComplianceModuleDescriptor({
   id: 'max-balance',
   name: 'Max Balance',
-  description: 'Limits the maximum token balance per identity',
   requiredHooks: ['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed'],
   crateName: 'max-balance',
   review: { state: 'under-review', prUrl: PR_650 },
@@ -20,7 +19,6 @@ export const maxBalanceModule = defineComplianceModuleDescriptor({
       type: 'number',
       required: true,
       placeholder: 'e.g. 50000',
-      hint: 'Maximum token balance per identity (in smallest token units)',
     },
   ],
   deployment: {

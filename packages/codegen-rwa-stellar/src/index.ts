@@ -69,8 +69,9 @@ export type { StellarRwaProgressPhaseName } from './progress-phases';
 /**
  * Metadata describing an available compliance module in the Stellar registry.
  *
- * Includes the module's unique ID, human-readable name, description,
- * the set of required hooks, review state, and config field descriptors.
+ * Includes the module's unique ID, human-readable name, the set of required
+ * hooks, review state, and config field descriptors. User-facing copy
+ * (descriptions, field hints) lives in `@openzeppelin/rwa-wizard-copy`.
  */
 export type {
   ComplianceModuleRegistryEntry,
@@ -229,8 +230,8 @@ export async function generateZip(
  * Get the registry of available compliance modules for Stellar.
  *
  * Returns only modules with concrete implementations in the generator.
- * Each entry includes the module ID, human-readable name, description,
- * and required compliance hooks.
+ * Each entry includes the module ID, human-readable name, required
+ * compliance hooks, review state, and config field descriptors.
  *
  * @returns An array of `ComplianceModuleRegistryEntry` objects.
  *
@@ -240,7 +241,7 @@ export async function generateZip(
  *
  * const modules = getAvailableModules();
  * for (const mod of modules) {
- *   console.log(`${mod.id}: ${mod.description} (hooks: ${mod.requiredHooks.join(', ')})`);
+ *   console.log(`${mod.id}: ${mod.name} (hooks: ${mod.requiredHooks.join(', ')})`);
  * }
  * ```
  */
