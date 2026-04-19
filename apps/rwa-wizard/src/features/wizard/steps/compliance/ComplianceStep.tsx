@@ -2,9 +2,9 @@ import { useCallback, useMemo } from 'react';
 
 import type { ComplianceConfig } from '@openzeppelin/rwa-config';
 
-import { useStepCopy } from '../../../app/providers/useStepCopy';
-import { WizardFrame } from '../../../components/shared/WizardFrame';
-import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../types/wizard';
+import { useStepCopy } from '../../../../app/providers/useStepCopy';
+import { WizardFrame } from '../../../../components/shared/WizardFrame';
+import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../../types/wizard';
 import { HookWiringPreview } from './HookWiringPreview';
 import { ModuleCatalog } from './ModuleCatalog';
 

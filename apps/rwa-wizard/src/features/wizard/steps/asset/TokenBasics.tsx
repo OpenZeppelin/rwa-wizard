@@ -4,15 +4,15 @@ import type { TokenConfig } from '@openzeppelin/rwa-config';
 import { formatCopy } from '@openzeppelin/rwa-wizard-copy';
 import { Card, CardContent, NumberField, TextField } from '@openzeppelin/ui-components';
 
-import { useCopy } from '../../../app/providers/useCopy';
-import { useSectionCopy } from '../../../app/providers/useStepCopy';
-import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
+import { useCopy } from '../../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 import {
   TOKEN_DECIMALS_MAX,
   TOKEN_DECIMALS_MIN,
   TOKEN_NAME_MAX_LENGTH,
   TOKEN_SYMBOL_MAX_LENGTH,
-} from '../validation/stepConstraints';
+} from '../../validation/stepConstraints';
 
 interface TokenBasicsProps {
   control: Control<TokenConfig>;

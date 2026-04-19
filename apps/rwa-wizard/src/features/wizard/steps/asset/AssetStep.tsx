@@ -6,10 +6,10 @@ import type {
 } from '@openzeppelin/rwa-config';
 import { Form } from '@openzeppelin/ui-components';
 
-import { useStepCopy } from '../../../app/providers/useStepCopy';
-import { WizardFrame } from '../../../components/shared/WizardFrame';
-import { useStepForm } from '../../../hooks/useStepForm';
-import type { FeatureControlMeta } from '../../../types/wizard';
+import { useStepCopy } from '../../../../app/providers/useStepCopy';
+import { WizardFrame } from '../../../../components/shared/WizardFrame';
+import { useStepForm } from '../../../../hooks/useStepForm';
+import type { FeatureControlMeta } from '../../../../types/wizard';
 import { AdministrativeControls } from './AdministrativeControls';
 import { DocumentManagerSection } from './DocumentManagerSection';
 import { TokenBasics } from './TokenBasics';

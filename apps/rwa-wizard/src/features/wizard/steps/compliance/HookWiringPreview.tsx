@@ -1,7 +1,7 @@
-import { useCopy } from '../../../app/providers/useCopy';
-import { Badge } from '../../../components/shared/Badge';
-import { renderInlineCopy } from '../../../components/shared/renderInlineCopy';
-import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../types/wizard';
+import { useCopy } from '../../../../app/providers/useCopy';
+import { Badge } from '../../../../components/shared/Badge';
+import { renderInlineCopy } from '../../../../components/shared/renderInlineCopy';
+import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../../types/wizard';
 
 interface HookWiringPreviewProps {
   complianceHooks: readonly ComplianceHookMeta[];

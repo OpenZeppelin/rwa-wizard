@@ -5,6 +5,7 @@ import { Button } from '@openzeppelin/ui-components';
 
 import { exportDraftAsJson } from '../../../services/download/exportDraftAsJson';
 import { useWizardDraftStorage } from '../../../storage';
+import { toError } from '../../../utils/errorReporting';
 
 interface ExportDraftButtonProps {
   draftId: string | null;
@@ -21,7 +22,7 @@ export function ExportDraftButton({ draftId, onError }: ExportDraftButtonProps) 
     try {
       await exportDraftAsJson(draftId, storage);
     } catch (err) {
-      onError?.(err instanceof Error ? err : new Error(String(err)));
+      onError?.(toError(err));
     } finally {
       setIsExporting(false);
     }

@@ -3,9 +3,9 @@ import type { Control } from 'react-hook-form';
 import type { TokenConfig } from '@openzeppelin/rwa-config';
 import { BooleanField, Card, CardContent } from '@openzeppelin/ui-components';
 
-import { useCopy } from '../../../app/providers/useCopy';
-import { useSectionCopy } from '../../../app/providers/useStepCopy';
-import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
+import { useCopy } from '../../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 
 interface DocumentManagerSectionProps {
   control: Control<TokenConfig>;

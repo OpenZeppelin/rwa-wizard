@@ -2,11 +2,11 @@ import { Lock } from 'lucide-react';
 
 import { Card, CardContent } from '@openzeppelin/ui-components';
 
-import { useCopy } from '../../../app/providers/useCopy';
-import { useSectionCopy } from '../../../app/providers/useStepCopy';
-import { Badge } from '../../../components/shared/Badge';
-import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
-import { SelectableCard } from '../../../components/shared/SelectableCard';
+import { useCopy } from '../../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { Badge } from '../../../../components/shared/Badge';
+import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
+import { SelectableCard } from '../../../../components/shared/SelectableCard';
 
 export function ImplementationApproach() {
   const sectionCopy = useSectionCopy('implementation-approach');

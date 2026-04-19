@@ -4,9 +4,9 @@ import type { ClaimTopic, IdentityVerificationConfig } from '@openzeppelin/rwa-c
 import { MAX_CLAIM_TOPICS, PREDEFINED_CLAIM_TOPICS } from '@openzeppelin/rwa-config';
 import { Card, CardContent } from '@openzeppelin/ui-components';
 
-import { useSectionCopy } from '../../../app/providers/useStepCopy';
-import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
-import { TopicToggleGroup } from '../../../components/shared/TopicToggleGroup';
+import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
+import { TopicToggleGroup } from '../../../../components/shared/TopicToggleGroup';
 
 interface ClaimTopicsSectionProps {
   identity: IdentityVerificationConfig;

@@ -17,11 +17,11 @@ import {
 } from '@openzeppelin/ui-components';
 import { cn } from '@openzeppelin/ui-utils';
 
-import { useCopy } from '../../../app/providers/useCopy';
-import { useSectionCopy } from '../../../app/providers/useStepCopy';
-import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
-import { TogglePill } from '../../../components/shared/TogglePill';
-import { useAddressing, useExplorer } from '../../../services/runtime';
+import { useCopy } from '../../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
+import { TogglePill } from '../../../../components/shared/TogglePill';
+import { useAddressing, useExplorer } from '../../../../services/runtime';
 
 interface IssuerDraftForm {
   address: string;

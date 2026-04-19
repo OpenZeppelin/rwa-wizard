@@ -1,11 +1,11 @@
 import type { IdentityControls } from '@openzeppelin/rwa-config';
 import { Card, CardContent } from '@openzeppelin/ui-components';
 
-import { useSectionCopy } from '../../../app/providers/useStepCopy';
-import { ReadOnlyFeatureCard } from '../../../components/shared/ReadOnlyFeatureCard';
-import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
-import { SelectableCard } from '../../../components/shared/SelectableCard';
-import type { FeatureControlMeta } from '../../../types/wizard';
+import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { ReadOnlyFeatureCard } from '../../../../components/shared/ReadOnlyFeatureCard';
+import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
+import { SelectableCard } from '../../../../components/shared/SelectableCard';
+import type { FeatureControlMeta } from '../../../../types/wizard';
 
 interface IdentityControlsSectionProps {
   controls: IdentityControls;

@@ -1,6 +1,6 @@
 import type { FieldValues } from 'react-hook-form';
 
-import type { ModuleConfigFieldMeta } from '../../../types/wizard';
+import type { ModuleConfigFieldMeta } from '../../../../types/wizard';
 
 /**
  * Returns true when a string[] field's raw value ends with a comma — the user is

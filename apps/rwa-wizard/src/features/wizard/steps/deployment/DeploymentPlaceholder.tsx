@@ -1,4 +1,4 @@
-import { isFeatureEnabled } from '../../../app/config/featureFlags';
+import { isFeatureEnabled } from '../../../../app/config/featureFlags';
 
 /**
  * Deployment placeholder step hidden behind the shared feature-flag system.

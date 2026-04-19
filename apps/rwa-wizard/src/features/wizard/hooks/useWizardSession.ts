@@ -5,6 +5,7 @@ import { useWizardStore } from '../../../app/state/useWizardStore';
 import { wizardStore } from '../../../app/state/wizardStore';
 import { useWizardDraftStorage } from '../../../storage';
 import { isTargetId, type TargetId, type WizardStepId } from '../../../types/wizard';
+import { getErrorMessage } from '../../../utils/errorReporting';
 import { useDraftAutosave } from '../../draft-management/hooks/useDraftAutosave';
 import { useGenerationFlow } from '../../generation/hooks/useGenerationFlow';
 import { useWizardDraftState } from '../state/useWizardDraftState';
@@ -109,7 +110,7 @@ export function useWizardSession(): WizardSession {
   }, []);
 
   const handlePersistError = useCallback((kind: 'create' | 'save', err: unknown) => {
-    const detail = err instanceof Error ? err.message : String(err);
+    const detail = getErrorMessage(err);
     setPersistError(
       kind === 'create'
         ? `Unable to save this draft to your browser: ${detail}`

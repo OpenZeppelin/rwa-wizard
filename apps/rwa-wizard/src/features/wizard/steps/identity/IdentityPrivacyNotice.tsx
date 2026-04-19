@@ -1,6 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
 
-import { useCopy } from '../../../app/providers/useCopy';
+import { useCopy } from '../../../../app/providers/useCopy';
 
 export function IdentityPrivacyNotice() {
   const notice = useCopy().notice('identity.privacy');

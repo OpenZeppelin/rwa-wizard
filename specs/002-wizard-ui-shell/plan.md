@@ -55,34 +55,33 @@ specs/002-wizard-ui-shell/
 apps/rwa-wizard/
 ├── src/
 │   ├── app/
-│   │   ├── providers/
-│   │   ├── config/
-│   │   ├── routes/
-│   │   └── state/
+│   │   ├── config/              # featureFlags, initAppConfig (AppConfigService bootstrap)
+│   │   ├── providers/           # AppProviders, CopyProvider
+│   │   ├── routes/              # AppRouter, AppSidebar, DashboardPage, wizardConstants
+│   │   └── state/               # wizardStore (external store) + useWizardStore selector hook
 │   ├── components/
-│   │   ├── layout/
-│   │   ├── navigation/
-│   │   └── shared/
+│   │   └── shared/              # ErrorBanner(Stack), WizardFrame/Section, AddressListInput, …
 │   ├── features/
-│   │   ├── target-catalog/
-│   │   ├── draft-management/
+│   │   ├── target-catalog/      # Sidebar target selector
+│   │   ├── draft-management/    # Draft list, import/export, autosave (machine + hook)
 │   │   ├── wizard/
-│   │   │   ├── asset/
-│   │   │   ├── identity/
-│   │   │   ├── compliance/
-│   │   │   ├── access-control/
-│   │   │   ├── deployment/
-│   │   │   └── review/
-│   │   └── generation/
-│   ├── hooks/
-│   ├── registry/
+│   │   │   ├── WizardPage.tsx   # Presentational wizard page (consumes hooks below)
+│   │   │   ├── hooks/           # useWizardSession, useWizardSteps, useTargetRuntime
+│   │   │   ├── state/           # useWizardDraftState (local form state + RWAConfig mapping)
+│   │   │   ├── steps/           # One folder per step: access-control/ asset/ compliance/ deployment/ identity/ review/
+│   │   │   └── validation/      # stepValidators, stepConstraints
+│   │   └── generation/          # useGenerationFlow, GenerationDialog, status/error panels
+│   ├── hooks/                   # Cross-feature hooks (useStepForm)
+│   ├── registry/                # targets, targetManager, enrichEcosystemMetadata
 │   ├── services/
-│   │   ├── codegen/
-│   │   ├── download/
-│   │   └── validation/
-│   ├── storage/
-│   ├── types/
-│   ├── utils/
+│   │   ├── codegen/             # Codegen service loader, types, runtime options
+│   │   ├── download/            # ZIP download + export-as-JSON + triggerBlobDownload
+│   │   ├── runtime/             # Adapter capabilities loader + provider
+│   │   └── validation/          # normalizeValidation
+│   ├── storage/                 # WizardDraftStorage (IndexedDB) + React hooks
+│   ├── test/                    # Shared test fixtures
+│   ├── types/                   # wizard domain types (TargetId, WizardStepId, …)
+│   ├── utils/                   # errorReporting, defaultRwaConfig, meaningfulDraft, componentInventory
 │   ├── App.tsx
 │   ├── index.css
 │   └── main.tsx
@@ -95,7 +94,7 @@ packages/hooks/
 packages/cli/
 ```
 
-**Structure Decision**: The feature is implemented primarily inside `apps/rwa-wizard/src`, with new app-local modules for storage, registry, wizard orchestration, shared feature-flag access, and codegen integration. A deployment placeholder may exist under a dedicated feature area, but it remains hidden by default behind the shared OpenZeppelin feature-flag system. Existing workspace packages remain external dependencies and references, not places for UI-shell business logic, except for future shared-component promotion after local validation.
+**Structure Decision**: The feature is implemented primarily inside `apps/rwa-wizard/src`, with app-local modules for storage, target registry, wizard orchestration, shared feature-flag access, and codegen integration. Wizard steps live under `features/wizard/steps/<step>/` and the wizard shell is composed in `features/wizard/WizardPage.tsx` through the `useWizardSession`, `useWizardSteps`, and `useTargetRuntime` hooks; the router shell splits further into `AppRouter`, `AppSidebar`, and `DashboardPage`. A deployment placeholder exists under `features/wizard/steps/deployment/` but remains hidden by default behind the shared OpenZeppelin feature-flag system. Existing workspace packages remain external dependencies and references, not places for UI-shell business logic, except for future shared-component promotion after local validation.
 
 ## Traceability Map
 

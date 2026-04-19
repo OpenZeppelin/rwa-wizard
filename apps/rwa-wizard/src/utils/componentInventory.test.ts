@@ -39,7 +39,7 @@ describe('classifyComponent', () => {
   it('classifies a feature-specific component as local-candidate', () => {
     const item = classifyComponent({
       componentName: 'ModuleCatalog',
-      owningFile: 'apps/rwa-wizard/src/features/wizard/compliance/ModuleCatalog.tsx',
+      owningFile: 'apps/rwa-wizard/src/features/wizard/steps/compliance/ModuleCatalog.tsx',
       rationale: 'Compliance module selection UI',
     });
     expect(item.classification).toBe('local-candidate');

@@ -4,6 +4,7 @@ import { useCallback, useRef } from 'react';
 import { Button } from '@openzeppelin/ui-components';
 
 import { useWizardDraftStorage } from '../../../storage';
+import { toError } from '../../../utils/errorReporting';
 
 interface ImportDraftButtonProps {
   onImported?: (ids: string[]) => void;
@@ -24,7 +25,7 @@ export function ImportDraftButton({ onImported, onError }: ImportDraftButtonProp
         const ids = await storage.import(text);
         onImported?.(ids);
       } catch (err) {
-        onError?.(err instanceof Error ? err : new Error(String(err)));
+        onError?.(toError(err));
       } finally {
         if (fileInputRef.current) fileInputRef.current.value = '';
       }

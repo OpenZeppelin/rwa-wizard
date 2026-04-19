@@ -72,17 +72,17 @@
 - [x] T026 [P] [US1] Implement the draft list surface in `apps/rwa-wizard/src/features/draft-management/components/DraftList.tsx`
 - [x] T027 [P] [US1] Implement per-draft actions UI in `apps/rwa-wizard/src/features/draft-management/components/DraftListItem.tsx`
 - [x] T028 [P] [US1] Implement configuration import UI in `apps/rwa-wizard/src/features/draft-management/components/ImportDraftButton.tsx`
-- [ ] T029 [P] [US1] Implement the wizard shell and step frame in `apps/rwa-wizard/src/features/wizard/components/WizardShell.tsx` *(not implemented as a local file — wizard chrome is composed with `@openzeppelin/ui-components` `WizardLayout` in `AppRouter.tsx`)*
-- [x] T030 [P] [US1] Implement the asset step in `apps/rwa-wizard/src/features/wizard/asset/AssetStep.tsx`
-- [x] T031 [P] [US1] Implement the identity step and privacy warning in `apps/rwa-wizard/src/features/wizard/identity/IdentityStep.tsx` and `apps/rwa-wizard/src/features/wizard/identity/IdentityPrivacyNotice.tsx`
-- [x] T032 [P] [US1] Implement the module-first compliance step in `apps/rwa-wizard/src/features/wizard/compliance/ComplianceStep.tsx`, `ModuleCatalog.tsx` (selectable module cards with review badges, required hooks, inline `ModuleConfigPanel.tsx` using `TextField`/`NumberField`), and `HookWiringPreview.tsx` (derived hook registration table)
-- [x] T033 [P] [US1] Implement the access-control step in `apps/rwa-wizard/src/features/wizard/access-control/AccessControlStep.tsx`
-- [x] T034 [P] [US1] Implement shared feature-flag access and a hidden-by-default deployment placeholder gate in `apps/rwa-wizard/src/app/config/featureFlags.ts` and `apps/rwa-wizard/src/features/wizard/deployment/DeploymentPlaceholder.tsx`
+- [x] T029 [P] [US1] Compose the wizard shell and step frame in `apps/rwa-wizard/src/features/wizard/WizardPage.tsx` using `@openzeppelin/ui-components` `WizardLayout`, driven by `useWizardSession`, `useWizardSteps`, and `useTargetRuntime` under `apps/rwa-wizard/src/features/wizard/hooks/`
+- [x] T030 [P] [US1] Implement the asset step in `apps/rwa-wizard/src/features/wizard/steps/asset/AssetStep.tsx`
+- [x] T031 [P] [US1] Implement the identity step and privacy warning in `apps/rwa-wizard/src/features/wizard/steps/identity/IdentityStep.tsx` and `apps/rwa-wizard/src/features/wizard/steps/identity/IdentityPrivacyNotice.tsx`
+- [x] T032 [P] [US1] Implement the module-first compliance step in `apps/rwa-wizard/src/features/wizard/steps/compliance/ComplianceStep.tsx`, `ModuleCatalog.tsx` (selectable module cards with review badges, required hooks, inline `ModuleConfigPanel.tsx` using `TextField`/`NumberField`), and `HookWiringPreview.tsx` (derived hook registration table)
+- [x] T033 [P] [US1] Implement the access-control step in `apps/rwa-wizard/src/features/wizard/steps/access-control/AccessControlStep.tsx`
+- [x] T034 [P] [US1] Implement shared feature-flag access and a hidden-by-default deployment placeholder gate in `apps/rwa-wizard/src/app/config/featureFlags.ts` and `apps/rwa-wizard/src/features/wizard/steps/deployment/DeploymentPlaceholder.tsx`
 - [x] T035 [US1] Implement wizard draft state and `RWAConfig` mapping for the MVP flow without deployment-choice persistence in `apps/rwa-wizard/src/features/wizard/state/useWizardDraftState.ts`
-- [x] T036 [US1] Implement autosave lifecycle wiring in `apps/rwa-wizard/src/features/draft-management/hooks/useDraftAutosave.ts`
-- [x] T037 [US1] Wire the app shell, target selector, draft list, hidden future deployment placeholder gating, and wizard navigation together in `apps/rwa-wizard/src/app/routes/AppRouter.tsx` and `apps/rwa-wizard/src/App.tsx`
+- [x] T036 [US1] Implement autosave lifecycle wiring in `apps/rwa-wizard/src/features/draft-management/hooks/useDraftAutosave.ts` (state machine in `autosaveMachine.ts`)
+- [x] T037 [US1] Wire the app shell together across `apps/rwa-wizard/src/app/routes/AppRouter.tsx`, `apps/rwa-wizard/src/app/routes/AppSidebar.tsx`, `apps/rwa-wizard/src/app/routes/DashboardPage.tsx`, `apps/rwa-wizard/src/features/wizard/WizardPage.tsx`, and `apps/rwa-wizard/src/App.tsx`, including target selector, draft list, hidden deployment placeholder gating, and wizard navigation
 
-**Checkpoint**: User Story 1 is independently functional and testable as the MVP. *(One spec delta: T029 path — see note on T029.)*
+**Checkpoint**: User Story 1 is independently functional and testable as the MVP.
 
 ---
 
@@ -100,12 +100,12 @@
 
 ### Implementation for User Story 2
 
-- [x] T041 [P] [US2] Implement the review step summary UI in `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
+- [x] T041 [P] [US2] Implement the review step summary UI in `apps/rwa-wizard/src/features/wizard/steps/review/ReviewStep.tsx`
 - [x] T042 [P] [US2] Implement current-draft export UI in `apps/rwa-wizard/src/features/draft-management/components/ExportDraftButton.tsx`
-- [x] T043 [P] [US2] Implement generation status UI in `apps/rwa-wizard/src/features/generation/components/GenerationStatusPanel.tsx`
+- [x] T043 [P] [US2] Implement generation status UI in `apps/rwa-wizard/src/features/generation/components/GenerationStatusPanel.tsx` and the orchestrating dialog in `apps/rwa-wizard/src/features/generation/components/GenerationDialog.tsx`
 - [x] T044 [P] [US2] Implement generation failure/recovery UI in `apps/rwa-wizard/src/features/generation/components/GenerationErrorState.tsx`
 - [x] T045 [US2] Implement generation orchestration in `apps/rwa-wizard/src/features/generation/hooks/useGenerationFlow.ts`
-- [x] T046 [US2] Wire review, export, and ZIP handoff flows in `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
+- [x] T046 [US2] Wire review, export, and ZIP handoff flows in `apps/rwa-wizard/src/features/wizard/steps/review/ReviewStep.tsx`
 - [x] T047 [US2] Integrate browser ZIP delivery and coarse generation phases in `apps/rwa-wizard/src/services/download/downloadZip.ts` and `apps/rwa-wizard/src/features/generation/hooks/useGenerationFlow.ts`
 
 **Checkpoint**: User Stories 1 and 2 both work independently. The shell can now produce the first complete user-facing outcome.
@@ -126,7 +126,7 @@
 
 - [x] T049 [P] [US3] Implement local wizard layout primitives in `apps/rwa-wizard/src/components/shared/WizardFrame.tsx` and `apps/rwa-wizard/src/components/shared/WizardSection.tsx`
 - [x] T050 [P] [US3] Implement the component inventory classification helper in `apps/rwa-wizard/src/utils/componentInventory.ts`
-- [x] T051 [US3] Refactor shared wizard-shell patterns into local reusable components in `apps/rwa-wizard/src/features/target-catalog/components/TargetSelectorSidebar.tsx`, `apps/rwa-wizard/src/features/wizard/components/WizardShell.tsx`, and `apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx`
+- [x] T051 [US3] Refactor shared wizard-shell patterns into local reusable components in `apps/rwa-wizard/src/features/target-catalog/components/TargetSelectorSidebar.tsx`, `apps/rwa-wizard/src/features/wizard/WizardPage.tsx`, and `apps/rwa-wizard/src/features/wizard/steps/review/ReviewStep.tsx`
 - [x] T052 [US3] Create the component inventory artifact in `specs/002-wizard-ui-shell/component-inventory.md`
 - [x] T053 [US3] Create the mock gap register artifact in `specs/002-wizard-ui-shell/mock-gap-register.md`
 - [x] T054 [US3] Record each reviewed surface with component name, owning file, classification (`reused`, `local-candidate`, `promoted-shared`), rationale, and follow-up action in `specs/002-wizard-ui-shell/component-inventory.md`
@@ -188,18 +188,18 @@
 
 ```text
 # After foundational state, storage, and registry seams are ready:
-Task T030: "Implement the asset step in apps/rwa-wizard/src/features/wizard/asset/AssetStep.tsx"
-Task T031: "Implement the identity step in apps/rwa-wizard/src/features/wizard/identity/IdentityStep.tsx and apps/rwa-wizard/src/features/wizard/identity/IdentityPrivacyNotice.tsx"
-Task T032: "Implement the compliance step in apps/rwa-wizard/src/features/wizard/compliance/ComplianceStep.tsx"
-Task T033: "Implement the access-control step in apps/rwa-wizard/src/features/wizard/access-control/AccessControlStep.tsx"
-Task T034: "Implement shared feature-flag access and a hidden-by-default deployment placeholder gate in apps/rwa-wizard/src/app/config/featureFlags.ts and apps/rwa-wizard/src/features/wizard/deployment/DeploymentPlaceholder.tsx"
+Task T030: "Implement the asset step in apps/rwa-wizard/src/features/wizard/steps/asset/AssetStep.tsx"
+Task T031: "Implement the identity step in apps/rwa-wizard/src/features/wizard/steps/identity/IdentityStep.tsx and apps/rwa-wizard/src/features/wizard/steps/identity/IdentityPrivacyNotice.tsx"
+Task T032: "Implement the compliance step in apps/rwa-wizard/src/features/wizard/steps/compliance/ComplianceStep.tsx"
+Task T033: "Implement the access-control step in apps/rwa-wizard/src/features/wizard/steps/access-control/AccessControlStep.tsx"
+Task T034: "Implement shared feature-flag access and a hidden-by-default deployment placeholder gate in apps/rwa-wizard/src/app/config/featureFlags.ts and apps/rwa-wizard/src/features/wizard/steps/deployment/DeploymentPlaceholder.tsx"
 ```
 
 ## Parallel Example: User Story 2
 
 ```text
 # Once generation contracts are defined:
-Task T041: "Implement the review step summary UI in apps/rwa-wizard/src/features/wizard/review/ReviewStep.tsx"
+Task T041: "Implement the review step summary UI in apps/rwa-wizard/src/features/wizard/steps/review/ReviewStep.tsx"
 Task T042: "Implement current-draft export UI in apps/rwa-wizard/src/features/draft-management/components/ExportDraftButton.tsx"
 Task T043: "Implement generation status UI in apps/rwa-wizard/src/features/generation/components/GenerationStatusPanel.tsx"
 Task T044: "Implement generation failure/recovery UI in apps/rwa-wizard/src/features/generation/components/GenerationErrorState.tsx"

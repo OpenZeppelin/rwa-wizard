@@ -4,10 +4,10 @@ import { useCallback } from 'react';
 import type { ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 import { cn } from '@openzeppelin/ui-utils';
 
-import { useCopy } from '../../../app/providers/useCopy';
-import { Badge } from '../../../components/shared/Badge';
-import { InfoTooltip } from '../../../components/shared/InfoTooltip';
-import type { ComplianceModuleOption } from '../../../types/wizard';
+import { useCopy } from '../../../../app/providers/useCopy';
+import { Badge } from '../../../../components/shared/Badge';
+import { InfoTooltip } from '../../../../components/shared/InfoTooltip';
+import type { ComplianceModuleOption } from '../../../../types/wizard';
 import { ModuleConfigPanel } from './ModuleConfigPanel';
 
 interface ModuleCatalogProps {

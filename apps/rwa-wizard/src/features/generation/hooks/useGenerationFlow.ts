@@ -5,6 +5,7 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 import type { RwaCodegenService } from '../../../services/codegen/types';
 import { downloadZip } from '../../../services/download/downloadZip';
 import type { GenerationJobState, GenerationPhase } from '../../../types/wizard';
+import { getErrorMessage } from '../../../utils/errorReporting';
 
 export interface UseGenerationFlowOptions {
   draftId: string | null;
@@ -184,7 +185,7 @@ export function useGenerationFlow({
     } catch (err) {
       if (isActive()) {
         setPhase('error', {
-          errorMessage: err instanceof Error ? err.message : 'Generation failed unexpectedly',
+          errorMessage: getErrorMessage(err, 'Generation failed unexpectedly'),
           completedAt: new Date(),
         });
       }

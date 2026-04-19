@@ -6,13 +6,13 @@ import { isFeatureEnabled } from '../../../app/config/featureFlags';
 import type { RwaCodegenService } from '../../../services/codegen/types';
 import type { TargetAdapterCapabilities } from '../../../services/runtime';
 import type { TargetCapabilitySnapshot, WizardStepId } from '../../../types/wizard';
-import { AccessControlStep } from '../access-control/AccessControlStep';
-import { AssetStep } from '../asset/AssetStep';
-import { ComplianceStep } from '../compliance/ComplianceStep';
-import { DeploymentPlaceholder } from '../deployment/DeploymentPlaceholder';
-import { IdentityStep } from '../identity/IdentityStep';
-import { ReviewStep } from '../review/ReviewStep';
 import type { WizardDraftStateApi } from '../state/useWizardDraftState';
+import { AccessControlStep } from '../steps/access-control/AccessControlStep';
+import { AssetStep } from '../steps/asset/AssetStep';
+import { ComplianceStep } from '../steps/compliance/ComplianceStep';
+import { DeploymentPlaceholder } from '../steps/deployment/DeploymentPlaceholder';
+import { IdentityStep } from '../steps/identity/IdentityStep';
+import { ReviewStep } from '../steps/review/ReviewStep';
 import { isStepValid } from '../validation/stepValidators';
 
 export interface UseWizardStepsOptions {

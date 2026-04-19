@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 
 import type { IdentityControls, IdentityVerificationConfig } from '@openzeppelin/rwa-config';
 
-import { useStepCopy } from '../../../app/providers/useStepCopy';
-import { WizardFrame } from '../../../components/shared/WizardFrame';
-import type { FeatureControlMeta } from '../../../types/wizard';
+import { useStepCopy } from '../../../../app/providers/useStepCopy';
+import { WizardFrame } from '../../../../components/shared/WizardFrame';
+import type { FeatureControlMeta } from '../../../../types/wizard';
 import { ClaimTopicsSection } from './ClaimTopicsSection';
 import { IdentityControlsSection } from './IdentityControlsSection';
 import { IdentityPrivacyNotice } from './IdentityPrivacyNotice';

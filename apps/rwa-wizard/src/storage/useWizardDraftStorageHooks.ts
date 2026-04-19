@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 import type { DraftListItem } from '../types/wizard';
+import { toError } from '../utils/errorReporting';
 import {
   defaultWizardDraftStorageApi,
   WizardDraftStorageContext,
@@ -32,7 +33,7 @@ export function useDraftList(): {
       const next = await list();
       setItems(next);
     } catch (e) {
-      setError(e instanceof Error ? e : new Error(String(e)));
+      setError(toError(e));
       setItems([]);
     } finally {
       if (!initialLoadDoneRef.current) {

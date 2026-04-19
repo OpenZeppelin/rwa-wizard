@@ -3,11 +3,11 @@ import { useCallback } from 'react';
 import type { AccessControlConfig, OperatorRole } from '@openzeppelin/rwa-config';
 import { Card, CardContent, Label } from '@openzeppelin/ui-components';
 
-import { useSectionCopy } from '../../../app/providers/useStepCopy';
-import { AddressListInput } from '../../../components/shared/AddressListInput';
-import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
-import { useAddressing, useExplorer } from '../../../services/runtime';
-import type { OperatorRoleMeta } from '../../../types/wizard';
+import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { AddressListInput } from '../../../../components/shared/AddressListInput';
+import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
+import { useAddressing, useExplorer } from '../../../../services/runtime';
+import type { OperatorRoleMeta } from '../../../../types/wizard';
 
 interface OperatorRolesSectionProps {
   accessControl: AccessControlConfig;

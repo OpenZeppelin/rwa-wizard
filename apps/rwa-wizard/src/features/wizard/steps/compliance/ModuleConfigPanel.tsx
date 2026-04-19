@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { NumberField, TextField } from '@openzeppelin/ui-components';
 
-import type { ComplianceModuleOption } from '../../../types/wizard';
+import type { ComplianceModuleOption } from '../../../../types/wizard';
 import { fromFormValues, hasPendingStringArrayInput, toFormValues } from './moduleConfigFormValues';
 
 interface ModuleConfigPanelProps {

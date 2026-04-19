@@ -4,6 +4,7 @@ import { getTargetCapabilitySnapshot, loadRuntime } from '../../../registry/targ
 import type { RwaCodegenService } from '../../../services/codegen/types';
 import type { TargetAdapterCapabilities } from '../../../services/runtime';
 import type { TargetCapabilitySnapshot, TargetId } from '../../../types/wizard';
+import { getErrorMessage } from '../../../utils/errorReporting';
 
 export interface TargetRuntimeState {
   /** Capability snapshot (metadata, modules) for the selected target, or `null` while loading/errored. */
@@ -62,9 +63,8 @@ export function useTargetRuntime(selectedTargetId: TargetId): TargetRuntimeState
         setTargetSnapshot(null);
         setAdapterCaps(null);
         setCodegenService(null);
-        const detail = err instanceof Error ? err.message : String(err);
         setTargetLoadError(
-          `Unable to load the ${selectedTargetId} target: ${detail}. Try reloading the page.`
+          `Unable to load the ${selectedTargetId} target: ${getErrorMessage(err)}. Try reloading the page.`
         );
       }
     }

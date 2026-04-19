@@ -33,11 +33,11 @@ export function ReadOnlyFeatureCard({
   return (
     <div
       className={cn(
-        'flex items-center justify-between rounded-lg border border-border p-4',
+        'flex items-center justify-between gap-4 rounded-lg border border-border p-4',
         className
       )}
     >
-      <div>
+      <div className="min-w-0">
         <p className="flex items-center gap-1.5 font-medium text-foreground">
           {title}
           <span className="inline-flex items-center gap-1 text-muted-foreground">
@@ -51,7 +51,9 @@ export function ReadOnlyFeatureCard({
         </p>
         {description && <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>}
       </div>
-      <Badge variant={enabled ? 'success' : 'outline'}>{enabled ? 'Enabled' : 'Disabled'}</Badge>
+      <Badge variant={enabled ? 'success' : 'outline'} className="shrink-0">
+        {enabled ? 'Enabled' : 'Disabled'}
+      </Badge>
     </div>
   );
 }

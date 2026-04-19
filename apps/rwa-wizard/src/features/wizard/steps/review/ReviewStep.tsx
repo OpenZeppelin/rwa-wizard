@@ -1,10 +1,10 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { useStepCopy } from '../../../app/providers/useStepCopy';
-import { ConfigSummary } from '../../../components/shared/ConfigSummary';
-import { WizardFrame } from '../../../components/shared/WizardFrame';
-import { useExplorer } from '../../../services/runtime';
-import type { ComplianceModuleOption } from '../../../types/wizard';
+import { useStepCopy } from '../../../../app/providers/useStepCopy';
+import { ConfigSummary } from '../../../../components/shared/ConfigSummary';
+import { WizardFrame } from '../../../../components/shared/WizardFrame';
+import { useExplorer } from '../../../../services/runtime';
+import type { ComplianceModuleOption } from '../../../../types/wizard';
 
 interface ReviewStepProps {
   config: RWAConfig;

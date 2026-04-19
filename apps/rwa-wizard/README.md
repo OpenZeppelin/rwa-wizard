@@ -53,16 +53,36 @@ pnpm test:coverage
 
 ```text
 apps/rwa-wizard/src/
-├── components/           # React components
-│   ├── Dashboard/       # Dashboard-related components
-│   ├── Layout/          # Layout components (Header, Sidebar, etc.)
-│   └── Shared/          # Shared/reusable components
-├── core/                # Core business logic
-│   ├── ecosystems/      # Blockchain ecosystem registry
-│   └── storage/         # Storage services
-├── hooks/               # React hooks
-├── pages/               # Page components
-└── types/               # TypeScript type definitions
+├── app/                       # Cross-cutting app concerns
+│   ├── config/                # Feature flags, AppConfigService bootstrap
+│   ├── providers/             # React context providers (copy, adapter caps, …)
+│   ├── routes/                # AppRouter, AppSidebar, DashboardPage, constants
+│   └── state/                 # External wizardStore + useWizardStore selector hook
+├── assets/                    # Static assets (icons, images)
+├── components/                # Shared presentational components
+│   └── shared/                # ErrorBanner(Stack), AddressListInput, …
+├── features/                  # Feature-sliced modules
+│   ├── draft-management/      # IndexedDB draft list + import/export
+│   ├── generation/            # Codegen flow + dialog
+│   ├── target-catalog/        # Target selector sidebar
+│   └── wizard/                # Wizard shell
+│       ├── WizardPage.tsx     # Presentational page (consumes hooks below)
+│       ├── hooks/             # useWizardSession, useWizardSteps, useTargetRuntime
+│       ├── state/             # useWizardDraftState (local form state)
+│       ├── steps/             # One folder per wizard step
+│       │   ├── access-control/
+│       │   ├── asset/
+│       │   ├── compliance/
+│       │   ├── deployment/
+│       │   ├── identity/
+│       │   └── review/
+│       └── validation/        # Per-step validators + constraints
+├── registry/                  # Target registry (Stellar, EVM, …)
+├── services/                  # Pure services (codegen loader, downloads, runtime)
+├── storage/                   # WizardDraftStorage (IndexedDB) + React hooks
+├── test/                      # Shared test fixtures
+├── types/                     # Wizard domain types (TargetId, WizardStepId, …)
+└── utils/                     # Small helpers (errorReporting, defaultRwaConfig, …)
 ```
 
 ## Scripts

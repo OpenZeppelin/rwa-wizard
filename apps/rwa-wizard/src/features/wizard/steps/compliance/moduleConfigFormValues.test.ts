@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ModuleConfigFieldMeta } from '../../../types/wizard';
+import type { ModuleConfigFieldMeta } from '../../../../types/wizard';
 import { fromFormValues, hasPendingStringArrayInput } from './moduleConfigFormValues';
 
 const stringArrayField: ModuleConfigFieldMeta = {

@@ -5,11 +5,11 @@ import { useForm } from 'react-hook-form';
 import type { OwnershipModel } from '@openzeppelin/rwa-config';
 import { AddressField, Card, CardContent } from '@openzeppelin/ui-components';
 
-import { useCopy } from '../../../app/providers/useCopy';
-import { useSectionCopy } from '../../../app/providers/useStepCopy';
-import { SectionCardHeader } from '../../../components/shared/SectionCardHeader';
-import { SelectableCard } from '../../../components/shared/SelectableCard';
-import { useAddressing } from '../../../services/runtime';
+import { useCopy } from '../../../../app/providers/useCopy';
+import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
+import { SelectableCard } from '../../../../components/shared/SelectableCard';
+import { useAddressing } from '../../../../services/runtime';
 
 interface OwnershipModelSectionProps {
   ownership: OwnershipModel;
