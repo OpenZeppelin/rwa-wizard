@@ -45,13 +45,18 @@ import {
 import type { TargetAdapterCapabilities } from '../../services/runtime';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useDraftList, useWizardDraftStorage } from '../../storage';
-import type { TargetCapabilitySnapshot, WizardStepId } from '../../types/wizard';
+import {
+  isTargetId,
+  type TargetCapabilitySnapshot,
+  type TargetId,
+  type WizardStepId,
+} from '../../types/wizard';
 import { isFeatureEnabled } from '../config/featureFlags';
 import { CopyProvider } from '../providers/CopyProvider';
 import { useCopy } from '../providers/useCopy';
 import { wizardStore } from '../state/wizardStore';
 
-const STEP_IDS: WizardStepId[] = ['asset', 'identity', 'compliance', 'access-control', 'review'];
+const DEFAULT_TARGET_ID: TargetId = 'stellar';
 
 function useWizardStoreState() {
   return useSyncExternalStore(wizardStore.subscribe, wizardStore.getState, wizardStore.getState);
@@ -101,7 +106,11 @@ function AppSidebar({
   const handleCreateForTarget = useCallback(
     (targetId: string) => {
       wizardStore.reset();
-      wizardStore.setTargetId(targetId);
+      // Narrow the catalog id (typed as `string` for storage tolerance) before
+      // handing it to the strongly-typed store. Unknown targets silently stay
+      // on the default — the target selector only surfaces `showInUI: true`
+      // entries so this branch is a belt-and-braces guard.
+      wizardStore.setTargetId(isTargetId(targetId) ? targetId : DEFAULT_TARGET_ID);
       navigate('/wizard');
       onMobileOpenChange(false);
     },
@@ -276,11 +285,8 @@ function WizardPage() {
   const [persistError, setPersistError] = useState<string | null>(null);
   const [targetLoadError, setTargetLoadError] = useState<string | null>(null);
 
-  const selectedTargetId = storeState.targetId ?? 'stellar';
+  const selectedTargetId: TargetId = storeState.targetId ?? DEFAULT_TARGET_ID;
   const draftState = useWizardDraftState();
-
-  const currentStepIndex = STEP_IDS.indexOf(storeState.currentStep);
-  const effectiveStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
 
   // Draft ids that were created locally in this session via autosave. When
   // the store transitions to one of these ids we MUST NOT re-hydrate from
@@ -317,7 +323,11 @@ function WizardPage() {
         draftState.resetConfig();
         return;
       }
-      wizardStore.setTargetId(draft.targetId);
+      // `draft.targetId` is persisted as `string` to be forward-compatible
+      // with future chains. Narrow here before pushing into the strongly-
+      // typed store; unknown values fall back to the default rather than
+      // crashing a legitimately-restored draft.
+      wizardStore.setTargetId(isTargetId(draft.targetId) ? draft.targetId : DEFAULT_TARGET_ID);
       wizardStore.setCurrentStep(draft.currentStep);
       draftState.setConfig(draft.config);
     }
@@ -444,11 +454,6 @@ function WizardPage() {
     };
   }, [isSaving, storeState.activeDraftId]);
 
-  const handleStepChange = useCallback((index: number) => {
-    const stepId = STEP_IDS[index];
-    if (stepId) wizardStore.setCurrentStep(stepId);
-  }, []);
-
   const wizardSteps: WizardStepConfig[] = useMemo(() => {
     const availableModules = targetSnapshot?.availableModules ?? [];
     const ecosystemMetadata = targetSnapshot?.ecosystemMetadata;
@@ -545,6 +550,26 @@ function WizardPage() {
     // invalidate this memo on every render — `generationFlow` is a new
     // object each render, so every keystroke would rebuild all step JSX.
   }, [draftState, targetSnapshot, adapterCaps, codegenService, isGenerating]);
+
+  // Derive the ordered step id list from the rendered steps so step-id
+  // indexing stays in lockstep with feature flags (e.g. 'deployment'). A
+  // separate STEP_IDS constant used to ship here and silently omit the
+  // deployment step when its flag was on, breaking navigation.
+  const orderedStepIds = useMemo(
+    () => wizardSteps.map((step) => step.id as WizardStepId),
+    [wizardSteps]
+  );
+
+  const currentStepIndex = orderedStepIds.indexOf(storeState.currentStep);
+  const effectiveStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
+
+  const handleStepChange = useCallback(
+    (index: number) => {
+      const stepId = orderedStepIds[index];
+      if (stepId) wizardStore.setCurrentStep(stepId);
+    },
+    [orderedStepIds]
+  );
 
   const [resetKey, setResetKey] = useState(0);
 

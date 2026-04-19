@@ -1,12 +1,17 @@
-import type { WizardStepId } from '../../types/wizard';
+import type { TargetId, WizardStepId } from '../../types/wizard';
 
 export interface WizardState {
   /** Currently selected/active draft id (null when no draft or creating new). */
   activeDraftId: string | null;
   /** Current wizard step for the active draft. */
   currentStep: WizardStepId;
-  /** Target id for the current flow (e.g. stellar). */
-  targetId: string | null;
+  /**
+   * Target id for the current flow (e.g. 'stellar'). Typed as {@link TargetId}
+   * — the store is an in-memory boundary, so we want type errors at write
+   * time rather than silent `'unknown'` strings flowing through the UI.
+   * Hydration from storage goes through `isTargetId` first.
+   */
+  targetId: TargetId | null;
   /** When set, the draft list shows a saving animation for this id (autosave in progress). */
   savingDraftId: string | null;
   /** Incremented after persisted draft changes so the sidebar list can refresh. */
@@ -60,7 +65,7 @@ export const wizardStore = {
   setCurrentStep(step: WizardStepId): void {
     setState({ currentStep: step });
   },
-  setTargetId(id: string | null): void {
+  setTargetId(id: TargetId | null): void {
     setState({ targetId: id });
   },
   reset(): void {

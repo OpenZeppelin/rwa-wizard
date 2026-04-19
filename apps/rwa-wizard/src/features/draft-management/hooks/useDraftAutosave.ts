@@ -3,7 +3,7 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type { WizardDraftStorageApi } from '../../../storage/wizardDraftStorageContext';
-import type { WizardStepId } from '../../../types/wizard';
+import type { TargetId, WizardStepId } from '../../../types/wizard';
 import { hasMeaningfulContent } from '../../../utils/meaningfulDraft';
 import { autosaveReducer, initialAutosaveState, isAutosaveBusy } from './autosaveMachine';
 
@@ -14,7 +14,8 @@ export type AutosaveErrorKind = 'create' | 'save';
 export interface UseDraftAutosaveOptions {
   draftId: string | null;
   config: RWAConfig;
-  targetId: string;
+  /** Target id for the draft being saved. Stored in IDB as `string`. */
+  targetId: TargetId;
   currentStep: WizardStepId;
   storage: WizardDraftStorageApi;
   onDraftCreated?: (id: string) => void;
@@ -31,7 +32,7 @@ export interface UseDraftAutosaveResult {
 interface LatestInputs {
   draftId: string | null;
   config: RWAConfig;
-  targetId: string;
+  targetId: TargetId;
   currentStep: WizardStepId;
 }
 

@@ -1,7 +1,37 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
+import { CHAIN_IDS, isChainId, type ChainId } from '@openzeppelin/rwa-wizard-copy';
 
 /** Re-export canonical config for wizard and codegen boundaries. */
 export type { RWAConfig } from '@openzeppelin/rwa-config';
+
+// ---------------------------------------------------------------------------
+// Target identifiers
+// ---------------------------------------------------------------------------
+
+/**
+ * Ordered tuple of known target ids. Re-exported from
+ * {@link CHAIN_IDS} so the copy package stays the single source of truth for
+ * which chain families the wizard supports.
+ */
+export const TARGET_IDS = CHAIN_IDS;
+
+/**
+ * Canonical target id type for every in-memory boundary in the app (store,
+ * props, React state). Aliased to {@link ChainId} so type errors surface
+ * immediately when a new chain is added without an explicit wizard
+ * acknowledgement.
+ *
+ * Persisted fields (e.g. {@link WizardDraftRecord.targetId},
+ * {@link TargetCatalogEntry.id}) stay typed as `string` on purpose: drafts
+ * written today must survive future target additions, and boundary DTOs
+ * should accept unknown ids without widening the runtime surface.
+ */
+export type TargetId = ChainId;
+
+/** Narrow an arbitrary string to a known {@link TargetId}. */
+export function isTargetId(value: string): value is TargetId {
+  return isChainId(value);
+}
 
 // ---------------------------------------------------------------------------
 // Wizard steps (data-model WizardStepId)
