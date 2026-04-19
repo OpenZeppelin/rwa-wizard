@@ -1,5 +1,5 @@
-import { ArrowDownToLine } from 'lucide-react';
-import { useRef, useState, type ChangeEvent } from 'react';
+import { ArrowDownToLine, CheckCircle2 } from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 
 import {
   Button,
@@ -42,10 +42,17 @@ function formatImportError(err: unknown): string {
   return message || 'Failed to import projects.';
 }
 
+/**
+ * How long the post-import confirmation stays on-screen before we close the
+ * dialog. Long enough to be perceived, short enough to feel snappy.
+ */
+const IMPORT_SUCCESS_FEEDBACK_MS = 1200;
+
 export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImportDialogProps) {
   const storage = useWizardDraftStorage();
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importedCount, setImportedCount] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetFileInput = () => {
@@ -56,6 +63,7 @@ export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImpor
 
   const dismiss = () => {
     setError(null);
+    setImportedCount(null);
     resetFileInput();
     onOpenChange(false);
   };
@@ -66,6 +74,19 @@ export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImpor
       dismiss();
     }
   };
+
+  // Show the success confirmation briefly before closing so the user has a
+  // clear signal that the import landed. Cleanup cancels the timer if the
+  // dialog closes via another path (e.g. dismiss button).
+  useEffect(() => {
+    if (importedCount === null) return;
+    const timer = setTimeout(() => {
+      setImportedCount(null);
+      resetFileInput();
+      onOpenChange(false);
+    }, IMPORT_SUCCESS_FEEDBACK_MS);
+    return () => clearTimeout(timer);
+  }, [importedCount, onOpenChange]);
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -85,14 +106,14 @@ export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImpor
     }
 
     setError(null);
+    setImportedCount(null);
     setIsImporting(true);
 
     try {
       const text = await file.text();
-      await storage.import(text);
+      const ids = await storage.import(text);
       onImported?.();
-      resetFileInput();
-      onOpenChange(false);
+      setImportedCount(ids.length);
     } catch (err) {
       setError(formatImportError(err));
     } finally {
@@ -136,6 +157,15 @@ export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImpor
               </Button>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
+            {importedCount !== null && (
+              <p
+                role="status"
+                className="flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-300"
+              >
+                <CheckCircle2 className="size-4" aria-hidden />
+                {importedCount === 1 ? 'Imported 1 project' : `Imported ${importedCount} projects`}
+              </p>
+            )}
           </div>
 
           <div className="rounded-lg bg-muted p-3 text-sm">

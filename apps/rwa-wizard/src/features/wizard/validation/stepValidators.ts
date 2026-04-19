@@ -30,13 +30,16 @@ export interface StepValidationContext {
 function isValidAssetStep(config: RWAConfig): boolean {
   const { name, symbol, decimals, initialSupply } = config.token;
 
+  // Length is evaluated after trimming so a user who types the maximum number
+  // of visible characters with a trailing space is not spuriously blocked —
+  // edit-site handlers trim before persisting, keeping this consistent.
   const trimmedName = name.trim();
   if (!trimmedName) return false;
-  if (name.length > TOKEN_NAME_MAX_LENGTH) return false;
+  if (trimmedName.length > TOKEN_NAME_MAX_LENGTH) return false;
 
   const trimmedSymbol = symbol.trim();
   if (!trimmedSymbol) return false;
-  if (symbol.length > TOKEN_SYMBOL_MAX_LENGTH) return false;
+  if (trimmedSymbol.length > TOKEN_SYMBOL_MAX_LENGTH) return false;
 
   if (!Number.isInteger(decimals)) return false;
   if (decimals < TOKEN_DECIMALS_MIN || decimals > TOKEN_DECIMALS_MAX) return false;
@@ -74,12 +77,24 @@ function isValidComplianceStep(config: RWAConfig, ctx: StepValidationContext): b
   return true;
 }
 
-function isValidAccessControlStep(config: RWAConfig, ctx: StepValidationContext): boolean {
-  const { ownership } = config.accessControl;
-  const ownerAddress =
-    ownership.type === 'single-owner' ? ownership.ownerAddress : ownership.address;
+function getOwnerAddress(ownership: RWAConfig['accessControl']['ownership']): string {
+  // Exhaustive switch — adding a new ownership variant fails compilation here
+  // until this function and the rest of the wizard acknowledge it explicitly.
+  switch (ownership.type) {
+    case 'single-owner':
+      return ownership.ownerAddress;
+    case 'multi-sig':
+    case 'dao':
+      return ownership.address;
+    default: {
+      const _exhaustive: never = ownership;
+      return _exhaustive;
+    }
+  }
+}
 
-  const trimmed = ownerAddress.trim();
+function isValidAccessControlStep(config: RWAConfig, ctx: StepValidationContext): boolean {
+  const trimmed = getOwnerAddress(config.accessControl.ownership).trim();
   if (!trimmed) return false;
   if (ctx.addressing && !ctx.addressing.isValidAddress(trimmed)) return false;
 

@@ -39,13 +39,15 @@ export function AddressListInput({
   });
 
   const draftAddress = watch('address');
+  const trimmedDraft = draftAddress?.trim() ?? '';
 
-  const isDuplicate = useMemo(
-    () => addresses.includes(draftAddress?.trim() ?? ''),
-    [addresses, draftAddress]
-  );
+  const isDuplicate = useMemo(() => addresses.includes(trimmedDraft), [addresses, trimmedDraft]);
 
-  const canAdd = !!draftAddress?.trim() && !atLimit && !isDuplicate;
+  // Mirror every constraint that `handleAdd` enforces so the Add button
+  // never appears enabled for inputs we would silently reject (e.g. invalid
+  // address under the chain adapter).
+  const isAddressValid = addressing ? addressing.isValidAddress(trimmedDraft) : true;
+  const canAdd = !!trimmedDraft && !atLimit && !isDuplicate && isAddressValid;
 
   const handleAdd = useCallback(
     (data: AddressDraftForm) => {

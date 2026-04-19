@@ -27,8 +27,9 @@ const EMPTY_ECOSYSTEM_METADATA: StructuralEcosystemMetadata = {
 
 /**
  * Loads the target runtime (codegen service + adapter) for the given target id.
- * Caches by targetId. The codegen service may be null if the real package is
- * unavailable — callers should disable generation in that case.
+ * Caches only fully-successful loads. A transient failure (network blip,
+ * dynamic-import error) therefore stays retryable on the next call instead
+ * of poisoning the session with a permanently null runtime.
  */
 export async function loadRuntime(targetId: string): Promise<LoadedTargetRuntime> {
   // `getTarget` already filters on `showInUI`, so hidden entries surface as
@@ -45,7 +46,12 @@ export async function loadRuntime(targetId: string): Promise<LoadedTargetRuntime
   const codegenService = getCodegenService(targetId);
   const adapterCapabilities = getAdapterCapabilities(targetId);
   const runtime: LoadedTargetRuntime = { targetId, codegenService, adapterCapabilities };
-  runtimeCache.set(targetId, runtime);
+  // Only cache when at least one capability resolved. If both are null,
+  // `ensure*Loaded` almost certainly failed and retrying on the next call
+  // is cheap — pinning the failure would be worse.
+  if (codegenService !== null || adapterCapabilities !== null) {
+    runtimeCache.set(targetId, runtime);
+  }
   return runtime;
 }
 

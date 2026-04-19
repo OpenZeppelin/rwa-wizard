@@ -7,7 +7,7 @@ import {
   ShieldCheck,
   Wallet,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import {
@@ -274,12 +274,21 @@ function WizardPage() {
   const [adapterCaps, setAdapterCaps] = useState<TargetAdapterCapabilities | null>(null);
   const [codegenService, setCodegenService] = useState<RwaCodegenService | null>(null);
   const [persistError, setPersistError] = useState<string | null>(null);
+  const [targetLoadError, setTargetLoadError] = useState<string | null>(null);
 
   const selectedTargetId = storeState.targetId ?? 'stellar';
   const draftState = useWizardDraftState();
 
   const currentStepIndex = STEP_IDS.indexOf(storeState.currentStep);
   const effectiveStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
+
+  // Draft ids that were created locally in this session via autosave. When
+  // the store transitions to one of these ids we MUST NOT re-hydrate from
+  // storage: our in-memory `draftState.config` is authoritative and fresher
+  // than any snapshot storage may have persisted. Re-reading storage here
+  // would overwrite user keystrokes typed between the create round-trip
+  // and this effect firing (see "silent data overwrite after first autosave").
+  const locallyCreatedIdsRef = useRef<Set<string>>(new Set());
 
   // Load the draft record when activeDraftId changes; clear form state when id is cleared (e.g. delete).
   // `isActive` guards against races when the user switches drafts while a prior `get` is still pending.
@@ -290,6 +299,14 @@ function WizardPage() {
       const id = storeState.activeDraftId;
       if (!id) {
         draftState.resetConfig();
+        return;
+      }
+      // Skip re-hydration for drafts we just created locally — see the ref
+      // declaration above. We consume the id so a *later* external selection
+      // of the same draft (e.g. the user picks it from the sidebar after
+      // reload) still goes through the normal hydration path.
+      if (locallyCreatedIdsRef.current.has(id)) {
+        locallyCreatedIdsRef.current.delete(id);
         return;
       }
       const draft = await storage.get(id);
@@ -322,20 +339,32 @@ function WizardPage() {
           getTargetCapabilitySnapshot(selectedTargetId),
           loadRuntime(selectedTargetId),
         ]);
-        if (isActive) {
-          setTargetSnapshot(snapshot);
-          setAdapterCaps(runtime.adapterCapabilities);
-          setCodegenService(runtime.codegenService);
+        if (!isActive) return;
+        setTargetSnapshot(snapshot);
+        setAdapterCaps(runtime.adapterCapabilities);
+        setCodegenService(runtime.codegenService);
+        // A null codegen service is not a thrown error, but it still means
+        // generation will fail silently later — surface it up front.
+        if (runtime.codegenService === null) {
+          setTargetLoadError(
+            'Code generation is unavailable for this target. You can edit the configuration, but the project ZIP cannot be produced.'
+          );
+        } else {
+          setTargetLoadError(null);
         }
-      } catch {
-        if (isActive) {
-          setTargetSnapshot(null);
-          setAdapterCaps(null);
-          setCodegenService(null);
-        }
+      } catch (err) {
+        if (!isActive) return;
+        setTargetSnapshot(null);
+        setAdapterCaps(null);
+        setCodegenService(null);
+        const detail = err instanceof Error ? err.message : String(err);
+        setTargetLoadError(
+          `Unable to load the ${selectedTargetId} target: ${detail}. Try reloading the page.`
+        );
       }
     }
 
+    setTargetLoadError(null);
     void loadTarget();
 
     return () => {
@@ -344,6 +373,9 @@ function WizardPage() {
   }, [selectedTargetId]);
 
   const handleDraftCreated = useCallback((id: string) => {
+    // Record before updating the store so the sync effect — which runs
+    // after this state change — observes the id and skips re-hydration.
+    locallyCreatedIdsRef.current.add(id);
     wizardStore.setActiveDraft(id);
   }, []);
 
@@ -388,7 +420,7 @@ function WizardPage() {
     minPhaseDurationMs: 450,
   });
 
-  const { generate, isGenerating } = generationFlow;
+  const { generate, isGenerating, jobState: generationJobState, download, reset } = generationFlow;
 
   const handleLastStepPrimary = useCallback(() => {
     void generate();
@@ -436,7 +468,7 @@ function WizardPage() {
       availableModules,
     };
     const validityFor = (id: WizardStepId) => isStepValid(id, draftState.config, validationCtx);
-    const reviewStepCanProceed = codegenService != null && !generationFlow.isGenerating;
+    const reviewStepCanProceed = codegenService != null && !isGenerating;
 
     const steps: WizardStepConfig[] = [
       {
@@ -508,7 +540,11 @@ function WizardPage() {
     }
 
     return steps;
-  }, [draftState, targetSnapshot, adapterCaps, codegenService, generationFlow]);
+    // Depend only on the narrow slice of the generation flow we read
+    // (`isGenerating`). Depending on the whole hook return object would
+    // invalidate this memo on every render — `generationFlow` is a new
+    // object each render, so every keystroke would rebuild all step JSX.
+  }, [draftState, targetSnapshot, adapterCaps, codegenService, isGenerating]);
 
   const [resetKey, setResetKey] = useState(0);
 
@@ -524,6 +560,12 @@ function WizardPage() {
     <CopyProvider targetId={selectedTargetId}>
       <AdapterCapabilitiesProvider value={adapterCaps}>
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          {targetLoadError && (
+            <PersistErrorBanner
+              message={targetLoadError}
+              onDismiss={() => setTargetLoadError(null)}
+            />
+          )}
           {persistError && (
             <PersistErrorBanner message={persistError} onDismiss={() => setPersistError(null)} />
           )}
@@ -541,11 +583,11 @@ function WizardPage() {
             lastStepSecondaryDisabled={!storeState.activeDraftId}
           />
           <GenerationDialog
-            jobState={generationFlow.jobState}
-            isGenerating={generationFlow.isGenerating}
-            onDownload={generationFlow.download}
+            jobState={generationJobState}
+            isGenerating={isGenerating}
+            onDownload={download}
             onRetry={handleLastStepPrimary}
-            onReset={generationFlow.reset}
+            onReset={reset}
           />
         </main>
       </AdapterCapabilitiesProvider>

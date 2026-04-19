@@ -59,11 +59,29 @@ export function useDraftAutosave({
 }: UseDraftAutosaveOptions): UseDraftAutosaveResult {
   const [state, dispatch] = useReducer(autosaveReducer, initialAutosaveState);
 
+  // Locally-adopted draftId after a successful `create`. Held until the
+  // parent catches up with its own state update. Without this, a rapid edit
+  // during the create round-trip can race the parent's prop update and
+  // produce a duplicate draft on the next persist pass. Cleared whenever
+  // the parent's `draftId` prop changes (including to `null` on reset).
+  const locallyAdoptedIdRef = useRef<string | null>(null);
+  const lastObservedDraftIdRef = useRef<string | null>(draftId);
+  if (lastObservedDraftIdRef.current !== draftId) {
+    locallyAdoptedIdRef.current = null;
+    lastObservedDraftIdRef.current = draftId;
+  }
+  const effectiveDraftId = draftId ?? locallyAdoptedIdRef.current;
+
   // Capture the freshest inputs so the save effect always operates on the
   // most recent config/targetId/step, even if it was queued while previous
   // renders were still in flight.
-  const latestRef = useRef<LatestInputs>({ draftId, config, targetId, currentStep });
-  latestRef.current = { draftId, config, targetId, currentStep };
+  const latestRef = useRef<LatestInputs>({
+    draftId: effectiveDraftId,
+    config,
+    targetId,
+    currentStep,
+  });
+  latestRef.current = { draftId: effectiveDraftId, config, targetId, currentStep };
 
   // Destructure only the methods used so `persist` does not re-create when
   // `storage.drafts` (the live list) updates — which would cause an infinite
@@ -117,6 +135,13 @@ export function useDraftAutosave({
         currentStep: step,
         metadata: { isManuallyRenamed: false, importSource: 'manual' },
       });
+      // Adopt the new id locally before notifying the parent so that any
+      // follow-up persist triggered by `saving-pending → saving` sees the
+      // freshly-created draftId and issues a `save` (not another `create`).
+      // The render-time merge above keeps this id in `latestRef.current`
+      // even if the parent has not yet re-rendered with its updated prop.
+      locallyAdoptedIdRef.current = newId;
+      latestRef.current = { ...latestRef.current, draftId: newId };
       onDraftCreatedRef.current?.(newId);
     }
   }, [get, save, create]);

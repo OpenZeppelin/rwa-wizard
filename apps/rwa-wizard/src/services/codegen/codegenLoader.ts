@@ -62,6 +62,30 @@ function resolveGenerateOptions(targetId: string): RuntimeGenerateOptions | unde
   };
 }
 
+/**
+ * Merge base generate options with the call-site progress callback.
+ *
+ * Precedence (call-site wins over base):
+ *   1. Every field of `baseGenerateOptions` (the runtime + default options
+ *      resolved for this target).
+ *   2. The call-site `onProgress` handler, when provided. This deliberately
+ *      overrides any `onProgress` that might live in the base options so the
+ *      streaming UI attached by the hook always receives the events.
+ *
+ * Returns `undefined` when there is nothing to pass so the underlying
+ * package's own defaults remain active.
+ */
+function buildGenerateOptions(
+  base: RuntimeGenerateOptions | undefined,
+  onProgress: ((event: { phase: string; percentage: number; message?: string }) => void) | undefined
+): GenerateOptions | undefined {
+  if (!base && !onProgress) return undefined;
+  return {
+    ...base,
+    ...(onProgress ? { onProgress } : {}),
+  };
+}
+
 function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCodegenService {
   const baseGenerateOptions = resolveGenerateOptions(targetId);
 
@@ -115,13 +139,7 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
             });
           }
         : undefined;
-      const generateOptions =
-        baseGenerateOptions || onProgress
-          ? {
-              ...baseGenerateOptions,
-              ...(onProgress ? { onProgress } : {}),
-            }
-          : undefined;
+      const generateOptions = buildGenerateOptions(baseGenerateOptions, onProgress);
       const result = await pkg.generateZip(config, generateOptions);
       return { fileName: result.fileName, data: result.data };
     },

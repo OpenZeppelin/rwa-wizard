@@ -82,7 +82,10 @@ describe('autosaveReducer', () => {
     expect(next.lastError).toBeNull();
   });
 
-  it('persist failure from saving-pending still flushes the pending edit (with error captured)', () => {
+  it('persist failure from saving-pending still flushes the pending edit and does not stash the error', () => {
+    // `lastError` is part of the `error` phase contract — stashing it while
+    // we immediately re-fire a save would never surface to consumers and only
+    // creates a stale value for the next transition to clean up.
     const err = new Error('boom');
     const start = reduce(initialAutosaveState, [
       { type: 'EDIT' },
@@ -92,7 +95,7 @@ describe('autosaveReducer', () => {
     const next = autosaveReducer(start, { type: 'PERSIST_FAILED', error: err });
     expect(next.phase).toBe('saving');
     expect(next.saveRunId).toBe(start.saveRunId + 1);
-    expect(next.lastError).toBe(err);
+    expect(next.lastError).toBeNull();
   });
 
   it('edit from error clears lastError and returns to debouncing', () => {

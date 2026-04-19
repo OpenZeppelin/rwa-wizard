@@ -76,16 +76,12 @@ export function autosaveReducer(state: AutosaveState, event: AutosaveEvent): Aut
       }
       // Both outcomes flush the pending edit immediately — we know there are
       // newer bits on the wire, so we start a fresh save instead of debouncing.
-      if (event.type === 'PERSIST_SUCCEEDED') {
+      // `lastError` is cleared on both outcomes: the machine's public contract
+      // is that `lastError` is meaningful only while `phase === 'error'`.
+      // Stashing the previous failure here would never surface to the UI and
+      // would be indistinguishable from a stale value on the next transition.
+      if (event.type === 'PERSIST_SUCCEEDED' || event.type === 'PERSIST_FAILED') {
         return { ...state, phase: 'saving', saveRunId: state.saveRunId + 1, lastError: null };
-      }
-      if (event.type === 'PERSIST_FAILED') {
-        return {
-          ...state,
-          phase: 'saving',
-          saveRunId: state.saveRunId + 1,
-          lastError: event.error,
-        };
       }
       return state;
 

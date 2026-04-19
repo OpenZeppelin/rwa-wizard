@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
@@ -66,6 +66,10 @@ export function useGenerationFlow({
     createIdleJob(effectiveDraftId)
   );
   const generatingRef = useRef(false);
+  // Monotonic id for each `generate()` call. Incremented on every start and
+  // on every `reset()`, so an in-flight run can detect that it has been
+  // superseded and stop publishing phase transitions or artifacts.
+  const runIdRef = useRef(0);
   // Cached so the consumer can trigger a browser download on demand (e.g. from
   // a user-initiated button click) without forcing auto-download at generation
   // time — we cannot detect whether the user actually saves the file.
@@ -80,9 +84,21 @@ export function useGenerationFlow({
     }));
   }, []);
 
+  // Whenever the active draft changes, clear all derived run state so
+  // `download()` cannot hand back a different draft's artifact and
+  // `jobState.draftId` never misreports the current draft.
+  useEffect(() => {
+    runIdRef.current += 1;
+    generatingRef.current = false;
+    artifactRef.current = null;
+    setJobState(createIdleJob(effectiveDraftId));
+  }, [effectiveDraftId]);
+
   const generate = useCallback(async () => {
     if (generatingRef.current) return;
     generatingRef.current = true;
+    const runId = ++runIdRef.current;
+    const isActive = () => runIdRef.current === runId;
 
     const startedAt = new Date();
     setJobState({
@@ -94,10 +110,12 @@ export function useGenerationFlow({
 
     try {
       if (!codegenService) {
-        setPhase('error', {
-          errorMessage: 'No codegen service is configured for the selected target.',
-          completedAt: new Date(),
-        });
+        if (isActive()) {
+          setPhase('error', {
+            errorMessage: 'No codegen service is configured for the selected target.',
+            completedAt: new Date(),
+          });
+        }
         return;
       }
 
@@ -109,6 +127,7 @@ export function useGenerationFlow({
         codegenService.validate(config),
         delay(minPhaseDurationMs),
       ]);
+      if (!isActive()) return;
 
       if (!validation.valid) {
         const firstError = validation.errors[0];
@@ -130,7 +149,7 @@ export function useGenerationFlow({
       const [artifact] = await Promise.all([
         codegenService.generateZip(config, {
           onStatus: (status) => {
-            if (status.phase === 'error') {
+            if (status.phase === 'error' && isActive()) {
               streamErrored = true;
               setPhase('error', {
                 errorMessage: status.message ?? 'Generation failed',
@@ -141,12 +160,18 @@ export function useGenerationFlow({
         }),
         delay(minPhaseDurationMs),
       ]);
-
+      if (!isActive()) return;
       if (streamErrored) return;
 
       setPhase('packaging');
       artifactRef.current = { fileName: artifact.fileName, data: artifact.data };
       await delay(minPhaseDurationMs);
+      if (!isActive()) {
+        // `reset()` fired between `packaging` and `success`; drop the
+        // artifact so `download()` cannot hand back stale bytes.
+        artifactRef.current = null;
+        return;
+      }
 
       setPhase('success', {
         zipFileName: artifact.fileName,
@@ -157,12 +182,19 @@ export function useGenerationFlow({
         downloadZip(artifact.fileName, artifact.data);
       }
     } catch (err) {
-      setPhase('error', {
-        errorMessage: err instanceof Error ? err.message : 'Generation failed unexpectedly',
-        completedAt: new Date(),
-      });
+      if (isActive()) {
+        setPhase('error', {
+          errorMessage: err instanceof Error ? err.message : 'Generation failed unexpectedly',
+          completedAt: new Date(),
+        });
+      }
     } finally {
-      generatingRef.current = false;
+      // Only clear the busy flag for the run that set it; a superseding
+      // `reset()` already cleared it and a newer `generate()` may be in
+      // flight by the time we reach `finally`.
+      if (runIdRef.current === runId) {
+        generatingRef.current = false;
+      }
     }
   }, [effectiveDraftId, config, codegenService, autoDownload, minPhaseDurationMs, setPhase]);
 
@@ -173,6 +205,8 @@ export function useGenerationFlow({
   }, []);
 
   const reset = useCallback(() => {
+    // Bump the run id so any in-flight `generate()` stops publishing state.
+    runIdRef.current += 1;
     generatingRef.current = false;
     artifactRef.current = null;
     setJobState(createIdleJob(effectiveDraftId));

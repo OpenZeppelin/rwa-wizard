@@ -329,6 +329,94 @@ describe('useGenerationFlow', () => {
     });
   });
 
+  it('reset() aborts an in-flight generation and leaves the job idle', async () => {
+    // Regression: `reset()` used to only flip `generatingRef` to false without
+    // cancelling the run. The in-flight Promise chain would still call
+    // `setPhase('success')` once the slow generator resolved, resurrecting a
+    // completed job on top of the newly-reset idle state.
+    let resolveGenerate: () => void = () => undefined;
+    const slowService: RwaCodegenService = {
+      ...testService,
+      async generateZip() {
+        await new Promise<void>((resolve) => {
+          resolveGenerate = resolve;
+        });
+        return { fileName: 'slow.zip', data: new Blob(['x']) };
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useGenerationFlow({
+        draftId: 'draft-1',
+        config: validConfig(),
+        codegenService: slowService,
+        autoDownload: false,
+      })
+    );
+
+    act(() => {
+      void result.current.generate();
+    });
+
+    await waitFor(() => {
+      expect(result.current.jobState.phase).toBe('generating');
+    });
+
+    act(() => {
+      result.current.reset();
+    });
+    expect(result.current.jobState.phase).toBe('idle');
+
+    await act(async () => {
+      resolveGenerate();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.jobState.phase).toBe('idle');
+    expect(result.current.jobState.zipFileName).toBeUndefined();
+    expect(result.current.jobState.phaseLog).not.toContain('success');
+  });
+
+  it('clears the cached artifact and draftId when the active draft changes', async () => {
+    // Regression: the artifact and `jobState.draftId` survived across draft
+    // switches. Switching from a draft with a completed generation to a new
+    // draft used to let `download()` hand back the *previous* draft's ZIP.
+    const { result, rerender } = renderHook(
+      ({ draftId }) =>
+        useGenerationFlow({
+          draftId,
+          config: validConfig(),
+          codegenService: testService,
+          autoDownload: false,
+        }),
+      { initialProps: { draftId: 'draft-A' } }
+    );
+
+    await act(async () => {
+      await result.current.generate();
+    });
+    await waitFor(() => {
+      expect(result.current.jobState.phase).toBe('success');
+    });
+    expect(result.current.jobState.draftId).toBe('draft-A');
+
+    rerender({ draftId: 'draft-B' });
+
+    expect(result.current.jobState.phase).toBe('idle');
+    expect(result.current.jobState.draftId).toBe('draft-B');
+    expect(result.current.jobState.zipFileName).toBeUndefined();
+
+    const createObjectURLSpy = vi.fn().mockReturnValue('blob:fake');
+    URL.createObjectURL = createObjectURLSpy;
+    URL.revokeObjectURL = vi.fn();
+    act(() => {
+      result.current.download();
+    });
+    expect(createObjectURLSpy).not.toHaveBeenCalled();
+  });
+
   it('prevents concurrent generate() calls', async () => {
     let resolveGenerate: () => void;
     const slowService: RwaCodegenService = {

@@ -34,6 +34,16 @@ function setState(partial: Partial<WizardState>): void {
 }
 
 /**
+ * Replace the whole state atomically. Callers pass a full snapshot; used by
+ * `reset()` so any future cross-cutting behavior added to `setState`
+ * (logging, replay, persistence) also runs on reset.
+ */
+function replaceState(next: WizardState): void {
+  state = next;
+  listeners.forEach((fn) => fn(state));
+}
+
+/**
  * Shared wizard state container (foundational seam for Phase 3).
  * Subscribers get notified on change; used by AppRouter and wizard steps.
  */
@@ -54,8 +64,7 @@ export const wizardStore = {
     setState({ targetId: id });
   },
   reset(): void {
-    state = { ...initialState };
-    listeners.forEach((fn) => fn(state));
+    replaceState({ ...initialState });
   },
   setSavingDraftId(id: string | null): void {
     setState({ savingDraftId: id });
