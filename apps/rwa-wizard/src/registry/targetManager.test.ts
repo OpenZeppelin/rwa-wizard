@@ -98,6 +98,10 @@ describe('targetManager', () => {
       await expect(loadRuntime('nonexistent')).rejects.toThrow('target/unknown');
     });
 
+    it('rejects disabled (coming-soon) targets', async () => {
+      await expect(loadRuntime('evm')).rejects.toThrow('target/disabled');
+    });
+
     it('caches loaded runtimes', async () => {
       const first = await loadRuntime('stellar');
       const second = await loadRuntime('stellar');

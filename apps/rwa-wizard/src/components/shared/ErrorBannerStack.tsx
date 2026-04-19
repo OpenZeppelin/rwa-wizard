@@ -1,3 +1,5 @@
+import type { ReactElement } from 'react';
+
 import { ErrorBanner, type ErrorBannerProps } from './ErrorBanner';
 
 export interface ErrorBannerStackEntry extends Omit<ErrorBannerProps, 'className'> {
@@ -40,7 +42,7 @@ export interface ErrorBannerStackProps {
 export function ErrorBannerStack({
   entries,
   className,
-}: ErrorBannerStackProps): React.ReactElement | null {
+}: ErrorBannerStackProps): ReactElement | null {
   const visible = entries.filter((entry): entry is ErrorBannerStackEntry => Boolean(entry));
 
   if (visible.length === 0) return null;

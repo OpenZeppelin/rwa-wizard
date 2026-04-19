@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { ReactNode } from 'react';
 
 import {
   defaultWizardDraftStorageApi,
@@ -10,7 +11,7 @@ export function WizardDraftStorageProvider({
   children,
   api = defaultWizardDraftStorageApi,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   api?: WizardDraftStorageApi;
 }) {
   const value = useMemo(() => api, [api]);

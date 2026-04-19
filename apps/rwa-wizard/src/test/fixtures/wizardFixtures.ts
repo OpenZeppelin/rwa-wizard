@@ -6,7 +6,7 @@ import type { WizardDraftStorageApi } from '../../storage/wizardDraftStorageCont
 import { createDefaultRwaConfig } from '../../utils/defaultRwaConfig';
 
 /**
- * Build an `RWAConfig` by deep-merging the defaults with partial overrides.
+ * Build an `RWAConfig` by shallow-merging the defaults with partial overrides.
  *
  * Intended for unit tests that need a config "like the default except for
  * these tweaks" without caring about every nested field. Shallow merges at

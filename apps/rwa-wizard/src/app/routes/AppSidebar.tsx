@@ -8,6 +8,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReactElement } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { SidebarButton, SidebarLayout, SidebarSection } from '@openzeppelin/ui-components';
@@ -35,10 +36,7 @@ interface AppSidebarProps {
  * through narrow selectors so unrelated wizard-page state updates
  * (e.g. current step, selected target) do not cause the sidebar to re-render.
  */
-export function AppSidebar({
-  mobileOpen,
-  onMobileOpenChange,
-}: AppSidebarProps): React.ReactElement {
+export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps): ReactElement {
   const activeDraftId = useWizardStore((s) => s.activeDraftId);
   const savingDraftId = useWizardStore((s) => s.savingDraftId);
   const draftListRefreshTick = useWizardStore((s) => s.draftListRefreshTick);

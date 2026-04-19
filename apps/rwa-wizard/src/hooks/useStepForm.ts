@@ -23,6 +23,9 @@ function shallowFieldsEqual(a: unknown, b: unknown): boolean {
   const aKeys = Object.keys(ao);
   const bKeys = Object.keys(bo);
   if (aKeys.length !== bKeys.length) return false;
+  const aKeySet = [...aKeys].sort().join('\0');
+  const bKeySet = [...bKeys].sort().join('\0');
+  if (aKeySet !== bKeySet) return false;
   for (const k of aKeys) {
     if (!shallowFieldsEqual(ao[k], bo[k])) return false;
   }

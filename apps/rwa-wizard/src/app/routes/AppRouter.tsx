@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactElement } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { Footer, Header } from '@openzeppelin/ui-components';
@@ -13,7 +14,7 @@ import { DashboardPage } from './DashboardPage';
  * know when it is open) and the header (which needs to open it) can share
  * the same state without a Context.
  */
-function AppShell(): React.ReactElement {
+function AppShell(): ReactElement {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -36,7 +37,7 @@ function AppShell(): React.ReactElement {
   );
 }
 
-export function AppRouter(): React.ReactElement {
+export function AppRouter(): ReactElement {
   return (
     <BrowserRouter>
       <AppShell />

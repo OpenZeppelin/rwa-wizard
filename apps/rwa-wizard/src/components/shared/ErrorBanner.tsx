@@ -1,4 +1,5 @@
 import { AlertCircle } from 'lucide-react';
+import type { ReactElement, ReactNode } from 'react';
 
 /**
  * Visual + ARIA variants for `ErrorBanner`.
@@ -17,7 +18,7 @@ export interface ErrorBannerProps {
   /** Label for the dismiss button. Defaults to `"Dismiss"`. */
   dismissLabel?: string;
   /** Optional icon override. Defaults to a `lucide-react` `AlertCircle`. Pass `null` to hide the icon entirely. */
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   /** Visual tone. Defaults to `"error"`. */
   tone?: ErrorBannerTone;
   /** Additional class names appended to the root element. */
@@ -57,7 +58,7 @@ export function ErrorBanner({
   icon,
   tone = 'error',
   className,
-}: ErrorBannerProps): React.ReactElement {
+}: ErrorBannerProps): ReactElement {
   const resolvedIcon =
     icon === null
       ? null

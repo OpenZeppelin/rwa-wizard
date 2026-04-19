@@ -38,6 +38,9 @@ export async function loadRuntime(targetId: string): Promise<LoadedTargetRuntime
   if (!entry) {
     throw new Error(`target/unknown: ${targetId}`);
   }
+  if (!entry.enabled) {
+    throw new Error(`target/disabled: ${targetId}`);
+  }
   const cached = runtimeCache.get(targetId);
   if (cached) return cached;
 

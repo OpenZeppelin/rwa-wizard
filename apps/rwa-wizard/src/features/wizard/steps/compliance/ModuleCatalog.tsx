@@ -1,5 +1,6 @@
 import { Check, ExternalLink } from 'lucide-react';
 import { useCallback } from 'react';
+import type { KeyboardEvent } from 'react';
 
 import type { ComplianceModuleSelection } from '@openzeppelin/rwa-config';
 import { cn } from '@openzeppelin/ui-utils';
@@ -83,7 +84,7 @@ function ModuleRow({ module, selected, config, onToggle, onConfigChange }: Modul
   const underReviewNotice = useCopy().notice('compliance.module-catalog.under-review-label');
   const handleClick = useCallback(() => onToggle(module.id), [module.id, onToggle]);
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+    (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         onToggle(module.id);

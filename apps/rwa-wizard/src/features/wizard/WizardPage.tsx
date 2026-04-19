@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { ReactElement } from 'react';
 
 import { WizardLayout } from '@openzeppelin/ui-components';
 
@@ -20,7 +21,7 @@ import { GenerationDialog } from '../generation/components/GenerationDialog';
  * is left responsible only for layout, error banner plumbing, and the
  * two buttons on the last step (primary + secondary).
  */
-export function WizardPage(): React.ReactElement {
+export function WizardPage(): ReactElement {
   const session = useWizardSession();
   const storage = useWizardDraftStorage();
 

@@ -1,5 +1,6 @@
 import { Upload } from 'lucide-react';
 import { useCallback, useRef } from 'react';
+import type { ChangeEvent } from 'react';
 
 import { Button } from '@openzeppelin/ui-components';
 
@@ -16,7 +17,7 @@ export function ImportDraftButton({ onImported, onError }: ImportDraftButtonProp
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 

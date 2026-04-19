@@ -45,12 +45,12 @@ describe('Codegen Service Contract Parity', () => {
       expect(modules.length).toBeGreaterThan(0);
     });
 
-    it('each module has id, name, description, requiredHooks, review, configFields', async () => {
+    it('each module has id, name, requiredHooks, review, configFields (structural; no UI description)', async () => {
       const modules = await testService.getAvailableModules();
       for (const mod of modules) {
         expect(mod).toHaveProperty('id');
         expect(mod).toHaveProperty('name');
-        expect(mod).toHaveProperty('description');
+        expect(mod).not.toHaveProperty('description');
         expect(mod).toHaveProperty('requiredHooks');
         expect(mod).toHaveProperty('review');
         expect(mod).toHaveProperty('configFields');
