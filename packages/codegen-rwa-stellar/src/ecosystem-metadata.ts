@@ -23,143 +23,91 @@ export type StellarComplianceHook =
   | 'destroyed';
 
 // ---------------------------------------------------------------------------
-// Administrative Controls — Stellar/Soroban ecosystem
+// Administrative + Identity Controls — Stellar/Soroban ecosystem
 // ---------------------------------------------------------------------------
 
+/**
+ * Structural facts about an administrative / identity control on Stellar.
+ *
+ * User-facing copy (description, tooltip prose) intentionally lives outside
+ * this package — see `@openzeppelin/rwa-wizard-copy` — and is joined by the
+ * wizard app at render time keyed on `id`. Keeping codegen narrow means
+ * downstream consumers (CLI, programmatic) don't ship UI prose they do not
+ * need.
+ */
 export interface StellarAdminControlMeta {
   id: string;
   name: string;
-  description: string;
   locked: boolean;
   defaultValue: boolean;
 }
 
 export const STELLAR_ADMIN_CONTROLS: readonly StellarAdminControlMeta[] = [
-  {
-    id: 'burnable',
-    name: 'Burnable',
-    description: 'Enable token burning for token supply management',
-    locked: true,
-    defaultValue: true,
-  },
-  {
-    id: 'mintable',
-    name: 'Mintable',
-    description: 'Enable token minting for token supply management',
-    locked: true,
-    defaultValue: true,
-  },
-  {
-    id: 'pausable',
-    name: 'Pausable',
-    description: 'Enable pausable functionality for emergency situations and security incidents',
-    locked: true,
-    defaultValue: true,
-  },
+  { id: 'burnable', name: 'Burnable', locked: true, defaultValue: true },
+  { id: 'mintable', name: 'Mintable', locked: true, defaultValue: true },
+  { id: 'pausable', name: 'Pausable', locked: true, defaultValue: true },
 ] as const;
 
-// ---------------------------------------------------------------------------
-// Identity Controls — Stellar/Soroban ecosystem
-// ---------------------------------------------------------------------------
-
 export const STELLAR_IDENTITY_CONTROLS: readonly StellarAdminControlMeta[] = [
-  {
-    id: 'addressFreezing',
-    name: 'Address-Level Freezing',
-    description: 'Full address freezing for regulatory compliance and sanctions',
-    locked: true,
-    defaultValue: true,
-  },
+  { id: 'addressFreezing', name: 'Address-Level Freezing', locked: true, defaultValue: true },
   {
     id: 'partialTokenFreezing',
     name: 'Partial Token Freezing',
-    description: 'Partial token freezing for dispute resolution and escrow',
     locked: true,
     defaultValue: true,
   },
-  {
-    id: 'recovery',
-    name: 'Account Recovery',
-    description: 'Lost wallet recovery for verified investors',
-    locked: true,
-    defaultValue: true,
-  },
-  {
-    id: 'forcedTransfers',
-    name: 'Forced Transfers',
-    description: 'Regulatory transfers for court orders and regulatory intervention',
-    locked: true,
-    defaultValue: true,
-  },
+  { id: 'recovery', name: 'Account Recovery', locked: true, defaultValue: true },
+  { id: 'forcedTransfers', name: 'Forced Transfers', locked: true, defaultValue: true },
 ] as const;
 
 // ---------------------------------------------------------------------------
 // Predefined Operator Roles — Stellar/Soroban ecosystem
 // ---------------------------------------------------------------------------
 
+/**
+ * Structural facts about an RBAC operator role. `id` is the stable key used
+ * both as the on-chain RBAC role constant and as the join key into
+ * `@openzeppelin/rwa-wizard-copy`. `name` is the short display label; longer
+ * educational copy lives in the copy package.
+ */
 export interface StellarOperatorRoleMeta {
   id: string;
   name: string;
-  description: string;
 }
 
 export const STELLAR_OPERATOR_ROLES: readonly StellarOperatorRoleMeta[] = [
-  { id: 'minter', name: 'Minting', description: 'Can mint new tokens' },
-  { id: 'burner', name: 'Burning', description: 'Can burn existing tokens' },
-  { id: 'freezer', name: 'Freezing', description: 'Can freeze addresses' },
-  { id: 'partial-freezer', name: 'Partial Freezing', description: 'Can freeze partial tokens' },
-  {
-    id: 'forced-transfer',
-    name: 'Forced Transfers',
-    description: 'Can execute forced transfers',
-  },
-  { id: 'recovery', name: 'Recovery', description: 'Can perform recovery operations' },
-  { id: 'pauser', name: 'Pausing', description: 'Can pause contract operations' },
-  { id: 'compliance', name: 'Compliance', description: 'Can manage compliance settings' },
-  { id: 'identity', name: 'Identity', description: 'Can manage identity verification' },
-  {
-    id: 'document-manager',
-    name: 'Document Management',
-    description: 'Can manage token documents',
-  },
+  { id: 'minter', name: 'Minting' },
+  { id: 'burner', name: 'Burning' },
+  { id: 'freezer', name: 'Freezing' },
+  { id: 'partial-freezer', name: 'Partial Freezing' },
+  { id: 'forced-transfer', name: 'Forced Transfers' },
+  { id: 'recovery', name: 'Recovery' },
+  { id: 'pauser', name: 'Pausing' },
+  { id: 'compliance', name: 'Compliance' },
+  { id: 'identity', name: 'Identity' },
+  { id: 'document-manager', name: 'Document Management' },
 ] as const;
 
 // ---------------------------------------------------------------------------
 // Compliance Hook Metadata — Stellar/Soroban ecosystem
 // ---------------------------------------------------------------------------
 
+/**
+ * Structural facts about a compliance hook. `displayName` is the short label
+ * rendered in the hook-wiring preview; longer explanatory prose lives in the
+ * copy package keyed on `hook.<hook>`.
+ */
 export interface StellarComplianceHookMeta {
   hook: StellarComplianceHook;
   displayName: string;
-  description: string;
 }
 
 export const STELLAR_COMPLIANCE_HOOKS: readonly StellarComplianceHookMeta[] = [
-  {
-    hook: 'canTransfer',
-    displayName: 'Can Transfer',
-    description: 'Validation before transfer (e.g., transfer limits, whitelist)',
-  },
-  {
-    hook: 'canCreate',
-    displayName: 'Can Create',
-    description: 'Validation before minting (e.g., supply caps, investor limits)',
-  },
-  {
-    hook: 'transferred',
-    displayName: 'Transferred',
-    description: 'State update after transfer (e.g., balance tracking, transfer counting)',
-  },
-  {
-    hook: 'created',
-    displayName: 'Created',
-    description: 'State update after minting (e.g., supply tracking, investor counting)',
-  },
-  {
-    hook: 'destroyed',
-    displayName: 'Destroyed',
-    description: 'State update after burning (e.g., supply tracking, investor counting)',
-  },
+  { hook: 'canTransfer', displayName: 'Can Transfer (pre-check)' },
+  { hook: 'canCreate', displayName: 'Can Create (pre-check)' },
+  { hook: 'transferred', displayName: 'Transferred (post-state)' },
+  { hook: 'created', displayName: 'Created (post-state)' },
+  { hook: 'destroyed', displayName: 'Destroyed (post-state)' },
 ] as const;
 
 /**

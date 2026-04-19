@@ -6,12 +6,15 @@ export type {
   ValidationResult,
   ProgressEvent,
   ProgressCallback,
+  ProgressPhase,
+  SummaryPhase,
   GenerateOptions,
   GenerationMetadata,
   GenerationResult,
   ZipResult,
   Generator,
 } from './types';
+export { PROGRESS_PHASES } from './types';
 
 // Determinism utilities
 export { computeConfigHash, hashString, sortObjectKeys, stableJsonStringify } from './determinism';
@@ -47,7 +50,12 @@ export {
 } from './file-tree';
 
 // Progress utilities
-export { noopProgress, createProgressEvent, resolveProgressCallback } from './progress';
+export {
+  noopProgress,
+  createProgressEvent,
+  resolveProgressCallback,
+  toSummaryPhase,
+} from './progress';
 export { CoreProgressPhase } from './progress-phases';
 export type { CoreProgressPhaseName } from './progress-phases';
 

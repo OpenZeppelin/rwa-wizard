@@ -4,7 +4,6 @@ import { defineComplianceModuleDescriptor } from './shared';
 export const transferRestrictModule = defineComplianceModuleDescriptor({
   id: 'transfer-restrict',
   name: 'Transfer Restriction',
-  description: 'Blocks transfers between specific wallet pairs',
   requiredHooks: ['canTransfer'],
   crateName: 'transfer-restrict',
   review: { state: 'under-review', prUrl: PR_651 },

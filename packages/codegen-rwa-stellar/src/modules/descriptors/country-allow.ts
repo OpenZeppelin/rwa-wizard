@@ -9,7 +9,6 @@ import {
 export const countryAllowModule = defineComplianceModuleDescriptor({
   id: 'country-allow',
   name: 'Country Allow-list',
-  description: 'Only allows transfers to holders from approved countries',
   requiredHooks: ['canTransfer'],
   crateName: 'country-allow',
   review: { state: 'under-review', prUrl: PR_651 },
@@ -20,7 +19,6 @@ export const countryAllowModule = defineComplianceModuleDescriptor({
       type: 'string[]',
       required: false,
       placeholder: 'e.g. CH, SG',
-      hint: 'ISO 3166-1 alpha-2 country codes to allow (configured post-deploy via IRS)',
     },
   ],
   deployment: {

@@ -175,6 +175,14 @@ const baseConfig = [
     },
   },
 
+  // CLI package override: console is the primary output mechanism
+  {
+    files: ['packages/cli/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   // Test files override: allow console usage in tests
   {
     files: ['**/__tests__/**', '**/*.test.ts', '**/*.test.tsx', '**/*.test.js', '**/*.test.jsx'],

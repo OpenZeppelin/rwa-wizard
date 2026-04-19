@@ -46,12 +46,31 @@ export interface ValidationResult {
 // Progress
 // ---------------------------------------------------------------------------
 
+/**
+ * Canonical pipeline phase strings used by codegen packages.
+ * Generators and the core pipeline must use these values so consumers can map consistently.
+ */
+export const PROGRESS_PHASES = [
+  'validating',
+  'generating-contracts',
+  'generating-scripts',
+  'packaging',
+  'assembling-zip',
+  'complete',
+  'error',
+] as const;
+
+export type ProgressPhase = (typeof PROGRESS_PHASES)[number];
+
+/**
+ * UI-friendly summary phases for progress display.
+ * Use toSummaryPhase() to map ProgressPhase to SummaryPhase.
+ */
+export type SummaryPhase = 'validating' | 'generating' | 'packaging' | 'success' | 'error';
+
 export interface ProgressEvent {
-  /**
-   * Current pipeline phase. Generators use their own names; core ZIP steps use
-   * `packaging` (see `CoreProgressPhase` in `@openzeppelin/codegen-core`).
-   */
-  phase: string;
+  /** Current pipeline phase (canonical ProgressPhase). */
+  phase: ProgressPhase;
   /** Completion percentage (0–100) */
   percentage: number;
   /** Optional detail message */

@@ -17,23 +17,36 @@ export interface ModuleReviewMeta {
 // Config field descriptor for module-specific parameters
 // ---------------------------------------------------------------------------
 
+/**
+ * Structural descriptor for a configurable module parameter. `label` and
+ * `placeholder` are kept on the codegen descriptor because they are tightly
+ * coupled to the form schema generated from it (label = form label, not
+ * explanatory prose). Longer helper text lives in
+ * `@openzeppelin/rwa-wizard-copy` under
+ * `moduleField.<moduleId>.<fieldKey>` and is joined by the wizard app.
+ */
 export interface ModuleConfigField {
   key: string;
   label: string;
   type: 'number' | 'string' | 'string[]';
   required: boolean;
   placeholder?: string;
-  hint?: string;
 }
 
 // ---------------------------------------------------------------------------
 // Public registry entry
 // ---------------------------------------------------------------------------
 
+/**
+ * Structural facts about a compliance module. Educational copy
+ * (`description`, tooltip prose, field hints) lives in the
+ * `@openzeppelin/rwa-wizard-copy` package keyed on `module.<id>` and
+ * `moduleField.<id>.<key>`; downstream CLI / programmatic consumers of this
+ * codegen package do not ship UI prose they do not need.
+ */
 export interface ComplianceModuleRegistryEntry {
   id: string;
   name: string;
-  description: string;
   requiredHooks: StellarComplianceHook[];
   /** Crate name used in generated Cargo.toml / wasm filenames */
   crateName: string;

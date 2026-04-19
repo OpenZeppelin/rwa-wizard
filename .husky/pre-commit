@@ -29,13 +29,12 @@ if [ -z "$staged_files" ]; then
   exit 0
 fi
 
-# Check for local tarball dependencies in package.json
-# We want to prevent committing local file paths that won't work in CI
-# Only check if package.json is among the staged files
+# Check for local file/tarball dependencies in package.json.
+# The local-dev workflow should never require committed `file:` overrides.
 if echo "$staged_files" | grep -q "apps/rwa-wizard/package.json"; then
-  if grep -q "file:.*ui-builder" apps/rwa-wizard/package.json; then
+  if grep -q "\"file:" apps/rwa-wizard/package.json; then
     echo ""
-    echo "❌ Error: Local tarball dependencies detected in package.json!"
+    echo "❌ Error: Local file dependencies detected in package.json!"
     echo "   These paths (file:...) will fail in CI/production."
     echo ""
     echo "   👉 Run 'pnpm dev:npm' to switch to registry versions."

@@ -9,7 +9,6 @@ import {
 export const supplyLimitModule = defineComplianceModuleDescriptor({
   id: 'supply-limit',
   name: 'Supply Limit',
-  description: 'Enforces a maximum total supply for the token',
   requiredHooks: ['canCreate', 'created', 'destroyed'],
   crateName: 'supply-limit',
   review: { state: 'under-review', prUrl: PR_650 },
@@ -20,7 +19,6 @@ export const supplyLimitModule = defineComplianceModuleDescriptor({
       type: 'number',
       required: true,
       placeholder: 'e.g. 1000000',
-      hint: 'Maximum total supply (in smallest token units)',
     },
   ],
   deployment: {
