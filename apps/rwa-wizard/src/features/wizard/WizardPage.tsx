@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { ReactElement } from 'react';
 
 import { WizardLayout } from '@openzeppelin/ui-components';
@@ -9,6 +9,7 @@ import { useWizardSteps } from './hooks/useWizardSteps';
 import { CopyProvider } from '../../app/providers/CopyProvider';
 import { wizardStore } from '../../app/state/wizardStore';
 import { ErrorBannerStack } from '../../components/shared';
+import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
 import { exportDraftAsJson } from '../../services/download/exportDraftAsJson';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useWizardDraftStorage } from '../../storage';
@@ -41,6 +42,17 @@ export function WizardPage(): ReactElement {
     runtime;
   const { generate, isGenerating, jobState: generationJobState, download, reset } = generation;
 
+  const {
+    trackWizardStep,
+    trackConfigExported,
+    trackProjectGenerated,
+    trackGenerationFailed,
+    trackWizardCancelled,
+    trackZipDownloadClicked,
+  } = useRwaWizardAnalytics();
+
+  const generationOutcomeKeyRef = useRef<string | null>(null);
+
   const { steps, orderedStepIds } = useWizardSteps({
     draftState,
     targetSnapshot,
@@ -52,12 +64,33 @@ export function WizardPage(): ReactElement {
   const currentStepIndex = orderedStepIds.indexOf(currentStep);
   const effectiveStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
 
+  useEffect(() => {
+    if (generationJobState.phase !== 'success' && generationJobState.phase !== 'error') {
+      return;
+    }
+    const completedAt = generationJobState.completedAt;
+    if (!completedAt) return;
+
+    const outcomeKey = `${generationJobState.phase}-${generationJobState.draftId}-${completedAt.getTime()}`;
+    if (generationOutcomeKeyRef.current === outcomeKey) return;
+    generationOutcomeKeyRef.current = outcomeKey;
+
+    if (generationJobState.phase === 'success') {
+      trackProjectGenerated(selectedTargetId, generationJobState.zipFileName ?? 'unknown');
+    } else {
+      trackGenerationFailed(selectedTargetId, generationJobState.errorMessage ?? 'unknown');
+    }
+  }, [generationJobState, selectedTargetId, trackProjectGenerated, trackGenerationFailed]);
+
   const handleStepChange = useCallback(
     (index: number) => {
       const stepId = orderedStepIds[index];
-      if (stepId) wizardStore.setCurrentStep(stepId);
+      if (stepId) {
+        wizardStore.setCurrentStep(stepId);
+        trackWizardStep(index + 1, stepId);
+      }
     },
-    [orderedStepIds]
+    [orderedStepIds, trackWizardStep]
   );
 
   const handleLastStepPrimary = useCallback(() => {
@@ -66,8 +99,19 @@ export function WizardPage(): ReactElement {
 
   const handleLastStepSecondary = useCallback(async () => {
     if (!activeDraftId) return;
+    trackConfigExported('single_draft');
     await exportDraftAsJson(activeDraftId, storage);
-  }, [storage, activeDraftId]);
+  }, [storage, activeDraftId, trackConfigExported]);
+
+  const handleCancel = useCallback(() => {
+    trackWizardCancelled(selectedTargetId);
+    resetSession();
+  }, [resetSession, selectedTargetId, trackWizardCancelled]);
+
+  const handleDownload = useCallback(() => {
+    trackZipDownloadClicked(selectedTargetId);
+    download();
+  }, [download, selectedTargetId, trackZipDownloadClicked]);
 
   const layoutKey = `${activeDraftId ?? 'new'}-${resetKey}`;
 
@@ -95,7 +139,7 @@ export function WizardPage(): ReactElement {
             steps={steps}
             currentStepIndex={effectiveStepIndex}
             onStepChange={handleStepChange}
-            onCancel={resetSession}
+            onCancel={handleCancel}
             lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
             onLastStepPrimary={handleLastStepPrimary}
             lastStepSecondaryLabel="Export Configuration"
@@ -105,7 +149,7 @@ export function WizardPage(): ReactElement {
           <GenerationDialog
             jobState={generationJobState}
             isGenerating={isGenerating}
-            onDownload={download}
+            onDownload={handleDownload}
             onRetry={handleLastStepPrimary}
             onReset={reset}
           />

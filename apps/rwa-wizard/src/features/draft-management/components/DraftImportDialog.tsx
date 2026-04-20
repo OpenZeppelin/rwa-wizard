@@ -13,6 +13,7 @@ import {
   Label,
 } from '@openzeppelin/ui-components';
 
+import { useRwaWizardAnalytics } from '../../../hooks/useRwaWizardAnalytics';
 import { useWizardDraftStorage } from '../../../storage';
 
 interface DraftImportDialogProps {
@@ -50,6 +51,7 @@ const IMPORT_SUCCESS_FEEDBACK_MS = 1200;
 
 export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImportDialogProps) {
   const storage = useWizardDraftStorage();
+  const { trackProjectsImported } = useRwaWizardAnalytics();
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importedCount, setImportedCount] = useState<number | null>(null);
@@ -112,6 +114,7 @@ export function DraftImportDialog({ open, onOpenChange, onImported }: DraftImpor
     try {
       const text = await file.text();
       const ids = await storage.import(text);
+      trackProjectsImported(ids.length);
       onImported?.();
       setImportedCount(ids.length);
     } catch (err) {

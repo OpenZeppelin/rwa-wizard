@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { Footer, Header } from '@openzeppelin/ui-components';
 
+import { TrackedRoute } from '../../components/analytics/TrackedRoute';
 import { WizardPage } from '../../features/wizard/WizardPage';
 import { AppSidebar } from './AppSidebar';
 import { DashboardPage } from './DashboardPage';
@@ -26,8 +27,22 @@ function AppShell(): ReactElement {
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <Routes>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/wizard" element={<WizardPage />} />
+            <Route
+              path="/"
+              element={
+                <TrackedRoute name="Dashboard">
+                  <DashboardPage />
+                </TrackedRoute>
+              }
+            />
+            <Route
+              path="/wizard"
+              element={
+                <TrackedRoute name="Wizard">
+                  <WizardPage />
+                </TrackedRoute>
+              }
+            />
           </Routes>
         </div>
 
