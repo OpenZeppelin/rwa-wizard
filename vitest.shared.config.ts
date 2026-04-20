@@ -7,7 +7,7 @@ export const sharedVitestConfig = defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'happy-dom',
     setupFiles: [path.resolve(__dirname, './test/setup.ts')],
     passWithNoTests: true,
     coverage: {

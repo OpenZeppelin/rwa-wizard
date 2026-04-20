@@ -6,19 +6,19 @@
 
 This project is currently in development.
 
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/OpenZeppelin/rwa-wizard/badge)](https://api.securityscorecards.dev/projects/github.com/OpenZeppelin/rwa-wizard)
-[![Scorecard supply-chain security](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/scorecard.yml/badge.svg)](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/scorecard.yml)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11773/badge)](https://www.bestpractices.dev/projects/11773)
-[![CLA Assistant](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/cla.yml/badge.svg)](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/cla.yml)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![CI](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/ci.yml)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-brightgreen.svg)](https://conventionalcommits.org)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vite](https://img.shields.io/badge/Vite-B73BFE?logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
-[![pnpm](https://img.shields.io/badge/pnpm-F69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
+[OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/OpenZeppelin/rwa-wizard)
+[Scorecard supply-chain security](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/scorecard.yml)
+[OpenSSF Best Practices](https://www.bestpractices.dev/projects/11773)
+[CLA Assistant](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/cla.yml)
+[License: AGPL v3](https://www.gnu.org/licenses/agpl-3.0)
+[CI](https://github.com/OpenZeppelin/rwa-wizard/actions/workflows/ci.yml)
+[Conventional Commits](https://conventionalcommits.org)
+[Commitizen friendly](http://commitizen.github.io/cz-cli/)
+[TypeScript](https://www.typescriptlang.org/)
+[React](https://reactjs.org/)
+[Tailwind CSS](https://tailwindcss.com/)
+[Vite](https://vitejs.dev/)
+[pnpm](https://pnpm.io/)
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ This project is currently in development.
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
 - [Available Scripts](#available-scripts)
-- [Local Development with UI Builder](#local-development-with-ui-builder)
+- [Local development with openzeppelin-ui and openzeppelin-adapters](#local-development-with-openzeppelin-ui-and-openzeppelin-adapters)
 - [Project Structure](#project-structure)
 - [Tech Stack](#tech-stack)
 - [Code Style](#code-style)
@@ -37,9 +37,13 @@ This project is currently in development.
 
 ## Monorepo Structure
 
-This project is organized as a monorepo with the following packages:
+This project is organized as a monorepo with the following applications and packages:
 
 - **apps/rwa-wizard**: The main React application for configuring RWA token projects.
+- **packages/codegen-core**: Chain-agnostic code generation primitives such as file trees, ZIP assembly, validation, template sources, and deterministic hashing.
+- **packages/codegen-rwa-common**: Shared RWA-domain generator helpers such as ownership and role resolution.
+- **packages/codegen-rwa-stellar**: The Stellar/Soroban RWA project generator.
+- **packages/config**: Chain-agnostic `RWAConfig` types and defaults shared by generators and the app.
 - **packages/components**: Shared React UI components.
 - **packages/hooks**: Shared React hooks for state management and business logic.
 
@@ -53,78 +57,86 @@ This project is organized as a monorepo with the following packages:
 ### Installation
 
 1. Clone the repository:
-
-   ```bash
+  ```bash
    git clone https://github.com/OpenZeppelin/rwa-wizard.git
    cd rwa-wizard
-   ```
-
+  ```
 2. Install dependencies:
-
-   ```bash
+  ```bash
    pnpm install
-   ```
-
+  ```
 3. Build all packages:
-
-   ```bash
+  ```bash
    pnpm build
-   ```
-
+  ```
 4. Start the development server:
-
-   ```bash
+  ```bash
    pnpm dev
-   ```
-
+  ```
 5. Open your browser and navigate to `http://localhost:5173`
 
 ## Available Scripts
 
-| Script                  | Description                                     |
-| ----------------------- | ----------------------------------------------- |
-| `pnpm dev`              | Start the development server (rwa-wizard app)   |
-| `pnpm dev:all`          | Start all packages in watch mode                |
-| `pnpm build`            | Build all packages and apps                     |
-| `pnpm build:ui-builder` | Build and pack local UI Builder packages        |
-| `pnpm build:packages`   | Build only packages (components, hooks)         |
-| `pnpm build:app`        | Build only the rwa-wizard app                   |
-| `pnpm test`             | Run tests across all packages                   |
-| `pnpm test:all`         | Run all tests in parallel                       |
-| `pnpm test:coverage`    | Run tests with coverage reports                 |
-| `pnpm typecheck`        | Run TypeScript type checking                    |
-| `pnpm lint`             | Run ESLint across all packages                  |
-| `pnpm lint:fix`         | Fix ESLint issues                               |
-| `pnpm format`           | Format code with Prettier                       |
-| `pnpm format:check`     | Check formatting without changes                |
-| `pnpm fix-all`          | Run Prettier then ESLint fix                    |
-| `pnpm commit`           | Create a commit using Commitizen                |
-| `pnpm changeset`        | Create a changeset for versioning               |
-| `pnpm clean`            | Clean build artifacts                           |
 
-## Local Development with UI Builder
+| Script                | Description                                                       |
+| --------------------- | ----------------------------------------------------------------- |
+| `pnpm dev`            | Start the development server (`apps/rwa-wizard`)                  |
+| `pnpm dev:all`        | Start all workspace packages in watch mode                        |
+| `pnpm build`          | Build all packages and apps                                       |
+| `pnpm build:packages` | Build all workspace packages under `packages/*`                   |
+| `pnpm build:app`      | Build only the wizard app                                         |
+| `pnpm test`           | Run tests across the workspace                                    |
+| `pnpm test:all`       | Run all tests in parallel                                         |
+| `pnpm test:coverage`  | Run tests with coverage reports                                   |
+| `pnpm typecheck`      | Run TypeScript type checking                                      |
+| `pnpm lint`           | Run ESLint across the workspace                                   |
+| `pnpm lint:fix`       | Fix ESLint issues                                                 |
+| `pnpm format`         | Format code with Prettier                                         |
+| `pnpm format:check`   | Check formatting without changes                                  |
+| `pnpm fix-all`        | Run Prettier, then ESLint fix                                     |
+| `pnpm dev:uikit:local` | Use local `openzeppelin-ui` packages only                         |
+| `pnpm dev:adapters:local` | Use local `openzeppelin-adapters` packages only              |
+| `pnpm dev:local`      | Use local `openzeppelin-ui` and `openzeppelin-adapters` packages |
+| `pnpm dev:npm`        | Restore npm-based UI and adapter dependencies                    |
+| `pnpm commit`         | Create a commit using Commitizen                                  |
+| `pnpm changeset`      | Create a changeset for versioning                                 |
+| `pnpm clean`          | Clean build artifacts                                             |
 
-This project can consume packages from the [UI Builder](https://github.com/OpenZeppelin/ui-builder) repository. To develop against local changes:
 
-1. **Enable local packages**:
+## Local development with openzeppelin-ui and openzeppelin-adapters
+
+This project can consume packages from [openzeppelin-ui](https://github.com/OpenZeppelin/openzeppelin-ui) (`@openzeppelin/ui-*`) and [openzeppelin-adapters](https://github.com/OpenZeppelin/openzeppelin-adapters) (`@openzeppelin/adapter-*`). See [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) for clone layout, troubleshooting, and workflow details.
+
+1. **Enable local UI + adapter packages**:
 
    ```bash
    pnpm dev:local
    ```
 
-   This automatically builds the local `openzeppelin-ui` packages (defaults to `../openzeppelin-ui`)
-   and installs dependencies with `LOCAL_UI=true`.
+   This delegates to the published `oz-ui-dev` CLI, which builds and packs the configured families from your local checkouts before reinstalling RWA Wizard against those packed artifacts.
 
-2. **Switch back to npm packages** (before committing):
+2. **Enable only local UI packages**:
+
+   ```bash
+   pnpm dev:uikit:local
+   ```
+
+3. **Enable only local adapter packages**:
+
+   ```bash
+   pnpm dev:adapters:local
+   ```
+
+4. **Switch back to npm packages** (before committing):
 
    ```bash
    pnpm dev:npm
    ```
 
-3. **Custom path** (optional):
+5. **Custom paths** (optional):
 
    ```bash
-   LOCAL_UI_PATH=/path/to/openzeppelin-ui pnpm dev:local
+   LOCAL_UI_PATH=/path/to/openzeppelin-ui LOCAL_ADAPTERS_PATH=/path/to/openzeppelin-adapters pnpm dev:local
    ```
 
 ## Project Structure
@@ -138,6 +150,22 @@ rwa-wizard/
 │       ├── vite.config.ts   # Vite configuration
 │       └── package.json     # App dependencies
 ├── packages/
+│   ├── codegen-core/        # Chain-agnostic codegen infrastructure
+│   │   ├── src/
+│   │   ├── tsdown.config.ts # Build configuration
+│   │   └── package.json
+│   ├── codegen-rwa-common/  # Shared RWA-domain generator helpers
+│   │   ├── src/
+│   │   ├── tsdown.config.ts # Build configuration
+│   │   └── package.json
+│   ├── codegen-rwa-stellar/ # Stellar/Soroban RWA generator
+│   │   ├── src/
+│   │   ├── tsdown.config.ts # Build configuration
+│   │   └── package.json
+│   ├── config/              # Shared RWAConfig schema and defaults
+│   │   ├── src/
+│   │   ├── tsdown.config.ts # Build configuration
+│   │   └── package.json
 │   ├── components/          # Shared UI components
 │   │   ├── src/
 │   │   ├── tsdown.config.ts # Build configuration
@@ -224,4 +252,4 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ---
 
-_This project uses [@openzeppelin/ui-components](https://www.npmjs.com/package/@openzeppelin/ui-components) for shared UI components._
+*This project uses [@openzeppelin/ui-components](https://www.npmjs.com/package/@openzeppelin/ui-components) for shared UI components.*

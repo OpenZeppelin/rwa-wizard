@@ -1,0 +1,122 @@
+[
+  {
+    "kind": "core-contract",
+    "id": "rwa-token",
+    "sourcePath": "examples/rwa/token/src/contract.rs"
+  },
+  {
+    "kind": "core-cargo",
+    "id": "rwa-token",
+    "sourcePath": "examples/rwa/token/Cargo.toml"
+  },
+  {
+    "kind": "core-contract",
+    "id": "compliance",
+    "sourcePath": "examples/rwa/compliance/src/contract.rs"
+  },
+  {
+    "kind": "core-cargo",
+    "id": "compliance",
+    "sourcePath": "examples/rwa/compliance/Cargo.toml"
+  },
+  {
+    "kind": "core-contract",
+    "id": "identity-verifier",
+    "sourcePath": "examples/rwa/identity-verifier/src/contract.rs"
+  },
+  {
+    "kind": "core-cargo",
+    "id": "identity-verifier",
+    "sourcePath": "examples/rwa/identity-verifier/Cargo.toml"
+  },
+  {
+    "kind": "core-contract",
+    "id": "claim-topics-issuers",
+    "sourcePath": "examples/rwa/claim-topics-and-issuers/src/contract.rs"
+  },
+  {
+    "kind": "core-cargo",
+    "id": "claim-topics-issuers",
+    "sourcePath": "examples/rwa/claim-topics-and-issuers/Cargo.toml"
+  },
+  {
+    "kind": "core-contract",
+    "id": "identity-registry-storage",
+    "sourcePath": "examples/rwa/identity-registry/src/contract.rs"
+  },
+  {
+    "kind": "core-cargo",
+    "id": "identity-registry-storage",
+    "sourcePath": "examples/rwa/identity-registry/Cargo.toml"
+  },
+  {
+    "kind": "module-contract",
+    "id": "supply-limit",
+    "sourcePath": "examples/rwa-supply-limit/src/contract.rs"
+  },
+  {
+    "kind": "module-cargo",
+    "id": "supply-limit",
+    "sourcePath": "examples/rwa-supply-limit/Cargo.toml"
+  },
+  {
+    "kind": "module-contract",
+    "id": "max-balance",
+    "sourcePath": "examples/rwa-max-balance/src/contract.rs"
+  },
+  {
+    "kind": "module-cargo",
+    "id": "max-balance",
+    "sourcePath": "examples/rwa-max-balance/Cargo.toml"
+  },
+  {
+    "kind": "module-contract",
+    "id": "country-restrict",
+    "sourcePath": "examples/rwa-country-restrict/src/contract.rs"
+  },
+  {
+    "kind": "module-cargo",
+    "id": "country-restrict",
+    "sourcePath": "examples/rwa-country-restrict/Cargo.toml"
+  },
+  {
+    "kind": "module-contract",
+    "id": "country-allow",
+    "sourcePath": "examples/rwa-country-allow/src/contract.rs"
+  },
+  {
+    "kind": "module-cargo",
+    "id": "country-allow",
+    "sourcePath": "examples/rwa-country-allow/Cargo.toml"
+  },
+  {
+    "kind": "module-contract",
+    "id": "transfer-restrict",
+    "sourcePath": "examples/rwa-transfer-restrict/src/contract.rs"
+  },
+  {
+    "kind": "module-cargo",
+    "id": "transfer-restrict",
+    "sourcePath": "examples/rwa-transfer-restrict/Cargo.toml"
+  },
+  {
+    "kind": "module-contract",
+    "id": "initial-lockup-period",
+    "sourcePath": "examples/rwa-initial-lockup-period/src/contract.rs"
+  },
+  {
+    "kind": "module-cargo",
+    "id": "initial-lockup-period",
+    "sourcePath": "examples/rwa-initial-lockup-period/Cargo.toml"
+  },
+  {
+    "kind": "module-contract",
+    "id": "time-transfers-limits",
+    "sourcePath": "examples/rwa-time-transfers-limits/src/contract.rs"
+  },
+  {
+    "kind": "module-cargo",
+    "id": "time-transfers-limits",
+    "sourcePath": "examples/rwa-time-transfers-limits/Cargo.toml"
+  }
+]

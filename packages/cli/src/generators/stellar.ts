@@ -1,0 +1,74 @@
+import type {
+  GenerateOptions,
+  GenerationResult,
+  ValidationResult,
+  ZipResult,
+} from '@openzeppelin/codegen-core';
+import {
+  generate,
+  generateZip,
+  getAvailableModules,
+  STELLAR_VALIDATION_CONSTANTS,
+  validate,
+} from '@openzeppelin/codegen-rwa-stellar';
+import type { RWAConfig } from '@openzeppelin/rwa-config';
+
+import type { ComplianceModuleInfo, GeneratorAdapter } from './registry';
+
+export const stellarAdapter: GeneratorAdapter = {
+  name: 'Stellar/Soroban RWA Generator',
+  chain: 'stellar',
+
+  hints: {
+    addressPlaceholder: 'e.g. GABCD...WXYZ',
+    tokenNameMaxLength: STELLAR_VALIDATION_CONSTANTS.TOKEN_NAME_MAX_LENGTH,
+    tokenSymbolMaxLength: STELLAR_VALIDATION_CONSTANTS.TOKEN_SYMBOL_MAX_LENGTH,
+    decimalsMin: STELLAR_VALIDATION_CONSTANTS.DECIMALS_MIN,
+    decimalsMax: STELLAR_VALIDATION_CONSTANTS.DECIMALS_MAX,
+    roleSymbolMaxLength: STELLAR_VALIDATION_CONSTANTS.ROLE_SYMBOL_MAX_LENGTH,
+    networks: [
+      {
+        value: 'stellar-testnet',
+        label: 'Testnet',
+        hint: 'Stellar testnet (recommended for development)',
+      },
+      {
+        value: 'stellar-mainnet',
+        label: 'Mainnet',
+        hint: 'Stellar mainnet (production)',
+      },
+    ],
+    supportsCustomRpc: true,
+    customRpcPlaceholder: 'https://soroban-testnet.stellar.org:443',
+  },
+
+  generate(config: RWAConfig, options?: GenerateOptions): GenerationResult {
+    return generate(config, options);
+  },
+
+  validate(config: RWAConfig, options?: GenerateOptions): ValidationResult {
+    return validate(config, options);
+  },
+
+  async generateZip(config: RWAConfig, options?: GenerateOptions): Promise<ZipResult> {
+    return generateZip(config, options);
+  },
+
+  getAvailableModules(): ComplianceModuleInfo[] {
+    return getAvailableModules().map((m) => ({
+      id: m.id,
+      name: m.name,
+      description: m.description,
+      requiredHooks: [...m.requiredHooks],
+      review: { state: m.review.state, ...(m.review.prUrl ? { prUrl: m.review.prUrl } : {}) },
+      configFields: m.configFields.map((f) => ({
+        key: f.key,
+        label: f.label,
+        type: f.type,
+        required: f.required,
+        ...(f.placeholder !== undefined ? { placeholder: f.placeholder } : {}),
+        ...(f.hint !== undefined ? { hint: f.hint } : {}),
+      })),
+    }));
+  },
+};

@@ -1,0 +1,67 @@
+# Codegen Compile Check
+# =====================
+# Verifies that the default bundled Stellar/Soroban artifact actually compiles
+# against the generated upstream pin. Catches drift between the bundled
+# template snapshot and the Cargo dependency revision shipped to users.
+
+name: Codegen Compile
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/codegen-rwa-stellar/**'
+      - 'packages/config/**'
+      - '.github/workflows/codegen-compile.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    name: Compile Generated Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e3f713f2d8f53843e71c69a996d56f51aa9adfb9 # v2.14.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@efa25f7f19611383d5b0ccf2d1c8914531636bf9 # master 2026-02-13
+        with:
+          toolchain: stable
+          targets: wasm32v1-none
+
+      - name: Cache Cargo registry & git
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-stellar-${{ hashFiles('packages/codegen-rwa-stellar/src/upstream/generated-revision.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-stellar-
+
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@bc432b49369a3f25c8c8b19578a82060c18a5dd6 # v1.17.6
+
+      - name: Install Stellar CLI
+        run: cargo binstall stellar-cli --no-confirm --log-level info
+
+      # Installs workspace dependencies via pnpm install --frozen-lockfile (see .github/actions/prepare).
+      - name: Prepare pre-requisites
+        uses: ./.github/actions/prepare
+
+      - name: Build codegen packages
+        run: pnpm --filter @openzeppelin/codegen-rwa-stellar... build
+
+      - name: Run compilation e2e test
+        run: pnpm --filter @openzeppelin/codegen-rwa-stellar exec vitest run __tests__/compile.test.ts --pool=forks --maxWorkers=1 --passWithNoTests

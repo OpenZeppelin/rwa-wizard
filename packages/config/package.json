@@ -1,0 +1,63 @@
+{
+  "name": "@openzeppelin/rwa-config",
+  "private": false,
+  "version": "0.0.0",
+  "description": "Shared RWA configuration types and validation constants for OpenZeppelin RWA code generators.",
+  "keywords": [
+    "openzeppelin",
+    "rwa",
+    "real-world-assets",
+    "configuration",
+    "typescript"
+  ],
+  "author": "OpenZeppelin",
+  "homepage": "https://github.com/OpenZeppelin/rwa-wizard#readme",
+  "bugs": {
+    "url": "https://github.com/OpenZeppelin/rwa-wizard/issues"
+  },
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": {
+        "import": "./dist/index.d.mts",
+        "require": "./dist/index.d.cts"
+      },
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenZeppelin/rwa-wizard.git",
+    "directory": "packages/config"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "[ \"$SKIP_PUBLISH_BUILD\" = \"true\" ] || pnpm build",
+    "dev": "tsdown --watch",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo node_modules/.tmp/tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "lint": "eslint \"src/**/*.ts\" --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\" --config ../../.prettierrc.cjs",
+    "format:check": "prettier --check \"src/**/*.ts\" --config ../../.prettierrc.cjs"
+  },
+  "license": "AGPL-3.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
