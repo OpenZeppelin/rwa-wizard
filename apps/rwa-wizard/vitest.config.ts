@@ -20,6 +20,10 @@ export default defineConfig(async ({ mode }) =>
         deps: {
           inline: [
             '@openzeppelin/ui-components',
+            // Ensures `vi.mock('@openzeppelin/ui-utils')` applies to the same module instance
+            // `@openzeppelin/ui-react` resolves for `AnalyticsProvider` (avoids split bundles in tests).
+            '@openzeppelin/ui-react',
+            '@openzeppelin/ui-utils',
             '@uiw/react-textarea-code-editor',
             '@openzeppelin/codegen-rwa-stellar',
           ],

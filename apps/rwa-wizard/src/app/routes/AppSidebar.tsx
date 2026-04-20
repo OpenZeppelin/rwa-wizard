@@ -17,6 +17,7 @@ import ContractsWizardIconSvg from '../../assets/icons/contracts-wizard-icon.svg
 import { DraftImportDialog } from '../../features/draft-management/components/DraftImportDialog';
 import { DraftList } from '../../features/draft-management/components/DraftList';
 import { TargetSelectorSidebar } from '../../features/target-catalog/components/TargetSelectorSidebar';
+import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
 import { listTargets } from '../../registry/targets';
 import { exportAllDraftsAsJson } from '../../services/download/exportDraftAsJson';
 import { useDraftList, useWizardDraftStorage } from '../../storage';
@@ -44,6 +45,7 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
   const targets = useMemo(() => listTargets(), []);
   const draftList = useDraftList();
   const storage = useWizardDraftStorage();
+  const { trackTargetSelected, trackDraftOpened, trackConfigExported } = useRwaWizardAnalytics();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,11 +74,13 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
       // handing it to the strongly-typed store. Unknown targets silently stay
       // on the default — the target selector only surfaces `showInUI: true`
       // entries so this branch is a belt-and-braces guard.
-      wizardStore.setTargetId(isTargetId(targetId) ? targetId : DEFAULT_TARGET_ID);
+      const resolved = isTargetId(targetId) ? targetId : DEFAULT_TARGET_ID;
+      wizardStore.setTargetId(resolved);
+      trackTargetSelected(resolved);
       navigate('/wizard');
       onMobileOpenChange(false);
     },
-    [navigate, onMobileOpenChange]
+    [navigate, onMobileOpenChange, trackTargetSelected]
   );
 
   const handleLoadDraft = useCallback(
@@ -84,13 +88,15 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
       navigate('/wizard');
       onMobileOpenChange(false);
       wizardStore.setActiveDraft(id);
+      trackDraftOpened('sidebar_recent');
     },
-    [navigate, onMobileOpenChange]
+    [navigate, onMobileOpenChange, trackDraftOpened]
   );
 
   const handleExportAllDrafts = useCallback(async () => {
+    trackConfigExported('all_drafts');
     await exportAllDraftsAsJson(storage);
-  }, [storage]);
+  }, [storage, trackConfigExported]);
 
   const headerContent = (
     <div className="mb-8">
