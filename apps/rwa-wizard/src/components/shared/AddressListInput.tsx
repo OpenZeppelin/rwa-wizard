@@ -45,7 +45,8 @@ export function AddressListInput({
 
   // Mirror every constraint that `handleAdd` enforces so the Add button
   // never appears enabled for inputs we would silently reject (e.g. invalid
-  // address under the chain adapter).
+  // address under the chain adapter). Invalid format is surfaced only by
+  // `AddressField`; keep extra copy here to domain rules (e.g. duplicate).
   const isAddressValid = addressing ? addressing.isValidAddress(trimmedDraft) : true;
   const canAdd = !!trimmedDraft && !atLimit && !isDuplicate && isAddressValid;
 
