@@ -13,7 +13,6 @@ describe('NOTICES_COPY', () => {
         'notice.compliance.module-catalog.under-review-label',
         'notice.trusted-issuer.no-topics',
         'notice.trusted-issuer.duplicate',
-        'notice.trusted-issuer.invalid-address',
         'notice.dashboard.intro',
         'notice.dashboard.sub-intro',
       ],

@@ -36,10 +36,6 @@ export const NOTICES_COPY: ConceptDictionary = {
     id: 'notice.trusted-issuer.duplicate',
     description: 'Issuer already added',
   },
-  'notice.trusted-issuer.invalid-address': {
-    id: 'notice.trusted-issuer.invalid-address',
-    description: 'Invalid address format for this network',
-  },
   'notice.dashboard.intro': {
     id: 'notice.dashboard.intro',
     description:

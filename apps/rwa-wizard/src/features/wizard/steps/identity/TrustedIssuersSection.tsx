@@ -44,7 +44,6 @@ export function TrustedIssuersSection({
   const copy = useCopy();
   const issuerAddressHelper = copy.fieldHelper('trusted-issuer.address').description;
   const duplicateMessage = copy.notice('trusted-issuer.duplicate').description;
-  const invalidAddressMessage = copy.notice('trusted-issuer.invalid-address').description;
   const noTopicsMessage = copy.notice('trusted-issuer.no-topics').description;
   const atLimit = identity.trustedIssuers.length >= maxTrustedIssuers;
   const availableTopics = identity.claimTopics;
@@ -104,12 +103,6 @@ export function TrustedIssuersSection({
     [identity.trustedIssuers, onUpdate]
   );
 
-  const validationMessage = isDuplicate
-    ? duplicateMessage
-    : trimmedDraft && !isValidAddress
-      ? invalidAddressMessage
-      : undefined;
-
   return (
     <Card>
       <SectionCardHeader {...sectionCopy} />
@@ -135,6 +128,13 @@ export function TrustedIssuersSection({
                 name="address"
                 label="Claim Issuer Contract Address"
                 placeholder="Address of the deployed Claim Issuer contract"
+                helperText={
+                  isDuplicate
+                    ? duplicateMessage
+                    : availableTopics.length > 0
+                      ? issuerAddressHelper
+                      : undefined
+                }
                 control={control}
                 addressing={addressing ?? undefined}
                 validation={{ required: false }}
@@ -151,16 +151,6 @@ export function TrustedIssuersSection({
               Add
             </Button>
           </div>
-          {(validationMessage || availableTopics.length > 0) && (
-            <p
-              className={cn(
-                'text-xs',
-                validationMessage ? 'text-destructive' : 'text-muted-foreground'
-              )}
-            >
-              {validationMessage ?? issuerAddressHelper}
-            </p>
-          )}
         </div>
       </CardContent>
     </Card>
