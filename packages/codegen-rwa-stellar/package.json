@@ -28,6 +28,14 @@
       },
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
+    },
+    "./contracts-library-meta": {
+      "types": {
+        "import": "./dist/contracts-library-meta.d.mts",
+        "require": "./dist/contracts-library-meta.d.cts"
+      },
+      "import": "./dist/contracts-library-meta.mjs",
+      "require": "./dist/contracts-library-meta.cjs"
     }
   },
   "sideEffects": false,

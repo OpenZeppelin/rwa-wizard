@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import type { CodegenInfoBlurb } from '@openzeppelin/codegen-core';
 import type {
   AdministrativeControls as AdminControlsType,
   TokenConfig,
@@ -11,16 +12,23 @@ import { WizardFrame } from '../../../../components/shared/WizardFrame';
 import { useStepForm } from '../../../../hooks/useStepForm';
 import type { FeatureControlMeta } from '../../../../types/wizard';
 import { AdministrativeControls } from './AdministrativeControls';
+import { CodegenInfoBlurbPanel } from './CodegenInfoBlurbPanel';
 import { DocumentManagerSection } from './DocumentManagerSection';
 import { TokenBasics } from './TokenBasics';
 
 interface AssetStepProps {
   token: TokenConfig;
   adminControlsMeta: readonly FeatureControlMeta[];
+  codegenInfoBlurb: CodegenInfoBlurb | null;
   onUpdate: (patch: Partial<TokenConfig>) => void;
 }
 
-export function AssetStep({ token, adminControlsMeta, onUpdate }: AssetStepProps) {
+export function AssetStep({
+  token,
+  adminControlsMeta,
+  codegenInfoBlurb,
+  onUpdate,
+}: AssetStepProps) {
   const form = useStepForm(token, onUpdate);
   const stepCopy = useStepCopy('asset');
 
@@ -39,6 +47,7 @@ export function AssetStep({ token, adminControlsMeta, onUpdate }: AssetStepProps
   return (
     <Form {...form}>
       <WizardFrame {...stepCopy}>
+        <CodegenInfoBlurbPanel blurb={codegenInfoBlurb} />
         <TokenBasics control={form.control} />
         <AdministrativeControls
           controls={token.administrativeControls}

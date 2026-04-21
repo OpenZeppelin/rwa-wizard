@@ -31,6 +31,13 @@ import { sanitizeDirectoryName, StellarRwaGenerator } from './stellar-rwa-genera
  */
 export { STELLAR_VALIDATION_CONSTANTS } from './constants';
 
+export {
+  GENERATED_STELLAR_SOURCE_REPO_URL,
+  getContractsLibraryRepositoryUrl,
+} from './contracts-library-meta';
+
+export { getCodegenInfoBlurb, STELLAR_SEP_0057_CONTRACT_TYPES_URL } from './codegen-info-blurb';
+
 /**
  * Auto-generate a Soroban-compatible role symbol from a human-readable role name.
  *

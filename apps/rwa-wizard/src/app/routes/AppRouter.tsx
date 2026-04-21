@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import type { ReactElement } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { Footer, Header } from '@openzeppelin/ui-components';
 
 import { TrackedRoute } from '../../components/analytics/TrackedRoute';
 import { WizardPage } from '../../features/wizard/WizardPage';
 import { AppSidebar } from './AppSidebar';
-import { DashboardPage } from './DashboardPage';
+import { DEFAULT_WIZARD_NETWORK_ID, wizardPath } from './wizardPaths';
 
 /**
  * App-wide layout: sidebar + header + routed page + footer. Owns the
@@ -29,14 +29,14 @@ function AppShell(): ReactElement {
           <Routes>
             <Route
               path="/"
-              element={
-                <TrackedRoute name="Dashboard">
-                  <DashboardPage />
-                </TrackedRoute>
-              }
+              element={<Navigate to={wizardPath(DEFAULT_WIZARD_NETWORK_ID)} replace />}
             />
             <Route
               path="/wizard"
+              element={<Navigate to={wizardPath(DEFAULT_WIZARD_NETWORK_ID)} replace />}
+            />
+            <Route
+              path="/wizard/:networkId"
               element={
                 <TrackedRoute name="Wizard">
                   <WizardPage />

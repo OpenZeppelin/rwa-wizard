@@ -74,14 +74,14 @@ describe('TrackedRoute', () => {
 
     it('tracks page view with correct path', () => {
       render(
-        <MemoryRouter initialEntries={['/wizard']}>
+        <MemoryRouter initialEntries={['/wizard/stellar-testnet']}>
           <TrackedRoute name="Wizard">
             <div>Wizard Content</div>
           </TrackedRoute>
         </MemoryRouter>
       );
 
-      expect(mockTrackPageView).toHaveBeenCalledWith('Wizard', '/wizard');
+      expect(mockTrackPageView).toHaveBeenCalledWith('Wizard', '/wizard/stellar-testnet');
     });
 
     it('tracks page view when location changes', async () => {
@@ -93,12 +93,12 @@ describe('TrackedRoute', () => {
               element={
                 <TrackedRoute name="Dashboard">
                   <div>Dashboard</div>
-                  <NavigationTrigger to="/wizard" />
+                  <NavigationTrigger to="/wizard/stellar-testnet" />
                 </TrackedRoute>
               }
             />
             <Route
-              path="/wizard"
+              path="/wizard/:networkId"
               element={
                 <TrackedRoute name="Wizard">
                   <div>Wizard</div>
@@ -116,7 +116,7 @@ describe('TrackedRoute', () => {
       });
 
       await vi.waitFor(() => {
-        expect(mockTrackPageView).toHaveBeenCalledWith('Wizard', '/wizard');
+        expect(mockTrackPageView).toHaveBeenCalledWith('Wizard', '/wizard/stellar-testnet');
       });
     });
 

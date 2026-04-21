@@ -46,8 +46,7 @@ describe('getCopyForChain', () => {
 
 describe('coreCopy', () => {
   it('resolves chain-neutral categories without a chain override', () => {
-    expect(coreCopy.wizardStep('asset').title).toBe('Asset Configuration');
-    expect(coreCopy.notice('dashboard.intro').description).toMatch(/ERC-3643/);
+    expect(coreCopy.notice('compliance.hook-wiring-preview').title).toBe('Hook Wiring Preview');
   });
 });
 

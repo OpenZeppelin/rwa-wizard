@@ -1,5 +1,9 @@
 import { toSummaryPhase } from '@openzeppelin/codegen-core';
-import type { GenerateOptions, ProgressCallback } from '@openzeppelin/codegen-core';
+import type {
+  CodegenInfoBlurb,
+  GenerateOptions,
+  ProgressCallback,
+} from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
@@ -35,6 +39,7 @@ interface CodegenPackageModule {
     options?: GenerateOptions
   ) => Promise<{ fileName: string; data: Blob }>;
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
+  getCodegenInfoBlurb?: () => CodegenInfoBlurb;
 }
 
 function getDefaultGenerateOptions(targetId: string): RuntimeGenerateOptions | undefined {
@@ -126,6 +131,8 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
     },
 
     getEcosystemMetadata: pkg.getEcosystemMetadata ? () => pkg.getEcosystemMetadata!() : undefined,
+
+    getCodegenInfoBlurb: pkg.getCodegenInfoBlurb ? () => pkg.getCodegenInfoBlurb!() : undefined,
 
     async generateZip(
       config: RWAConfig,

@@ -7,6 +7,9 @@ export const DEFAULT_DEPLOYMENT_TARGET: PresetDeploymentTarget = {
   networkId: 'stellar-testnet',
 };
 
+/** Default route segment for `/wizard/:networkId` — matches {@link DEFAULT_DEPLOYMENT_TARGET.networkId}. */
+export const DEFAULT_WIZARD_NETWORK_ID = DEFAULT_DEPLOYMENT_TARGET.networkId;
+
 export function createDefaultRwaConfig(): RWAConfig {
   return {
     token: {

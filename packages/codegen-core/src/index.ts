@@ -1,3 +1,6 @@
+// Optional intro copy for generators (CLI, UI, docs)
+export type { CodegenInfoBlurb, CodegenInfoLink } from './codegen-info-blurb';
+
 // Types
 export type {
   FileTree,

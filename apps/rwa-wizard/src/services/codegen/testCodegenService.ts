@@ -1,3 +1,4 @@
+import type { CodegenInfoBlurb } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
@@ -13,7 +14,15 @@ import type { RwaCodegenService, ValidationResultDTO } from './types';
  * generation is disabled rather than falling back to this.
  */
 export function createTestCodegenService(): RwaCodegenService {
+  const testBlurb: CodegenInfoBlurb = {
+    title: 'Test intro',
+    description: 'Test codegen blurb for unit tests.',
+    links: [{ label: 'Example', href: 'https://example.com' }],
+  };
+
   return {
+    getCodegenInfoBlurb: () => testBlurb,
+
     async validate(_config: RWAConfig): Promise<ValidationResultDTO> {
       return { valid: true, errors: [], warnings: [] };
     },

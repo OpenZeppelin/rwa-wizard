@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import type { CodegenInfoBlurb } from '@openzeppelin/codegen-core';
 import type { WizardStepConfig } from '@openzeppelin/ui-components';
 
 import { isFeatureEnabled } from '../../../app/config/featureFlags';
@@ -20,6 +21,8 @@ export interface UseWizardStepsOptions {
   targetSnapshot: TargetCapabilitySnapshot | null;
   adapterCaps: TargetAdapterCapabilities | null;
   codegenService: RwaCodegenService | null;
+  /** Optional first-step intro from the active target’s codegen package. */
+  codegenInfoBlurb: CodegenInfoBlurb | null;
   isGenerating: boolean;
 }
 
@@ -48,6 +51,7 @@ export function useWizardSteps({
   targetSnapshot,
   adapterCaps,
   codegenService,
+  codegenInfoBlurb,
   isGenerating,
 }: UseWizardStepsOptions): UseWizardStepsResult {
   const steps = useMemo<WizardStepConfig[]>(() => {
@@ -79,6 +83,7 @@ export function useWizardSteps({
           <AssetStep
             token={draftState.config.token}
             adminControlsMeta={adminControlsMeta}
+            codegenInfoBlurb={codegenInfoBlurb}
             onUpdate={draftState.updateToken}
           />
         ),
@@ -141,7 +146,7 @@ export function useWizardSteps({
     }
 
     return list;
-  }, [draftState, targetSnapshot, adapterCaps, codegenService, isGenerating]);
+  }, [draftState, targetSnapshot, adapterCaps, codegenService, codegenInfoBlurb, isGenerating]);
 
   // Derive the ordered step id list from the rendered steps so step-id
   // indexing stays in lockstep with feature flags (e.g. 'deployment'). A
