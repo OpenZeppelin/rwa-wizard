@@ -155,8 +155,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1(@babel/runtime@7.29.2)(@tanstack/react-query@5.90.16(react@19.2.3))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(tailwindcss@4.1.18)(typescript@5.9.3)
       '@openzeppelin/ui-renderer':
-        specifier: ^2.0.0
-        version: 2.0.0(@babel/runtime@7.29.2)(@tanstack/react-query@5.90.16(react@19.2.3))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react-hook-form@7.72.1(react@19.2.3))(react@19.2.3)(tailwindcss@4.1.18)(typescript@5.9.3)
+        specifier: ^2.0.1
+        version: 2.0.1(@babel/runtime@7.29.2)(@tanstack/react-query@5.90.16(react@19.2.3))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react-hook-form@7.72.1(react@19.2.3))(react@19.2.3)(tailwindcss@4.1.18)(typescript@5.9.3)
       '@openzeppelin/ui-storage':
         specifier: ^1.2.1
         version: 1.2.1(@types/react@19.2.8)(react@19.2.3)
@@ -1450,8 +1450,8 @@ packages:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@openzeppelin/ui-renderer@2.0.0':
-    resolution: {integrity: sha512-wHcSB35VI+wjoJrVKFiIP5xbBO29KbRA/2DERxGlAoyUhRSaFuw5x7pmYqnzbn8n7H/L/Icfyu8pCYwc6661RQ==}
+  '@openzeppelin/ui-renderer@2.0.1':
+    resolution: {integrity: sha512-JWOTHzwWgnQYaPJP8OgNYm/OaEctFZk2ceeXBld8zqjS9nT8L1gAv5hmhCAsxl/cXA//8Jl+WNk/Di1xnzr40w==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -10382,7 +10382,7 @@ snapshots:
       - tailwindcss
       - typescript
 
-  '@openzeppelin/ui-renderer@2.0.0(@babel/runtime@7.29.2)(@tanstack/react-query@5.90.16(react@19.2.3))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react-hook-form@7.72.1(react@19.2.3))(react@19.2.3)(tailwindcss@4.1.18)(typescript@5.9.3)':
+  '@openzeppelin/ui-renderer@2.0.1(@babel/runtime@7.29.2)(@tanstack/react-query@5.90.16(react@19.2.3))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react-hook-form@7.72.1(react@19.2.3))(react@19.2.3)(tailwindcss@4.1.18)(typescript@5.9.3)':
     dependencies:
       '@hookform/resolvers': 4.1.3(react-hook-form@7.72.1(react@19.2.3))
       '@openzeppelin/ui-components': 2.3.0(@babel/runtime@7.29.2)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(tailwindcss@4.1.18)(typescript@5.9.3)
@@ -10399,7 +10399,7 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       react-hook-form: 7.72.1(react@19.2.3)
-      tailwind-merge: 3.4.0
+      tailwind-merge: 3.5.0
     transitivePeerDependencies:
       - '@babel/runtime'
       - '@tanstack/react-query'
