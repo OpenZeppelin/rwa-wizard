@@ -2,7 +2,7 @@ name: Staging Build and Deploy
 
 on:
   push:
-    branches: [main, release-ecs]
+    branches: [release-ecs]
   workflow_dispatch:
     inputs:
       branch:
