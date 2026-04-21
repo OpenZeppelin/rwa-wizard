@@ -251,7 +251,7 @@ function AccessControlSection({
                 <AddressDisplay
                   address={ownerAddress}
                   variant="inline"
-                  truncate={false}
+                  truncateWhenLabeled
                   showCopyButton
                   explorerUrl={getExplorerUrl?.(ownerAddress) ?? undefined}
                 />
@@ -287,7 +287,7 @@ function AccessControlSection({
                           key={addr}
                           address={addr}
                           variant="inline"
-                          truncate={false}
+                          truncateWhenLabeled
                           showCopyButton
                           explorerUrl={getExplorerUrl?.(addr) ?? undefined}
                         />
