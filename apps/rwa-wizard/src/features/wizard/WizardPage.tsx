@@ -51,6 +51,20 @@ export function WizardPage(): ReactElement {
     trackZipDownloadClicked,
   } = useRwaWizardAnalytics();
 
+  const deploymentTarget = draftState.config.deployment.target;
+  const presetNetworkId = deploymentTarget.kind === 'preset' ? deploymentTarget.networkId : null;
+
+  useEffect(() => {
+    if (presetNetworkId) {
+      wizardStore.setActiveNetworkId(presetNetworkId);
+    } else {
+      wizardStore.setActiveNetworkId(null);
+    }
+    return () => {
+      wizardStore.setActiveNetworkId(null);
+    };
+  }, [presetNetworkId]);
+
   const generationOutcomeKeyRef = useRef<string | null>(null);
 
   const { steps, orderedStepIds } = useWizardSteps({

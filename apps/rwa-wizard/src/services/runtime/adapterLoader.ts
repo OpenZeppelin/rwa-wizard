@@ -1,5 +1,6 @@
-import type { EcosystemExport } from '@openzeppelin/ui-types';
+import type { Ecosystem, EcosystemExport } from '@openzeppelin/ui-types';
 
+import { getEcosystemDefinition } from './ecosystemManager';
 import type { TargetAdapterCapabilities } from './types';
 
 /**
@@ -29,23 +30,15 @@ function extractDeclarativeCapabilities(
 }
 
 /**
- * Dynamically imports the adapter package for a target and extracts
- * Declarative-profile capabilities. Returns null for unknown targets
- * or adapters that lack required Tier 1 factories.
+ * Resolves Declarative-profile capabilities for a target ecosystem.
+ *
+ * Delegates the actual adapter import to {@link getEcosystemDefinition} in the
+ * shared ecosystem manager, which owns the lazy-load + promise-cache logic so
+ * we don't double-import adapter packages from this layer.
  */
 export async function loadAdapterCapabilities(
   targetId: string
 ): Promise<TargetAdapterCapabilities | null> {
-  switch (targetId) {
-    case 'stellar': {
-      const mod = await import('@openzeppelin/adapter-stellar');
-      return extractDeclarativeCapabilities(mod.ecosystemDefinition);
-    }
-    case 'evm': {
-      const mod = await import('@openzeppelin/adapter-evm');
-      return extractDeclarativeCapabilities(mod.ecosystemDefinition);
-    }
-    default:
-      return null;
-  }
+  const ecosystem = await getEcosystemDefinition(targetId as Ecosystem);
+  return ecosystem ? extractDeclarativeCapabilities(ecosystem) : null;
 }

@@ -69,6 +69,18 @@ export function useRwaWizardAnalytics() {
       trackZipDownloadClicked: (targetId: string) => {
         analytics.trackEvent('zip_download_clicked', { target_id: targetId });
       },
+
+      /**
+       * Fires once when the address book dialog opens (false → true), not on network changes while open.
+       * @param networkId - Active network id, or `'unknown'`
+       * @param ecosystem - Active ecosystem id, or `'unknown'`
+       */
+      trackAddressBookOpened: (networkId: string, ecosystem: string) => {
+        analytics.trackEvent('address_book_opened', {
+          network_id: networkId,
+          ecosystem,
+        });
+      },
     }),
     [analytics]
   );

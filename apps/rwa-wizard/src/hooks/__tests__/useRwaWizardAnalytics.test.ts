@@ -128,6 +128,15 @@ describe('useRwaWizardAnalytics', () => {
       result.current.trackZipDownloadClicked('stellar');
       expect(mockTrackEvent).toHaveBeenCalledWith('zip_download_clicked', { target_id: 'stellar' });
     });
+
+    it('tracks address_book_opened', () => {
+      const { result } = renderHook(() => useRwaWizardAnalytics());
+      result.current.trackAddressBookOpened('stellar-testnet', 'stellar');
+      expect(mockTrackEvent).toHaveBeenCalledWith('address_book_opened', {
+        network_id: 'stellar-testnet',
+        ecosystem: 'stellar',
+      });
+    });
   });
 
   describe('memoization', () => {

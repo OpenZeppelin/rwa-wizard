@@ -1,7 +1,11 @@
+import { Toaster } from 'sonner';
 import type { ReactNode } from 'react';
 
 import { TooltipProvider } from '@openzeppelin/ui-components';
 import { AnalyticsProvider } from '@openzeppelin/ui-react';
+
+import { AliasLabelBridge } from '../../contexts/AliasLabelBridge';
+import { WizardDraftStorageProvider } from '../../storage';
 
 /**
  * Shared providers and client-side app composition root for the RWA Wizard.
@@ -23,7 +27,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   return (
     <AnalyticsProvider tagId={analyticsTagId} autoInit>
-      <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+      <TooltipProvider delayDuration={200}>
+        <WizardDraftStorageProvider>
+          <AliasLabelBridge>
+            {children}
+            <Toaster position="top-right" />
+          </AliasLabelBridge>
+        </WizardDraftStorageProvider>
+      </TooltipProvider>
     </AnalyticsProvider>
   );
 }
