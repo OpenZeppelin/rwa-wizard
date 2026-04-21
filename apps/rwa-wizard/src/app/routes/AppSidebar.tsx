@@ -1,6 +1,7 @@
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  BookUser,
   ExternalLink,
   LayoutDashboard,
   LayoutTemplate,
@@ -14,6 +15,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { SidebarButton, SidebarLayout, SidebarSection } from '@openzeppelin/ui-components';
 
 import ContractsWizardIconSvg from '../../assets/icons/contracts-wizard-icon.svg';
+import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
 import { DraftImportDialog } from '../../features/draft-management/components/DraftImportDialog';
 import { DraftList } from '../../features/draft-management/components/DraftList';
 import { TargetSelectorSidebar } from '../../features/target-catalog/components/TargetSelectorSidebar';
@@ -47,6 +49,7 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
   const storage = useWizardDraftStorage();
   const { trackTargetSelected, trackDraftOpened, trackConfigExported } = useRwaWizardAnalytics();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [addressBookOpen, setAddressBookOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const isWizardRoute = location.pathname === '/wizard' || location.pathname.startsWith('/wizard/');
@@ -176,6 +179,12 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
               Export
             </SidebarButton>
           )}
+          <SidebarButton
+            icon={<BookUser className="size-4" />}
+            onClick={() => setAddressBookOpen(true)}
+          >
+            Address Book
+          </SidebarButton>
         </SidebarSection>
 
         <DraftImportDialog
@@ -183,6 +192,7 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
           onOpenChange={setImportDialogOpen}
           onImported={() => void draftList.refresh()}
         />
+        <AddressBookDialog open={addressBookOpen} onOpenChange={setAddressBookOpen} />
 
         <SidebarSection title={recentAssetsTitle} grow>
           <DraftList

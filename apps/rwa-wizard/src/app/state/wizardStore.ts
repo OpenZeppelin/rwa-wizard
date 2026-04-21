@@ -3,6 +3,12 @@ import type { TargetId, WizardStepId } from '../../types/wizard';
 export interface WizardState {
   /** Currently selected/active draft id (null when no draft or creating new). */
   activeDraftId: string | null;
+  /**
+   * Network id from the in-editor deployment preset (`deployment.target.networkId`),
+   * synced from the wizard page for alias resolution. Null when not on `/wizard`
+   * or when deployment is custom / unset.
+   */
+  activeNetworkId: string | null;
   /** Current wizard step for the active draft. */
   currentStep: WizardStepId;
   /**
@@ -20,6 +26,7 @@ export interface WizardState {
 
 const initialState: WizardState = {
   activeDraftId: null,
+  activeNetworkId: null,
   currentStep: 'asset',
   targetId: null,
   savingDraftId: null,
@@ -67,6 +74,9 @@ export const wizardStore = {
   },
   setTargetId(id: TargetId | null): void {
     setState({ targetId: id });
+  },
+  setActiveNetworkId(id: string | null): void {
+    setState({ activeNetworkId: id });
   },
   reset(): void {
     replaceState({ ...initialState });
