@@ -14,6 +14,7 @@ const {
   getAvailableModulesMock,
   getCodegenRuntimeOptionsMock,
   getEcosystemMetadataMock,
+  getCodegenInfoBlurbMock,
   validateMock,
 } = vi.hoisted(() => ({
   validateMock: vi.fn(() => ({ valid: true, errors: [], warnings: [] })),
@@ -23,6 +24,11 @@ const {
   >(async () => ({ fileName: 'test.zip', data: new Blob(['zip']) })),
   getCodegenRuntimeOptionsMock: vi.fn(),
   getEcosystemMetadataMock: vi.fn(() => undefined),
+  getCodegenInfoBlurbMock: vi.fn(() => ({
+    title: 'Mock',
+    description: 'Mock blurb',
+    links: [],
+  })),
 }));
 
 vi.mock('./runtimeOptions', () => ({
@@ -38,6 +44,7 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   getAvailableModules: getAvailableModulesMock,
   generateZip: generateZipMock,
   getEcosystemMetadata: getEcosystemMetadataMock,
+  getCodegenInfoBlurb: getCodegenInfoBlurbMock,
 }));
 
 describe('loadCodegenService', () => {
@@ -47,6 +54,7 @@ describe('loadCodegenService', () => {
     generateZipMock.mockClear();
     getCodegenRuntimeOptionsMock.mockReset();
     getEcosystemMetadataMock.mockClear();
+    getCodegenInfoBlurbMock.mockClear();
   });
 
   it('allows under-review modules by default for stellar validation', async () => {

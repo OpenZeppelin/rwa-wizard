@@ -8,12 +8,12 @@ interface DraftListProps {
   activeDraftId: string | null;
   /**
    * Which draft row shows the sidebar “selected” style. Mirrors UI Builder’s
-   * `currentLoadedConfigurationId` — parent derives this (e.g. only on `/wizard`) so it can stay
-   * in sync with top nav selection without clearing `activeDraftId` when visiting Dashboard.
+   * `currentLoadedConfigurationId` — parent derives this (e.g. only on `/wizard/:networkId`) so it can stay
+   * in sync with top nav selection without clearing `activeDraftId` when outside the wizard route.
    */
   sidebarDraftSelectionId: string | null;
   savingDraftId?: string | null;
-  onLoadDraft: (id: string) => void;
+  onLoadDraft: (id: string) => void | Promise<void>;
   items: DraftListItemType[];
   isLoading: boolean;
   error: Error | null;

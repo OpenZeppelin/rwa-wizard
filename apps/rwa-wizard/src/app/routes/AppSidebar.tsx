@@ -3,7 +3,6 @@ import {
   ArrowUpFromLine,
   BookUser,
   ExternalLink,
-  LayoutDashboard,
   LayoutTemplate,
   ShieldCheck,
   Wallet,
@@ -27,6 +26,12 @@ import { isTargetId } from '../../types/wizard';
 import { useWizardStore } from '../state/useWizardStore';
 import { wizardStore } from '../state/wizardStore';
 import { DEFAULT_TARGET_ID } from './wizardConstants';
+import {
+  DEFAULT_WIZARD_NETWORK_ID,
+  defaultWizardNetworkIdForTarget,
+  isWizardRoutePath,
+  wizardPath,
+} from './wizardPaths';
 
 interface AppSidebarProps {
   mobileOpen: boolean;
@@ -41,6 +46,7 @@ interface AppSidebarProps {
  */
 export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps): ReactElement {
   const activeDraftId = useWizardStore((s) => s.activeDraftId);
+  const selectedTargetId = useWizardStore((s) => s.targetId);
   const savingDraftId = useWizardStore((s) => s.savingDraftId);
   const draftListRefreshTick = useWizardStore((s) => s.draftListRefreshTick);
 
@@ -52,7 +58,7 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
   const [addressBookOpen, setAddressBookOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const isWizardRoute = location.pathname === '/wizard' || location.pathname.startsWith('/wizard/');
+  const isWizardRoute = isWizardRoutePath(location.pathname);
   const sidebarDraftSelectionId = isWizardRoute ? activeDraftId : null;
 
   const refreshDraftList = draftList.refresh;
@@ -61,14 +67,6 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
     if (draftListRefreshTick === 0) return;
     void refreshDraftList();
   }, [draftListRefreshTick, refreshDraftList]);
-
-  const handleNav = useCallback(
-    (path: string) => {
-      navigate(path);
-      onMobileOpenChange(false);
-    },
-    [navigate, onMobileOpenChange]
-  );
 
   const handleCreateForTarget = useCallback(
     (targetId: string) => {
@@ -80,20 +78,30 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
       const resolved = isTargetId(targetId) ? targetId : DEFAULT_TARGET_ID;
       wizardStore.setTargetId(resolved);
       trackTargetSelected(resolved);
-      navigate('/wizard');
+      navigate(wizardPath(defaultWizardNetworkIdForTarget(resolved)));
       onMobileOpenChange(false);
     },
     [navigate, onMobileOpenChange, trackTargetSelected]
   );
 
   const handleLoadDraft = useCallback(
-    (id: string) => {
-      navigate('/wizard');
+    async (id: string) => {
       onMobileOpenChange(false);
+      const draft = await storage.get(id);
+      const networkId = (() => {
+        if (!draft) return DEFAULT_WIZARD_NETWORK_ID;
+        if (draft.config.deployment.target.kind === 'preset') {
+          return draft.config.deployment.target.networkId;
+        }
+        return defaultWizardNetworkIdForTarget(
+          isTargetId(draft.targetId) ? draft.targetId : DEFAULT_TARGET_ID
+        );
+      })();
+      navigate(wizardPath(networkId));
       wizardStore.setActiveDraft(id);
       trackDraftOpened('sidebar_recent');
     },
-    [navigate, onMobileOpenChange, trackDraftOpened]
+    [navigate, onMobileOpenChange, storage, trackDraftOpened]
   );
 
   const handleExportAllDrafts = useCallback(async () => {
@@ -157,14 +165,13 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
     >
       <div className="flex w-full flex-col gap-12">
         <SidebarSection>
-          <SidebarButton
-            icon={<LayoutDashboard className="size-4" />}
-            isSelected={location.pathname === '/'}
-            onClick={() => handleNav('/')}
-          >
-            Dashboard
-          </SidebarButton>
-          <TargetSelectorSidebar targets={targets} onCreateForTarget={handleCreateForTarget} />
+          <TargetSelectorSidebar
+            targets={targets}
+            selectedTargetId={selectedTargetId}
+            isWizardRoute={isWizardRoute}
+            activeDraftId={activeDraftId}
+            onCreateForTarget={handleCreateForTarget}
+          />
           <SidebarButton
             icon={<ArrowDownToLine className="size-4" />}
             onClick={() => setImportDialogOpen(true)}

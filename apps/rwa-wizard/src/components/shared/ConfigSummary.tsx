@@ -281,16 +281,18 @@ function AccessControlSection({
               <AccordionContent>
                 <div className="mt-1">
                   {role.addresses.length > 0 ? (
-                    <div className="space-y-1">
+                    <div className="flex flex-col divide-y divide-border/60">
                       {role.addresses.map((addr) => (
-                        <AddressDisplay
-                          key={addr}
-                          address={addr}
-                          variant="inline"
-                          truncateWhenLabeled
-                          showCopyButton
-                          explorerUrl={getExplorerUrl?.(addr) ?? undefined}
-                        />
+                        <div key={addr} className="w-full min-w-0 py-2 first:pt-0 last:pb-0">
+                          <AddressDisplay
+                            address={addr}
+                            variant="inline"
+                            truncateWhenLabeled
+                            showCopyButton
+                            explorerUrl={getExplorerUrl?.(addr) ?? undefined}
+                            className="w-full"
+                          />
+                        </div>
                       ))}
                     </div>
                   ) : (

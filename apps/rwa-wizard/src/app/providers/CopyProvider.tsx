@@ -7,7 +7,7 @@ import { CopyContext } from './CopyContext';
 interface CopyProviderProps {
   /**
    * Active wizard target id. Pass `null` or omit when there is no active
-   * target (e.g. on the dashboard) — the provider falls back to
+   * target — the provider falls back to
    * `coreCopy`, which already covers every chain-neutral category.
    */
   targetId?: string | null;

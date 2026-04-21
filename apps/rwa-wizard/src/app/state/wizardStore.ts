@@ -5,7 +5,7 @@ export interface WizardState {
   activeDraftId: string | null;
   /**
    * Network id from the in-editor deployment preset (`deployment.target.networkId`),
-   * synced from the wizard page for alias resolution. Null when not on `/wizard`
+   * synced from the wizard page for alias resolution. Null when not on `/wizard/:networkId`
    * or when deployment is custom / unset.
    */
   activeNetworkId: string | null;

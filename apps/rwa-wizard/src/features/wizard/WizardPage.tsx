@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ReactElement } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { WizardLayout } from '@openzeppelin/ui-components';
 
+import { useWizardNetworkRoute } from './hooks/useWizardNetworkRoute';
 import { useWizardSession } from './hooks/useWizardSession';
 import { useWizardSteps } from './hooks/useWizardSteps';
 
 import { CopyProvider } from '../../app/providers/CopyProvider';
+import { DEFAULT_WIZARD_NETWORK_ID, wizardPath } from '../../app/routes/wizardPaths';
 import { wizardStore } from '../../app/state/wizardStore';
 import { ErrorBannerStack } from '../../components/shared';
 import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
@@ -16,13 +19,15 @@ import { useWizardDraftStorage } from '../../storage';
 import { GenerationDialog } from '../generation/components/GenerationDialog';
 
 /**
- * Wizard page shell at `/wizard`. The heavy lifting (draft hydration,
+ * Wizard page shell at `/wizard/:networkId`. Network id matches adapter
+ * `NetworkConfig.id` (e.g. `stellar-testnet`). The heavy lifting (draft hydration,
  * autosave, target runtime, generation) is delegated to `useWizardSession`;
  * step JSX and ordering is delegated to `useWizardSteps`. This component
- * is left responsible only for layout, error banner plumbing, and the
- * two buttons on the last step (primary + secondary).
+ * is left responsible only for layout, error banner plumbing, route/deployment
+ * sync, and the two buttons on the last step (primary + secondary).
  */
 export function WizardPage(): ReactElement {
+  const navigate = useNavigate();
   const session = useWizardSession();
   const storage = useWizardDraftStorage();
 
@@ -51,6 +56,8 @@ export function WizardPage(): ReactElement {
     trackZipDownloadClicked,
   } = useRwaWizardAnalytics();
 
+  useWizardNetworkRoute(draftState, activeDraftId);
+
   const deploymentTarget = draftState.config.deployment.target;
   const presetNetworkId = deploymentTarget.kind === 'preset' ? deploymentTarget.networkId : null;
 
@@ -67,11 +74,17 @@ export function WizardPage(): ReactElement {
 
   const generationOutcomeKeyRef = useRef<string | null>(null);
 
+  const codegenInfoBlurb = useMemo(
+    () => codegenService?.getCodegenInfoBlurb?.() ?? null,
+    [codegenService]
+  );
+
   const { steps, orderedStepIds } = useWizardSteps({
     draftState,
     targetSnapshot,
     adapterCaps,
     codegenService,
+    codegenInfoBlurb,
     isGenerating,
   });
 
@@ -120,7 +133,8 @@ export function WizardPage(): ReactElement {
   const handleCancel = useCallback(() => {
     trackWizardCancelled(selectedTargetId);
     resetSession();
-  }, [resetSession, selectedTargetId, trackWizardCancelled]);
+    navigate(wizardPath(DEFAULT_WIZARD_NETWORK_ID), { replace: true });
+  }, [resetSession, selectedTargetId, trackWizardCancelled, navigate]);
 
   const handleDownload = useCallback(() => {
     trackZipDownloadClicked(selectedTargetId);

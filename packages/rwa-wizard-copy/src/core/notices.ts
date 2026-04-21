@@ -3,7 +3,7 @@ import type { ConceptDictionary } from '../types';
 /**
  * Notices — standalone prose blocks that are not attached to a form field
  * or a concept lookup: warning banners, empty-state messages, dashboard
- * intros, tooltips that live on UI chrome rather than a data concept.
+ * tooltips that live on UI chrome rather than a data concept.
  */
 export const NOTICES_COPY: ConceptDictionary = {
   'notice.identity.privacy': {
@@ -35,15 +35,5 @@ export const NOTICES_COPY: ConceptDictionary = {
   'notice.trusted-issuer.duplicate': {
     id: 'notice.trusted-issuer.duplicate',
     description: 'Issuer already added',
-  },
-  'notice.dashboard.intro': {
-    id: 'notice.dashboard.intro',
-    description:
-      'Scaffold a production-ready ERC-3643 / T-REX real-world-asset token project. The wizard walks you through the five pieces of a T-REX deployment — token metadata, identity verification (claim topics & trusted issuers), modular compliance rules, role-based access control, and a final review — and generates a project you can audit, customize, and deploy to your chosen target ecosystem.',
-  },
-  'notice.dashboard.sub-intro': {
-    id: 'notice.dashboard.sub-intro',
-    description:
-      'Pick a target and start a new project from the sidebar, or reopen a draft from Recent Assets. Drafts are stored only in your browser; nothing is sent to a server.',
   },
 } as const;

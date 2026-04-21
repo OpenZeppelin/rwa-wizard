@@ -33,8 +33,8 @@ describe('useRwaWizardAnalytics', () => {
   describe('base analytics passthrough', () => {
     it('passes through trackPageView', () => {
       const { result } = renderHook(() => useRwaWizardAnalytics());
-      result.current.trackPageView('Wizard', '/wizard');
-      expect(mockTrackPageView).toHaveBeenCalledWith('Wizard', '/wizard');
+      result.current.trackPageView('Wizard', '/wizard/stellar-testnet');
+      expect(mockTrackPageView).toHaveBeenCalledWith('Wizard', '/wizard/stellar-testnet');
     });
 
     it('passes through trackNetworkSelection', () => {
