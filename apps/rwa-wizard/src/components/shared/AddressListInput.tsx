@@ -99,7 +99,7 @@ export function AddressListInput({
               <AddressDisplay
                 address={address}
                 variant="inline"
-                truncate={false}
+                truncateWhenLabeled
                 showCopyButton
                 explorerUrl={getExplorerUrl?.(address) ?? undefined}
               />

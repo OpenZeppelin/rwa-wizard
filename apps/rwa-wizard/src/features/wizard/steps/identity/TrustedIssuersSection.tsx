@@ -187,7 +187,7 @@ function IssuerRow({
         <AddressDisplay
           address={issuer.address}
           variant="inline"
-          truncate={false}
+          truncateWhenLabeled
           showCopyButton
           explorerUrl={getExplorerUrl?.(issuer.address) ?? undefined}
         />
