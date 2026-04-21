@@ -44,7 +44,13 @@ export function InfoTooltip({
       <TooltipContent
         side={side}
         sideOffset={6}
-        className={cn('text-xs leading-relaxed', maxWidthClassName)}
+        className={cn(
+          'text-xs leading-relaxed',
+          maxWidthClassName,
+          // renderInlineCopy uses bg-muted + text-foreground on <code>; on this inverted
+          // surface (bg-foreground / text-background) that reads as harsh pills. Soften.
+          '[&_code]:rounded [&_code]:border [&_code]:border-white/15 [&_code]:!bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_code]:!text-inherit'
+        )}
       >
         {children}
       </TooltipContent>

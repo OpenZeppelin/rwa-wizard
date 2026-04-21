@@ -33,7 +33,10 @@ export function renderInlineCopy(text: string): ReactElement {
     }
     if (match[1] !== undefined) {
       nodes.push(
-        <code key={matchIndex} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">
+        <code
+          key={matchIndex}
+          className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em] text-foreground"
+        >
           {match[1]}
         </code>
       );
