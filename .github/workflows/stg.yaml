@@ -132,7 +132,7 @@ jobs:
         run: |
           IMAGE_URI="${{ needs.build-and-push.outputs.image_uri }}"
           if [ -z "$IMAGE_URI" ]; then
-            IMAGE_URI="${{ env.REGISTRY }}/{{ env.IMAGE_NAME }}:${{ env.VERSION }}"
+            IMAGE_URI="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}"
           fi
           echo "image_uri=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
           echo "Using image URI: ${IMAGE_URI}"
