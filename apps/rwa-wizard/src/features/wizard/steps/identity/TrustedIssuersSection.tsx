@@ -121,8 +121,8 @@ export function TrustedIssuersSection({
         ))}
 
         <div className="space-y-1">
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
               <AddressField
                 id="trusted-issuer-address"
                 name="address"
@@ -140,16 +140,23 @@ export function TrustedIssuersSection({
                 validation={{ required: false }}
               />
             </div>
-            <Button
-              type="button"
-              onClick={handleSubmit(handleAdd)}
-              size="sm"
-              disabled={!trimmedDraft || atLimit || isDuplicate || !isValidAddress}
-              className="mb-0.5"
-            >
-              <Plus className="mr-1 size-4" />
-              Add
-            </Button>
+            <div className="flex flex-col gap-2">
+              {/* Invisible label mirrors the AddressField's label height */}
+              <Label className="invisible" aria-hidden="true">
+                &nbsp;
+              </Label>
+              <div className="flex h-10 items-center">
+                <Button
+                  type="button"
+                  onClick={handleSubmit(handleAdd)}
+                  size="sm"
+                  disabled={!trimmedDraft || atLimit || isDuplicate || !isValidAddress}
+                >
+                  <Plus className="mr-1 size-4" />
+                  Add
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -186,7 +193,7 @@ function IssuerRow({
       <div className="flex items-center justify-between gap-2">
         <AddressDisplay
           address={issuer.address}
-          variant="inline"
+          variant="chip"
           truncateWhenLabeled
           showCopyButton
           explorerUrl={getExplorerUrl?.(issuer.address) ?? undefined}

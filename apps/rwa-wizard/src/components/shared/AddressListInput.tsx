@@ -2,7 +2,7 @@ import { Plus, X } from 'lucide-react';
 import { useCallback, useId, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { AddressDisplay, AddressField, Button } from '@openzeppelin/ui-components';
+import { AddressDisplay, AddressField, Button, Label } from '@openzeppelin/ui-components';
 import type { AddressingCapability } from '@openzeppelin/ui-types';
 
 interface AddressDraftForm {
@@ -65,8 +65,8 @@ export function AddressListInput({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
           <AddressField
             id={`address-list-${fieldId}`}
             name="address"
@@ -78,16 +78,18 @@ export function AddressListInput({
             validation={{ required: false }}
           />
         </div>
-        <Button
-          type="button"
-          onClick={handleSubmit(handleAdd)}
-          size="sm"
-          disabled={!canAdd}
-          className="mb-0.5"
-        >
-          <Plus className="mr-1 size-4" />
-          Add
-        </Button>
+        <div className="flex flex-col gap-2">
+          {/* Invisible label mirrors the AddressField's label height */}
+          <Label className="invisible" aria-hidden="true">
+            &nbsp;
+          </Label>
+          <div className="flex h-10 items-center">
+            <Button type="button" onClick={handleSubmit(handleAdd)} size="sm" disabled={!canAdd}>
+              <Plus className="mr-1 size-4" />
+              Add
+            </Button>
+          </div>
+        </div>
       </div>
       {addresses.length > 0 && (
         <div className="space-y-1">
