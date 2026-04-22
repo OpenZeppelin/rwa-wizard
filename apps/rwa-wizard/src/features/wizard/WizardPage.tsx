@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ReactElement } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { WizardLayout } from '@openzeppelin/ui-components';
 
@@ -60,17 +60,20 @@ export function WizardPage(): ReactElement {
 
   const deploymentTarget = draftState.config.deployment.target;
   const presetNetworkId = deploymentTarget.kind === 'preset' ? deploymentTarget.networkId : null;
+  const { networkId: routeNetworkId } = useParams<{ networkId: string }>();
 
+  // Sync the wizard's "context network" used by `AliasLabelBridge` for alias
+  // resolution and creation. Prefer the deployment preset network, but fall
+  // back to the URL `:networkId` so that custom-deployment drafts still
+  // produce network-scoped aliases (otherwise pencil-saved aliases would
+  // become global records that the network-filtered Address Book hides).
   useEffect(() => {
-    if (presetNetworkId) {
-      wizardStore.setActiveNetworkId(presetNetworkId);
-    } else {
-      wizardStore.setActiveNetworkId(null);
-    }
+    const contextNetworkId = presetNetworkId ?? routeNetworkId ?? null;
+    wizardStore.setActiveNetworkId(contextNetworkId);
     return () => {
       wizardStore.setActiveNetworkId(null);
     };
-  }, [presetNetworkId]);
+  }, [presetNetworkId, routeNetworkId]);
 
   const generationOutcomeKeyRef = useRef<string | null>(null);
 
@@ -141,7 +144,12 @@ export function WizardPage(): ReactElement {
     download();
   }, [download, selectedTargetId, trackZipDownloadClicked]);
 
-  const layoutKey = `${activeDraftId ?? 'new'}-${resetKey}`;
+  // Use only `resetKey` (not `activeDraftId`) so that the layout does not
+  // remount when autosave promotes a fresh form into a new draft id on the
+  // user's first keystroke — that remount was dropping focus from the input
+  // mid-typing. `resetKey` is bumped by `useWizardSession` whenever a real
+  // remount is needed (Cancel, or hydrating a different draft from storage).
+  const layoutKey = `wizard-${resetKey}`;
 
   return (
     <CopyProvider targetId={selectedTargetId}>
