@@ -129,7 +129,7 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
           Contracts Wizard <ExternalLink className="size-3 text-gray-400" />
         </span>
       </SidebarButton>
-      <SidebarButton icon={<Wallet className="size-4" />} disabled>
+      <SidebarButton icon={<Wallet className="size-4" />} disabled badge="Coming Soon">
         Open Accounts
       </SidebarButton>
       <SidebarButton

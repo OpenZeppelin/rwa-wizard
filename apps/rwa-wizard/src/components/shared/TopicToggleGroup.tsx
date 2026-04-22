@@ -106,8 +106,8 @@ export function TopicToggleGroup({
         </div>
       </div>
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
           <TextField
             id="custom-topic-name"
             name="name"
@@ -117,7 +117,7 @@ export function TopicToggleGroup({
             validation={{ required: false }}
           />
         </div>
-        <div className="w-36">
+        <div className="w-36 shrink-0">
           <NumberField
             id="custom-topic-id"
             name="id"
@@ -127,16 +127,22 @@ export function TopicToggleGroup({
             validation={{ required: false, min: MIN_CUSTOM_CLAIM_TOPIC_ID }}
           />
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={handleAddCustom}
-          disabled={!canAddCustom}
-          className="mb-0.5"
-        >
-          <Plus className="size-4" />
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Label className="invisible" aria-hidden="true">
+            &nbsp;
+          </Label>
+          <div className="flex h-10 items-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={handleAddCustom}
+              disabled={!canAddCustom}
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
