@@ -4,9 +4,15 @@ export interface WizardState {
   /** Currently selected/active draft id (null when no draft or creating new). */
   activeDraftId: string | null;
   /**
-   * Network id from the in-editor deployment preset (`deployment.target.networkId`),
-   * synced from the wizard page for alias resolution. Null when not on `/wizard/:networkId`
-   * or when deployment is custom / unset.
+   * The wizard's "context network" used for alias resolution and creation
+   * inside `AliasLabelBridge`. Synced from `WizardPage`:
+   *
+   * - Prefers `deployment.target.networkId` when the deployment is a preset.
+   * - Falls back to the URL `:networkId` so custom-deployment drafts still
+   *   have a network in scope (otherwise the pencil-driven `AliasEditPopover`
+   *   would create unscoped global records that the Address Book filters
+   *   hide — see `AliasLabelBridge`).
+   * - `null` when not on `/wizard/:networkId` (e.g., dashboard).
    */
   activeNetworkId: string | null;
   /** Current wizard step for the active draft. */

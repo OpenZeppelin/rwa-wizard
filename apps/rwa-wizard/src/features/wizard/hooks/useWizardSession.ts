@@ -23,7 +23,14 @@ export interface WizardSession {
   generation: ReturnType<typeof useGenerationFlow>;
   persistError: string | null;
   clearPersistError: () => void;
-  /** Monotonic key the page can include on child containers to force remount after Cancel. */
+  /**
+   * Monotonic key the page can include on child containers to force a remount.
+   * Bumped on Cancel (reset) and when a different draft is hydrated from
+   * storage (sidebar selection). Crucially, *not* bumped when autosave
+   * promotes a "new" in-memory form into a freshly-created draft id —
+   * keying off `activeDraftId` directly would unmount the form mid-keystroke
+   * on the user's first input, dropping focus.
+   */
   resetKey: number;
   /** Cancels the active draft, clears local form state, and bumps `resetKey` for a full remount. */
   resetSession: () => void;
@@ -58,6 +65,8 @@ export function useWizardSession(): WizardSession {
   // and this effect firing (see "silent data overwrite after first autosave").
   const locallyCreatedIdsRef = useRef<Set<string>>(new Set());
 
+  const [resetKey, setResetKey] = useState(0);
+
   // Load the draft record when activeDraftId changes; clear form state when
   // id is cleared (e.g. delete). `isActive` guards against races when the
   // user switches drafts while a prior `get` is still pending.
@@ -88,6 +97,12 @@ export function useWizardSession(): WizardSession {
       wizardStore.setTargetId(isTargetId(draft.targetId) ? draft.targetId : DEFAULT_TARGET_ID);
       wizardStore.setCurrentStep(draft.currentStep);
       draftState.setConfig(draft.config);
+      // Bump the mount key so any wizard-step component holding local
+      // (uncontrolled) state is rebuilt against the freshly-loaded draft,
+      // matching the previous behavior of keying the layout off
+      // `activeDraftId`. The autosave-created branch above returns early,
+      // so first-keystroke draft creation no longer triggers a remount.
+      setResetKey((k) => k + 1);
     }
     void syncDraftFromStorage();
 
@@ -156,8 +171,6 @@ export function useWizardSession(): WizardSession {
       wizardStore.setSavingDraftId(null);
     };
   }, [isSaving, activeDraftId]);
-
-  const [resetKey, setResetKey] = useState(0);
 
   const resetSession = useCallback(() => {
     wizardStore.reset();
