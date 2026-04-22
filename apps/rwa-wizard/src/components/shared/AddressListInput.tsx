@@ -80,9 +80,11 @@ export function AddressListInput({
         </div>
         <div className="flex flex-col gap-2">
           {/* Invisible label mirrors the AddressField's label height */}
-          <Label className="invisible" aria-hidden="true">
-            &nbsp;
-          </Label>
+          {label && (
+            <Label className="invisible" aria-hidden="true">
+              &nbsp;
+            </Label>
+          )}
           <div className="flex h-10 items-center">
             <Button type="button" onClick={handleSubmit(handleAdd)} size="sm" disabled={!canAdd}>
               <Plus className="mr-1 size-4" />
