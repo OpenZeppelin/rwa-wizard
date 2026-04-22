@@ -12,13 +12,13 @@ on:
         type: string
 
       version:
-        description: "Tag version (e.g. 1.0.0-rc.1)"
+        description: "Tag version (e.g. latest or 1.0.0-rc.1)"
         required: true
         type: string
         default: "latest"
 
 env:
-  VERSION: ${{ github.event.inputs.version }}
+  VERSION: latest
 
 permissions:
   contents: read
