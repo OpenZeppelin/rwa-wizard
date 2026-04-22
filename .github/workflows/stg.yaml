@@ -11,14 +11,9 @@ on:
         default: 'main'
         type: string
 
-      version:
-        description: "Tag version (e.g. latest or 1.0.0-rc.1)"
-        required: true
-        type: string
-        default: "latest"
 
 env:
-  VERSION: latest
+  VERSION: ${{ github.sha }}
 
 permissions:
   contents: read
