@@ -13,11 +13,9 @@ on:
         description: "Tag version (e.g. 1.0.0)"
         required: true
         type: string
-        default: "latest"
 
 env:
-  # VERSION: ${{ github.event.inputs.version }}
-  VERSION: latest
+  VERSION: ${{ github.event.inputs.version }}
 
 permissions:
   contents: read
