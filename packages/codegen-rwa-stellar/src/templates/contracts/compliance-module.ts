@@ -47,3 +47,15 @@ export function generateComplianceModuleContract(
 
   return prependRustCommentBanner(source, bannerLines);
 }
+
+/**
+ * Generates a compliance module `Cargo.toml` from the upstream example,
+ * rewriting the package `name` to the wizard registry `crateName`.
+ */
+export function generateComplianceModuleCargoToml(
+  entry: ComplianceModuleRegistryEntry,
+  templateSource: UpstreamTemplateSource = createBundledTemplateSource()
+): string {
+  const source = templateSource.getTemplate('module-cargo', entry.id);
+  return source.replace(/^name = ".*"$/m, `name = "${entry.crateName}"`);
+}

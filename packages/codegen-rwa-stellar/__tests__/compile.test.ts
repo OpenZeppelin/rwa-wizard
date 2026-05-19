@@ -193,6 +193,9 @@ describe.skipIf(!!defaultCompileSkipReason)(
         const config = createFullConfig();
         const projectDir = writeGeneratedProject(testRoot, 'full-featured-bundled', config, {
           allowUnderReviewModules: true,
+          ...(hasLocalContractsLibrary()
+            ? { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH }
+            : {}),
         });
 
         await expectBuildSucceeds(
@@ -217,7 +220,11 @@ describe.skipIf(!!defaultCompileSkipReason)(
       'should compile a minimal RWA project (no DocumentManager, no roles)',
       async () => {
         const config = createMinimalConfig();
-        const projectDir = writeGeneratedProject(testRoot, 'minimal-bundled', config);
+        const projectDir = writeGeneratedProject(testRoot, 'minimal-bundled', config, {
+          ...(hasLocalContractsLibrary()
+            ? { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH }
+            : {}),
+        });
 
         await expectBuildSucceeds(projectDir, ['rwa_token'], 'Minimal bundled compilation failed');
       },

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ComplianceModuleRegistryEntry } from '../../src/modules/registry';
-import { generateCrateToml } from '../../src/templates/cargo/crate-toml';
-import { generateComplianceModuleContract } from '../../src/templates/contracts/compliance-module';
+import {
+  generateComplianceModuleCargoToml,
+  generateComplianceModuleContract,
+} from '../../src/templates/contracts/compliance-module';
 import { generateLibRs } from '../../src/templates/lib-rs';
 
 function createEntry(
@@ -25,10 +27,11 @@ describe('Compliance Module Contract Template', () => {
 
     expect(contract).toContain('pub struct SupplyLimitContract;');
     expect(contract).toContain('impl ComplianceModule for SupplyLimitContract');
+    expect(contract).toContain('impl SupplyLimit for SupplyLimitContract');
     expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
-    expect(contract).toContain('fn require_module_admin_or_compliance_auth');
-    expect(contract).toContain('pub fn set_supply_limit(e: &Env, token: Address, limit: i128)');
-    expect(contract).toContain('pub fn verify_hook_wiring(e: &Env)');
+    expect(contract).toContain('fn require_compliance_auth');
+    expect(contract).toContain('fn set_supply_limit(e: &Env, token: Address, limit: i128)');
+    expect(contract).toContain('fn verify_hook_wiring(e: &Env)');
   });
 
   it('prepends a review banner for under-review modules', () => {
@@ -54,17 +57,16 @@ describe('Compliance Module Contract Template', () => {
     expect(libRs).toContain('pub use contract::*;');
   });
 
-  it('generates upstream-aligned Cargo.toml metadata for module crates', () => {
-    const toml = generateCrateToml({
-      name: 'supply-limit',
-      dependencies: ['soroban-sdk', 'stellar-tokens'],
-      includeRlib: true,
-    });
+  it('generates upstream-aligned Cargo.toml for module crates', () => {
+    const toml = generateComplianceModuleCargoToml(createEntry());
 
     expect(toml).toContain('name = "supply-limit"');
     expect(toml).toContain('crate-type = ["cdylib", "rlib"]');
     expect(toml).toContain('[package.metadata.stellar]');
     expect(toml).toContain('edition.workspace = true');
+    expect(toml).toContain('stellar-access = { workspace = true }');
+    expect(toml).toContain('stellar-macros = { workspace = true }');
+    expect(toml).toContain('stellar-tokens = { workspace = true }');
   });
 
   it('selects a different upstream module implementation per registry entry', () => {
@@ -73,6 +75,6 @@ describe('Compliance Module Contract Template', () => {
 
     expect(supplyLimit).toContain('pub struct SupplyLimitContract;');
     expect(maxBalance).toContain('pub struct MaxBalanceContract;');
-    expect(maxBalance).toContain('pub fn set_max_balance');
+    expect(maxBalance).toContain('fn set_max_balance(e: &Env, token: Address, max: i128)');
   });
 });
