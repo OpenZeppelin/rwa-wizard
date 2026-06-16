@@ -26,7 +26,7 @@ export const WIZARD_STEPS_COPY: ConceptDictionary = {
     title: 'Compliance Modules',
     description: 'Select the pluggable rules the contract will enforce on every token operation.',
     infoCopy:
-      'Compliance modules are pluggable rules the T-REX Compliance contract runs on every token operation. Pre-check hooks (`canTransfer`, `canCreate`) can veto a transaction; post-state hooks (`transferred`, `created`, `destroyed`) update accumulators such as supply counters. Each module auto-registers on the hooks it needs.',
+      'Compliance modules are pluggable rules the T-REX Compliance contract runs on token operations. Modules use post-operation hooks (`transferred`, `created`, `destroyed`) inside the same transaction, so they can update state or reject atomically. Each module auto-registers on the hooks it needs.',
   },
   'wizardStep.access-control': {
     id: 'wizardStep.access-control',

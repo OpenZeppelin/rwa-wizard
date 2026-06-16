@@ -57,7 +57,7 @@ describe('Compliance Module Registry', () => {
     });
 
     it('requiredHooks should only contain valid ComplianceHook values', () => {
-      const validHooks = new Set(['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed']);
+      const validHooks = new Set(['transferred', 'created', 'destroyed']);
       for (const entry of COMPLIANCE_MODULE_REGISTRY) {
         for (const hook of entry.requiredHooks) {
           expect(validHooks.has(hook)).toBe(true);

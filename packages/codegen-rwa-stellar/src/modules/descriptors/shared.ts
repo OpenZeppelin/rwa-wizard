@@ -50,14 +50,6 @@ export function createModuleInvocation(functionName: string, args: string): Modu
 }
 
 /**
- * Create the optional post-registration verification call used by modules
- * that expose `verify_hook_wiring` in their public contract ABI.
- */
-export function createHookWiringVerificationInvocation(): ModuleInvocation {
-  return createModuleInvocation('verify_hook_wiring', '');
-}
-
-/**
  * Read a scalar module config value as a shell-safe string.
  */
 export function getOptionalScalarConfigValue(
@@ -131,10 +123,17 @@ export function serializeNumericArray(values: readonly string[]): string {
 }
 
 /**
+ * Serialize string values as a Stellar CLI vector literal.
+ */
+export function serializeStringArray(values: readonly string[]): string {
+  return `'[${values.map((value) => JSON.stringify(value)).join(', ')}]'`;
+}
+
+/**
  * Serialize a time-transfer limit struct for Stellar CLI invocation.
  */
-export function serializeLimitStruct(limitTime: string, limitValue: string): string {
+export function serializeLimitStruct(limitDuration: string, limitValue: string): string {
   // Soroban CLI expects i128 fields to be quoted JSON strings, even when
-  // neighboring scalar fields like u64 remain numeric literals.
-  return `'{"limit_time": ${limitTime}, "limit_value": ${JSON.stringify(limitValue)}}'`;
+  // neighboring scalar fields like u32 remain numeric literals.
+  return `'{"limit_duration": ${limitDuration}, "limit_value": ${JSON.stringify(limitValue)}}'`;
 }

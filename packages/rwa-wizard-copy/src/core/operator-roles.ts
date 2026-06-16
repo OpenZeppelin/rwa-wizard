@@ -11,7 +11,7 @@ export const OPERATOR_ROLES_COPY: ConceptDictionary = {
     description:
       'Issues new tokens to verified investors. Used for primary issuance after the recipient has an ONCHAINID with the required claims.',
     infoCopy:
-      'Grants the authority to call `mint` on the token. Every mint runs through the `canCreate` compliance pre-check, so eligibility, supply caps, and investor caps still apply. Keep minters tightly scoped — primary-issuance desks, transfer agents, or a custody operator acting on subscription orders.',
+      'Grants the authority to call `mint` on the token. Every mint runs through the `created` compliance hook in the same transaction, so eligibility, supply caps, and investor caps still apply atomically. Keep minters tightly scoped — primary-issuance desks, transfer agents, or a custody operator acting on subscription orders.',
   },
   'role.burner': {
     id: 'role.burner',

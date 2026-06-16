@@ -16,9 +16,9 @@ export const ADMIN_CONTROLS_COPY: ConceptDictionary = {
   'admin.mintable': {
     id: 'admin.mintable',
     description:
-      'Lets a mint-role operator issue new tokens to an investor. Recipients must have a verified ONCHAINID and pass every canCreate compliance hook.',
+      'Lets a mint-role operator issue new tokens to an investor. Recipients must have a verified ONCHAINID and pass every `created` compliance hook.',
     infoCopy:
-      'Covers primary issuance and follow-on offerings. The `canCreate` pre-check runs before the mint — any registered module (eligibility, max-supply, investor cap) can veto it and revert the transaction. On success, the `created` post-hook fires so modules can bump supply and investor counters. A recipient without the required claims cannot be minted to — there is no partial or silent mint.',
+      'Covers primary issuance and follow-on offerings. The `created` compliance hook runs inside the mint transaction, so any registered module (eligibility, max-supply, investor cap) can reject atomically or bump its supply and investor counters. A recipient without the required claims cannot be minted to — there is no partial or silent mint.',
   },
   'admin.pausable': {
     id: 'admin.pausable',

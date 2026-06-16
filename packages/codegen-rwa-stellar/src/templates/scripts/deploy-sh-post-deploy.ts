@@ -61,7 +61,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
           buildInvokeCommand(
             modVar,
             'set_identity_registry_storage',
-            '--token "$RWA_TOKEN_ADDRESS" --irs "$IRS_ADDRESS"',
+            '--token "$RWA_TOKEN_ADDRESS" --irs "$IRS_ADDRESS" --operator "$MANAGER"',
             networkFlag
           )
         );
@@ -77,7 +77,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
         buildInvokeCommand(
           modVar,
           'set_compliance_address',
-          '--compliance "$COMPLIANCE_ADDRESS"',
+          '--token "$RWA_TOKEN_ADDRESS" --compliance "$COMPLIANCE_ADDRESS" --operator "$MANAGER"',
           networkFlag
         )
       );

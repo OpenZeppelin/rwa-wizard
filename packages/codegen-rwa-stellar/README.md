@@ -191,21 +191,19 @@ for (const mod of getAvailableModules()) {
 
 ## Available Compliance Modules
 
-All currently exposed compliance modules are marked `under-review` and include review metadata in the registry and generated output.
+All currently exposed compliance modules are stable snapshots from merged
+`stellar-contracts` example crates under `examples/rwa`.
 
 
-| Module ID               | Required Hooks                                                    | Config Keys               | Review                                                               |
-| ----------------------- | ----------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------- |
-| `supply-limit`          | `canCreate`, `created`, `destroyed`                               | `limit`                   | [PR 650](https://github.com/OpenZeppelin/stellar-contracts/pull/650) |
-| `max-balance`           | `canTransfer`, `canCreate`, `transferred`, `created`, `destroyed` | `maxBalance`              | [PR 650](https://github.com/OpenZeppelin/stellar-contracts/pull/650) |
-| `country-restrict`      | `canTransfer`                                                     | `restrictedCountries`     | [PR 651](https://github.com/OpenZeppelin/stellar-contracts/pull/651) |
-| `country-allow`         | `canTransfer`                                                     | `allowedCountries`        | [PR 651](https://github.com/OpenZeppelin/stellar-contracts/pull/651) |
-| `transfer-restrict`     | `canTransfer`                                                     | none                      | [PR 651](https://github.com/OpenZeppelin/stellar-contracts/pull/651) |
-| `initial-lockup-period` | `canTransfer`, `created`, `transferred`, `destroyed`              | `lockupSeconds`           | [PR 652](https://github.com/OpenZeppelin/stellar-contracts/pull/652) |
-| `time-transfers-limits` | `canTransfer`, `transferred`                                      | `limitTime`, `limitValue` | [PR 652](https://github.com/OpenZeppelin/stellar-contracts/pull/652) |
-
-
-When under-review modules are generated, the output includes clear warning banners in module source files and an `UNDER_REVIEW_MODULES.md` summary file.
+| Module ID               | Required Hooks                               | Config Keys                        | Upstream Example Crate                         |
+| ----------------------- | -------------------------------------------- | ---------------------------------- | ---------------------------------------------- |
+| `supply-limit`          | `created`, `destroyed`                       | `limit`                            | `examples/rwa/compliance-supply-limit`         |
+| `max-balance`           | `transferred`, `created`, `destroyed`        | `maxBalance`                       | `examples/rwa/compliance-max-balance`          |
+| `country-restrict`      | `transferred`, `created`                     | `restrictedCountries`              | `examples/rwa/compliance-country-restrict`     |
+| `country-allow`         | `transferred`, `created`                     | `allowedCountries`                 | `examples/rwa/compliance-country-allow`        |
+| `transfer-allow`        | `transferred`                                | `allowedUsers`                     | `examples/rwa/compliance-transfer-allow`       |
+| `initial-lockup-period` | `transferred`, `created`, `destroyed`        | `lockupPeriodLedgers`              | `examples/rwa/compliance-initial-lockup-period` |
+| `time-transfers-limits` | `transferred`                                | `limitDurationLedgers`, `limitValue` | `examples/rwa/compliance-time-transfers-limits` |
 
 ## Generated Project Structure
 

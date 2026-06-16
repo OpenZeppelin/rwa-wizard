@@ -21,7 +21,7 @@ describe('getCopyForChain', () => {
   it('exposes every category accessor added for the migration', () => {
     const copy = getCopyForChain('stellar');
     expect(copy.role('minter').description).toMatch(/verified investors/);
-    expect(copy.hook('canTransfer').title).toBe('Can Transfer (pre-check)');
+    expect(copy.hook('transferred').title).toBe('Transferred');
     expect(copy.module('supply-limit').description).toMatch(/supply/i);
     expect(copy.moduleField('supply-limit', 'limit').description).toMatch(/smallest token unit/);
     expect(copy.wizardStep('asset').title).toBe('Asset Configuration');

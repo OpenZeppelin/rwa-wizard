@@ -20,7 +20,7 @@ export const STELLAR_CONTRACTS_VERSION = '0.7.1';
 export const STELLAR_CONTRACTS_LICENSE = 'MIT';
 export const STELLAR_CONTRACTS_AUTHORS = ['OpenZeppelin'] as const;
 
-export const SOROBAN_SDK_VERSION = '25.3.0';
+export const SOROBAN_SDK_VERSION = '26.1.0';
 
 export const RUST_EDITION = '2021';
 

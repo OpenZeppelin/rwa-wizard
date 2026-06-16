@@ -267,16 +267,16 @@ describe('deploy.sh template', () => {
       });
       const script = generateDeploySh(config);
 
-      expect(script).toContain('--hook "CanCreate"');
-      expect(script).toContain('--hook "CanTransfer"');
       expect(script).toContain('--hook "Created"');
       expect(script).toContain('--hook "Transferred"');
       expect(script).toContain('--hook "Destroyed"');
       expect(script).not.toContain('--hook "canCreate"');
       expect(script).not.toContain('--hook "canTransfer"');
+      expect(script).not.toContain('--hook "CanCreate"');
+      expect(script).not.toContain('--hook "CanTransfer"');
     });
 
-    it('should only emit verify_hook_wiring for modules that expose it', () => {
+    it('should not emit removed hook wiring verification calls', () => {
       const config = createValidConfig({
         compliance: {
           modules: [
@@ -288,13 +288,7 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
       const verifyMatches = script.match(/verify_hook_wiring/g) ?? [];
 
-      expect(verifyMatches).toHaveLength(1);
-
-      const countrySectionStart = script.indexOf('# -- Country Restriction setup --');
-      const countrySectionEnd = script.indexOf('# Add claim topics');
-      const countrySection = script.slice(countrySectionStart, countrySectionEnd);
-
-      expect(countrySection).not.toContain('verify_hook_wiring');
+      expect(verifyMatches).toHaveLength(0);
     });
 
     it('should serialize time transfer limit structs with stringified i128 values', () => {
@@ -303,7 +297,7 @@ describe('deploy.sh template', () => {
           modules: [
             {
               moduleId: 'time-transfers-limits',
-              config: { limitTime: 86400, limitValue: 25000 },
+              config: { limitDurationLedgers: 17280, limitValue: 25000 },
             },
           ],
         },
@@ -311,10 +305,10 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
 
       expect(script).toContain(
-        `--limit '{"limit_time": 86400, "limit_value": "25000"}'`
+        `--limit '{"limit_duration": 17280, "limit_value": "25000"}' --operator "$MANAGER"`
       );
       expect(script).not.toContain(
-        `--limit '{"limit_time": 86400, "limit_value": 25000}'`
+        `--limit '{"limit_duration": 17280, "limit_value": 25000}'`
       );
     });
 

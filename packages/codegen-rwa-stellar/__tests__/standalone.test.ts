@@ -232,7 +232,7 @@ describe('standalone Node.js integration (US4)', () => {
         expect(mod).not.toHaveProperty('description');
         expect(Array.isArray(mod.requiredHooks)).toBe(true);
         for (const hook of mod.requiredHooks) {
-          expect(['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed']).toContain(hook);
+          expect(['transferred', 'created', 'destroyed']).toContain(hook);
         }
       }
     });

@@ -64,8 +64,7 @@ export interface IdentityVerificationConfig {
 
 /**
  * Opaque hook identifier — each ecosystem defines its own valid values.
- * Stellar: 'canTransfer' | 'canCreate' | 'transferred' | 'created' | 'destroyed'
- * EVM T-REX: 'canTransfer' | 'transferred' | 'created' | 'destroyed'
+ * Keep this type chain-agnostic; generator packages own their hook vocabulary.
  */
 export type ComplianceHook = string;
 

@@ -35,7 +35,7 @@ describe('Compliance Module Descriptors', () => {
     expect(invocations).toEqual([
       {
         functionName: 'set_supply_limit',
-        args: '--token "$RWA_TOKEN_ADDRESS" --limit 1000',
+        args: '--token "$RWA_TOKEN_ADDRESS" --limit 1000 --operator "$MANAGER"',
       },
     ]);
   });
@@ -51,7 +51,7 @@ describe('Compliance Module Descriptors', () => {
     expect(invocations).toEqual([
       {
         functionName: 'batch_restrict_countries',
-        args: `--token "$RWA_TOKEN_ADDRESS" --countries '[840, 408]'`,
+        args: `--token "$RWA_TOKEN_ADDRESS" --countries '[840, 408]' --operator "$MANAGER"`,
       },
     ]);
   });
@@ -61,42 +61,39 @@ describe('Compliance Module Descriptors', () => {
       'time-transfers-limits'
     )?.deployment.getConfigurationInvocations({
       moduleId: 'time-transfers-limits',
-      config: { limitTime: 86400, limitValue: 25000 },
+      config: { limitDurationLedgers: 17280, limitValue: 25000 },
     });
 
     expect(invocations).toEqual([
       {
         functionName: 'set_time_transfer_limit',
-        args: `--token "$RWA_TOKEN_ADDRESS" --limit '{"limit_time": 86400, "limit_value": "25000"}'`,
+        args: `--token "$RWA_TOKEN_ADDRESS" --limit '{"limit_duration": 17280, "limit_value": "25000"}' --operator "$MANAGER"`,
       },
     ]);
   });
 
-  it('returns no configuration invocations for modules without post-deploy config', () => {
+  it('serializes transfer allow-list users through the descriptor', () => {
     const invocations = getModuleDescriptorById(
-      'transfer-restrict'
+      'transfer-allow'
     )?.deployment.getConfigurationInvocations({
-      moduleId: 'transfer-restrict',
+      moduleId: 'transfer-allow',
+      config: { allowedUsers: ['GCALLOW1', 'GCALLOW2'] },
     });
 
-    expect(invocations).toEqual([]);
+    expect(invocations).toEqual([
+      {
+        functionName: 'batch_allow_users',
+        args: `--token "$RWA_TOKEN_ADDRESS" --users '["GCALLOW1", "GCALLOW2"]' --operator "$MANAGER"`,
+      },
+    ]);
   });
 
-  it('keeps optional hook-wiring verification co-located on supporting descriptors', () => {
-    const verifyingInvocations = getModuleDescriptorById(
-      'supply-limit'
-    )?.deployment.getPostRegistrationInvocations?.({
-      moduleId: 'supply-limit',
-      config: { limit: 1000 },
-    });
-    const nonVerifyingInvocations = getModuleDescriptorById(
-      'country-restrict'
-    )?.deployment.getPostRegistrationInvocations?.({
-      moduleId: 'country-restrict',
-      config: { restrictedCountries: ['US'] },
-    });
-
-    expect(verifyingInvocations).toEqual([{ functionName: 'verify_hook_wiring', args: '' }]);
-    expect(nonVerifyingInvocations ?? []).toEqual([]);
+  it('does not emit removed hook-wiring verification invocations', () => {
+    expect(
+      getModuleDescriptorById('supply-limit')?.deployment.getPostRegistrationInvocations?.({
+        moduleId: 'supply-limit',
+        config: { limit: 1000 },
+      }) ?? []
+    ).toEqual([]);
   });
 });

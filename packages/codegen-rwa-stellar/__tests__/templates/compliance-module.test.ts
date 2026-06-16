@@ -13,8 +13,8 @@ function createEntry(
   return {
     id: 'supply-limit',
     name: 'Supply Limit',
-    requiredHooks: ['canCreate', 'created', 'destroyed'],
-    crateName: 'supply-limit',
+    requiredHooks: ['created', 'destroyed'],
+    crateName: 'compliance-supply-limit',
     review: { state: 'stable' },
     configFields: [],
     ...overrides,
@@ -28,10 +28,13 @@ describe('Compliance Module Contract Template', () => {
     expect(contract).toContain('pub struct SupplyLimitContract;');
     expect(contract).toContain('impl ComplianceModule for SupplyLimitContract');
     expect(contract).toContain('impl SupplyLimit for SupplyLimitContract');
-    expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address)');
-    expect(contract).toContain('fn require_compliance_auth');
-    expect(contract).toContain('fn set_supply_limit(e: &Env, token: Address, limit: i128)');
-    expect(contract).toContain('fn verify_hook_wiring(e: &Env)');
+    expect(contract).toContain('pub fn __constructor(e: &Env, admin: Address, manager: Address)');
+    expect(contract).toContain(
+      'fn set_supply_limit(e: &Env, token: Address, limit: i128, operator: Address)'
+    );
+    expect(contract).toContain(
+      'fn set_compliance_address(e: &Env, token: Address, compliance: Address, _operator: Address)'
+    );
   });
 
   it('prepends a review banner for under-review modules', () => {
@@ -60,8 +63,8 @@ describe('Compliance Module Contract Template', () => {
   it('generates upstream-aligned Cargo.toml for module crates', () => {
     const toml = generateComplianceModuleCargoToml(createEntry());
 
-    expect(toml).toContain('name = "supply-limit"');
-    expect(toml).toContain('crate-type = ["cdylib", "rlib"]');
+    expect(toml).toContain('name = "compliance-supply-limit"');
+    expect(toml).toContain('crate-type = ["cdylib"]');
     expect(toml).toContain('[package.metadata.stellar]');
     expect(toml).toContain('edition.workspace = true');
     expect(toml).toContain('stellar-access = { workspace = true }');
@@ -75,6 +78,8 @@ describe('Compliance Module Contract Template', () => {
 
     expect(supplyLimit).toContain('pub struct SupplyLimitContract;');
     expect(maxBalance).toContain('pub struct MaxBalanceContract;');
-    expect(maxBalance).toContain('fn set_max_balance(e: &Env, token: Address, max: i128)');
+    expect(maxBalance).toContain(
+      'fn set_max_balance(e: &Env, token: Address, max: i128, operator: Address)'
+    );
   });
 });

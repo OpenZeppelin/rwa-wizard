@@ -79,6 +79,25 @@ function createFullConfig(overrides?: Partial<RWAConfig>): RWAConfig {
   });
 }
 
+function createAllModulesConfig(): RWAConfig {
+  return createFullConfig({
+    compliance: {
+      modules: [
+        { moduleId: 'supply-limit', config: { limit: 1_000_000 } },
+        { moduleId: 'max-balance', config: { maxBalance: 50_000 } },
+        { moduleId: 'country-restrict', config: { restrictedCountries: ['US'] } },
+        { moduleId: 'country-allow', config: { allowedCountries: ['CH', 'SG'] } },
+        { moduleId: 'transfer-allow', config: { allowedUsers: ['GCEXAMPLEOWNER'] } },
+        { moduleId: 'initial-lockup-period', config: { lockupPeriodLedgers: 17_280 } },
+        {
+          moduleId: 'time-transfers-limits',
+          config: { limitDurationLedgers: 17_280, limitValue: 25_000 },
+        },
+      ],
+    },
+  });
+}
+
 function createMinimalConfig(): RWAConfig {
   return createBaseMinimalConfig();
 }
@@ -206,9 +225,9 @@ describe.skipIf(!!defaultCompileSkipReason)(
             'identity_verifier',
             'claim_topics_issuers',
             'identity_registry_storage',
-            'supply_limit',
-            'max_balance',
-            'country_restrict',
+            'compliance_supply_limit',
+            'compliance_max_balance',
+            'compliance_country_restrict',
           ],
           'Bundled compilation failed'
         );
@@ -227,6 +246,35 @@ describe.skipIf(!!defaultCompileSkipReason)(
         });
 
         await expectBuildSucceeds(projectDir, ['rwa_token'], 'Minimal bundled compilation failed');
+      },
+      COMPILE_TIMEOUT
+    );
+
+    it(
+      'should compile a bundled RWA project with every stable compliance module',
+      async () => {
+        const config = createAllModulesConfig();
+        const projectDir = writeGeneratedProject(testRoot, 'all-modules-bundled', config, {
+          allowUnderReviewModules: true,
+          ...(hasLocalContractsLibrary()
+            ? { contractsLibraryPath: LOCAL_STELLAR_CONTRACTS_PATH }
+            : {}),
+        });
+
+        await expectBuildSucceeds(
+          projectDir,
+          [
+            'rwa_token',
+            'compliance_supply_limit',
+            'compliance_max_balance',
+            'compliance_country_restrict',
+            'compliance_country_allow',
+            'compliance_transfer_allow',
+            'compliance_initial_lockup_period',
+            'compliance_time_transfers_limits',
+          ],
+          'All-modules bundled compilation failed'
+        );
       },
       COMPILE_TIMEOUT
     );
@@ -257,7 +305,12 @@ describe.skipIf(!!localCheckoutSkipReason)(
 
         await expectBuildSucceeds(
           projectDir,
-          ['rwa_token', 'supply_limit', 'max_balance', 'country_restrict'],
+          [
+            'rwa_token',
+            'compliance_supply_limit',
+            'compliance_max_balance',
+            'compliance_country_restrict',
+          ],
           'Local-checkout compilation failed'
         );
       },
