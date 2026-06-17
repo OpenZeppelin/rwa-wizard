@@ -66,6 +66,7 @@ export interface StellarOperatorRoleMeta {
 }
 
 export const STELLAR_OPERATOR_ROLES: readonly StellarOperatorRoleMeta[] = [
+  { id: 'manager', name: 'Manager' },
   { id: 'minter', name: 'Minting' },
   { id: 'burner', name: 'Burning' },
   { id: 'freezer', name: 'Freezing' },

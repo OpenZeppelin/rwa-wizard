@@ -31,6 +31,6 @@ export const IDENTITY_CONTROLS_COPY: ConceptDictionary = {
     description:
       'Let an authorized operator move tokens between two already-verified wallets without the sender\u2019s signature — required by most jurisdictions to execute court orders or succession.',
     infoCopy:
-      'The regulator-facing override: probate, divorce settlements, tax-seizure orders, regulatory clawbacks. Consent is bypassed but identity rules are not — the recipient must already hold a verified ONCHAINID with the required claims, and compliance pre-checks still run. A forced transfer into an ineligible jurisdiction will still revert.',
+      'The regulator-facing override: probate, divorce settlements, tax-seizure orders, regulatory clawbacks. Consent is bypassed but identity and compliance rules are not — the recipient must already hold a verified ONCHAINID with the required claims, and post-operation compliance hooks still run. A forced transfer into an ineligible jurisdiction will still revert.',
   },
 } as const;

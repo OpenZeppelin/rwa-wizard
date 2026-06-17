@@ -7,6 +7,7 @@ describe('OPERATOR_ROLES_COPY', () => {
   it('covers every predefined T-REX operator role', () => {
     assertDictionaryShape(OPERATOR_ROLES_COPY, {
       expectedIds: [
+        'role.manager',
         'role.minter',
         'role.burner',
         'role.freezer',

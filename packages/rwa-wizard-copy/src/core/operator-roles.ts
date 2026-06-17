@@ -6,6 +6,13 @@ import type { ConceptDictionary } from '../types';
  * emitted by codegen; call sites join these entries keyed on `role.<id>`.
  */
 export const OPERATOR_ROLES_COPY: ConceptDictionary = {
+  'role.manager': {
+    id: 'role.manager',
+    description:
+      'Delegates day-to-day module configuration and hook wiring to a separate operator while the owner retains admin-only actions such as `set_compliance_address`.',
+    infoCopy:
+      'The manager role is the operational delegate for compliance modules, identity registry updates, and token operations that require `only_role(..., "manager")`. The contract admin (owner) keeps exclusive control of admin-gated actions like binding compliance addresses or transferring admin rights. Assign manager to a custody desk or automation account; keep admin on a higher-trust key.',
+  },
   'role.minter': {
     id: 'role.minter',
     description:

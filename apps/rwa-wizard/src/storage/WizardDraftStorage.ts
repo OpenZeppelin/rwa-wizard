@@ -1,3 +1,4 @@
+import { migrateRwaConfig } from '@openzeppelin/rwa-config';
 import { EntityStorage, withQuotaHandling } from '@openzeppelin/ui-storage';
 
 import type {
@@ -36,6 +37,23 @@ interface WizardDraftRecordPersisted extends WizardDraftRecord {
 export class WizardDraftStorage extends EntityStorage<WizardDraftRecordPersisted> {
   constructor() {
     super(db, WIZARD_DRAFTS_TABLE_NAME);
+  }
+
+  /**
+   * Returns a draft with forward-compatible config migrations applied.
+   */
+  override async get(id: string): Promise<WizardDraftRecordPersisted | undefined> {
+    const record = await super.get(id);
+    if (!record) {
+      return undefined;
+    }
+
+    const migratedConfig = migrateRwaConfig(record.config);
+    if (migratedConfig === record.config) {
+      return record;
+    }
+
+    return { ...record, config: migratedConfig };
   }
 
   /**
@@ -264,7 +282,7 @@ function sanitizeImportDraft(
     targetId,
     status: resolvedStatus,
     currentStep: resolvedStep,
-    config: config as unknown as WizardDraftRecordPersisted['config'],
+    config: migrateRwaConfig(config as unknown as WizardDraftRecordPersisted['config']),
     metadata: sanitizedMetadata,
   };
 }

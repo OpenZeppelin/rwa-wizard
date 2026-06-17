@@ -64,8 +64,8 @@ describe('STELLAR_IDENTITY_CONTROLS', () => {
 });
 
 describe('STELLAR_OPERATOR_ROLES', () => {
-  it('contains 10 predefined roles', () => {
-    expect(STELLAR_OPERATOR_ROLES).toHaveLength(10);
+  it('contains 11 predefined roles', () => {
+    expect(STELLAR_OPERATOR_ROLES).toHaveLength(11);
   });
 
   it('has unique ids', () => {
@@ -82,6 +82,10 @@ describe('STELLAR_OPERATOR_ROLES', () => {
 
   it('includes the document-manager role', () => {
     expect(STELLAR_OPERATOR_ROLES.find((r) => r.id === 'document-manager')).toBeDefined();
+  });
+
+  it('includes the manager role', () => {
+    expect(STELLAR_OPERATOR_ROLES.find((r) => r.id === 'manager')).toBeDefined();
   });
 });
 

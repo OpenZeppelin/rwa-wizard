@@ -258,5 +258,45 @@ describe('WizardDraftStorage', () => {
       expect(imported?.status).toBe('draft');
       expect(imported?.currentStep).toBe('asset');
     });
+
+    it('migrates transfer-restrict to transfer-allow on import', async () => {
+      const ids = await storage.import(
+        JSON.stringify({
+          schemaVersion: '1.0',
+          drafts: [
+            {
+              title: 'Legacy module',
+              targetId: 'stellar',
+              config: makeConfig({
+                compliance: {
+                  modules: [{ moduleId: 'transfer-restrict' }],
+                },
+              }),
+              metadata: {},
+            },
+          ],
+        })
+      );
+      const imported = await storage.get(ids[0]);
+      expect(imported?.config.compliance.modules).toEqual([{ moduleId: 'transfer-allow' }]);
+    });
+  });
+
+  describe('get', () => {
+    it('migrates transfer-restrict to transfer-allow when loading from IndexedDB', async () => {
+      const id = await storage.create({
+        title: 'Legacy stored draft',
+        targetId: 'stellar',
+        config: makeConfig({
+          compliance: {
+            modules: [{ moduleId: 'transfer-restrict' }],
+          },
+        }),
+        metadata: { isManuallyRenamed: false, importSource: 'manual' },
+      });
+
+      const loaded = await storage.get(id);
+      expect(loaded?.config.compliance.modules).toEqual([{ moduleId: 'transfer-allow' }]);
+    });
   });
 });
