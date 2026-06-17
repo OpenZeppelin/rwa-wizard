@@ -27,6 +27,10 @@ program
     '--allow-under-review-modules',
     'Allow compliance modules marked as under review upstream (not for production)'
   )
+  .option(
+    '--include-identity-support',
+    'Include claim-issuer, identity contract, and sign-claim helper artifacts (Stellar testnet flows)'
+  )
   .option('--chain <name>', 'Target chain', 'stellar')
   .action(
     async (opts: {
@@ -35,6 +39,7 @@ program
       zip?: boolean;
       chain: string;
       allowUnderReviewModules?: boolean;
+      includeIdentitySupport?: boolean;
     }) => {
       if (!opts.output) {
         if (opts.config) {
@@ -50,6 +55,7 @@ program
         zip: opts.zip,
         chain: opts.chain,
         allowUnderReviewModules: opts.allowUnderReviewModules,
+        includeIdentitySupport: opts.includeIdentitySupport,
       });
     }
   );

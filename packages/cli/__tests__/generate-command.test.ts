@@ -132,12 +132,50 @@ describe('generateCommand', () => {
         allowUnderReviewModules: true,
       });
 
+      expect(mockAdapter.migrateConfig).toHaveBeenCalled();
       expect(mockAdapter.validate).toHaveBeenCalledWith(expect.any(Object), {
         allowUnderReviewModules: true,
       });
       expect(mockAdapter.generateZip).toHaveBeenCalledWith(expect.any(Object), {
         allowUnderReviewModules: true,
       });
+    });
+
+    it('should use identity-support generation when requested', async () => {
+      const identityAdapter = createMockAdapter({
+        generateWithIdentitySupport: vi
+          .fn<() => ReturnType<typeof createMockGenerationResult>>()
+          .mockReturnValue(createMockGenerationResult()),
+      });
+      vi.mocked(getGenerator).mockReturnValue(identityAdapter);
+      vi.mocked(loadConfig).mockReturnValue(createValidConfig());
+
+      await generateCommand({
+        config: 'test.json',
+        output: '/output',
+        chain: 'stellar',
+        includeIdentitySupport: true,
+      });
+
+      expect(identityAdapter.generateWithIdentitySupport).toHaveBeenCalled();
+      expect(identityAdapter.generate).not.toHaveBeenCalled();
+    });
+
+    it('should exit when identity support is requested for an unsupported chain', async () => {
+      vi.mocked(loadConfig).mockReturnValue(createValidConfig());
+
+      await expect(
+        generateCommand({
+          config: 'test.json',
+          output: '/output',
+          chain: 'stellar',
+          includeIdentitySupport: true,
+        })
+      ).rejects.toThrow(ExitError);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('--include-identity-support')
+      );
     });
 
     it('should not offer config export in headless mode', async () => {

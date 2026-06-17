@@ -23,7 +23,7 @@ export function validateCommand(opts: ValidateOptions): void {
 
   let config: RWAConfig;
   try {
-    config = loadConfig(opts.config);
+    config = adapter.migrateConfig(loadConfig(opts.config));
   } catch (err) {
     logger.error((err as Error).message);
     process.exit(1);

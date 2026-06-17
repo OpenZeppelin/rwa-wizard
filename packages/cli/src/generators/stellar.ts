@@ -4,16 +4,22 @@ import type {
   ValidationResult,
   ZipResult,
 } from '@openzeppelin/codegen-core';
+import { generateZip as coreGenerateZip } from '@openzeppelin/codegen-core';
 import {
   generate,
+  generateRoleSymbol,
+  generateWithIdentitySupport,
   generateZip,
   getAvailableModules,
+  getEcosystemMetadata,
+  migrateStellarRwaConfig,
+  sanitizeDirectoryName,
   STELLAR_VALIDATION_CONSTANTS,
   validate,
 } from '@openzeppelin/codegen-rwa-stellar';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import type { ComplianceModuleInfo, GeneratorAdapter } from './registry';
+import type { ComplianceModuleInfo, GeneratorAdapter, OperatorRolePreset } from './registry';
 
 export const stellarAdapter: GeneratorAdapter = {
   name: 'Stellar/Soroban RWA Generator',
@@ -42,8 +48,24 @@ export const stellarAdapter: GeneratorAdapter = {
     customRpcPlaceholder: 'https://soroban-testnet.stellar.org:443',
   },
 
+  migrateConfig(config: RWAConfig): RWAConfig {
+    return migrateStellarRwaConfig(config);
+  },
+
+  getOperatorRolePresets(): OperatorRolePreset[] {
+    return getEcosystemMetadata().operatorRoles.map((role) => ({
+      id: role.id,
+      name: role.name,
+      defaultSymbol: generateRoleSymbol(role.name),
+    }));
+  },
+
   generate(config: RWAConfig, options?: GenerateOptions): GenerationResult {
     return generate(config, options);
+  },
+
+  generateWithIdentitySupport(config: RWAConfig, options?: GenerateOptions): GenerationResult {
+    return generateWithIdentitySupport(config, options);
   },
 
   validate(config: RWAConfig, options?: GenerateOptions): ValidationResult {
@@ -52,6 +74,15 @@ export const stellarAdapter: GeneratorAdapter = {
 
   async generateZip(config: RWAConfig, options?: GenerateOptions): Promise<ZipResult> {
     return generateZip(config, options);
+  },
+
+  async generateZipWithIdentitySupport(
+    config: RWAConfig,
+    options?: GenerateOptions
+  ): Promise<ZipResult> {
+    const result = generateWithIdentitySupport(config, options);
+    const dirName = sanitizeDirectoryName(config.token.symbol);
+    return coreGenerateZip(result, dirName, { onProgress: options?.onProgress });
   },
 
   getAvailableModules(): ComplianceModuleInfo[] {

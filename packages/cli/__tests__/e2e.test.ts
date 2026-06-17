@@ -167,6 +167,7 @@ describe('CLI E2E', () => {
       expect(output).toContain('--output');
       expect(output).toContain('--zip');
       expect(output).toContain('--chain');
+      expect(output).toContain('--include-identity-support');
     });
   });
 });

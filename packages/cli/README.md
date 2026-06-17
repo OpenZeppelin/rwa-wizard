@@ -49,7 +49,12 @@ rwa-wizard generate -c config.json -o ./my-rwa-project
 
 # Generate as a ZIP archive
 rwa-wizard generate -c config.json -o my-rwa-project.zip --zip
+
+# Include identity-onboarding artifacts for full Stellar testnet flows
+rwa-wizard generate -c config.json -o ./my-rwa-project --include-identity-support
 ```
+
+Legacy configs that still reference the removed `transfer-restrict` module are migrated automatically to `transfer-allow` before validation and generation.
 
 ## Commands
 
@@ -67,6 +72,7 @@ rwa-wizard generate [options]
 | `-o, --output <path>`            | Output directory (file tree) or file path (ZIP).                                                    | `.`       |
 | `--zip`                          | Output as a ZIP archive instead of a file tree.                                                       | `false`   |
 | `--allow-under-review-modules`   | Allow compliance modules marked under review upstream. **Not for production.**                      | `false`   |
+| `--include-identity-support`     | Include claim-issuer, identity contract, and sign-claim helper artifacts (Stellar testnet flows). | `false`   |
 | `--chain <name>`                 | Target chain.                                                                                       | `stellar` |
 
 ### `validate`
@@ -186,6 +192,21 @@ my-rwa-project/
 ```
 
 All 5 core contracts are always generated. Compliance module contracts are added based on your selection.
+
+With `--include-identity-support`, the output also includes upstream claim-issuer and identity contracts plus a `sign-claim` helper tool for testnet identity onboarding.
+
+### Deploying with split admin/manager roles
+
+Generated `scripts/deploy.sh` supports separate Stellar CLI signers when the configured admin and manager addresses differ:
+
+```bash
+export SOURCE_ACCOUNT=deployer
+export ADMIN_SOURCE_ACCOUNT=admin-identity
+export MANAGER_SOURCE_ACCOUNT=manager-identity
+./scripts/deploy.sh
+```
+
+When admin and manager resolve to the same address, `SOURCE_ACCOUNT` is used for both.
 
 ## Architecture
 

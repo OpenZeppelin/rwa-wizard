@@ -85,7 +85,7 @@ describe('complianceStep', () => {
         id: 'limit',
         name: 'Country Limit',
         description: 'Allowed countries',
-        requiredHooks: ['canTransfer', 'created'],
+        requiredHooks: ['transferred', 'created'],
         configFields: [
           { key: 'maxSupply', label: 'Max supply', type: 'number', required: true },
           { key: 'countries', label: 'Countries', type: 'string[]', required: true },
@@ -107,7 +107,7 @@ describe('complianceStep', () => {
         id: 'limit',
         name: 'Country Limit',
         description: 'Allowed countries',
-        requiredHooks: ['canTransfer', 'created'],
+        requiredHooks: ['transferred', 'created'],
         configFields: [
           { key: 'maxSupply', label: 'Max supply', type: 'number', required: true },
           { key: 'countries', label: 'Countries', type: 'string[]', required: true },
@@ -128,7 +128,7 @@ describe('complianceStep', () => {
 
     const result = await complianceStep([
       makeModule(),
-      makeModule({ id: 'limit', name: 'Transfer Limit', requiredHooks: ['canTransfer'] }),
+      makeModule({ id: 'limit', name: 'Transfer Limit', requiredHooks: ['transferred'] }),
     ]);
 
     expect(result.modules).toHaveLength(2);

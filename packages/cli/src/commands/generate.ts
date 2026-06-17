@@ -20,6 +20,8 @@ export interface GenerateOptions {
   chain: string;
   /** When true, pass through to stellar codegen (not for production). */
   allowUnderReviewModules?: boolean;
+  /** Include claim-issuer, identity contract, and sign-claim helper artifacts (Stellar). */
+  includeIdentitySupport?: boolean;
 }
 
 function formatBytes(bytes: number): string {
@@ -43,7 +45,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
 
   if (opts.config) {
     try {
-      config = loadConfig(opts.config);
+      config = adapter.migrateConfig(loadConfig(opts.config));
     } catch (err) {
       logger.error((err as Error).message);
       process.exit(1);
@@ -112,10 +114,17 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
 
   const s = p.spinner();
 
+  if (opts.includeIdentitySupport && !adapter.generateWithIdentitySupport) {
+    logger.error(`Chain "${opts.chain}" does not support --include-identity-support.`);
+    process.exit(1);
+  }
+
   if (useZip) {
     s.start('Generating ZIP archive...');
     try {
-      const zipResult = await adapter.generateZip(config, coreOptions);
+      const zipResult = opts.includeIdentitySupport
+        ? await adapter.generateZipWithIdentitySupport!(config, coreOptions)
+        : await adapter.generateZip(config, coreOptions);
       const writeResult = await writeZip(zipResult, resolvedOutput);
       s.stop('ZIP archive generated');
 
@@ -137,7 +146,9 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
   } else {
     s.start('Generating project files...');
     try {
-      const result = adapter.generate(config, coreOptions);
+      const result = opts.includeIdentitySupport
+        ? adapter.generateWithIdentitySupport!(config, coreOptions)
+        : adapter.generate(config, coreOptions);
       const writeResult = writeFileTree(result, resolvedOutput);
       s.stop('Project files generated');
 

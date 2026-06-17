@@ -36,7 +36,7 @@ export async function runWizard(
   const availableModules = adapter.getAvailableModules();
   const compliance = await complianceStep(availableModules);
 
-  const accessControl = await rolesStep(hints);
+  const accessControl = await rolesStep(hints, adapter.getOperatorRolePresets());
   const deployment = await deploymentStep(adapter);
 
   const config: RWAConfig = {

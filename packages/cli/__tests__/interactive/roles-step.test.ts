@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ChainHints } from '../../src/generators/registry';
+import type { ChainHints, OperatorRolePreset } from '../../src/generators/registry';
 import { rolesStep } from '../../src/interactive/steps/roles';
 import { createMockHints } from '../helpers';
 
@@ -8,6 +8,7 @@ const mockPrompts = vi.hoisted(() => ({
   text: vi.fn(),
   confirm: vi.fn(),
   select: vi.fn(),
+  multiselect: vi.fn(),
   isCancel: vi.fn().mockReturnValue(false),
   cancel: vi.fn(),
   log: { step: vi.fn() },
@@ -144,5 +145,25 @@ describe('rolesStep', () => {
     const longSymbol = 'x'.repeat(hints.roleSymbolMaxLength + 1);
     expect(validator(longSymbol)).toBeDefined();
     expect(validator('ok')).toBeUndefined();
+  });
+
+  it('should configure predefined roles when presets are provided', async () => {
+    const presets: OperatorRolePreset[] = [
+      { id: 'manager', name: 'Manager', defaultSymbol: 'manager' },
+      { id: 'minter', name: 'Minting', defaultSymbol: 'minting' },
+    ];
+
+    mockPrompts.select.mockResolvedValueOnce('single-owner');
+    mockPrompts.text.mockResolvedValueOnce('GCOWNERADDR');
+    mockPrompts.multiselect.mockResolvedValueOnce(['manager']);
+    mockPrompts.text.mockResolvedValueOnce('GCMGR1');
+    mockPrompts.confirm.mockResolvedValueOnce(false);
+
+    const result = await rolesStep(hints, presets);
+
+    expect(result.roles).toEqual([
+      { name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] },
+    ]);
+    expect(mockPrompts.multiselect).toHaveBeenCalled();
   });
 });
