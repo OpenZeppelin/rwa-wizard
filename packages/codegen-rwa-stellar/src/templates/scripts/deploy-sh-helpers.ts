@@ -147,19 +147,43 @@ export function buildDeploySection(
   return lines.join('\n');
 }
 
+/** Which configured Stellar CLI identity should sign an invoke transaction. */
+export type InvokeSignerRole = 'admin' | 'manager' | 'deploy';
+
+function resolveInvokeSourceAccountVar(role: InvokeSignerRole): string {
+  switch (role) {
+    case 'admin':
+      return '$ADMIN_SOURCE_ACCOUNT';
+    case 'manager':
+      return '$MANAGER_SOURCE_ACCOUNT';
+    case 'deploy':
+      return '$SOURCE_ACCOUNT';
+    default: {
+      const _exhaustive: never = role;
+      return _exhaustive;
+    }
+  }
+}
+
 /**
  * Build a shell-safe `stellar contract invoke` command.
+ *
+ * Post-deploy calls must sign with the CLI identity that controls the on-chain
+ * `operator` address (manager role) or the contract admin, not always the
+ * deploy payer account.
  */
 export function buildInvokeCommand(
   contractAddr: string,
   fnName: string,
   args: string,
-  networkFlag: string
+  networkFlag: string,
+  signerRole: InvokeSignerRole = 'manager'
 ): string {
+  const sourceAccountVar = resolveInvokeSourceAccountVar(signerRole);
   const commandLines = [
     'stellar contract invoke \\',
     `  --id ${contractAddr} \\`,
-    '  --source-account "$SOURCE_ACCOUNT" \\',
+    `  --source-account "${sourceAccountVar}" \\`,
     `  ${networkFlag} \\`,
     '  -- \\',
     `  ${fnName}`,

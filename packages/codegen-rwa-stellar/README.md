@@ -120,8 +120,9 @@ pnpm --filter @openzeppelin/codegen-rwa-stellar test:manual:e2e -- \
 Notes:
 
 - The default sample uses the placeholder `__STELLAR_E2E_ADDRESS__`, so you must pass `--address` (or `STELLAR_E2E_ADDRESS`) unless your custom config already contains real addresses.
-- Pass `--source-account <identity>` or export `SOURCE_ACCOUNT` / `STELLAR_ACCOUNT` so the generated `deploy.sh` can sign deploy and invoke transactions.
-- The chosen source account must be able to authorize the admin/operator address used by the generated deployment script.
+- Pass `--source-account <identity>` or export `SOURCE_ACCOUNT` / `STELLAR_ACCOUNT` so the generated `deploy.sh` can pay for and sign contract deployments.
+- When the configured owner and Manager role use different addresses, also set `ADMIN_SOURCE_ACCOUNT` and `MANAGER_SOURCE_ACCOUNT` to the Stellar CLI identities that control those addresses. Post-deploy invokes sign with the matching role account; `set_compliance_address` uses the admin signer, while module configuration and hook wiring use the manager signer.
+- If owner and Manager share the same address, `SOURCE_ACCOUNT` is enough for deploy and post-deploy configuration.
 - If your config sets `token.initialSupply`, expect a validation warning and a successful deploy without auto-minting; mint only after onboarding a verified recipient identity and claim stack.
 - If you need an explicit signer override, you can also pass `--sign-with-key <identity>` or use `STELLAR_SIGN_WITH_KEY`.
 - Pass `--contracts-library-path /absolute/path/to/stellar-contracts` if you want the manual flow to use local path dependencies instead of the bundled git-pinned source.

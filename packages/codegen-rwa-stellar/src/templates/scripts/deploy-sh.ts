@@ -36,6 +36,8 @@ export function generateDeploySh(config: RWAConfig): string {
   sections.push(`ADMIN="${shellEscape(adminAddress)}"`);
   sections.push(`MANAGER="${shellEscape(managerAddress)}"`);
   sections.push('SOURCE_ACCOUNT="${SOURCE_ACCOUNT:-${STELLAR_ACCOUNT:-}}"');
+  sections.push('ADMIN_SOURCE_ACCOUNT="${ADMIN_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
+  sections.push('MANAGER_SOURCE_ACCOUNT="${MANAGER_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
   sections.push('');
   sections.push('if [ -z "$SOURCE_ACCOUNT" ]; then');
   sections.push('  echo "Missing Stellar source account."');
@@ -46,6 +48,16 @@ export function generateDeploySh(config: RWAConfig): string {
   sections.push('  exit 1');
   sections.push('fi');
   sections.push('');
+  sections.push('if [ "$ADMIN" != "$MANAGER" ]; then');
+  sections.push(
+    '  echo "Admin and Manager addresses differ — set ADMIN_SOURCE_ACCOUNT and MANAGER_SOURCE_ACCOUNT to Stellar CLI identities that control those addresses."'
+  );
+  sections.push(
+    '  echo "Post-deploy invokes sign with the matching role account; deploy transactions still use SOURCE_ACCOUNT."'
+  );
+  sections.push('  echo ""');
+  sections.push('fi');
+  sections.push('');
 
   sections.push(
     ...shellSection(
@@ -53,8 +65,11 @@ export function generateDeploySh(config: RWAConfig): string {
     )
   );
   sections.push(shellEcho(`  Network:        ${shellSafeDeploymentName}`));
-  sections.push(shellEcho('  Source Account: $SOURCE_ACCOUNT'));
+  sections.push(shellEcho('  Deploy Signer:  $SOURCE_ACCOUNT'));
   sections.push(shellEcho('  Admin:          $ADMIN'));
+  sections.push(shellEcho('  Manager:        $MANAGER'));
+  sections.push(shellEcho('  Admin Signer:   $ADMIN_SOURCE_ACCOUNT'));
+  sections.push(shellEcho('  Manager Signer: $MANAGER_SOURCE_ACCOUNT'));
   sections.push('');
   const { deployedContracts, lines: deploymentSections } = buildDeploymentSections(
     config,

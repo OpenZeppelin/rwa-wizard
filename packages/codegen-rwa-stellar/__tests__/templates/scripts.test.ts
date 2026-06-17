@@ -183,12 +183,39 @@ describe('deploy.sh template', () => {
       expect(script).toContain('--source-account "$SOURCE_ACCOUNT"');
     });
 
-    it('should thread SOURCE_ACCOUNT into post-deploy invoke commands', () => {
+    it('should define role-specific invoke signers with SOURCE_ACCOUNT defaults', () => {
       const config = createValidConfig();
       const script = generateDeploySh(config);
 
+      expect(script).toContain('ADMIN_SOURCE_ACCOUNT="${ADMIN_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
+      expect(script).toContain('MANAGER_SOURCE_ACCOUNT="${MANAGER_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
+    });
+
+    it('should warn when admin and manager addresses differ', () => {
+      const config = createValidConfig();
+      const script = generateDeploySh(config);
+
+      expect(script).toContain('if [ "$ADMIN" != "$MANAGER" ]; then');
+      expect(script).toContain('ADMIN_SOURCE_ACCOUNT and MANAGER_SOURCE_ACCOUNT');
+    });
+
+    it('should use role-specific signers for post-deploy invoke commands', () => {
+      const config = createValidConfig({
+        compliance: {
+          modules: [{ moduleId: 'supply-limit', config: { limit: 1000000 } }],
+        },
+      });
+      const script = generateDeploySh(config);
+
       const bindSection = script.slice(script.indexOf('stellar contract invoke \\'));
-      expect(bindSection).toContain('--source-account "$SOURCE_ACCOUNT"');
+      expect(bindSection).toContain('--source-account "$MANAGER_SOURCE_ACCOUNT"');
+
+      expect(script).toMatch(
+        /--source-account "\$ADMIN_SOURCE_ACCOUNT" \\\n[\s\S]*?set_compliance_address/
+      );
+      expect(script).toContain(
+        'set_compliance_address \\\n  --token "$RWA_TOKEN_ADDRESS" --compliance "$COMPLIANCE_ADDRESS" --operator "$ADMIN"'
+      );
     });
   });
 
@@ -576,7 +603,7 @@ describe('deploy.sh template', () => {
       });
       const script = generateDeploySh(config);
 
-      expect(script).toContain('Network:  Stellar Testnet');
+      expect(script).toContain('Network:        Stellar Testnet');
     });
 
     it('should shell-escape config-derived labels in deploy output and summary', () => {
@@ -609,7 +636,6 @@ describe('deploy.sh template', () => {
         `Deployment Complete — ${shellEscape(tokenName)} (${shellEscape(tokenSymbol)})`
       );
       expect(script).toContain(`Network:        ${shellEscape(networkLabel)}`);
-      expect(script).toContain(`Network:  ${shellEscape(networkLabel)}`);
       expect(script).toContain(`Claim topic 1 (${shellEscape(claimTopicName)})`);
       expect(script).toContain(`--trusted_issuer "${shellEscape(issuerAddress)}"`);
     });
