@@ -101,17 +101,6 @@ describe('Stellar Adapter', () => {
     });
   });
 
-  describe('migrateConfig', () => {
-    it('should rename transfer-restrict to transfer-allow', () => {
-      const config = createValidConfig();
-      config.compliance.modules = [{ moduleId: 'transfer-restrict' }];
-
-      const migrated = stellarAdapter.migrateConfig(config);
-
-      expect(migrated.compliance.modules).toEqual([{ moduleId: 'transfer-allow' }]);
-    });
-  });
-
   describe('getOperatorRolePresets', () => {
     it('should include manager as the first preset', () => {
       const presets = stellarAdapter.getOperatorRolePresets();

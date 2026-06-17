@@ -45,7 +45,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
 
   if (opts.config) {
     try {
-      config = adapter.migrateConfig(loadConfig(opts.config));
+      config = loadConfig(opts.config);
     } catch (err) {
       logger.error((err as Error).message);
       process.exit(1);

@@ -112,9 +112,7 @@ describe('generateCommand', () => {
             chain: 'stellar',
           })
         ).rejects.toThrow(ExitError);
-        expect(logger.error).toHaveBeenCalledWith(
-          expect.stringContaining('When using --zip')
-        );
+        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('When using --zip'));
         expect(mockAdapter.generateZip).not.toHaveBeenCalled();
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -132,7 +130,6 @@ describe('generateCommand', () => {
         allowUnderReviewModules: true,
       });
 
-      expect(mockAdapter.migrateConfig).toHaveBeenCalled();
       expect(mockAdapter.validate).toHaveBeenCalledWith(expect.any(Object), {
         allowUnderReviewModules: true,
       });

@@ -12,7 +12,6 @@ import {
   generateZip,
   getAvailableModules,
   getEcosystemMetadata,
-  migrateStellarRwaConfig,
   sanitizeDirectoryName,
   STELLAR_VALIDATION_CONSTANTS,
   validate,
@@ -46,10 +45,6 @@ export const stellarAdapter: GeneratorAdapter = {
     ],
     supportsCustomRpc: true,
     customRpcPlaceholder: 'https://soroban-testnet.stellar.org:443',
-  },
-
-  migrateConfig(config: RWAConfig): RWAConfig {
-    return migrateStellarRwaConfig(config);
   },
 
   getOperatorRolePresets(): OperatorRolePreset[] {

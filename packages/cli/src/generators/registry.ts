@@ -75,8 +75,6 @@ export interface GeneratorAdapter {
   validate(config: RWAConfig, options?: GenerateOptions): ValidationResult;
   generateZip(config: RWAConfig, options?: GenerateOptions): Promise<ZipResult>;
   getAvailableModules(): ComplianceModuleInfo[];
-  /** Apply chain-specific forward-compatible config migrations before validate/generate. */
-  migrateConfig(config: RWAConfig): RWAConfig;
   /** Predefined operator roles for the interactive wizard, if any. */
   getOperatorRolePresets(): OperatorRolePreset[];
   /** Optional identity-onboarding artifacts (claim issuer, identity contract, sign-claim tool). */

@@ -161,9 +161,7 @@ describe('rolesStep', () => {
 
     const result = await rolesStep(hints, presets);
 
-    expect(result.roles).toEqual([
-      { name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] },
-    ]);
+    expect(result.roles).toEqual([{ name: 'Manager', symbol: 'manager', addresses: ['GCMGR1'] }]);
     expect(mockPrompts.multiselect).toHaveBeenCalled();
   });
 });

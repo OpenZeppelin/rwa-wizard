@@ -54,8 +54,6 @@ rwa-wizard generate -c config.json -o my-rwa-project.zip --zip
 rwa-wizard generate -c config.json -o ./my-rwa-project --include-identity-support
 ```
 
-Legacy configs that still reference the removed `transfer-restrict` module are migrated automatically to `transfer-allow` before validation and generation.
-
 ## Commands
 
 ### `generate`
@@ -66,14 +64,14 @@ Generate an RWA token project.
 rwa-wizard generate [options]
 ```
 
-| Option                           | Description                                                                                         | Default   |
-| -------------------------------- | --------------------------------------------------------------------------------------------------- | --------- |
-| `-c, --config <path>`            | JSON config file (headless mode). Omit for interactive wizard.                                      | —         |
-| `-o, --output <path>`            | Output directory (file tree) or file path (ZIP).                                                    | `.`       |
-| `--zip`                          | Output as a ZIP archive instead of a file tree.                                                       | `false`   |
-| `--allow-under-review-modules`   | Allow compliance modules marked under review upstream. **Not for production.**                      | `false`   |
-| `--include-identity-support`     | Include claim-issuer, identity contract, and sign-claim helper artifacts (Stellar testnet flows). | `false`   |
-| `--chain <name>`                 | Target chain.                                                                                       | `stellar` |
+| Option                         | Description                                                                                       | Default   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------- | --------- |
+| `-c, --config <path>`          | JSON config file (headless mode). Omit for interactive wizard.                                    | —         |
+| `-o, --output <path>`          | Output directory (file tree) or file path (ZIP).                                                  | `.`       |
+| `--zip`                        | Output as a ZIP archive instead of a file tree.                                                   | `false`   |
+| `--allow-under-review-modules` | Allow compliance modules marked under review upstream. **Not for production.**                    | `false`   |
+| `--include-identity-support`   | Include claim-issuer, identity contract, and sign-claim helper artifacts (Stellar testnet flows). | `false`   |
+| `--chain <name>`               | Target chain.                                                                                     | `stellar` |
 
 ### `validate`
 
@@ -83,11 +81,11 @@ Validate a config file without generating any output.
 rwa-wizard validate -c config.json
 ```
 
-| Option                           | Description                                                                                       | Default   |
-| -------------------------------- | ------------------------------------------------------------------------------------------------- | --------- |
-| `-c, --config <path>`            | JSON config file to validate. **(required)**                                                      | —         |
-| `--allow-under-review-modules`   | Allow compliance modules marked under review upstream. **Not for production.**                    | `false`   |
-| `--chain <name>`                 | Target chain.                                                                                     | `stellar` |
+| Option                         | Description                                                                    | Default   |
+| ------------------------------ | ------------------------------------------------------------------------------ | --------- |
+| `-c, --config <path>`          | JSON config file to validate. **(required)**                                   | —         |
+| `--allow-under-review-modules` | Allow compliance modules marked under review upstream. **Not for production.** | `false`   |
+| `--chain <name>`               | Target chain.                                                                  | `stellar` |
 
 ### `modules`
 
@@ -154,12 +152,12 @@ See `examples/stellar-basic.json` for a ready-to-use example.
 
 ### Config Sections
 
-| Section                  | Key Fields                                                                                                   |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| **token**                | `name`, `symbol`, `decimals`, `initialSupply?`, `administrativeControls` (burnable/mintable/pausable), `documentManager.enabled` |
-| **identityVerification** | `claimTopics[]` (id + name), `trustedIssuers[]` (address + claimTopics), `controls` (addressFreezing/partialTokenFreezing/recovery/forcedTransfers) |
-| **compliance**           | `modules[]` — each with `moduleId` and optional module-specific `config`; hooks are auto-derived from the registry |
-| **accessControl**        | `ownership` (type + address), `roles[]` (name, symbol?, addresses)                                           |
+| Section                  | Key Fields                                                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **token**                | `name`, `symbol`, `decimals`, `initialSupply?`, `administrativeControls` (burnable/mintable/pausable), `documentManager.enabled`                             |
+| **identityVerification** | `claimTopics[]` (id + name), `trustedIssuers[]` (address + claimTopics), `controls` (addressFreezing/partialTokenFreezing/recovery/forcedTransfers)          |
+| **compliance**           | `modules[]` — each with `moduleId` and optional module-specific `config`; hooks are auto-derived from the registry                                           |
+| **accessControl**        | `ownership` (type + address), `roles[]` (name, symbol?, addresses)                                                                                           |
 | **deployment**           | `target` — either `{ kind: 'preset', ecosystem, networkId }` or `{ kind: 'custom', ecosystem, rpcUrl, explorerUrl?, label? }`, plus optional `sourceAccount` |
 
 ### Ownership Models

@@ -25,7 +25,6 @@ describe('Generator Registry', () => {
       validate: vi.fn() as GeneratorAdapter['validate'],
       generateZip: vi.fn() as GeneratorAdapter['generateZip'],
       getAvailableModules: vi.fn().mockReturnValue([]),
-      migrateConfig: vi.fn((config) => config),
       getOperatorRolePresets: vi.fn().mockReturnValue([]),
     };
   }
