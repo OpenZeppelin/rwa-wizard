@@ -582,12 +582,12 @@ function registerIdentity(participant, contracts, options, env, projectDir) {
       '--initial_profiles',
       buildCountryProfile(participant.country),
       '--operator',
-      env.ADMIN_ADDRESS,
+      env.MANAGER_ADDRESS,
     ],
     options,
     env,
     projectDir,
-    'admin'
+    'manager'
   );
 
   return identityAddress;
@@ -861,11 +861,11 @@ function main() {
     const tx = stellarInvoke(
       contracts.token,
       'mint',
-      ['--to', adminAddress, '--amount', '100', '--operator', managerAddress],
+      ['--to', adminAddress, '--amount', '100', '--operator', adminAddress],
       options,
       env,
       outputDir,
-      'manager'
+      'admin'
     );
     const balance = stellarView(
       contracts.token,
@@ -882,11 +882,11 @@ function main() {
     stellarInvokeResult(
       contracts.token,
       'mint',
-      ['--to', adminAddress, '--amount', '60', '--operator', managerAddress],
+      ['--to', adminAddress, '--amount', '60', '--operator', adminAddress],
       options,
       env,
       outputDir,
-      'manager'
+      'admin'
     )
   );
 
@@ -917,11 +917,11 @@ function main() {
     stellarInvokeResult(
       contracts.token,
       'mint',
-      ['--to', adminAddress, '--amount', '950', '--operator', managerAddress],
+      ['--to', adminAddress, '--amount', '950', '--operator', adminAddress],
       options,
       env,
       outputDir,
-      'manager'
+      'admin'
     )
   );
 

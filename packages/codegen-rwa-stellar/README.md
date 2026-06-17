@@ -143,6 +143,8 @@ For split owner/manager configs, set `ADMIN_SOURCE_ACCOUNT` and `MANAGER_SOURCE_
 pnpm e2e:testnet -- --split-roles
 ```
 
+The split-role path provisions separate admin and manager signers, then drives identity registration and module configuration through the manager operator while admin-only actions (such as `set_compliance_address`) stay on the owner signer.
+
 Use `--sign-with-key <identity>` only when the admin signer differs from the admin source account.
 
 The final summary prints each generated account/contract address with a Stellar Expert explorer link.
