@@ -77,7 +77,7 @@ export interface GeneratorAdapter {
   getAvailableModules(): ComplianceModuleInfo[];
   /** Predefined operator roles for the interactive wizard, if any. */
   getOperatorRolePresets(): OperatorRolePreset[];
-  /** Optional extended generation for identity onboarding when the chain generator provides it. */
+  /** Optional dev/testnet identity-onboarding scaffolding when the chain generator provides it. */
   generateWithIdentitySupport?(config: RWAConfig, options?: GenerateOptions): GenerationResult;
   generateZipWithIdentitySupport?(config: RWAConfig, options?: GenerateOptions): Promise<ZipResult>;
 }

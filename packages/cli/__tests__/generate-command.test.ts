@@ -156,6 +156,9 @@ describe('generateCommand', () => {
 
       expect(identityAdapter.generateWithIdentitySupport).toHaveBeenCalled();
       expect(identityAdapter.generate).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        '--include-identity-support adds example onboarding scaffolding for local and testnet demos. It is not a production identity stack.'
+      );
     });
 
     it('should exit when identity support is requested for an unsupported chain', async () => {

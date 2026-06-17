@@ -174,8 +174,9 @@ function addTypedCountryDataHelper(files: FileTree): FileTree {
 }
 
 /**
- * Generate the upstream identity-support contracts and claim-signing helper.
+ * Generate upstream example identity-onboarding contracts and a claim-signing helper.
  *
+ * Development and testnet scaffolding only — not a production onboarding stack.
  * The claim-signing helper is emitted as an excluded Cargo package because it
  * is a native binary, not a Soroban contract crate.
  */
@@ -184,8 +185,10 @@ export function generateIdentitySupportFiles(options?: GenerateOptions): Identit
 }
 
 /**
- * Generate the regular RWA project plus upstream claim issuer / identity
- * support used by complete testnet flows.
+ * Generate the regular RWA project plus example claim-issuer / identity
+ * scaffolding used to exercise complete local and testnet identity flows.
+ *
+ * Not for production — use real claim issuers and holder onboarding in live deployments.
  */
 export function generateWithIdentitySupport(
   config: RWAConfig,

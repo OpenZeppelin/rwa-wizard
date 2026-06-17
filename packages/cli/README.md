@@ -50,7 +50,7 @@ rwa-wizard generate -c config.json -o ./my-rwa-project
 # Generate as a ZIP archive
 rwa-wizard generate -c config.json -o my-rwa-project.zip --zip
 
-# Include optional identity-onboarding artifacts (Stellar generator today)
+# Dev/testnet identity scaffolding (Stellar generator today; not for production)
 rwa-wizard generate -c config.json -o ./my-rwa-project --include-identity-support --chain stellar
 ```
 
@@ -64,14 +64,14 @@ Generate an RWA token project.
 rwa-wizard generate [options]
 ```
 
-| Option                         | Description                                                                                    | Default   |
-| ------------------------------ | ---------------------------------------------------------------------------------------------- | --------- |
-| `-c, --config <path>`          | JSON config file (headless mode). Omit for interactive wizard.                                 | —         |
-| `-o, --output <path>`          | Output directory (file tree) or file path (ZIP).                                               | `.`       |
-| `--zip`                        | Output as a ZIP archive instead of a file tree.                                                | `false`   |
-| `--allow-under-review-modules` | Allow compliance modules marked under review upstream. **Not for production.**                 | `false`   |
-| `--include-identity-support`   | Include optional identity-onboarding artifacts when supported by the selected chain generator. | `false`   |
-| `--chain <name>`               | Target chain.                                                                                  | `stellar` |
+| Option                         | Description                                                                                                                          | Default   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| `-c, --config <path>`          | JSON config file (headless mode). Omit for interactive wizard.                                                                       | —         |
+| `-o, --output <path>`          | Output directory (file tree) or file path (ZIP).                                                                                     | `.`       |
+| `--zip`                        | Output as a ZIP archive instead of a file tree.                                                                                      | `false`   |
+| `--allow-under-review-modules` | Allow compliance modules marked under review upstream. **Not for production.**                                                       | `false`   |
+| `--include-identity-support`   | Include optional dev/testnet identity-onboarding scaffolding when supported by the selected chain generator. **Not for production.** | `false`   |
+| `--chain <name>`               | Target chain.                                                                                                                        | `stellar` |
 
 ### `validate`
 
@@ -191,7 +191,9 @@ my-rwa-project/
 
 All 5 core contracts are always generated. Compliance module contracts are added based on your selection.
 
-When the selected chain generator supports it, `--include-identity-support` adds optional identity-onboarding artifacts alongside the core project. The Stellar generator currently emits claim-issuer and identity contracts plus a sign-claim helper for testnet flows.
+When the selected chain generator supports it, `--include-identity-support` adds **development and testnet-only** example onboarding scaffolding alongside the core project. It is meant for local demos, automated testnet flows, and e2e validation — not as a production KYC or holder-onboarding stack.
+
+On Stellar today this emits upstream example claim-issuer and identity contracts plus a `sign-claim` helper tool. Production deployments should use your own claim issuers and real holder identity onboarding instead.
 
 ### Deploying with split admin/manager roles
 

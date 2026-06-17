@@ -6,7 +6,10 @@ import pc from 'picocolors';
 import type { GenerateOptions as CoreGenerateOptions } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { UNSUPPORTED_IDENTITY_SUPPORT_MESSAGE } from '../constants';
+import {
+  INCLUDE_IDENTITY_SUPPORT_WARNING,
+  UNSUPPORTED_IDENTITY_SUPPORT_MESSAGE,
+} from '../constants';
 import type { GeneratorAdapter } from '../generators/registry';
 import { getGenerator } from '../generators/registry';
 import { runWizard } from '../interactive/wizard';
@@ -21,7 +24,7 @@ export interface GenerateOptions {
   chain: string;
   /** When true, pass through to the chain generator (not for production). */
   allowUnderReviewModules?: boolean;
-  /** Request optional identity-onboarding artifacts when the chain generator supports them. */
+  /** Request dev/testnet identity-onboarding scaffolding when the chain generator supports it. */
   includeIdentitySupport?: boolean;
 }
 
@@ -118,6 +121,10 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
   if (opts.includeIdentitySupport && !adapter.generateWithIdentitySupport) {
     logger.error(UNSUPPORTED_IDENTITY_SUPPORT_MESSAGE);
     process.exit(1);
+  }
+
+  if (opts.includeIdentitySupport) {
+    logger.warn(INCLUDE_IDENTITY_SUPPORT_WARNING);
   }
 
   if (useZip) {
