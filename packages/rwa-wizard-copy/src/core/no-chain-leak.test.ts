@@ -27,6 +27,8 @@ const BANNED_TOKENS: ReadonlyArray<{ pattern: RegExp; label: string }> = [
   { pattern: /\bWASM\b/i, label: 'WASM' },
   { pattern: /\bledgers?\b/i, label: 'ledger-based unit' },
   { pattern: /\bpanick?(?:ed|ing|s)?\b/i, label: 'panic-based runtime behavior' },
+  { pattern: /\bonly_role\b/, label: 'Soroban only_role macro' },
+  { pattern: /set_compliance_address/, label: 'Soroban contract entry point' },
 ];
 
 describe('core dictionary: no chain-specific leaks', () => {

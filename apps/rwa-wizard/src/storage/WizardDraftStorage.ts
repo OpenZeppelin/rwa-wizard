@@ -1,4 +1,5 @@
-import { migrateRwaConfig } from '@openzeppelin/rwa-config';
+import { migrateStellarRwaConfig } from '@openzeppelin/codegen-rwa-stellar';
+import type { RWAConfig } from '@openzeppelin/rwa-config';
 import { EntityStorage, withQuotaHandling } from '@openzeppelin/ui-storage';
 
 import type {
@@ -19,6 +20,16 @@ const SUPPORTED_IMPORT_MAJORS = new Set(['1']);
 
 const VALID_STATUSES: ReadonlySet<WizardDraftStatus> = new Set(WIZARD_DRAFT_STATUSES);
 const VALID_STEPS: ReadonlySet<WizardStepId> = new Set(WIZARD_STEP_IDS);
+
+function migrateDraftConfig(
+  targetId: string,
+  config: WizardDraftRecordPersisted['config']
+): WizardDraftRecordPersisted['config'] {
+  if (targetId === 'stellar') {
+    return migrateStellarRwaConfig(config as RWAConfig) as WizardDraftRecordPersisted['config'];
+  }
+  return config;
+}
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -48,7 +59,7 @@ export class WizardDraftStorage extends EntityStorage<WizardDraftRecordPersisted
       return undefined;
     }
 
-    const migratedConfig = migrateRwaConfig(record.config);
+    const migratedConfig = migrateDraftConfig(record.targetId, record.config);
     if (migratedConfig === record.config) {
       return record;
     }
@@ -282,7 +293,7 @@ function sanitizeImportDraft(
     targetId,
     status: resolvedStatus,
     currentStep: resolvedStep,
-    config: migrateRwaConfig(config as unknown as WizardDraftRecordPersisted['config']),
+    config: migrateDraftConfig(targetId, config as unknown as WizardDraftRecordPersisted['config']),
     metadata: sanitizedMetadata,
   };
 }

@@ -108,6 +108,8 @@ export { getModuleById } from './modules/registry';
  */
 export { getEcosystemMetadata } from './ecosystem-metadata';
 
+export { migrateStellarRwaConfig } from './migrate';
+
 export type {
   StellarComplianceHook,
   StellarEcosystemMetadata,

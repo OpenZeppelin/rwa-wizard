@@ -1,11 +1,11 @@
-import type { ComplianceModuleSelection, RWAConfig } from './types';
+import type { ComplianceModuleSelection, RWAConfig } from '@openzeppelin/rwa-config';
 
-const MODULE_ID_MIGRATIONS: Readonly<Record<string, string>> = {
+const STELLAR_MODULE_ID_MIGRATIONS: Readonly<Record<string, string>> = {
   'transfer-restrict': 'transfer-allow',
 };
 
 function migrateComplianceModule(module: ComplianceModuleSelection): ComplianceModuleSelection {
-  const migratedId = MODULE_ID_MIGRATIONS[module.moduleId];
+  const migratedId = STELLAR_MODULE_ID_MIGRATIONS[module.moduleId];
   if (!migratedId) {
     return module;
   }
@@ -14,9 +14,9 @@ function migrateComplianceModule(module: ComplianceModuleSelection): ComplianceM
 }
 
 /**
- * Apply forward-compatible migrations to a stored or imported RWA config.
+ * Apply forward-compatible migrations to a stored or imported Stellar RWA config.
  */
-export function migrateRwaConfig(config: RWAConfig): RWAConfig {
+export function migrateStellarRwaConfig(config: RWAConfig): RWAConfig {
   const modules = config.compliance.modules.map(migrateComplianceModule);
   const changed = modules.some((module, index) => module !== config.compliance.modules[index]);
   if (!changed) {

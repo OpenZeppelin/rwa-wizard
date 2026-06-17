@@ -20,4 +20,12 @@ describe('STELLAR_OVERRIDE', () => {
       /ledgers/
     );
   });
+
+  it('keeps Soroban-specific manager role phrasing in the override layer', () => {
+    const copy = getCopyForChain('stellar');
+    const manager = copy.role('manager');
+
+    expect(manager.description).toMatch(/set_compliance_address/);
+    expect(manager.infoCopy).toMatch(/only_role/);
+  });
 });
