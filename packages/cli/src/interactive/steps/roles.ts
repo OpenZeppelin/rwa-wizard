@@ -38,10 +38,7 @@ async function collectOwnership(hints: ChainHints): Promise<OwnershipModel> {
   return { type: ownershipType as 'multi-sig' | 'dao', address: addr };
 }
 
-async function collectCustomRole(
-  hints: ChainHints,
-  roleIndex: number
-): Promise<OperatorRole> {
+async function collectCustomRole(hints: ChainHints, roleIndex: number): Promise<OperatorRole> {
   const name = await p.text({
     message: `Role #${roleIndex} — Name`,
     placeholder: 'e.g. Manager, Agent, Operator',
