@@ -662,7 +662,7 @@ function normalizeProof(value) {
 
 function createAssertionRunner(keepGoing) {
   const results = [];
-  void keepGoing;
+  let stopped = false;
 
   function record(name, ok, detail = '', proof) {
     const normalizedProof = proof?.trim();
@@ -671,11 +671,21 @@ function createAssertionRunner(keepGoing) {
     if (normalizedProof) {
       console.log(`  Proof: ${normalizedProof}`);
     }
+    if (!ok && !keepGoing) {
+      stopped = true;
+    }
+  }
+
+  function shouldRun() {
+    return keepGoing || !stopped;
   }
 
   return {
     results,
     expectSuccess(name, fn) {
+      if (!shouldRun()) {
+        return undefined;
+      }
       try {
         const value = fn();
         record(name, true, '', normalizeProof(value));
@@ -686,6 +696,9 @@ function createAssertionRunner(keepGoing) {
       }
     },
     expectFailure(name, fn) {
+      if (!shouldRun()) {
+        return;
+      }
       try {
         const result = fn();
         if (result?.ok === false) {
