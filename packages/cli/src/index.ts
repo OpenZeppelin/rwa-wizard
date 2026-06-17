@@ -8,6 +8,8 @@ import { stellarAdapter } from './generators/stellar';
 import { logger } from './utils/logger';
 import { getPackageVersion } from './utils/package-version';
 
+import { INCLUDE_IDENTITY_SUPPORT_FLAG_DESCRIPTION } from './constants';
+
 registerGenerator(stellarAdapter);
 
 const program = new Command();
@@ -27,10 +29,7 @@ program
     '--allow-under-review-modules',
     'Allow compliance modules marked as under review upstream (not for production)'
   )
-  .option(
-    '--include-identity-support',
-    'Include claim-issuer, identity contract, and sign-claim helper artifacts (Stellar testnet flows)'
-  )
+  .option('--include-identity-support', INCLUDE_IDENTITY_SUPPORT_FLAG_DESCRIPTION)
   .option('--chain <name>', 'Target chain', 'stellar')
   .action(
     async (opts: {

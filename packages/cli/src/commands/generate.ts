@@ -6,6 +6,7 @@ import pc from 'picocolors';
 import type { GenerateOptions as CoreGenerateOptions } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import { UNSUPPORTED_IDENTITY_SUPPORT_MESSAGE } from '../constants';
 import type { GeneratorAdapter } from '../generators/registry';
 import { getGenerator } from '../generators/registry';
 import { runWizard } from '../interactive/wizard';
@@ -18,9 +19,9 @@ export interface GenerateOptions {
   output: string;
   zip?: boolean;
   chain: string;
-  /** When true, pass through to stellar codegen (not for production). */
+  /** When true, pass through to the chain generator (not for production). */
   allowUnderReviewModules?: boolean;
-  /** Include claim-issuer, identity contract, and sign-claim helper artifacts (Stellar). */
+  /** Request optional identity-onboarding artifacts when the chain generator supports them. */
   includeIdentitySupport?: boolean;
 }
 
@@ -115,7 +116,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
   const s = p.spinner();
 
   if (opts.includeIdentitySupport && !adapter.generateWithIdentitySupport) {
-    logger.error(`Chain "${opts.chain}" does not support --include-identity-support.`);
+    logger.error(UNSUPPORTED_IDENTITY_SUPPORT_MESSAGE);
     process.exit(1);
   }
 

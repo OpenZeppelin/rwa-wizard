@@ -50,8 +50,8 @@ rwa-wizard generate -c config.json -o ./my-rwa-project
 # Generate as a ZIP archive
 rwa-wizard generate -c config.json -o my-rwa-project.zip --zip
 
-# Include identity-onboarding artifacts for full Stellar testnet flows
-rwa-wizard generate -c config.json -o ./my-rwa-project --include-identity-support
+# Include optional identity-onboarding artifacts (Stellar generator today)
+rwa-wizard generate -c config.json -o ./my-rwa-project --include-identity-support --chain stellar
 ```
 
 ## Commands
@@ -64,14 +64,14 @@ Generate an RWA token project.
 rwa-wizard generate [options]
 ```
 
-| Option                         | Description                                                                                       | Default   |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- | --------- |
-| `-c, --config <path>`          | JSON config file (headless mode). Omit for interactive wizard.                                    | —         |
-| `-o, --output <path>`          | Output directory (file tree) or file path (ZIP).                                                  | `.`       |
-| `--zip`                        | Output as a ZIP archive instead of a file tree.                                                   | `false`   |
-| `--allow-under-review-modules` | Allow compliance modules marked under review upstream. **Not for production.**                    | `false`   |
-| `--include-identity-support`   | Include claim-issuer, identity contract, and sign-claim helper artifacts (Stellar testnet flows). | `false`   |
-| `--chain <name>`               | Target chain.                                                                                     | `stellar` |
+| Option                         | Description                                                                                    | Default   |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- | --------- |
+| `-c, --config <path>`          | JSON config file (headless mode). Omit for interactive wizard.                                 | —         |
+| `-o, --output <path>`          | Output directory (file tree) or file path (ZIP).                                               | `.`       |
+| `--zip`                        | Output as a ZIP archive instead of a file tree.                                                | `false`   |
+| `--allow-under-review-modules` | Allow compliance modules marked under review upstream. **Not for production.**                 | `false`   |
+| `--include-identity-support`   | Include optional identity-onboarding artifacts when supported by the selected chain generator. | `false`   |
+| `--chain <name>`               | Target chain.                                                                                  | `stellar` |
 
 ### `validate`
 
@@ -191,11 +191,11 @@ my-rwa-project/
 
 All 5 core contracts are always generated. Compliance module contracts are added based on your selection.
 
-With `--include-identity-support`, the output also includes upstream claim-issuer and identity contracts plus a `sign-claim` helper tool for testnet identity onboarding.
+When the selected chain generator supports it, `--include-identity-support` adds optional identity-onboarding artifacts alongside the core project. The Stellar generator currently emits claim-issuer and identity contracts plus a sign-claim helper for testnet flows.
 
 ### Deploying with split admin/manager roles
 
-Generated `scripts/deploy.sh` supports separate Stellar CLI signers when the configured admin and manager addresses differ:
+Generated `scripts/deploy.sh` supports separate deploy signers when the configured admin and manager addresses differ. On Stellar, set distinct Stellar CLI identities:
 
 ```bash
 export SOURCE_ACCOUNT=deployer

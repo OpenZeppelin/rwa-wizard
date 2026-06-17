@@ -171,7 +171,7 @@ describe('generateCommand', () => {
       ).rejects.toThrow(ExitError);
 
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('--include-identity-support')
+        'The selected chain generator does not support optional identity-onboarding artifacts'
       );
     });
 
