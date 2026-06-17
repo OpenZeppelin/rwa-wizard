@@ -93,5 +93,34 @@ describe('Stellar Adapter', () => {
         expect(Array.isArray(m.configFields)).toBe(true);
       }
     });
+
+    it('should expose transfer-allow instead of transfer-restrict', () => {
+      const modules = stellarAdapter.getAvailableModules();
+      expect(modules.some((m) => m.id === 'transfer-allow')).toBe(true);
+      expect(modules.some((m) => m.id === 'transfer-restrict')).toBe(false);
+    });
+  });
+
+  describe('getOperatorRolePresets', () => {
+    it('should include manager as the first preset', () => {
+      const presets = stellarAdapter.getOperatorRolePresets();
+      expect(presets[0]?.id).toBe('manager');
+      expect(presets[0]?.defaultSymbol).toBe('manager');
+    });
+  });
+
+  describe('identity support generation', () => {
+    it('should include identity-support artifacts when requested', () => {
+      const result = stellarAdapter.generateWithIdentitySupport!(createValidConfig());
+      expect(result.files['contracts/claim-issuer/src/contract.rs']).toBeDefined();
+      expect(result.files['contracts/identity/src/contract.rs']).toBeDefined();
+      expect(result.files['tools/sign-claim/src/main.rs']).toBeDefined();
+    });
+
+    it('should package identity-support artifacts in ZIP output', async () => {
+      const zip = await stellarAdapter.generateZipWithIdentitySupport!(createValidConfig());
+      expect(zip.data).toBeInstanceOf(Blob);
+      expect(zip.fileName).toContain('.zip');
+    });
   });
 });

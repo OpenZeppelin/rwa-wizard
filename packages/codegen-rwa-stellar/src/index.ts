@@ -64,7 +64,7 @@ export { generateRoleSymbol } from './constants';
  * Most consumers should use the standalone `generate()`, `validate()`, and `generateZip()`
  * functions rather than instantiating this class directly.
  */
-export { StellarRwaGenerator } from './stellar-rwa-generator';
+export { StellarRwaGenerator, sanitizeDirectoryName } from './stellar-rwa-generator';
 
 /**
  * Canonical progress phase strings for `StellarRwaGenerator.generate()`.

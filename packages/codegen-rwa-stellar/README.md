@@ -106,6 +106,12 @@ The emitted `config.json` is an informational snapshot of the source `RWAConfig`
 
 If `token.initialSupply` is set, the generated `deploy.sh` does **not** auto-mint it. The upstream Stellar claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before `mint` can succeed. The current generator scaffolds CTI, IRS, and the identity verifier, but not those investor-specific identity contracts.
 
+### Dev/testnet identity scaffolding
+
+`generateWithIdentitySupport()` adds upstream **example** claim-issuer and identity contracts plus a `sign-claim` helper for exercising complete local and testnet identity flows. This is development and demo scaffolding only — **not for production**. Use real claim issuers and holder onboarding in live deployments.
+
+The Stellar testnet e2e script (`pnpm e2e:testnet`) uses this path internally. The CLI exposes the same behavior via `--include-identity-support`.
+
 ### Manual E2E
 
 Use the checked-in full sample config to generate, build, and deploy a representative project:

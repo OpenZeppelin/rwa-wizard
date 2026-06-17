@@ -112,9 +112,7 @@ describe('generateCommand', () => {
             chain: 'stellar',
           })
         ).rejects.toThrow(ExitError);
-        expect(logger.error).toHaveBeenCalledWith(
-          expect.stringContaining('When using --zip')
-        );
+        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('When using --zip'));
         expect(mockAdapter.generateZip).not.toHaveBeenCalled();
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -138,6 +136,46 @@ describe('generateCommand', () => {
       expect(mockAdapter.generateZip).toHaveBeenCalledWith(expect.any(Object), {
         allowUnderReviewModules: true,
       });
+    });
+
+    it('should use identity-support generation when requested', async () => {
+      const identityAdapter = createMockAdapter({
+        generateWithIdentitySupport: vi
+          .fn<() => ReturnType<typeof createMockGenerationResult>>()
+          .mockReturnValue(createMockGenerationResult()),
+      });
+      vi.mocked(getGenerator).mockReturnValue(identityAdapter);
+      vi.mocked(loadConfig).mockReturnValue(createValidConfig());
+
+      await generateCommand({
+        config: 'test.json',
+        output: '/output',
+        chain: 'stellar',
+        includeIdentitySupport: true,
+      });
+
+      expect(identityAdapter.generateWithIdentitySupport).toHaveBeenCalled();
+      expect(identityAdapter.generate).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        '--include-identity-support adds example onboarding scaffolding for local and testnet demos. It is not a production identity stack.'
+      );
+    });
+
+    it('should exit when identity support is requested for an unsupported chain', async () => {
+      vi.mocked(loadConfig).mockReturnValue(createValidConfig());
+
+      await expect(
+        generateCommand({
+          config: 'test.json',
+          output: '/output',
+          chain: 'stellar',
+          includeIdentitySupport: true,
+        })
+      ).rejects.toThrow(ExitError);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'The selected chain generator does not support optional identity-onboarding artifacts'
+      );
     });
 
     it('should not offer config export in headless mode', async () => {

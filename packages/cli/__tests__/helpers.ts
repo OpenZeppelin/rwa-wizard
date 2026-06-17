@@ -102,6 +102,7 @@ export function createMockAdapter(overrides?: Partial<GeneratorAdapter>): Genera
     validate: vi.fn<() => ValidationResult>().mockReturnValue(createMockValidationResult()),
     generateZip: vi.fn<() => Promise<ZipResult>>().mockResolvedValue(createMockZipResult()),
     getAvailableModules: vi.fn().mockReturnValue([]),
+    getOperatorRolePresets: vi.fn().mockReturnValue([]),
     ...overrides,
   } as GeneratorAdapter;
 }

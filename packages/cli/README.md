@@ -49,6 +49,9 @@ rwa-wizard generate -c config.json -o ./my-rwa-project
 
 # Generate as a ZIP archive
 rwa-wizard generate -c config.json -o my-rwa-project.zip --zip
+
+# Dev/testnet identity scaffolding (Stellar generator today; not for production)
+rwa-wizard generate -c config.json -o ./my-rwa-project --include-identity-support --chain stellar
 ```
 
 ## Commands
@@ -61,13 +64,14 @@ Generate an RWA token project.
 rwa-wizard generate [options]
 ```
 
-| Option                           | Description                                                                                         | Default   |
-| -------------------------------- | --------------------------------------------------------------------------------------------------- | --------- |
-| `-c, --config <path>`            | JSON config file (headless mode). Omit for interactive wizard.                                      | —         |
-| `-o, --output <path>`            | Output directory (file tree) or file path (ZIP).                                                    | `.`       |
-| `--zip`                          | Output as a ZIP archive instead of a file tree.                                                       | `false`   |
-| `--allow-under-review-modules`   | Allow compliance modules marked under review upstream. **Not for production.**                      | `false`   |
-| `--chain <name>`                 | Target chain.                                                                                       | `stellar` |
+| Option                         | Description                                                                                                                          | Default   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| `-c, --config <path>`          | JSON config file (headless mode). Omit for interactive wizard.                                                                       | —         |
+| `-o, --output <path>`          | Output directory (file tree) or file path (ZIP).                                                                                     | `.`       |
+| `--zip`                        | Output as a ZIP archive instead of a file tree.                                                                                      | `false`   |
+| `--allow-under-review-modules` | Allow compliance modules marked under review upstream. **Not for production.**                                                       | `false`   |
+| `--include-identity-support`   | Include optional dev/testnet identity-onboarding scaffolding when supported by the selected chain generator. **Not for production.** | `false`   |
+| `--chain <name>`               | Target chain.                                                                                                                        | `stellar` |
 
 ### `validate`
 
@@ -77,11 +81,11 @@ Validate a config file without generating any output.
 rwa-wizard validate -c config.json
 ```
 
-| Option                           | Description                                                                                       | Default   |
-| -------------------------------- | ------------------------------------------------------------------------------------------------- | --------- |
-| `-c, --config <path>`            | JSON config file to validate. **(required)**                                                      | —         |
-| `--allow-under-review-modules`   | Allow compliance modules marked under review upstream. **Not for production.**                    | `false`   |
-| `--chain <name>`                 | Target chain.                                                                                     | `stellar` |
+| Option                         | Description                                                                    | Default   |
+| ------------------------------ | ------------------------------------------------------------------------------ | --------- |
+| `-c, --config <path>`          | JSON config file to validate. **(required)**                                   | —         |
+| `--allow-under-review-modules` | Allow compliance modules marked under review upstream. **Not for production.** | `false`   |
+| `--chain <name>`               | Target chain.                                                                  | `stellar` |
 
 ### `modules`
 
@@ -148,12 +152,12 @@ See `examples/stellar-basic.json` for a ready-to-use example.
 
 ### Config Sections
 
-| Section                  | Key Fields                                                                                                   |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| **token**                | `name`, `symbol`, `decimals`, `initialSupply?`, `administrativeControls` (burnable/mintable/pausable), `documentManager.enabled` |
-| **identityVerification** | `claimTopics[]` (id + name), `trustedIssuers[]` (address + claimTopics), `controls` (addressFreezing/partialTokenFreezing/recovery/forcedTransfers) |
-| **compliance**           | `modules[]` — each with `moduleId` and optional module-specific `config`; hooks are auto-derived from the registry |
-| **accessControl**        | `ownership` (type + address), `roles[]` (name, symbol?, addresses)                                           |
+| Section                  | Key Fields                                                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **token**                | `name`, `symbol`, `decimals`, `initialSupply?`, `administrativeControls` (burnable/mintable/pausable), `documentManager.enabled`                             |
+| **identityVerification** | `claimTopics[]` (id + name), `trustedIssuers[]` (address + claimTopics), `controls` (addressFreezing/partialTokenFreezing/recovery/forcedTransfers)          |
+| **compliance**           | `modules[]` — each with `moduleId` and optional module-specific `config`; hooks are auto-derived from the registry                                           |
+| **accessControl**        | `ownership` (type + address), `roles[]` (name, symbol?, addresses)                                                                                           |
 | **deployment**           | `target` — either `{ kind: 'preset', ecosystem, networkId }` or `{ kind: 'custom', ecosystem, rpcUrl, explorerUrl?, label? }`, plus optional `sourceAccount` |
 
 ### Ownership Models
@@ -186,6 +190,23 @@ my-rwa-project/
 ```
 
 All 5 core contracts are always generated. Compliance module contracts are added based on your selection.
+
+When the selected chain generator supports it, `--include-identity-support` adds **development and testnet-only** example onboarding scaffolding alongside the core project. It is meant for local demos, automated testnet flows, and e2e validation — not as a production KYC or holder-onboarding stack.
+
+On Stellar today this emits upstream example claim-issuer and identity contracts plus a `sign-claim` helper tool. Production deployments should use your own claim issuers and real holder identity onboarding instead.
+
+### Deploying with split admin/manager roles
+
+Generated `scripts/deploy.sh` supports separate deploy signers when the configured admin and manager addresses differ. On Stellar, set distinct Stellar CLI identities:
+
+```bash
+export SOURCE_ACCOUNT=deployer
+export ADMIN_SOURCE_ACCOUNT=admin-identity
+export MANAGER_SOURCE_ACCOUNT=manager-identity
+./scripts/deploy.sh
+```
+
+When admin and manager resolve to the same address, `SOURCE_ACCOUNT` is used for both.
 
 ## Architecture
 

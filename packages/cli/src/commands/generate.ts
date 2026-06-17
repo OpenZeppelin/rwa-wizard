@@ -6,6 +6,10 @@ import pc from 'picocolors';
 import type { GenerateOptions as CoreGenerateOptions } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import {
+  INCLUDE_IDENTITY_SUPPORT_WARNING,
+  UNSUPPORTED_IDENTITY_SUPPORT_MESSAGE,
+} from '../constants';
 import type { GeneratorAdapter } from '../generators/registry';
 import { getGenerator } from '../generators/registry';
 import { runWizard } from '../interactive/wizard';
@@ -18,8 +22,10 @@ export interface GenerateOptions {
   output: string;
   zip?: boolean;
   chain: string;
-  /** When true, pass through to stellar codegen (not for production). */
+  /** When true, pass through to the chain generator (not for production). */
   allowUnderReviewModules?: boolean;
+  /** Request dev/testnet identity-onboarding scaffolding when the chain generator supports it. */
+  includeIdentitySupport?: boolean;
 }
 
 function formatBytes(bytes: number): string {
@@ -112,10 +118,21 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
 
   const s = p.spinner();
 
+  if (opts.includeIdentitySupport && !adapter.generateWithIdentitySupport) {
+    logger.error(UNSUPPORTED_IDENTITY_SUPPORT_MESSAGE);
+    process.exit(1);
+  }
+
+  if (opts.includeIdentitySupport) {
+    logger.warn(INCLUDE_IDENTITY_SUPPORT_WARNING);
+  }
+
   if (useZip) {
     s.start('Generating ZIP archive...');
     try {
-      const zipResult = await adapter.generateZip(config, coreOptions);
+      const zipResult = opts.includeIdentitySupport
+        ? await adapter.generateZipWithIdentitySupport!(config, coreOptions)
+        : await adapter.generateZip(config, coreOptions);
       const writeResult = await writeZip(zipResult, resolvedOutput);
       s.stop('ZIP archive generated');
 
@@ -137,7 +154,9 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
   } else {
     s.start('Generating project files...');
     try {
-      const result = adapter.generate(config, coreOptions);
+      const result = opts.includeIdentitySupport
+        ? adapter.generateWithIdentitySupport!(config, coreOptions)
+        : adapter.generate(config, coreOptions);
       const writeResult = writeFileTree(result, resolvedOutput);
       s.stop('Project files generated');
 

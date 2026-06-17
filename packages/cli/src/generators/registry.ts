@@ -59,6 +59,14 @@ export interface ChainHints {
   customRpcPlaceholder?: string;
 }
 
+/** Predefined operator role offered in the interactive wizard. */
+export interface OperatorRolePreset {
+  id: string;
+  name: string;
+  /** Default on-chain symbol when the preset maps to a well-known role. */
+  defaultSymbol?: string;
+}
+
 export interface GeneratorAdapter {
   readonly name: string;
   readonly chain: string;
@@ -67,6 +75,11 @@ export interface GeneratorAdapter {
   validate(config: RWAConfig, options?: GenerateOptions): ValidationResult;
   generateZip(config: RWAConfig, options?: GenerateOptions): Promise<ZipResult>;
   getAvailableModules(): ComplianceModuleInfo[];
+  /** Predefined operator roles for the interactive wizard, if any. */
+  getOperatorRolePresets(): OperatorRolePreset[];
+  /** Optional dev/testnet identity-onboarding scaffolding when the chain generator provides it. */
+  generateWithIdentitySupport?(config: RWAConfig, options?: GenerateOptions): GenerationResult;
+  generateZipWithIdentitySupport?(config: RWAConfig, options?: GenerateOptions): Promise<ZipResult>;
 }
 
 const registry = new Map<string, GeneratorAdapter>();
