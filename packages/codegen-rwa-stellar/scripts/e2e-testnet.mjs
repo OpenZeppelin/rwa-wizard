@@ -40,7 +40,10 @@ function printUsage() {
   console.log(`Usage: pnpm e2e:testnet -- [options]
 
 Options:
-  --source-account <identity>      Stellar CLI identity or account used as source (default: ${DEFAULT_STELLAR_IDENTITY})
+  --source-account <identity>      Stellar CLI identity or account used as deploy payer (default: ${DEFAULT_STELLAR_IDENTITY})
+  --admin-source-account <identity>  CLI identity for admin/owner invokes (default: SOURCE_ACCOUNT)
+  --manager-source-account <identity>  CLI identity for manager invokes (default: SOURCE_ACCOUNT)
+  --split-roles                    Use separate funded admin and manager identities (creates manager if omitted)
   --sign-with-key <identity>       Optional signer override forwarded to Stellar CLI
   --output-dir <path>              Directory where the generated project will be written
   --network <name>                 Stellar CLI network name (default: testnet)
@@ -49,12 +52,16 @@ Options:
   --help                           Show this help
 
 Environment:
-  SOURCE_ACCOUNT / STELLAR_ACCOUNT Override the default source identity
+  SOURCE_ACCOUNT / STELLAR_ACCOUNT Override the default deploy payer identity
+  ADMIN_SOURCE_ACCOUNT             Admin/owner signer when owner != Manager (defaults to SOURCE_ACCOUNT)
+  MANAGER_SOURCE_ACCOUNT           Manager signer when owner != Manager (defaults to SOURCE_ACCOUNT)
   SIGN_WITH_KEY / STELLAR_SIGN_WITH_KEY
                                    Used when --sign-with-key is omitted
 
 Notes:
   - Happy path: run \`pnpm e2e:testnet\` with a funded Stellar CLI "${DEFAULT_STELLAR_IDENTITY}" identity.
+  - When owner and Manager share one address, SOURCE_ACCOUNT alone is enough for deploy and post-deploy invokes.
+  - For split owner/manager configs, set ADMIN_SOURCE_ACCOUNT and MANAGER_SOURCE_ACCOUNT (or pass --split-roles).
   - This script deploys real contracts on Stellar testnet.
   - It creates three funded temporary Stellar identities for test recipients.
   - The generated project includes upstream claim-issuer, identity, and sign-claim helpers.
@@ -65,11 +72,14 @@ function parseArgs(argv) {
   const options = {
     sourceAccount:
       process.env.SOURCE_ACCOUNT || process.env.STELLAR_ACCOUNT || DEFAULT_STELLAR_IDENTITY,
+    adminSourceAccount: process.env.ADMIN_SOURCE_ACCOUNT,
+    managerSourceAccount: process.env.MANAGER_SOURCE_ACCOUNT,
     signWithKey: process.env.SIGN_WITH_KEY ?? process.env.STELLAR_SIGN_WITH_KEY,
     outputDir: undefined,
     network: 'testnet',
     contractsLibraryPath: undefined,
     keepGoing: false,
+    splitRoles: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -79,6 +89,15 @@ function parseArgs(argv) {
     switch (arg) {
       case '--source-account':
         options.sourceAccount = argv[++index] ?? '';
+        break;
+      case '--admin-source-account':
+        options.adminSourceAccount = argv[++index] ?? '';
+        break;
+      case '--manager-source-account':
+        options.managerSourceAccount = argv[++index] ?? '';
+        break;
+      case '--split-roles':
+        options.splitRoles = true;
         break;
       case '--sign-with-key':
         options.signWithKey = argv[++index] ?? '';
@@ -173,6 +192,36 @@ function resolveIdentityAddress(identity) {
   return resolved.ok && isLikelyAccountAddress(address) ? address : undefined;
 }
 
+function resolveInvokeSourceAccount(env, role = 'deploy') {
+  switch (role) {
+    case 'admin':
+      return env.ADMIN_SOURCE_ACCOUNT ?? env.SOURCE_ACCOUNT;
+    case 'manager':
+      return env.MANAGER_SOURCE_ACCOUNT ?? env.SOURCE_ACCOUNT;
+    case 'deploy':
+      return env.SOURCE_ACCOUNT;
+    default:
+      throw new Error(`Unknown invoke signer role: ${role}`);
+  }
+}
+
+function verifyRoleSigner(roleLabel, expectedAddress, sourceIdentity) {
+  const resolved = resolveIdentityAddress(sourceIdentity);
+  if (!resolved) {
+    throw new Error(
+      `Could not resolve Stellar CLI identity for ${roleLabel}: ${sourceIdentity}. ` +
+        'Ensure the identity exists or pass a G-address directly.'
+    );
+  }
+  if (resolved !== expectedAddress) {
+    throw new Error(
+      `${roleLabel} signer mismatch: expected on-chain address ${expectedAddress}, ` +
+        `but CLI identity "${sourceIdentity}" resolves to ${resolved}. ` +
+        'Set ADMIN_SOURCE_ACCOUNT / MANAGER_SOURCE_ACCOUNT to identities that control the configured addresses.'
+    );
+  }
+}
+
 function resolveEnvironment(options) {
   const sourceAccount = options.sourceAccount?.trim();
   if (!sourceAccount) {
@@ -181,19 +230,46 @@ function resolveEnvironment(options) {
     );
   }
 
-  const authIdentity = options.signWithKey?.trim() || sourceAccount;
-  const adminAddress = resolveIdentityAddress(authIdentity);
+  const adminSourceAccount = options.adminSourceAccount?.trim() || sourceAccount;
+  const managerSourceAccount = options.managerSourceAccount?.trim() || sourceAccount;
+  const adminAddress = resolveIdentityAddress(options.signWithKey?.trim() || adminSourceAccount);
   if (!adminAddress) {
     throw new Error(
-      `Could not resolve a public account address for signer/source identity: ${authIdentity}`
+      `Could not resolve a public account address for admin identity: ${adminSourceAccount}`
     );
+  }
+
+  const managerAddress =
+    options.splitRoles || managerSourceAccount !== adminSourceAccount
+      ? resolveIdentityAddress(managerSourceAccount)
+      : adminAddress;
+  if (!managerAddress) {
+    throw new Error(
+      `Could not resolve a public account address for manager identity: ${managerSourceAccount}`
+    );
+  }
+
+  if (options.splitRoles && adminAddress === managerAddress) {
+    throw new Error(
+      '--split-roles requires admin and manager to resolve to different G-addresses.'
+    );
+  }
+
+  if (adminAddress !== managerAddress) {
+    verifyRoleSigner('Admin', adminAddress, adminSourceAccount);
+    verifyRoleSigner('Manager', managerAddress, managerSourceAccount);
   }
 
   return {
     adminAddress,
+    managerAddress,
     env: {
       SOURCE_ACCOUNT: sourceAccount,
       STELLAR_ACCOUNT: sourceAccount,
+      ADMIN_SOURCE_ACCOUNT: adminSourceAccount,
+      MANAGER_SOURCE_ACCOUNT: managerSourceAccount,
+      ADMIN_ADDRESS: adminAddress,
+      MANAGER_ADDRESS: managerAddress,
       ...(options.signWithKey
         ? {
             STELLAR_SIGN_WITH_KEY: options.signWithKey,
@@ -230,9 +306,10 @@ function createFundedIdentity(label, options) {
   };
 }
 
-function createBehaviorConfig(adminAddress, participants) {
+function createBehaviorConfig(adminAddress, managerAddress, participants) {
   const allowedUsers = [
     adminAddress,
+    managerAddress,
     participants.recipient.address,
     participants.blockedCountry.address,
   ];
@@ -283,7 +360,7 @@ function createBehaviorConfig(adminAddress, participants) {
         {
           name: 'Manager',
           symbol: 'manager',
-          addresses: [adminAddress],
+          addresses: [managerAddress],
         },
       ],
     },
@@ -339,7 +416,7 @@ function stellarDeploy(projectDir, options, env, wasmName, constructorArgs) {
   );
 }
 
-function stellarInvoke(contractId, fnName, fnArgs, options, env, projectDir) {
+function stellarInvoke(contractId, fnName, fnArgs, options, env, projectDir, signerRole = 'deploy') {
   return mustRunResult(
     'stellar',
     [
@@ -348,7 +425,7 @@ function stellarInvoke(contractId, fnName, fnArgs, options, env, projectDir) {
       '--id',
       contractId,
       '--source-account',
-      env.SOURCE_ACCOUNT,
+      resolveInvokeSourceAccount(env, signerRole),
       '--network',
       options.network,
       '--',
@@ -359,7 +436,15 @@ function stellarInvoke(contractId, fnName, fnArgs, options, env, projectDir) {
   );
 }
 
-function stellarInvokeResult(contractId, fnName, fnArgs, options, env, projectDir) {
+function stellarInvokeResult(
+  contractId,
+  fnName,
+  fnArgs,
+  options,
+  env,
+  projectDir,
+  signerRole = 'deploy'
+) {
   return runResult(
     'stellar',
     [
@@ -368,7 +453,7 @@ function stellarInvokeResult(contractId, fnName, fnArgs, options, env, projectDi
       '--id',
       contractId,
       '--source-account',
-      env.SOURCE_ACCOUNT,
+      resolveInvokeSourceAccount(env, signerRole),
       '--network',
       options.network,
       '--',
@@ -482,7 +567,8 @@ function registerIdentity(participant, contracts, options, env, projectDir) {
     ],
     options,
     env,
-    projectDir
+    projectDir,
+    'deploy'
   );
 
   stellarInvoke(
@@ -500,7 +586,8 @@ function registerIdentity(participant, contracts, options, env, projectDir) {
     ],
     options,
     env,
-    projectDir
+    projectDir,
+    'admin'
   );
 
   return identityAddress;
@@ -662,12 +749,22 @@ function main() {
   ensureCommand('stellar', ['--version'], 'Stellar CLI');
   ensureRustWasmTarget();
 
-  const { adminAddress, env: baseEnv } = resolveEnvironment(options);
-  const outputDir = options.outputDir ?? mkdtempSync(DEFAULT_OUTPUT_PREFIX);
-  const env = { ...baseEnv, ADMIN_ADDRESS: adminAddress };
+  if (options.splitRoles && !options.managerSourceAccount?.trim()) {
+    console.log('Creating funded manager identity for split-role e2e...');
+    options.managerSourceAccount = createFundedIdentity('manager', options).name;
+  }
 
-  console.log(`Using source account: ${env.SOURCE_ACCOUNT}`);
-  console.log(`Using admin/operator address: ${adminAddress}`);
+  const { adminAddress, managerAddress, env: baseEnv } = resolveEnvironment(options);
+  const outputDir = options.outputDir ?? mkdtempSync(DEFAULT_OUTPUT_PREFIX);
+  const env = { ...baseEnv };
+
+  console.log(`Using deploy payer: ${env.SOURCE_ACCOUNT}`);
+  console.log(`Using admin address: ${adminAddress}`);
+  console.log(`Using manager address: ${managerAddress}`);
+  if (adminAddress !== managerAddress) {
+    console.log(`Using admin signer: ${env.ADMIN_SOURCE_ACCOUNT}`);
+    console.log(`Using manager signer: ${env.MANAGER_SOURCE_ACCOUNT}`);
+  }
   console.log(`Writing generated project to: ${outputDir}`);
   console.log('Creating funded recipient identities...');
 
@@ -681,7 +778,7 @@ function main() {
   participants.blockedCountry.country = ISO_COUNTRY.US;
   participants.unallowed.country = ISO_COUNTRY.CH;
 
-  const config = createBehaviorConfig(adminAddress, participants);
+  const config = createBehaviorConfig(adminAddress, managerAddress, participants);
   const generateOptions = {
     allowUnderReviewModules: true,
     ...(options.contractsLibraryPath ? { contractsLibraryPath: options.contractsLibraryPath } : {}),
@@ -728,11 +825,12 @@ function main() {
       '--claim_topics',
       `[${TEST_CLAIM_TOPIC}]`,
       '--operator',
-      adminAddress,
+      managerAddress,
     ],
     options,
     env,
-    outputDir
+    outputDir,
+    'manager'
   );
   stellarInvoke(
     contracts.claimIssuer,
@@ -747,7 +845,8 @@ function main() {
     ],
     options,
     env,
-    outputDir
+    outputDir,
+    'admin'
   );
 
   for (const participant of Object.values(participants)) {
@@ -762,10 +861,11 @@ function main() {
     const tx = stellarInvoke(
       contracts.token,
       'mint',
-      ['--to', adminAddress, '--amount', '100', '--operator', adminAddress],
+      ['--to', adminAddress, '--amount', '100', '--operator', managerAddress],
       options,
       env,
-      outputDir
+      outputDir,
+      'manager'
     );
     const balance = stellarView(
       contracts.token,
@@ -782,10 +882,11 @@ function main() {
     stellarInvokeResult(
       contracts.token,
       'mint',
-      ['--to', adminAddress, '--amount', '60', '--operator', adminAddress],
+      ['--to', adminAddress, '--amount', '60', '--operator', managerAddress],
       options,
       env,
-      outputDir
+      outputDir,
+      'manager'
     )
   );
 
@@ -793,10 +894,11 @@ function main() {
     const tx = stellarInvoke(
       contracts.maxBalance,
       'set_max_balance',
-      ['--token', contracts.token, '--max', '2000', '--operator', adminAddress],
+      ['--token', contracts.token, '--max', '2000', '--operator', managerAddress],
       options,
       env,
-      outputDir
+      outputDir,
+      'manager'
     );
     const maxBalance = stellarView(
       contracts.maxBalance,
@@ -815,10 +917,11 @@ function main() {
     stellarInvokeResult(
       contracts.token,
       'mint',
-      ['--to', adminAddress, '--amount', '950', '--operator', adminAddress],
+      ['--to', adminAddress, '--amount', '950', '--operator', managerAddress],
       options,
       env,
-      outputDir
+      outputDir,
+      'manager'
     )
   );
 
@@ -826,10 +929,11 @@ function main() {
     const tx = stellarInvoke(
       contracts.transferAllow,
       'disallow_user',
-      ['--token', contracts.token, '--user', adminAddress, '--operator', adminAddress],
+      ['--token', contracts.token, '--user', adminAddress, '--operator', managerAddress],
       options,
       env,
-      outputDir
+      outputDir,
+      'manager'
     );
     const allowed = stellarView(
       contracts.transferAllow,
@@ -849,7 +953,8 @@ function main() {
       ['--from', adminAddress, '--to', participants.unallowed.address, '--amount', '1'],
       options,
       env,
-      outputDir
+      outputDir,
+      'admin'
     )
   );
 
@@ -857,10 +962,11 @@ function main() {
     const tx = stellarInvoke(
       contracts.transferAllow,
       'allow_user',
-      ['--token', contracts.token, '--user', adminAddress, '--operator', adminAddress],
+      ['--token', contracts.token, '--user', adminAddress, '--operator', managerAddress],
       options,
       env,
-      outputDir
+      outputDir,
+      'manager'
     );
     const allowed = stellarView(
       contracts.transferAllow,
@@ -880,7 +986,8 @@ function main() {
       ['--from', adminAddress, '--to', participants.blockedCountry.address, '--amount', '1'],
       options,
       env,
-      outputDir
+      outputDir,
+      'admin'
     )
   );
 
@@ -891,7 +998,8 @@ function main() {
       ['--from', adminAddress, '--to', participants.recipient.address, '--amount', '50'],
       options,
       env,
-      outputDir
+      outputDir,
+      'admin'
     );
     const sourceBalance = stellarView(
       contracts.token,
@@ -925,7 +1033,8 @@ function main() {
       ['--from', adminAddress, '--to', participants.recipient.address, '--amount', '20'],
       options,
       env,
-      outputDir
+      outputDir,
+      'admin'
     )
   );
 
@@ -933,6 +1042,7 @@ function main() {
     assert.results,
     {
       sourceAccount: participants.source.address,
+      managerAccount: managerAddress,
       recipientAccount: participants.recipient.address,
       blockedCountryAccount: participants.blockedCountry.address,
       unallowedAccount: participants.unallowed.address,

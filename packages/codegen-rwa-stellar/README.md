@@ -135,7 +135,15 @@ Run the full behavior e2e against Stellar testnet with the local Stellar CLI `de
 pnpm e2e:testnet
 ```
 
-Use `--source-account <identity>` or `SOURCE_ACCOUNT` only when you want a non-default funded identity. Use `--sign-with-key <identity>` only when the signer differs from the source account.
+Use `--source-account <identity>` or `SOURCE_ACCOUNT` only when you want a non-default funded identity. When owner and Manager share one address, `SOURCE_ACCOUNT` alone is enough for deploy and post-deploy configuration.
+
+For split owner/manager configs, set `ADMIN_SOURCE_ACCOUNT` and `MANAGER_SOURCE_ACCOUNT` (or pass `--admin-source-account` / `--manager-source-account`). To exercise split roles with a freshly funded manager identity:
+
+```bash
+pnpm e2e:testnet -- --split-roles
+```
+
+Use `--sign-with-key <identity>` only when the admin signer differs from the admin source account.
 
 The final summary prints each generated account/contract address with a Stellar Expert explorer link.
 

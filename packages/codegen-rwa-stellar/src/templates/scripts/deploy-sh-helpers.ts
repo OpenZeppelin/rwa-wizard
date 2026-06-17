@@ -203,3 +203,50 @@ export function buildInvokeCommand(
 export function moduleVarName(moduleId: string): string {
   return `MODULE_${moduleId.toUpperCase().replace(/-/g, '_')}_ADDRESS`;
 }
+
+/**
+ * Bash helpers that resolve Stellar CLI identities to G-addresses and verify
+ * configured signers match on-chain admin/manager addresses when they differ.
+ */
+export function buildRoleSignerPreflightChecks(): string[] {
+  return [
+    'resolve_cli_identity_address() {',
+    '  local identity="$1"',
+    '  if [[ "$identity" =~ ^G[A-Z2-7]{55}$ ]]; then',
+    '    echo "$identity"',
+    '    return 0',
+    '  fi',
+    '  local resolved',
+    '  resolved="$(stellar keys address "$identity" 2>/dev/null | tr -d \'[:space:]\' || true)"',
+    '  if [[ "$resolved" =~ ^G[A-Z2-7]{55}$ ]]; then',
+    '    echo "$resolved"',
+    '    return 0',
+    '  fi',
+    '  return 1',
+    '}',
+    '',
+    'verify_role_signer() {',
+    '  local role_label="$1"',
+    '  local expected_address="$2"',
+    '  local source_account="$3"',
+    '  local resolved',
+    '  if ! resolved="$(resolve_cli_identity_address "$source_account")"; then',
+    `    echo "${CLR.red}  ✗ Could not resolve Stellar CLI identity for \${role_label}: \${source_account}${CLR.rst}"`,
+    '    echo "    Ensure the identity exists (stellar keys generate <name> --fund ...) or pass a G-address directly."',
+    '    exit 1',
+    '  fi',
+    '  if [ "$resolved" != "$expected_address" ]; then',
+    `    echo "${CLR.red}  ✗ \${role_label} signer mismatch${CLR.rst}"`,
+    '    echo "    Expected on-chain address: $expected_address"',
+    '    echo "    CLI identity \\"$source_account\\" resolves to: $resolved"',
+    '    echo "    Set ADMIN_SOURCE_ACCOUNT / MANAGER_SOURCE_ACCOUNT to identities that control the configured addresses."',
+    '    exit 1',
+    '  fi',
+    '}',
+    '',
+    'if [ "$ADMIN" != "$MANAGER" ]; then',
+    '  verify_role_signer "Admin" "$ADMIN" "$ADMIN_SOURCE_ACCOUNT"',
+    '  verify_role_signer "Manager" "$MANAGER" "$MANAGER_SOURCE_ACCOUNT"',
+    'fi',
+  ];
+}

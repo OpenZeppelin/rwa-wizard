@@ -199,6 +199,29 @@ describe('deploy.sh template', () => {
       expect(script).toContain('ADMIN_SOURCE_ACCOUNT and MANAGER_SOURCE_ACCOUNT');
     });
 
+    it('should verify CLI identity addresses when admin and manager differ', () => {
+      const config = createValidConfig();
+      const script = generateDeploySh(config);
+
+      expect(script).toContain('resolve_cli_identity_address()');
+      expect(script).toContain('verify_role_signer "Admin" "$ADMIN" "$ADMIN_SOURCE_ACCOUNT"');
+      expect(script).toContain('verify_role_signer "Manager" "$MANAGER" "$MANAGER_SOURCE_ACCOUNT"');
+      expect(script).toContain('stellar keys address "$identity"');
+    });
+
+    it('should only run role signer verification inside an admin != manager guard', () => {
+      const config = createValidConfig();
+      const script = generateDeploySh(config);
+
+      const guardStart = script.indexOf('if [ "$ADMIN" != "$MANAGER" ]; then');
+      const adminVerify = script.indexOf('verify_role_signer "Admin"');
+      const managerVerify = script.indexOf('verify_role_signer "Manager"');
+
+      expect(guardStart).toBeGreaterThan(-1);
+      expect(adminVerify).toBeGreaterThan(guardStart);
+      expect(managerVerify).toBeGreaterThan(adminVerify);
+    });
+
     it('should use role-specific signers for post-deploy invoke commands', () => {
       const config = createValidConfig({
         compliance: {
