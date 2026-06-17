@@ -13,6 +13,10 @@ import {
 
 export interface WorkspaceTomlConfig {
   members: string[];
+  /** Paths under the workspace root that Cargo should ignore. */
+  exclude?: string[];
+  /** Additional registry dependencies needed by optional generated helper crates. */
+  extraWorkspaceDependencies?: Record<string, string>;
   /** When set, resolve upstream contract crates via local path instead of git. */
   contractsLibraryPath?: string;
   /** Source repository recorded in workspace package metadata. */
@@ -33,9 +37,20 @@ function toRepositoryMetadataUrl(sourceRepoUrl: string): string {
  */
 export function generateWorkspaceToml(config: WorkspaceTomlConfig): string {
   const membersBlock = config.members.map((m) => `    "${m}",`).join('\n');
+  const excludeBlock =
+    config.exclude && config.exclude.length > 0
+      ? `exclude = [
+${config.exclude.map((m) => `    "${m}",`).join('\n')}
+]
+
+`
+      : '';
   const repositoryUrl = toRepositoryMetadataUrl(
     config.repositoryUrl ?? GENERATED_STELLAR_SOURCE_REPO_URL
   );
+  const extraDepsBlock = Object.entries(config.extraWorkspaceDependencies ?? {})
+    .map(([dependency, spec]) => `${dependency} = ${spec}`)
+    .join('\n');
 
   let depsBlock: string;
   if (config.contractsLibraryPath) {
@@ -56,7 +71,7 @@ members = [
 ${membersBlock}
 ]
 
-[workspace.package]
+${excludeBlock}[workspace.package]
 authors = ["${STELLAR_CONTRACTS_AUTHORS.join('", "')}"]
 edition = "2021"
 license = "${STELLAR_CONTRACTS_LICENSE}"
@@ -65,7 +80,7 @@ version = "${STELLAR_CONTRACTS_VERSION}"
 
 [workspace.dependencies]
 soroban-sdk = { version = "=${SOROBAN_SDK_VERSION}", features = ["experimental_spec_shaking_v2"] }
-${depsBlock}
+${depsBlock}${extraDepsBlock ? `\n${extraDepsBlock}` : ''}
 
 [profile.release]
 opt-level = "z"

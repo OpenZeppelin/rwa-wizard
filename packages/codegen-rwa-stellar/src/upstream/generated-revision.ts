@@ -3,4 +3,4 @@
 export const GENERATED_STELLAR_SOURCE_REPO_URL =
   'https://github.com/OpenZeppelin/stellar-contracts.git';
 export const GENERATED_STELLAR_SOURCE_COMMIT_HASH = '4114bb8e2d7f090bdd9f45731e0607071d5ecea2';
-export const GENERATED_STELLAR_SOURCE_SYNCED_AT = '2026-06-16T18:59:02.849Z';
+export const GENERATED_STELLAR_SOURCE_SYNCED_AT = '2026-06-16T21:36:00.414Z';

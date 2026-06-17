@@ -50,6 +50,36 @@
     "sourcePath": "examples/rwa/identity-registry/Cargo.toml"
   },
   {
+    "kind": "identity-support-contract",
+    "id": "claim-issuer",
+    "sourcePath": "examples/rwa/claim-issuer/src/contract.rs"
+  },
+  {
+    "kind": "identity-support-cargo",
+    "id": "claim-issuer",
+    "sourcePath": "examples/rwa/claim-issuer/Cargo.toml"
+  },
+  {
+    "kind": "identity-support-contract",
+    "id": "identity",
+    "sourcePath": "examples/rwa/identity/src/contract.rs"
+  },
+  {
+    "kind": "identity-support-cargo",
+    "id": "identity",
+    "sourcePath": "examples/rwa/identity/Cargo.toml"
+  },
+  {
+    "kind": "identity-support-tool",
+    "id": "sign-claim",
+    "sourcePath": "examples/rwa/sign-claim/src/main.rs"
+  },
+  {
+    "kind": "identity-support-tool-cargo",
+    "id": "sign-claim",
+    "sourcePath": "examples/rwa/sign-claim/Cargo.toml"
+  },
+  {
     "kind": "module-contract",
     "id": "supply-limit",
     "sourcePath": "examples/rwa/compliance-supply-limit/src/contract.rs"

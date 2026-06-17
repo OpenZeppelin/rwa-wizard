@@ -57,6 +57,7 @@
     "dev": "tsdown --watch",
     "sync:stellar-templates": "node ./scripts/sync-stellar-templates.mjs",
     "test:manual:e2e": "pnpm build && node ./scripts/manual-e2e.mjs",
+    "e2e:testnet": "pnpm build && node ./scripts/e2e-testnet.mjs",
     "clean": "rm -rf dist tsconfig.tsbuildinfo node_modules/.tmp/tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",

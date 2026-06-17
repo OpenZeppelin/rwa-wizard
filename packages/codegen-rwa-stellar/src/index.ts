@@ -116,6 +116,14 @@ export type {
   StellarComplianceHookMeta,
 } from './ecosystem-metadata';
 
+export {
+  generateIdentitySupportFiles,
+  generateWithIdentitySupport,
+  IDENTITY_SUPPORT_CONTRACTS,
+  SIGN_CLAIM_TOOL,
+} from './templates/identity-support';
+export type { IdentitySupportFiles } from './templates/identity-support';
+
 /**
  * Root configuration type for RWA token generation.
  *

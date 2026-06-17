@@ -126,6 +126,18 @@ Notes:
 - If you need an explicit signer override, you can also pass `--sign-with-key <identity>` or use `STELLAR_SIGN_WITH_KEY`.
 - Pass `--contracts-library-path /absolute/path/to/stellar-contracts` if you want the manual flow to use local path dependencies instead of the bundled git-pinned source.
 
+### Testnet Behavior E2E
+
+Run the full behavior e2e against Stellar testnet with the local Stellar CLI `default` identity:
+
+```bash
+pnpm e2e:testnet
+```
+
+Use `--source-account <identity>` or `SOURCE_ACCOUNT` only when you want a non-default funded identity. Use `--sign-with-key <identity>` only when the signer differs from the source account.
+
+The final summary prints each generated account/contract address with a Stellar Expert explorer link.
+
 ### Query Available Compliance Modules
 
 ```typescript
@@ -140,7 +152,6 @@ for (const mod of getAvailableModules()) {
 
 ### Functions
 
-
 | Function                        | Returns                                      | Description                                            |
 | ------------------------------- | -------------------------------------------- | ------------------------------------------------------ |
 | `generate(config, options?)`    | `GenerationResult`                           | Generate the full file tree (throws on invalid config) |
@@ -150,7 +161,6 @@ for (const mod of getAvailableModules()) {
 | `getModuleById(id)`             | `ComplianceModuleRegistryEntry or undefined` | Look up a single module by ID                          |
 | `getEcosystemMetadata()`        | `StellarEcosystemMetadata`                   | Return Stellar-specific UI and validation metadata     |
 | `generateRoleSymbol(name)`      | `string`                                     | Auto-generate a Soroban-compatible role symbol         |
-
 
 ### Important Options
 
@@ -162,22 +172,17 @@ for (const mod of getAvailableModules()) {
 
 ### Constants
 
-
 | Constant                       | Description                                                              |
 | ------------------------------ | ------------------------------------------------------------------------ |
 | `STELLAR_VALIDATION_CONSTANTS` | Soroban-specific validation limits (symbol lengths, decimal range, etc.) |
 
-
 ### Classes
-
 
 | Class                 | Description                                                         |
 | --------------------- | ------------------------------------------------------------------- |
 | `StellarRwaGenerator` | `Generator<RWAConfig>` implementation (prefer standalone functions) |
 
-
 ### Re-exported Types
-
 
 | Type                            | Source                       |
 | ------------------------------- | ---------------------------- |
@@ -188,22 +193,20 @@ for (const mod of getAvailableModules()) {
 | `ZipResult`                     | `@openzeppelin/codegen-core` |
 | `ComplianceModuleRegistryEntry` | local                        |
 
-
 ## Available Compliance Modules
 
 All currently exposed compliance modules are stable snapshots from merged
 `stellar-contracts` example crates under `examples/rwa`.
 
-
-| Module ID               | Required Hooks                               | Config Keys                        | Upstream Example Crate                         |
-| ----------------------- | -------------------------------------------- | ---------------------------------- | ---------------------------------------------- |
-| `supply-limit`          | `created`, `destroyed`                       | `limit`                            | `examples/rwa/compliance-supply-limit`         |
-| `max-balance`           | `transferred`, `created`, `destroyed`        | `maxBalance`                       | `examples/rwa/compliance-max-balance`          |
-| `country-restrict`      | `transferred`, `created`                     | `restrictedCountries`              | `examples/rwa/compliance-country-restrict`     |
-| `country-allow`         | `transferred`, `created`                     | `allowedCountries`                 | `examples/rwa/compliance-country-allow`        |
-| `transfer-allow`        | `transferred`                                | `allowedUsers`                     | `examples/rwa/compliance-transfer-allow`       |
-| `initial-lockup-period` | `transferred`, `created`, `destroyed`        | `lockupPeriodLedgers`              | `examples/rwa/compliance-initial-lockup-period` |
-| `time-transfers-limits` | `transferred`                                | `limitDurationLedgers`, `limitValue` | `examples/rwa/compliance-time-transfers-limits` |
+| Module ID               | Required Hooks                        | Config Keys                          | Upstream Example Crate                          |
+| ----------------------- | ------------------------------------- | ------------------------------------ | ----------------------------------------------- |
+| `supply-limit`          | `created`, `destroyed`                | `limit`                              | `examples/rwa/compliance-supply-limit`          |
+| `max-balance`           | `transferred`, `created`, `destroyed` | `maxBalance`                         | `examples/rwa/compliance-max-balance`           |
+| `country-restrict`      | `transferred`, `created`              | `restrictedCountries`                | `examples/rwa/compliance-country-restrict`      |
+| `country-allow`         | `transferred`, `created`              | `allowedCountries`                   | `examples/rwa/compliance-country-allow`         |
+| `transfer-allow`        | `transferred`                         | `allowedUsers`                       | `examples/rwa/compliance-transfer-allow`        |
+| `initial-lockup-period` | `transferred`, `created`, `destroyed` | `lockupPeriodLedgers`                | `examples/rwa/compliance-initial-lockup-period` |
+| `time-transfers-limits` | `transferred`                         | `limitDurationLedgers`, `limitValue` | `examples/rwa/compliance-time-transfers-limits` |
 
 ## Generated Project Structure
 

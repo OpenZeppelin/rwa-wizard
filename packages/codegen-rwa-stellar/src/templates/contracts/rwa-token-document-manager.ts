@@ -24,11 +24,13 @@ ${documentManagerGuard}
         document_hash: BytesN<32>,
         operator: Address,
     ) {
+        let _ = &operator;
         doc_manager::set_document(e, &name, &uri, &document_hash);
     }
 
 ${documentManagerGuard}
     fn remove_document(e: &Env, name: BytesN<32>, operator: Address) {
+        let _ = &operator;
         doc_manager::remove_document(e, &name);
     }
 
