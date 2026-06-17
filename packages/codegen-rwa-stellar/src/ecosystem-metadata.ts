@@ -3,24 +3,14 @@
 // ---------------------------------------------------------------------------
 
 /**
- * The 5 compliance hooks in the Stellar/Soroban `ComplianceHook` enum.
+ * The 3 compliance hooks in the Stellar/Soroban `ComplianceHook` enum.
  * Maps 1:1 to the Rust `ComplianceHook` variants in `stellar-contracts`.
  *
- * Pre-checks (read-only, called before the action):
- *   - `canTransfer` — validates before transfer
- *   - `canCreate`   — validates before mint
- *
- * Post-hooks (state-modifying, called after the action):
- *   - `transferred` — notified after transfer
- *   - `created`     — notified after mint
- *   - `destroyed`   — notified after burn
+ * Hooks are called after the token operation is applied but within the same
+ * transaction. Modules can still reject by panicking, which reverts the whole
+ * operation atomically.
  */
-export type StellarComplianceHook =
-  | 'canTransfer'
-  | 'canCreate'
-  | 'transferred'
-  | 'created'
-  | 'destroyed';
+export type StellarComplianceHook = 'transferred' | 'created' | 'destroyed';
 
 // ---------------------------------------------------------------------------
 // Administrative + Identity Controls — Stellar/Soroban ecosystem
@@ -76,6 +66,7 @@ export interface StellarOperatorRoleMeta {
 }
 
 export const STELLAR_OPERATOR_ROLES: readonly StellarOperatorRoleMeta[] = [
+  { id: 'manager', name: 'Manager' },
   { id: 'minter', name: 'Minting' },
   { id: 'burner', name: 'Burning' },
   { id: 'freezer', name: 'Freezing' },
@@ -103,11 +94,9 @@ export interface StellarComplianceHookMeta {
 }
 
 export const STELLAR_COMPLIANCE_HOOKS: readonly StellarComplianceHookMeta[] = [
-  { hook: 'canTransfer', displayName: 'Can Transfer (pre-check)' },
-  { hook: 'canCreate', displayName: 'Can Create (pre-check)' },
-  { hook: 'transferred', displayName: 'Transferred (post-state)' },
-  { hook: 'created', displayName: 'Created (post-state)' },
-  { hook: 'destroyed', displayName: 'Destroyed (post-state)' },
+  { hook: 'transferred', displayName: 'Transferred' },
+  { hook: 'created', displayName: 'Created' },
+  { hook: 'destroyed', displayName: 'Destroyed' },
 ] as const;
 
 /**

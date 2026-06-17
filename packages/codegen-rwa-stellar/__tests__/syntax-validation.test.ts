@@ -84,9 +84,9 @@ describe('SC-002 Rust syntax validation', () => {
       expect(paths).toContain('contracts/identity-verifier/src/contract.rs');
       expect(paths).toContain('contracts/claim-topics-issuers/src/contract.rs');
       expect(paths).toContain('contracts/identity-registry-storage/src/contract.rs');
-      expect(paths).toContain('contracts/modules/supply-limit/src/contract.rs');
-      expect(paths).toContain('contracts/modules/max-balance/src/contract.rs');
-      expect(paths).toContain('contracts/modules/country-restrict/src/contract.rs');
+      expect(paths).toContain('contracts/modules/compliance-supply-limit/src/contract.rs');
+      expect(paths).toContain('contracts/modules/compliance-max-balance/src/contract.rs');
+      expect(paths).toContain('contracts/modules/compliance-country-restrict/src/contract.rs');
     });
 
     it.each(contractFiles)('contract %s should have valid Rust structure', (_path, content) => {
@@ -193,9 +193,9 @@ describe('SC-002 Rust syntax validation', () => {
       expect(workspaceToml).toContain('contracts/identity-verifier');
       expect(workspaceToml).toContain('contracts/claim-topics-issuers');
       expect(workspaceToml).toContain('contracts/identity-registry-storage');
-      expect(workspaceToml).toContain('contracts/modules/supply-limit');
-      expect(workspaceToml).toContain('contracts/modules/max-balance');
-      expect(workspaceToml).toContain('contracts/modules/country-restrict');
+      expect(workspaceToml).toContain('contracts/modules/compliance-supply-limit');
+      expect(workspaceToml).toContain('contracts/modules/compliance-max-balance');
+      expect(workspaceToml).toContain('contracts/modules/compliance-country-restrict');
     });
   });
 

@@ -27,9 +27,12 @@ export function buildDeploymentSummary(
     )
   );
 
-  lines.push(shellEcho('  Network:  ' + shellSafeDeploymentName));
-  lines.push(shellEcho('  Admin:    $ADMIN'));
-  lines.push(shellEcho('  Signer:   $SOURCE_ACCOUNT'));
+  lines.push(shellEcho('  Network:        ' + shellSafeDeploymentName));
+  lines.push(shellEcho('  Admin:          $ADMIN'));
+  lines.push(shellEcho('  Manager:        $MANAGER'));
+  lines.push(shellEcho('  Deploy Signer:  $SOURCE_ACCOUNT'));
+  lines.push(shellEcho('  Admin Signer:   $ADMIN_SOURCE_ACCOUNT'));
+  lines.push(shellEcho('  Manager Signer: $MANAGER_SOURCE_ACCOUNT'));
   lines.push('echo ""');
 
   lines.push(shellEcho(`${CLR.dim}${THIN_SEPARATOR}${CLR.rst}`));

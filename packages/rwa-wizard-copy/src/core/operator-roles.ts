@@ -6,12 +6,19 @@ import type { ConceptDictionary } from '../types';
  * emitted by codegen; call sites join these entries keyed on `role.<id>`.
  */
 export const OPERATOR_ROLES_COPY: ConceptDictionary = {
+  'role.manager': {
+    id: 'role.manager',
+    description:
+      'Delegates day-to-day module configuration and hook wiring to a separate operator while the owner retains admin-only actions such as binding the compliance contract or transferring ownership.',
+    infoCopy:
+      'The manager role is the operational delegate for compliance modules, identity registry updates, and token operations gated by the manager role. The contract admin (owner) keeps exclusive control of admin-gated actions like binding compliance addresses or transferring admin rights. Assign manager to a custody desk or automation account; keep admin on a higher-trust key.',
+  },
   'role.minter': {
     id: 'role.minter',
     description:
       'Issues new tokens to verified investors. Used for primary issuance after the recipient has an ONCHAINID with the required claims.',
     infoCopy:
-      'Grants the authority to call `mint` on the token. Every mint runs through the `canCreate` compliance pre-check, so eligibility, supply caps, and investor caps still apply. Keep minters tightly scoped — primary-issuance desks, transfer agents, or a custody operator acting on subscription orders.',
+      'Grants the authority to call `mint` on the token. Every mint runs through the `created` compliance hook in the same transaction, so eligibility, supply caps, and investor caps still apply atomically. Keep minters tightly scoped — primary-issuance desks, transfer agents, or a custody operator acting on subscription orders.',
   },
   'role.burner': {
     id: 'role.burner',

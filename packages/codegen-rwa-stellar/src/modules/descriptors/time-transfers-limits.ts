@@ -1,6 +1,4 @@
-import { PR_652 } from './review-urls';
 import {
-  createHookWiringVerificationInvocation,
   createModuleInvocation,
   defineComplianceModuleDescriptor,
   getOptionalScalarConfigValue,
@@ -10,16 +8,16 @@ import {
 export const timeTransfersLimitsModule = defineComplianceModuleDescriptor({
   id: 'time-transfers-limits',
   name: 'Time-based Transfer Limits',
-  requiredHooks: ['canTransfer', 'transferred'],
-  crateName: 'time-transfers-limits',
-  review: { state: 'under-review', prUrl: PR_652 },
+  requiredHooks: ['transferred'],
+  crateName: 'compliance-time-transfers-limits',
+  review: { state: 'stable' },
   configFields: [
     {
-      key: 'limitTime',
-      label: 'Window Duration (seconds)',
+      key: 'limitDurationLedgers',
+      label: 'Window Duration (ledgers)',
       type: 'number',
       required: true,
-      placeholder: 'e.g. 86400',
+      placeholder: 'e.g. 17280',
     },
     {
       key: 'limitValue',
@@ -32,19 +30,16 @@ export const timeTransfersLimitsModule = defineComplianceModuleDescriptor({
   deployment: {
     requiresIdentityRegistryStorage: true,
     getConfigurationInvocations(selection) {
-      const limitTime = getOptionalScalarConfigValue(selection, 'limitTime');
+      const limitDurationLedgers = getOptionalScalarConfigValue(selection, 'limitDurationLedgers');
       const limitValue = getOptionalScalarConfigValue(selection, 'limitValue');
-      return limitTime && limitValue
+      return limitDurationLedgers && limitValue
         ? [
             createModuleInvocation(
               'set_time_transfer_limit',
-              `--token "$RWA_TOKEN_ADDRESS" --limit ${serializeLimitStruct(limitTime, limitValue)}`
+              `--token "$RWA_TOKEN_ADDRESS" --limit ${serializeLimitStruct(limitDurationLedgers, limitValue)} --operator "$MANAGER"`
             ),
           ]
         : [];
-    },
-    getPostRegistrationInvocations() {
-      return [createHookWiringVerificationInvocation()];
     },
   },
 });

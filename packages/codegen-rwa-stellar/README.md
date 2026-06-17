@@ -120,11 +120,34 @@ pnpm --filter @openzeppelin/codegen-rwa-stellar test:manual:e2e -- \
 Notes:
 
 - The default sample uses the placeholder `__STELLAR_E2E_ADDRESS__`, so you must pass `--address` (or `STELLAR_E2E_ADDRESS`) unless your custom config already contains real addresses.
-- Pass `--source-account <identity>` or export `SOURCE_ACCOUNT` / `STELLAR_ACCOUNT` so the generated `deploy.sh` can sign deploy and invoke transactions.
-- The chosen source account must be able to authorize the admin/operator address used by the generated deployment script.
+- Pass `--source-account <identity>` or export `SOURCE_ACCOUNT` / `STELLAR_ACCOUNT` so the generated `deploy.sh` can pay for and sign contract deployments.
+- When the configured owner and Manager role use different addresses, also set `ADMIN_SOURCE_ACCOUNT` and `MANAGER_SOURCE_ACCOUNT` to the Stellar CLI identities that control those addresses. Post-deploy invokes sign with the matching role account; `set_compliance_address` uses the admin signer, while module configuration and hook wiring use the manager signer.
+- If owner and Manager share the same address, `SOURCE_ACCOUNT` is enough for deploy and post-deploy configuration.
 - If your config sets `token.initialSupply`, expect a validation warning and a successful deploy without auto-minting; mint only after onboarding a verified recipient identity and claim stack.
 - If you need an explicit signer override, you can also pass `--sign-with-key <identity>` or use `STELLAR_SIGN_WITH_KEY`.
 - Pass `--contracts-library-path /absolute/path/to/stellar-contracts` if you want the manual flow to use local path dependencies instead of the bundled git-pinned source.
+
+### Testnet Behavior E2E
+
+Run the full behavior e2e against Stellar testnet with the local Stellar CLI `default` identity:
+
+```bash
+pnpm e2e:testnet
+```
+
+Use `--source-account <identity>` or `SOURCE_ACCOUNT` only when you want a non-default funded identity. When owner and Manager share one address, `SOURCE_ACCOUNT` alone is enough for deploy and post-deploy configuration.
+
+For split owner/manager configs, set `ADMIN_SOURCE_ACCOUNT` and `MANAGER_SOURCE_ACCOUNT` (or pass `--admin-source-account` / `--manager-source-account`). To exercise split roles with a freshly funded manager identity:
+
+```bash
+pnpm e2e:testnet -- --split-roles
+```
+
+The split-role path provisions separate admin and manager signers, then drives identity registration and module configuration through the manager operator while admin-only actions (such as `set_compliance_address`) stay on the owner signer.
+
+Use `--sign-with-key <identity>` only when the admin signer differs from the admin source account.
+
+The final summary prints each generated account/contract address with a Stellar Expert explorer link.
 
 ### Query Available Compliance Modules
 
@@ -140,7 +163,6 @@ for (const mod of getAvailableModules()) {
 
 ### Functions
 
-
 | Function                        | Returns                                      | Description                                            |
 | ------------------------------- | -------------------------------------------- | ------------------------------------------------------ |
 | `generate(config, options?)`    | `GenerationResult`                           | Generate the full file tree (throws on invalid config) |
@@ -150,7 +172,6 @@ for (const mod of getAvailableModules()) {
 | `getModuleById(id)`             | `ComplianceModuleRegistryEntry or undefined` | Look up a single module by ID                          |
 | `getEcosystemMetadata()`        | `StellarEcosystemMetadata`                   | Return Stellar-specific UI and validation metadata     |
 | `generateRoleSymbol(name)`      | `string`                                     | Auto-generate a Soroban-compatible role symbol         |
-
 
 ### Important Options
 
@@ -162,22 +183,17 @@ for (const mod of getAvailableModules()) {
 
 ### Constants
 
-
 | Constant                       | Description                                                              |
 | ------------------------------ | ------------------------------------------------------------------------ |
 | `STELLAR_VALIDATION_CONSTANTS` | Soroban-specific validation limits (symbol lengths, decimal range, etc.) |
 
-
 ### Classes
-
 
 | Class                 | Description                                                         |
 | --------------------- | ------------------------------------------------------------------- |
 | `StellarRwaGenerator` | `Generator<RWAConfig>` implementation (prefer standalone functions) |
 
-
 ### Re-exported Types
-
 
 | Type                            | Source                       |
 | ------------------------------- | ---------------------------- |
@@ -188,24 +204,20 @@ for (const mod of getAvailableModules()) {
 | `ZipResult`                     | `@openzeppelin/codegen-core` |
 | `ComplianceModuleRegistryEntry` | local                        |
 
-
 ## Available Compliance Modules
 
-All currently exposed compliance modules are marked `under-review` and include review metadata in the registry and generated output.
+All currently exposed compliance modules are stable snapshots from merged
+`stellar-contracts` example crates under `examples/rwa`.
 
-
-| Module ID               | Required Hooks                                                    | Config Keys               | Review                                                               |
-| ----------------------- | ----------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------- |
-| `supply-limit`          | `canCreate`, `created`, `destroyed`                               | `limit`                   | [PR 650](https://github.com/OpenZeppelin/stellar-contracts/pull/650) |
-| `max-balance`           | `canTransfer`, `canCreate`, `transferred`, `created`, `destroyed` | `maxBalance`              | [PR 650](https://github.com/OpenZeppelin/stellar-contracts/pull/650) |
-| `country-restrict`      | `canTransfer`                                                     | `restrictedCountries`     | [PR 651](https://github.com/OpenZeppelin/stellar-contracts/pull/651) |
-| `country-allow`         | `canTransfer`                                                     | `allowedCountries`        | [PR 651](https://github.com/OpenZeppelin/stellar-contracts/pull/651) |
-| `transfer-restrict`     | `canTransfer`                                                     | none                      | [PR 651](https://github.com/OpenZeppelin/stellar-contracts/pull/651) |
-| `initial-lockup-period` | `canTransfer`, `created`, `transferred`, `destroyed`              | `lockupSeconds`           | [PR 652](https://github.com/OpenZeppelin/stellar-contracts/pull/652) |
-| `time-transfers-limits` | `canTransfer`, `transferred`                                      | `limitTime`, `limitValue` | [PR 652](https://github.com/OpenZeppelin/stellar-contracts/pull/652) |
-
-
-When under-review modules are generated, the output includes clear warning banners in module source files and an `UNDER_REVIEW_MODULES.md` summary file.
+| Module ID               | Required Hooks                        | Config Keys                          | Upstream Example Crate                          |
+| ----------------------- | ------------------------------------- | ------------------------------------ | ----------------------------------------------- |
+| `supply-limit`          | `created`, `destroyed`                | `limit`                              | `examples/rwa/compliance-supply-limit`          |
+| `max-balance`           | `transferred`, `created`, `destroyed` | `maxBalance`                         | `examples/rwa/compliance-max-balance`           |
+| `country-restrict`      | `transferred`, `created`              | `restrictedCountries`                | `examples/rwa/compliance-country-restrict`      |
+| `country-allow`         | `transferred`, `created`              | `allowedCountries`                   | `examples/rwa/compliance-country-allow`         |
+| `transfer-allow`        | `transferred`                         | `allowedUsers`                       | `examples/rwa/compliance-transfer-allow`        |
+| `initial-lockup-period` | `transferred`, `created`, `destroyed` | `lockupPeriodLedgers`                | `examples/rwa/compliance-initial-lockup-period` |
+| `time-transfers-limits` | `transferred`                         | `limitDurationLedgers`, `limitValue` | `examples/rwa/compliance-time-transfers-limits` |
 
 ## Generated Project Structure
 

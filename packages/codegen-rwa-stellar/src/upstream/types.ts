@@ -11,6 +11,10 @@ import type {
 export type UpstreamTemplateKind =
   | 'core-contract'
   | 'core-cargo'
+  | 'identity-support-contract'
+  | 'identity-support-cargo'
+  | 'identity-support-tool'
+  | 'identity-support-tool-cargo'
   | 'module-contract'
   | 'module-cargo';
 

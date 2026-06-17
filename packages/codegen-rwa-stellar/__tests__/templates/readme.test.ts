@@ -89,11 +89,11 @@ describe('generateReadme', () => {
     expect(readme).toContain('## Selected Compliance Modules');
     expect(readme).toContain('Supply Limit (`supply-limit`)');
     expect(readme).toContain('Country Allow-list (`country-allow`)');
-    expect(readme).toContain('`canCreate`');
-    expect(readme).toContain('`canTransfer`');
+    expect(readme).toContain('`created`');
+    expect(readme).toContain('`transferred`');
     expect(readme).toContain('`limit=1000000`');
     expect(readme).toContain('`allowedCountries=CH, SG`');
-    expect(readme).toContain('Under review ([PR](');
+    expect(readme).toContain('Stable');
     expect(readme.match(/Supply Limit \(`supply-limit`\)/g)).toHaveLength(1);
   });
 
@@ -110,7 +110,7 @@ describe('generateReadme', () => {
     expect(readme).not.toContain('## Selected Compliance Modules');
   });
 
-  it('renders the under-review modules warning with unique entries', () => {
+  it('omits the under-review modules warning for stable upstream modules', () => {
     const readme = generateReadme(
       createValidConfig({
         compliance: {
@@ -124,10 +124,8 @@ describe('generateReadme', () => {
       createReadmeContext()
     );
 
-    expect(readme).toContain('## Under-Review Modules');
-    expect(readme).toContain('**Country Allow-list** (`country-allow`)');
-    expect(readme.match(/\*\*Country Allow-list\*\* \(`country-allow`\)/g)).toHaveLength(1);
-    expect(readme).toContain('See `UNDER_REVIEW_MODULES.md` for details.');
+    expect(readme).not.toContain('## Under-Review Modules');
+    expect(readme).not.toContain('See `UNDER_REVIEW_MODULES.md` for details.');
   });
 
   it('describes config.json as provenance instead of a runtime deployment input', () => {

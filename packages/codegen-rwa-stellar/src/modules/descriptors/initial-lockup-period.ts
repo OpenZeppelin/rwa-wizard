@@ -1,6 +1,4 @@
-import { PR_652 } from './review-urls';
 import {
-  createHookWiringVerificationInvocation,
   createModuleInvocation,
   defineComplianceModuleDescriptor,
   getOptionalScalarConfigValue,
@@ -9,33 +7,30 @@ import {
 export const initialLockupPeriodModule = defineComplianceModuleDescriptor({
   id: 'initial-lockup-period',
   name: 'Initial Lockup Period',
-  requiredHooks: ['canTransfer', 'created', 'transferred', 'destroyed'],
-  crateName: 'initial-lockup-period',
-  review: { state: 'under-review', prUrl: PR_652 },
+  requiredHooks: ['transferred', 'created', 'destroyed'],
+  crateName: 'compliance-initial-lockup-period',
+  review: { state: 'stable' },
   configFields: [
     {
-      key: 'lockupSeconds',
-      label: 'Lockup Duration (seconds)',
+      key: 'lockupPeriodLedgers',
+      label: 'Lockup Duration (ledgers)',
       type: 'number',
       required: true,
-      placeholder: 'e.g. 2592000',
+      placeholder: 'e.g. 17280',
     },
   ],
   deployment: {
     requiresIdentityRegistryStorage: false,
     getConfigurationInvocations(selection) {
-      const lockupSeconds = getOptionalScalarConfigValue(selection, 'lockupSeconds');
-      return lockupSeconds
+      const lockupPeriodLedgers = getOptionalScalarConfigValue(selection, 'lockupPeriodLedgers');
+      return lockupPeriodLedgers
         ? [
             createModuleInvocation(
               'set_lockup_period',
-              `--token "$RWA_TOKEN_ADDRESS" --lockup_seconds ${lockupSeconds}`
+              `--token "$RWA_TOKEN_ADDRESS" --period ${lockupPeriodLedgers} --operator "$MANAGER"`
             ),
           ]
         : [];
-    },
-    getPostRegistrationInvocations() {
-      return [createHookWiringVerificationInvocation()];
     },
   },
 });

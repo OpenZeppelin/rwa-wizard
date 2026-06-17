@@ -64,8 +64,8 @@ describe('STELLAR_IDENTITY_CONTROLS', () => {
 });
 
 describe('STELLAR_OPERATOR_ROLES', () => {
-  it('contains 10 predefined roles', () => {
-    expect(STELLAR_OPERATOR_ROLES).toHaveLength(10);
+  it('contains 11 predefined roles', () => {
+    expect(STELLAR_OPERATOR_ROLES).toHaveLength(11);
   });
 
   it('has unique ids', () => {
@@ -83,11 +83,15 @@ describe('STELLAR_OPERATOR_ROLES', () => {
   it('includes the document-manager role', () => {
     expect(STELLAR_OPERATOR_ROLES.find((r) => r.id === 'document-manager')).toBeDefined();
   });
+
+  it('includes the manager role', () => {
+    expect(STELLAR_OPERATOR_ROLES.find((r) => r.id === 'manager')).toBeDefined();
+  });
 });
 
 describe('STELLAR_COMPLIANCE_HOOKS', () => {
-  it('contains metadata for all 5 hooks', () => {
-    expect(STELLAR_COMPLIANCE_HOOKS).toHaveLength(5);
+  it('contains metadata for all 3 hooks', () => {
+    expect(STELLAR_COMPLIANCE_HOOKS).toHaveLength(3);
   });
 
   it('has unique hook values', () => {
@@ -97,7 +101,7 @@ describe('STELLAR_COMPLIANCE_HOOKS', () => {
 
   it('covers the expected hook names', () => {
     const hooks = STELLAR_COMPLIANCE_HOOKS.map((m) => m.hook);
-    expect(hooks).toEqual(['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed']);
+    expect(hooks).toEqual(['transferred', 'created', 'destroyed']);
   });
 
   it('has non-empty display names and no embedded UI copy', () => {
@@ -108,8 +112,6 @@ describe('STELLAR_COMPLIANCE_HOOKS', () => {
   });
 
   it('serializes hook ids to the contract CLI enum case names', () => {
-    expect(serializeStellarComplianceHookForCli('canTransfer')).toBe('CanTransfer');
-    expect(serializeStellarComplianceHookForCli('canCreate')).toBe('CanCreate');
     expect(serializeStellarComplianceHookForCli('transferred')).toBe('Transferred');
     expect(serializeStellarComplianceHookForCli('created')).toBe('Created');
     expect(serializeStellarComplianceHookForCli('destroyed')).toBe('Destroyed');

@@ -108,6 +108,8 @@ export { getModuleById } from './modules/registry';
  */
 export { getEcosystemMetadata } from './ecosystem-metadata';
 
+export { migrateStellarRwaConfig } from './migrate';
+
 export type {
   StellarComplianceHook,
   StellarEcosystemMetadata,
@@ -115,6 +117,14 @@ export type {
   StellarOperatorRoleMeta,
   StellarComplianceHookMeta,
 } from './ecosystem-metadata';
+
+export {
+  generateIdentitySupportFiles,
+  generateWithIdentitySupport,
+  IDENTITY_SUPPORT_CONTRACTS,
+  SIGN_CLAIM_TOOL,
+} from './templates/identity-support';
+export type { IdentitySupportFiles } from './templates/identity-support';
 
 /**
  * Root configuration type for RWA token generation.

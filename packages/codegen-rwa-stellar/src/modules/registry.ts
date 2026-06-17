@@ -4,7 +4,7 @@ import { initialLockupPeriodModule } from './descriptors/initial-lockup-period';
 import { maxBalanceModule } from './descriptors/max-balance';
 import { supplyLimitModule } from './descriptors/supply-limit';
 import { timeTransfersLimitsModule } from './descriptors/time-transfers-limits';
-import { transferRestrictModule } from './descriptors/transfer-restrict';
+import { transferAllowModule } from './descriptors/transfer-allow';
 
 import type { ComplianceModuleDescriptor, ComplianceModuleRegistryEntry } from './types';
 
@@ -20,7 +20,7 @@ const COMPLIANCE_MODULE_DESCRIPTORS: readonly ComplianceModuleDescriptor[] = [
   maxBalanceModule,
   countryRestrictModule,
   countryAllowModule,
-  transferRestrictModule,
+  transferAllowModule,
   initialLockupPeriodModule,
   timeTransfersLimitsModule,
 ];

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMinimalConfig } from '../helpers/config';
 import { generateRwaTokenContract } from '../../src/templates/contracts/rwa-token';
+import { createMinimalConfig } from '../helpers/config';
 
 describe('RWA Token Contract Template', () => {
   it('keeps the upstream contract struct and trait implementations', () => {
@@ -94,6 +94,7 @@ describe('RWA Token Contract Template', () => {
     expect(output).toContain('#[only_role(operator, "burner")]');
     expect(output).toContain('#[only_role(_caller, "pauser")]');
     expect(output).toContain('#[only_role(operator, "documentm")]');
+    expect(output).toContain('use stellar_macros::{only_admin, only_role};');
   });
 
   it('falls back to admin guards when no specialized role is configured', () => {
@@ -108,10 +109,17 @@ describe('RWA Token Contract Template', () => {
       })
     );
 
-    expect(output).toContain('#[only_admin]\n    fn mint(e: &Env, to: Address, amount: i128, operator: Address) {');
+    expect(output).toContain(
+      '#[only_admin]\n    fn mint(e: &Env, to: Address, amount: i128, operator: Address) {'
+    );
+    expect(output).toContain(
+      '#[only_admin]\n    fn mint(e: &Env, to: Address, amount: i128, operator: Address) {\n        let _ = &operator;'
+    );
     expect(output).toContain(
       '#[only_admin]\n    fn forced_transfer(e: &Env, from: Address, to: Address, amount: i128, operator: Address) {'
     );
+    expect(output).toContain('use stellar_macros::only_admin;');
+    expect(output).not.toContain('use stellar_macros::{only_admin, only_role};');
     expect(output).toContain('#[only_admin]\n    fn set_document(');
   });
 
@@ -128,6 +136,7 @@ describe('RWA Token Contract Template', () => {
     );
     expect(enabledOutput).toContain('impl DocumentManager for RWATokenContract');
     expect(enabledOutput).toContain('BytesN');
+    expect(enabledOutput).toContain('let _ = &operator;\n        doc_manager::set_document');
 
     const disabledOutput = generateRwaTokenContract(createMinimalConfig());
     expect(disabledOutput).not.toContain('DocumentManager');

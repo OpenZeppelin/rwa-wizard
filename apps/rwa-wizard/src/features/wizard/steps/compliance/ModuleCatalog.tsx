@@ -20,8 +20,6 @@ interface ModuleCatalogProps {
 }
 
 const HOOK_DISPLAY: Record<string, string> = {
-  canTransfer: 'Can Transfer',
-  canCreate: 'Can Create',
   transferred: 'Transferred',
   created: 'Created',
   destroyed: 'Destroyed',

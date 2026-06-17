@@ -32,10 +32,9 @@ export function createTestCodegenService(): RwaCodegenService {
         {
           id: 'supply-limit',
           name: 'Supply Limit',
-          requiredHooks: ['canCreate', 'created', 'destroyed'],
+          requiredHooks: ['created', 'destroyed'],
           review: {
-            state: 'under-review',
-            prUrl: 'https://github.com/OpenZeppelin/stellar-contracts/pull/650',
+            state: 'stable',
           },
           configFields: [
             {
@@ -50,10 +49,9 @@ export function createTestCodegenService(): RwaCodegenService {
         {
           id: 'max-balance',
           name: 'Max Balance',
-          requiredHooks: ['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed'],
+          requiredHooks: ['transferred', 'created', 'destroyed'],
           review: {
-            state: 'under-review',
-            prUrl: 'https://github.com/OpenZeppelin/stellar-contracts/pull/650',
+            state: 'stable',
           },
           configFields: [
             {
@@ -68,10 +66,9 @@ export function createTestCodegenService(): RwaCodegenService {
         {
           id: 'country-restrict',
           name: 'Country Restriction',
-          requiredHooks: ['canTransfer'],
+          requiredHooks: ['transferred', 'created'],
           review: {
-            state: 'under-review',
-            prUrl: 'https://github.com/OpenZeppelin/stellar-contracts/pull/651',
+            state: 'stable',
           },
           configFields: [],
         },

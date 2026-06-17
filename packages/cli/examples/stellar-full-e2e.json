@@ -66,8 +66,14 @@
       {
         "moduleId": "time-transfers-limits",
         "config": {
-          "limitTime": 86400,
+          "limitDurationLedgers": 17280,
           "limitValue": 25000
+        }
+      },
+      {
+        "moduleId": "transfer-allow",
+        "config": {
+          "allowedUsers": ["__STELLAR_E2E_ADDRESS__"]
         }
       }
     ]

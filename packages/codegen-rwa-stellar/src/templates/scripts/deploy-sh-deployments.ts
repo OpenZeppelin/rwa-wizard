@@ -94,7 +94,7 @@ function buildModuleDeploymentDescriptors(config: RWAConfig): DeploymentDescript
       varName: moduleVarName(selection.moduleId),
       displayName: moduleDescriptor.name,
       crateName: moduleDescriptor.crateName,
-      constructorArgs: '--admin "$ADMIN"',
+      constructorArgs: '--admin "$ADMIN" --manager "$MANAGER"',
     });
   }
 

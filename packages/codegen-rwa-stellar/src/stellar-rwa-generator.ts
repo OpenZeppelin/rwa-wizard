@@ -22,7 +22,10 @@ import { generateCrateToml } from './templates/cargo/crate-toml';
 import { generateWorkspaceToml } from './templates/cargo/workspace-toml';
 import { generateClaimTopicsIssuersContract } from './templates/contracts/claim-topics-issuers';
 import { generateComplianceContract } from './templates/contracts/compliance';
-import { generateComplianceModuleContract } from './templates/contracts/compliance-module';
+import {
+  generateComplianceModuleCargoToml,
+  generateComplianceModuleContract,
+} from './templates/contracts/compliance-module';
 import { generateIdentityRegistryStorageContract } from './templates/contracts/identity-registry-storage';
 import { generateIdentityVerifierContract } from './templates/contracts/identity-verifier';
 import { generateRwaTokenContract } from './templates/contracts/rwa-token';
@@ -199,11 +202,7 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
 
       const contractRs = generateComplianceModuleContract(entry, templateSource);
       const libRs = generateLibRs();
-      const cargoToml = generateCrateToml({
-        name: entry.crateName,
-        dependencies: ['soroban-sdk', 'stellar-tokens'],
-        includeRlib: true,
-      });
+      const cargoToml = generateComplianceModuleCargoToml(entry, templateSource);
 
       files = mergeFileTrees(
         files,

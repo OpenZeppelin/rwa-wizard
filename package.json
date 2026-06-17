@@ -17,6 +17,7 @@
     "build": "pnpm -r build",
     "build:packages": "pnpm --filter \"./packages/*\" build",
     "build:app": "pnpm --filter @openzeppelin/rwa-wizard-app build",
+    "e2e:testnet": "pnpm --filter @openzeppelin/codegen-rwa-stellar e2e:testnet",
     "test": "node --test .pnpmfile.test.cjs && pnpm -r test",
     "test:all": "pnpm -r --parallel test",
     "test:coverage": "pnpm -r test:coverage",

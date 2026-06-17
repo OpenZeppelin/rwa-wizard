@@ -12,15 +12,14 @@ describe('COMPLIANCE_MODULES_COPY', () => {
         'module.country-restrict',
         'moduleField.country-restrict.restrictedCountries',
         'module.initial-lockup-period',
-        'moduleField.initial-lockup-period.lockupSeconds',
         'module.max-balance',
         'moduleField.max-balance.maxBalance',
         'module.supply-limit',
         'moduleField.supply-limit.limit',
         'module.time-transfers-limits',
-        'moduleField.time-transfers-limits.limitTime',
         'moduleField.time-transfers-limits.limitValue',
-        'module.transfer-restrict',
+        'module.transfer-allow',
+        'moduleField.transfer-allow.allowedUsers',
       ],
     });
   });

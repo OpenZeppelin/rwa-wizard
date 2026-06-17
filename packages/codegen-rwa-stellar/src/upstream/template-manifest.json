@@ -50,73 +50,103 @@
     "sourcePath": "examples/rwa/identity-registry/Cargo.toml"
   },
   {
+    "kind": "identity-support-contract",
+    "id": "claim-issuer",
+    "sourcePath": "examples/rwa/claim-issuer/src/contract.rs"
+  },
+  {
+    "kind": "identity-support-cargo",
+    "id": "claim-issuer",
+    "sourcePath": "examples/rwa/claim-issuer/Cargo.toml"
+  },
+  {
+    "kind": "identity-support-contract",
+    "id": "identity",
+    "sourcePath": "examples/rwa/identity/src/contract.rs"
+  },
+  {
+    "kind": "identity-support-cargo",
+    "id": "identity",
+    "sourcePath": "examples/rwa/identity/Cargo.toml"
+  },
+  {
+    "kind": "identity-support-tool",
+    "id": "sign-claim",
+    "sourcePath": "examples/rwa/sign-claim/src/main.rs"
+  },
+  {
+    "kind": "identity-support-tool-cargo",
+    "id": "sign-claim",
+    "sourcePath": "examples/rwa/sign-claim/Cargo.toml"
+  },
+  {
     "kind": "module-contract",
     "id": "supply-limit",
-    "sourcePath": "examples/rwa-supply-limit/src/contract.rs"
+    "sourcePath": "examples/rwa/compliance-supply-limit/src/contract.rs"
   },
   {
     "kind": "module-cargo",
     "id": "supply-limit",
-    "sourcePath": "examples/rwa-supply-limit/Cargo.toml"
+    "sourcePath": "examples/rwa/compliance-supply-limit/Cargo.toml"
   },
   {
     "kind": "module-contract",
     "id": "max-balance",
-    "sourcePath": "examples/rwa-max-balance/src/contract.rs"
+    "sourcePath": "examples/rwa/compliance-max-balance/src/contract.rs"
   },
   {
     "kind": "module-cargo",
     "id": "max-balance",
-    "sourcePath": "examples/rwa-max-balance/Cargo.toml"
+    "sourcePath": "examples/rwa/compliance-max-balance/Cargo.toml"
   },
   {
     "kind": "module-contract",
     "id": "country-restrict",
-    "sourcePath": "examples/rwa-country-restrict/src/contract.rs"
+    "sourcePath": "examples/rwa/compliance-country-restrict/src/contract.rs"
   },
   {
     "kind": "module-cargo",
     "id": "country-restrict",
-    "sourcePath": "examples/rwa-country-restrict/Cargo.toml"
+    "sourcePath": "examples/rwa/compliance-country-restrict/Cargo.toml"
   },
   {
     "kind": "module-contract",
     "id": "country-allow",
-    "sourcePath": "examples/rwa-country-allow/src/contract.rs"
+    "sourcePath": "examples/rwa/compliance-country-allow/src/contract.rs"
   },
   {
     "kind": "module-cargo",
     "id": "country-allow",
-    "sourcePath": "examples/rwa-country-allow/Cargo.toml"
+    "sourcePath": "examples/rwa/compliance-country-allow/Cargo.toml"
   },
   {
     "kind": "module-contract",
-    "id": "transfer-restrict",
-    "sourcePath": "examples/rwa-transfer-restrict/src/contract.rs"
+    "id": "transfer-allow",
+    "sourcePath": "examples/rwa/compliance-transfer-allow/src/contract.rs"
   },
   {
     "kind": "module-cargo",
-    "id": "transfer-restrict",
-    "sourcePath": "examples/rwa-transfer-restrict/Cargo.toml"
+    "id": "transfer-allow",
+    "sourcePath": "examples/rwa/compliance-transfer-allow/Cargo.toml"
   },
   {
     "kind": "module-contract",
     "id": "initial-lockup-period",
-    "sourcePath": "examples/rwa-initial-lockup-period/src/contract.rs"
+    "sourcePath": "examples/rwa/compliance-initial-lockup-period/src/contract.rs"
   },
   {
     "kind": "module-cargo",
     "id": "initial-lockup-period",
-    "sourcePath": "examples/rwa-initial-lockup-period/Cargo.toml"
+    "sourcePath": "examples/rwa/compliance-initial-lockup-period/Cargo.toml"
   },
   {
     "kind": "module-contract",
     "id": "time-transfers-limits",
-    "sourcePath": "examples/rwa-time-transfers-limits/src/contract.rs"
+    "sourcePath": "examples/rwa/compliance-time-transfers-limits/src/contract.rs"
   },
   {
     "kind": "module-cargo",
     "id": "time-transfers-limits",
-    "sourcePath": "examples/rwa-time-transfers-limits/Cargo.toml"
+    "sourcePath": "examples/rwa/compliance-time-transfers-limits/Cargo.toml"
   }
 ]

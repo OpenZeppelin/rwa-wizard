@@ -61,7 +61,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
           buildInvokeCommand(
             modVar,
             'set_identity_registry_storage',
-            '--token "$RWA_TOKEN_ADDRESS" --irs "$IRS_ADDRESS"',
+            '--token "$RWA_TOKEN_ADDRESS" --irs "$IRS_ADDRESS" --operator "$MANAGER"',
             networkFlag
           )
         );
@@ -69,7 +69,13 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
 
       for (const invocation of descriptor.deployment.getConfigurationInvocations(selection)) {
         lines.push(
-          buildInvokeCommand(modVar, invocation.functionName, invocation.args, networkFlag)
+          buildInvokeCommand(
+            modVar,
+            invocation.functionName,
+            invocation.args,
+            networkFlag,
+            'manager'
+          )
         );
       }
 
@@ -77,8 +83,9 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
         buildInvokeCommand(
           modVar,
           'set_compliance_address',
-          '--compliance "$COMPLIANCE_ADDRESS"',
-          networkFlag
+          '--token "$RWA_TOKEN_ADDRESS" --compliance "$COMPLIANCE_ADDRESS" --operator "$ADMIN"',
+          networkFlag,
+          'admin'
         )
       );
 
@@ -88,7 +95,8 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
             '$COMPLIANCE_ADDRESS',
             'add_module_to',
             `--hook "${serializeStellarComplianceHookForCli(hook)}" --module "${modVar}" --operator "$MANAGER"`,
-            networkFlag
+            networkFlag,
+            'manager'
           )
         );
       }
@@ -96,7 +104,13 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
       for (const invocation of descriptor.deployment.getPostRegistrationInvocations?.(selection) ??
         []) {
         lines.push(
-          buildInvokeCommand(modVar, invocation.functionName, invocation.args, networkFlag)
+          buildInvokeCommand(
+            modVar,
+            invocation.functionName,
+            invocation.args,
+            networkFlag,
+            'manager'
+          )
         );
       }
 

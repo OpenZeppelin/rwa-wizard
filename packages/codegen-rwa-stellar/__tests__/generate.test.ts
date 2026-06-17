@@ -343,7 +343,7 @@ describe('StellarRwaGenerator', () => {
       expect(readme).toContain('Country Allow-list (`country-allow`)');
       expect(readme).toContain('`limit=1000000`');
       expect(readme).toContain('`allowedCountries=CH, SG`');
-      expect(readme).toContain('Under review ([PR](');
+      expect(readme).toContain('Stable');
     });
   });
 

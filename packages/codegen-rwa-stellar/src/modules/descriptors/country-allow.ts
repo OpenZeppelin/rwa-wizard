@@ -1,4 +1,3 @@
-import { PR_651 } from './review-urls';
 import {
   createModuleInvocation,
   defineComplianceModuleDescriptor,
@@ -9,9 +8,9 @@ import {
 export const countryAllowModule = defineComplianceModuleDescriptor({
   id: 'country-allow',
   name: 'Country Allow-list',
-  requiredHooks: ['canTransfer'],
-  crateName: 'country-allow',
-  review: { state: 'under-review', prUrl: PR_651 },
+  requiredHooks: ['transferred', 'created'],
+  crateName: 'compliance-country-allow',
+  review: { state: 'stable' },
   configFields: [
     {
       key: 'allowedCountries',
@@ -29,7 +28,7 @@ export const countryAllowModule = defineComplianceModuleDescriptor({
         ? [
             createModuleInvocation(
               'batch_allow_countries',
-              `--token "$RWA_TOKEN_ADDRESS" --countries ${serializeNumericArray(countriesToAllow)}`
+              `--token "$RWA_TOKEN_ADDRESS" --countries ${serializeNumericArray(countriesToAllow)} --operator "$MANAGER"`
             ),
           ]
         : [];

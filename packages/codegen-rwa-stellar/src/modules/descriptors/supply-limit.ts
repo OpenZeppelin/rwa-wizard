@@ -1,6 +1,4 @@
-import { PR_650 } from './review-urls';
 import {
-  createHookWiringVerificationInvocation,
   createModuleInvocation,
   defineComplianceModuleDescriptor,
   getOptionalScalarConfigValue,
@@ -9,9 +7,9 @@ import {
 export const supplyLimitModule = defineComplianceModuleDescriptor({
   id: 'supply-limit',
   name: 'Supply Limit',
-  requiredHooks: ['canCreate', 'created', 'destroyed'],
-  crateName: 'supply-limit',
-  review: { state: 'under-review', prUrl: PR_650 },
+  requiredHooks: ['created', 'destroyed'],
+  crateName: 'compliance-supply-limit',
+  review: { state: 'stable' },
   configFields: [
     {
       key: 'limit',
@@ -29,13 +27,10 @@ export const supplyLimitModule = defineComplianceModuleDescriptor({
         ? [
             createModuleInvocation(
               'set_supply_limit',
-              `--token "$RWA_TOKEN_ADDRESS" --limit ${limit}`
+              `--token "$RWA_TOKEN_ADDRESS" --limit ${limit} --operator "$MANAGER"`
             ),
           ]
         : [];
-    },
-    getPostRegistrationInvocations() {
-      return [createHookWiringVerificationInvocation()];
     },
   },
 });

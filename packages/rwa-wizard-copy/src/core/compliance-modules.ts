@@ -6,6 +6,11 @@ import type { ConceptDictionary } from '../types';
  * field keys mirror the `ModuleConfigField.key` emitted by the codegen
  * package so the wizard can join them on the composite
  * `moduleField.<moduleId>.<fieldKey>` key at render time.
+ *
+ * Keep this core copy chain-neutral. Units or runtime details that only make
+ * sense for one target (for example ledger counts) belong in
+ * `overrides/<chain>.ts`, even if the field key itself is emitted by that
+ * chain's codegen package.
  */
 export const COMPLIANCE_MODULES_COPY: ConceptDictionary = {
   'module.country-allow': {
@@ -33,12 +38,7 @@ export const COMPLIANCE_MODULES_COPY: ConceptDictionary = {
   'module.initial-lockup-period': {
     id: 'module.initial-lockup-period',
     description:
-      'Enforces a hold period: freshly minted tokens cannot be transferred until the configured duration has elapsed. Commonly used for primary issuance to match regulatory holding requirements (e.g. Reg S distribution compliance periods).',
-  },
-  'moduleField.initial-lockup-period.lockupSeconds': {
-    id: 'moduleField.initial-lockup-period.lockupSeconds',
-    description:
-      'How long each newly minted position is locked, in seconds. 1 day = 86 400, 30 days = 2 592 000, 1 year = 31 536 000.',
+      'Enforces a hold period: freshly minted tokens cannot be transferred until the configured duration has elapsed. Commonly used for primary issuance to match regulatory holding requirements.',
   },
 
   'module.max-balance': {
@@ -55,7 +55,7 @@ export const COMPLIANCE_MODULES_COPY: ConceptDictionary = {
   'module.supply-limit': {
     id: 'module.supply-limit',
     description:
-      'Hard cap on total circulating supply. `canCreate` vetoes mints that would exceed the cap; `created` and `destroyed` keep the tracked supply in sync with the outstanding balance.',
+      'Hard cap on total circulating supply. The module checks mints through the `created` hook and tracks burns through `destroyed`.',
   },
   'moduleField.supply-limit.limit': {
     id: 'moduleField.supply-limit.limit',
@@ -68,20 +68,20 @@ export const COMPLIANCE_MODULES_COPY: ConceptDictionary = {
     description:
       'Throttles outgoing volume per identity within a rolling time window (e.g. no more than N tokens sent in any 24h period). Useful for anti-money-laundering velocity checks and retail cooling-off rules.',
   },
-  'moduleField.time-transfers-limits.limitTime': {
-    id: 'moduleField.time-transfers-limits.limitTime',
-    description:
-      'Length of the rolling window in seconds. 1 hour = 3 600, 1 day = 86 400, 1 week = 604 800.',
-  },
   'moduleField.time-transfers-limits.limitValue': {
     id: 'moduleField.time-transfers-limits.limitValue',
     description:
       'Maximum cumulative outgoing volume allowed within the window, in the smallest token unit.',
   },
 
-  'module.transfer-restrict': {
-    id: 'module.transfer-restrict',
+  'module.transfer-allow': {
+    id: 'module.transfer-allow',
     description:
-      'Pairwise allow-list: only transfers between wallet pairs explicitly approved by the compliance operator succeed. Typical for OTC desks, internal treasury movements, and closed investor circles.',
+      'User allow-list: only approved accounts can receive, send, mint, or burn tokens when this module is attached. Typical for closed investor circles and manually approved operating accounts.',
+  },
+  'moduleField.transfer-allow.allowedUsers': {
+    id: 'moduleField.transfer-allow.allowedUsers',
+    description:
+      'Account addresses to allow during post-deploy configuration. You can leave this empty and manage the allow-list later with the module contract.',
   },
 } as const;

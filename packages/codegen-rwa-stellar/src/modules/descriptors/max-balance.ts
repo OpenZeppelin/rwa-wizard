@@ -1,6 +1,4 @@
-import { PR_650 } from './review-urls';
 import {
-  createHookWiringVerificationInvocation,
   createModuleInvocation,
   defineComplianceModuleDescriptor,
   getOptionalScalarConfigValue,
@@ -9,9 +7,9 @@ import {
 export const maxBalanceModule = defineComplianceModuleDescriptor({
   id: 'max-balance',
   name: 'Max Balance',
-  requiredHooks: ['canTransfer', 'canCreate', 'transferred', 'created', 'destroyed'],
-  crateName: 'max-balance',
-  review: { state: 'under-review', prUrl: PR_650 },
+  requiredHooks: ['transferred', 'created', 'destroyed'],
+  crateName: 'compliance-max-balance',
+  review: { state: 'stable' },
   configFields: [
     {
       key: 'maxBalance',
@@ -29,13 +27,10 @@ export const maxBalanceModule = defineComplianceModuleDescriptor({
         ? [
             createModuleInvocation(
               'set_max_balance',
-              `--token "$RWA_TOKEN_ADDRESS" --max ${maxBalance}`
+              `--token "$RWA_TOKEN_ADDRESS" --max ${maxBalance} --operator "$MANAGER"`
             ),
           ]
         : [];
-    },
-    getPostRegistrationInvocations() {
-      return [createHookWiringVerificationInvocation()];
     },
   },
 });

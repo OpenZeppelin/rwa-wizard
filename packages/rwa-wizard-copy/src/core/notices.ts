@@ -16,7 +16,7 @@ export const NOTICES_COPY: ConceptDictionary = {
     id: 'notice.compliance.hook-wiring-preview',
     title: 'Hook Wiring Preview',
     description:
-      'How the Compliance contract will route token operations. Pre-check hooks (`canTransfer`, `canCreate`) run before the action and can block it; post-state hooks (`transferred`, `created`, `destroyed`) run after a successful action so modules can update internal counters. Each selected module is automatically registered on every hook it requires.',
+      'How the Compliance contract will route token operations. Modules run on post-operation hooks (`transferred`, `created`, `destroyed`) inside the same transaction, so a module can still reject and revert the full operation. Each selected module is automatically registered on every hook it requires.',
   },
   'notice.compliance.module-catalog.empty': {
     id: 'notice.compliance.module-catalog.empty',

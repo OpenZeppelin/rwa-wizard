@@ -62,8 +62,8 @@ describe('SC-001 performance benchmark', () => {
       'contracts/identity-verifier/src/contract.rs',
       'contracts/claim-topics-issuers/src/contract.rs',
       'contracts/identity-registry-storage/src/contract.rs',
-      'contracts/modules/supply-limit/src/contract.rs',
-      'contracts/modules/max-balance/src/contract.rs',
+      'contracts/modules/compliance-supply-limit/src/contract.rs',
+      'contracts/modules/compliance-max-balance/src/contract.rs',
     ];
 
     for (const crate of expectedCrates) {
