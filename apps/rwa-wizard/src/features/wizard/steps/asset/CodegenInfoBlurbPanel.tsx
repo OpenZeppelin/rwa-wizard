@@ -1,7 +1,8 @@
-import { ExternalLink, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import type { CodegenInfoBlurb } from '@openzeppelin/codegen-core';
+import { Banner, ExternalLink } from '@openzeppelin/ui-components';
 
 export interface CodegenInfoBlurbPanelProps {
   blurb: CodegenInfoBlurb | null;
@@ -16,32 +17,24 @@ export function CodegenInfoBlurbPanel({ blurb }: CodegenInfoBlurbPanelProps): Re
   }
 
   return (
-    <div
-      role="status"
-      className="flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-4 sm:flex-row sm:items-start sm:gap-3"
+    <Banner
+      variant="info"
+      title={blurb.title}
+      dismissible={false}
+      icon={<Info className="size-4" aria-hidden />}
     >
-      <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
-      <div className="min-w-0 flex-1 space-y-3">
-        <p className="text-sm font-medium text-foreground">{blurb.title}</p>
-        <p className="text-sm text-muted-foreground">{blurb.description}</p>
+      <div className="space-y-3">
+        <p>{blurb.description}</p>
         {blurb.links.length > 0 && (
           <ul className="flex flex-col gap-2">
             {blurb.links.map((link) => (
               <li key={link.href}>
-                <a
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {link.label}
-                  <ExternalLink className="size-3.5 shrink-0" aria-hidden />
-                </a>
+                <ExternalLink href={link.href}>{link.label}</ExternalLink>
               </li>
             ))}
           </ul>
         )}
       </div>
-    </div>
+    </Banner>
   );
 }

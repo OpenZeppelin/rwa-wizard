@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react';
 
 import { formatCopy } from '@openzeppelin/rwa-wizard-copy';
-import { AddressDisplay, Checkbox, Label } from '@openzeppelin/ui-components';
+import { AddressDisplay, Banner, Checkbox, Label } from '@openzeppelin/ui-components';
 
 import { useCopy } from '../../../../app/providers/useCopy';
 import { InfoTooltip } from '../../../../components/shared/InfoTooltip';
@@ -39,44 +39,38 @@ export function DeployReadinessPanel({
     : '';
 
   return (
-    <section className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-      <div className="flex gap-2">
-        <Info className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-        <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-xs font-medium text-foreground">{beforeDeployNotice.title ?? ''}</p>
-          {deployIntro && (
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              {renderInlineCopy(deployIntro)}
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-xs text-muted-foreground">
-              {configuredAdminNotice.title ?? ''}
-            </span>
-            <AddressDisplay
-              address={guidance.adminAddress}
-              variant="inline"
-              disableLabel
-              truncate={false}
-              showCopyButton
-              explorerUrl={explorer?.getExplorerUrl(guidance.adminAddress) ?? undefined}
-              className="min-w-0 max-w-full break-all font-mono text-xs"
-            />
-          </div>
+    <Banner
+      variant="neutral"
+      size="compact"
+      title={beforeDeployNotice.title ?? undefined}
+      dismissible={false}
+      icon={<Info className="size-4" aria-hidden />}
+      className="min-w-0"
+    >
+      <div className="space-y-2">
+        {deployIntro && <div>{renderInlineCopy(deployIntro)}</div>}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span>{configuredAdminNotice.title ?? ''}</span>
+          <AddressDisplay
+            address={guidance.adminAddress}
+            variant="inline"
+            disableLabel
+            truncate={false}
+            showCopyButton
+            explorerUrl={explorer?.getExplorerUrl(guidance.adminAddress) ?? undefined}
+            className="min-w-0 max-w-full break-all font-mono text-xs"
+          />
         </div>
       </div>
 
-      <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
+      <div className="mt-3 space-y-2 border-t border-current/15 pt-3">
         <div className="flex items-start gap-2">
           <Checkbox
             id="deploy-signer-ack"
             checked={signerAcknowledged}
             onCheckedChange={(checked) => setSignerAcknowledged(checked === true)}
           />
-          <Label
-            htmlFor="deploy-signer-ack"
-            className="text-xs font-normal leading-snug text-muted-foreground"
-          >
+          <Label htmlFor="deploy-signer-ack" className="text-xs font-normal leading-snug">
             {signerAckNotice.description ?? ''}
           </Label>
         </div>
@@ -91,7 +85,7 @@ export function DeployReadinessPanel({
             <div className="flex min-w-0 flex-1 items-start gap-1.5">
               <Label
                 htmlFor="include-identity-support"
-                className="text-xs font-normal leading-snug text-muted-foreground"
+                className="text-xs font-normal leading-snug"
               >
                 {identitySupportNotice.description ?? ''}
               </Label>
@@ -113,6 +107,6 @@ export function DeployReadinessPanel({
           </div>
         )}
       </div>
-    </section>
+    </Banner>
   );
 }
