@@ -240,6 +240,10 @@ function rewriteDependencies(pkg, context, cacheDir, familyKey, family) {
     if (!pkg[depType]) continue;
 
     for (const npmName of Object.keys(pkg[depType])) {
+      if (!npmName.startsWith('@openzeppelin/')) {
+        continue;
+      }
+
       const packedTarballPath = packedPackages && packedPackages[npmName];
       if (packedTarballPath && fs.existsSync(packedTarballPath)) {
         pkg[depType][npmName] = `file:${packedTarballPath}`;
