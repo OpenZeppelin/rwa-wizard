@@ -244,9 +244,7 @@ export function buildRoleSignerPreflightChecks(): string[] {
     '  fi',
     '}',
     '',
-    'if [ "$ADMIN" != "$MANAGER" ]; then',
-    '  verify_role_signer "Admin" "$ADMIN" "$ADMIN_SOURCE_ACCOUNT"',
-    '  verify_role_signer "Manager" "$MANAGER" "$MANAGER_SOURCE_ACCOUNT"',
-    'fi',
+    'verify_role_signer "Admin" "$ADMIN" "$ADMIN_SOURCE_ACCOUNT"',
+    'verify_role_signer "Manager" "$MANAGER" "$MANAGER_SOURCE_ACCOUNT"',
   ];
 }

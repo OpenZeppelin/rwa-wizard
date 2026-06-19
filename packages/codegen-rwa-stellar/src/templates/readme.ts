@@ -5,10 +5,14 @@ import {
 } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import { CRATE_NAMES, SOROBAN_SDK_VERSION } from '../constants';
+import { getDeploymentCrateNames } from './scripts/deploy-sh-deployments';
+
+import { CRATE_NAMES } from '../constants';
 import { resolveStellarDeploymentTarget } from '../deployment/target';
 import { getModuleById } from '../modules/registry';
 import type { UpstreamTemplateSourceMetadata } from '../upstream/types';
+import { IDENTITY_SUPPORT_CONTRACTS } from './identity-support-contracts';
+import { renderDeployReadmeSections, renderExtendedPrerequisites } from './readme-deploy-sections';
 
 interface ContractTableRow {
   crate: string;
@@ -19,6 +23,7 @@ interface ContractTableRow {
 
 export interface ReadmeGenerationContext {
   templateSourceMetadata: UpstreamTemplateSourceMetadata;
+  includeIdentitySupport?: boolean;
 }
 
 /**
@@ -100,6 +105,60 @@ function renderSelectedModules(config: RWAConfig): string {
     );
   }
 
+  lines.push('');
+  return lines.join('\n');
+}
+
+function getExampleContractTable(): ContractTableRow[] {
+  return [
+    {
+      crate: IDENTITY_SUPPORT_CONTRACTS[0].crateName,
+      name: IDENTITY_SUPPORT_CONTRACTS[0].displayName,
+      purpose: 'Example Ed25519 claim issuer for demo/testnet claim signing',
+      traits: ['ClaimIssuer', 'Ownable'],
+    },
+    {
+      crate: IDENTITY_SUPPORT_CONTRACTS[1].crateName,
+      name: IDENTITY_SUPPORT_CONTRACTS[1].displayName,
+      purpose: 'Example per-holder identity contract for onboarding demos',
+      traits: ['IdentityClaims', 'Ownable'],
+    },
+  ];
+}
+
+function renderBuildArtifactNote(config: RWAConfig, context: ReadmeGenerationContext): string {
+  const deployableCount = getDeploymentCrateNames(config).length;
+
+  if (context.includeIdentitySupport) {
+    const exampleCount = IDENTITY_SUPPORT_CONTRACTS.length;
+    const builtCount = deployableCount + exampleCount;
+    return `\n\`build.sh\` compiles **${builtCount}** WASM artifacts: **${deployableCount}** deployed by \`deploy.sh\`, plus **${exampleCount}** example/dev-only crates (\`rwa_claim_issuer_example.wasm\`, \`rwa_identity_example.wasm\`). Preflight validates only the ${deployableCount} deployable artifacts.\n`;
+  }
+
+  return `\n\`build.sh\` produces **${deployableCount}** WASM artifacts — the same set \`deploy.sh\` validates and deploys.\n`;
+}
+
+function renderIdentityOnboardingArchitecture(context: ReadmeGenerationContext): string {
+  if (context.includeIdentitySupport) {
+    return `This export includes upstream **example** Claim Issuer and per-holder Identity contracts under \`contracts/claim-issuer\` and \`contracts/identity\`, plus a \`tools/sign-claim\` helper. \`build.sh\` compiles them alongside the core contracts, but \`deploy.sh\` does **not** deploy or wire them automatically — use them for local/testnet onboarding demos after the core system is deployed.`;
+  }
+
+  return `This generated project does not include the upstream **Claim Issuer** or per-holder **Identity** example contracts used to onboard verified investors. Those contracts must exist before a recipient can pass Stellar identity verification and receive minted tokens. Enable testnet identity scaffolding in the wizard (or \`--include-identity-support\` in the CLI) to add the example crates.`;
+}
+
+function renderExampleContractsSection(context: ReadmeGenerationContext): string {
+  if (!context.includeIdentitySupport) {
+    return '';
+  }
+
+  const lines: string[] = [];
+  lines.push('### Example / dev-only contracts');
+  lines.push('');
+  lines.push(
+    'Built for onboarding demos; not deployed or wired by `deploy.sh`. See `tools/sign-claim` for signing demo claims.'
+  );
+  lines.push('');
+  lines.push(renderContractTable(getExampleContractTable()));
   lines.push('');
   return lines.join('\n');
 }
@@ -233,12 +292,16 @@ function renderUpstreamProvenance(metadata: UpstreamTemplateSourceMetadata): str
 /**
  * Explain why the requested initial supply is not auto-minted on Stellar.
  */
-function renderInitialSupplyNote(config: RWAConfig): string {
+function renderInitialSupplyNote(config: RWAConfig, context: ReadmeGenerationContext): string {
   if (config.token.initialSupply === undefined) {
     return '';
   }
 
-  return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. This generated project scaffolds CTI, IRS, and the Identity Verifier, but it does not scaffold those investor-specific identity contracts, so perform the mint manually after identity onboarding. The configured initial supply is expressed in on-chain base units (smallest token units), not display units; with \`token.decimals = ${config.token.decimals}\`, one whole token equals \`10^${config.token.decimals}\` base units.\n`;
+  const identityNote = context.includeIdentitySupport
+    ? 'This export includes example Claim Issuer and Identity crates (see Contracts), but `deploy.sh` does not deploy or wire them automatically — deploy them separately for testnet onboarding before minting.'
+    : 'This generated project scaffolds CTI, IRS, and the Identity Verifier, but it does not include those investor-specific identity contracts, so perform the mint manually after identity onboarding.';
+
+  return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. ${identityNote} The configured initial supply is expressed in on-chain base units (smallest token units), not display units; with \`token.decimals = ${config.token.decimals}\`, one whole token equals \`10^${config.token.decimals}\` base units.\n`;
 }
 
 /**
@@ -263,52 +326,26 @@ export function generateReadme(config: RWAConfig, context: ReadmeGenerationConte
 
 ## Prerequisites
 
-- [Rust](https://www.rust-lang.org/tools/install) toolchain (edition 2021)
-- [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/install-cli) (\`stellar\` command)
-- \`soroban-sdk\` version: \`${SOROBAN_SDK_VERSION}\`
-- \`wasm32v1-none\` target: \`rustup target add wasm32v1-none\`
+${renderExtendedPrerequisites(config)}
 
 ## Build
 
-Compile all contracts in the workspace:
+Compile all contracts in the workspace (required before deploy):
 
 \`\`\`bash
 chmod +x scripts/build.sh
 ./scripts/build.sh
 \`\`\`
-
+${renderBuildArtifactNote(config, context)}
 After building, run \`cargo fmt\` to apply canonical Rust formatting to the generated source files.
 
 ## Deploy
 
-Deploy all contracts to ${networkDesc}:
-
-### End-to-end script flow
-
-\`build.sh\` compiles the workspace; \`deploy.sh\` deploys contracts and runs post-deploy configuration. The following diagram is generated from this project's config and matches the script order:
+${renderDeployReadmeSections(config, networkDesc)}
 
 ${renderE2eScriptFlowMermaid(config)}
 
-\`\`\`bash
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh
-\`\`\`
-
-Before running \`deploy.sh\`, set a signable Stellar CLI source account. The script resolves
-\`SOURCE_ACCOUNT\` first and falls back to \`STELLAR_ACCOUNT\`:
-
-\`\`\`bash
-export STELLAR_ACCOUNT=alice
-./scripts/deploy.sh
-\`\`\`
-
-The chosen source account must be able to authorize the configured admin/operator actions during deployment.
-
-The deploy script handles the complete lifecycle:
-1. Deploys contracts in dependency order
-2. Captures deployed contract addresses
-3. Performs post-deployment configuration (token binding, module registration, claim topics, trusted issuers)
-${renderInitialSupplyNote(config)}
+${renderInitialSupplyNote(config, context)}
 \`config.json\` is an informational snapshot of the exact source config used to generate this project. You can reuse it to regenerate or re-import the project later, but \`deploy.sh\` does not read it at runtime.
 
 ## Architecture
@@ -325,12 +362,13 @@ The system follows a modular architecture where each concern is handled by a ded
 
 Contracts communicate through address references established during deployment. The deploy script handles all cross-contract wiring automatically.
 
-This generated project does not currently scaffold the upstream **Claim Issuer** or per-holder **Identity** example contracts used to onboard verified investors. Those contracts must exist before a recipient can pass Stellar identity verification and receive minted tokens.
+${renderIdentityOnboardingArchitecture(context)}
 
 ## Contracts
 
 ${renderContractTable(contractTable)}
 
+${renderExampleContractsSection(context)}
 ${selectedModulesSection ? `${selectedModulesSection}\n` : ''}### Upstream Provenance
 
 ${renderUpstreamProvenance(context.templateSourceMetadata)}

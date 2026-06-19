@@ -4,6 +4,10 @@ import * as p from '@clack/prompts';
 import pc from 'picocolors';
 
 import type { GenerateOptions as CoreGenerateOptions } from '@openzeppelin/codegen-core';
+import {
+  formatDeployPostGenerationSteps,
+  getDeployGuidance,
+} from '@openzeppelin/codegen-rwa-stellar';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import {
@@ -146,6 +150,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
         ['Generator', adapter.name],
         ['Config hash', zipResult.metadata.configHash],
       ]);
+      printDeployNextSteps(opts.chain, config);
     } catch (err) {
       s.stop('Generation failed');
       logger.error((err as Error).message);
@@ -169,6 +174,7 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
         ['Generator', adapter.name],
         ['Config hash', result.metadata.configHash],
       ]);
+      printDeployNextSteps(opts.chain, config);
     } catch (err) {
       s.stop('Generation failed');
       logger.error((err as Error).message);
@@ -182,6 +188,17 @@ export async function generateCommand(opts: GenerateOptions): Promise<void> {
 
   logger.blank();
   p.outro(pc.green('Done!'));
+}
+
+function printDeployNextSteps(chain: string, config: RWAConfig): void {
+  if (chain !== 'stellar') return;
+
+  const guidance = getDeployGuidance(config);
+  logger.blank();
+  logger.plain(pc.bold('Deploy next steps'));
+  for (const line of formatDeployPostGenerationSteps(guidance)) {
+    logger.plain(`  ${line}`);
+  }
 }
 
 async function offerConfigExport(config: RWAConfig): Promise<void> {

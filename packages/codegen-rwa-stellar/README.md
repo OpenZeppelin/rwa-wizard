@@ -112,23 +112,31 @@ If `token.initialSupply` is set, the generated `deploy.sh` does **not** auto-min
 
 The Stellar testnet e2e script (`pnpm e2e:testnet`) uses this path internally. The CLI exposes the same behavior via `--include-identity-support`.
 
-### Manual E2E
+### Manual E2E (golden path)
 
-Use the checked-in full sample config to generate, build, and deploy a representative project:
+Use the checked-in full sample config to generate, build, and deploy a representative project. This mirrors how CI validates the generator end-to-end:
 
 ```bash
+# 1. Generate a project (replace G... with your funded testnet admin address)
 pnpm --filter @openzeppelin/codegen-rwa-stellar test:manual:e2e -- \
   --config packages/cli/examples/stellar-full-e2e.json \
   --address G... \
-  --source-account alice
+  --source-account my-admin
+
+# The script writes a temp project, runs build.sh, then deploy.sh.
+# Your --source-account identity MUST resolve to the configured Admin/Manager
+# address (see generated deploy.sh). Use:
+#   stellar keys generate my-admin --fund
+#   stellar keys address my-admin
 ```
 
 Notes:
 
 - The default sample uses the placeholder `__STELLAR_E2E_ADDRESS__`, so you must pass `--address` (or `STELLAR_E2E_ADDRESS`) unless your custom config already contains real addresses.
-- Pass `--source-account <identity>` or export `SOURCE_ACCOUNT` / `STELLAR_ACCOUNT` so the generated `deploy.sh` can pay for and sign contract deployments.
-- When the configured owner and Manager role use different addresses, also set `ADMIN_SOURCE_ACCOUNT` and `MANAGER_SOURCE_ACCOUNT` to the Stellar CLI identities that control those addresses. Post-deploy invokes sign with the matching role account; `set_compliance_address` uses the admin signer, while module configuration and hook wiring use the manager signer.
-- If owner and Manager share the same address, `SOURCE_ACCOUNT` is enough for deploy and post-deploy configuration.
+- Pass `--source-account <identity>` or export `SOURCE_ACCOUNT` / `STELLAR_ACCOUNT`. The identity must control the configured Admin and Manager addresses — generated `deploy.sh` now verifies this **before** deploying.
+- Run `./scripts/deploy.sh --preflight` first to validate signers and WASM artifacts without spending XLM.
+- When the configured owner and Manager role use different addresses, also set `ADMIN_SOURCE_ACCOUNT` and `MANAGER_SOURCE_ACCOUNT` to the Stellar CLI identities that control those addresses.
+- If owner and Manager share the same address, `SOURCE_ACCOUNT` is enough for deploy and post-deploy configuration when it matches that shared address.
 - If your config sets `token.initialSupply`, expect a validation warning and a successful deploy without auto-minting; mint only after onboarding a verified recipient identity and claim stack.
 - If you need an explicit signer override, you can also pass `--sign-with-key <identity>` or use `STELLAR_SIGN_WITH_KEY`.
 - Pass `--contracts-library-path /absolute/path/to/stellar-contracts` if you want the manual flow to use local path dependencies instead of the bundled git-pinned source.

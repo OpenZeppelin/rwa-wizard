@@ -9,6 +9,12 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type { ComplianceModuleRegistryEntry } from './modules/registry';
 import { getAvailableModules as getModules } from './modules/registry';
+import {
+  generateIdentitySupportFiles,
+  generateWithIdentitySupport,
+  IDENTITY_SUPPORT_CONTRACTS,
+  SIGN_CLAIM_TOOL,
+} from './templates/identity-support';
 
 import { sanitizeDirectoryName, StellarRwaGenerator } from './stellar-rwa-generator';
 
@@ -37,6 +43,13 @@ export {
 } from './contracts-library-meta';
 
 export { getCodegenInfoBlurb, STELLAR_SEP_0057_CONTRACT_TYPES_URL } from './codegen-info-blurb';
+
+export {
+  formatDeployPostGenerationSteps,
+  formatDeployReadinessChecklist,
+  getDeployGuidance,
+} from './templates/deploy-guidance';
+export type { DeployGuidance } from './templates/deploy-guidance';
 
 /**
  * Auto-generate a Soroban-compatible role symbol from a human-readable role name.
@@ -108,8 +121,6 @@ export { getModuleById } from './modules/registry';
  */
 export { getEcosystemMetadata } from './ecosystem-metadata';
 
-export { migrateStellarRwaConfig } from './migrate';
-
 export type {
   StellarComplianceHook,
   StellarEcosystemMetadata,
@@ -123,7 +134,7 @@ export {
   generateWithIdentitySupport,
   IDENTITY_SUPPORT_CONTRACTS,
   SIGN_CLAIM_TOOL,
-} from './templates/identity-support';
+};
 export type { IdentitySupportFiles } from './templates/identity-support';
 
 /**
@@ -238,6 +249,20 @@ export async function generateZip(
   options?: GenerateOptions
 ): Promise<ZipResult> {
   const result = generate(config, options);
+  const dirName = sanitizeDirectoryName(config.token.symbol);
+
+  return coreGenerateZip(result, dirName, { onProgress: options?.onProgress });
+}
+
+/**
+ * Generate a ZIP archive including dev/testnet identity-onboarding scaffolding.
+ * Not for production — see `generateWithIdentitySupport`.
+ */
+export async function generateZipWithIdentitySupport(
+  config: RWAConfig,
+  options?: GenerateOptions
+): Promise<ZipResult> {
+  const result = generateWithIdentitySupport(config, options);
   const dirName = sanitizeDirectoryName(config.token.symbol);
 
   return coreGenerateZip(result, dirName, { onProgress: options?.onProgress });
