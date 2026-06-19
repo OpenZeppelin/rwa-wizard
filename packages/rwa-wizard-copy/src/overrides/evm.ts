@@ -11,4 +11,10 @@ export const EVM_OVERRIDE: ConceptOverride = {
     title: 'EVM',
     description: 'Ethereum Virtual Machine (future)',
   },
+  'fieldHelper.address-list.placeholder': {
+    description: '0x... address',
+  },
+  'fieldHelper.address-list.bulk-placeholder': {
+    description: '0x... address (one per line, or comma-separated)',
+  },
 } as const;

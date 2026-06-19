@@ -1,3 +1,10 @@
+import type {
+  ComplianceModuleCategoryId,
+  ComplianceModuleConfigValueKind,
+  ComplianceModuleRuntimePrerequisiteId,
+  ComplianceModuleSelectionWarningId,
+  ComplianceModuleSelectionWarningRule,
+} from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 import { CHAIN_IDS, isChainId, type ChainId } from '@openzeppelin/rwa-wizard-copy';
 
@@ -151,11 +158,30 @@ export interface StructuralModuleConfigFieldMeta {
   type: 'number' | 'string' | 'string[]';
   required: boolean;
   placeholder?: string;
+  valueKind?: ComplianceModuleConfigValueKind;
 }
 
 /** UI-ready config field metadata: structural fields + joined helper text. */
 export interface ModuleConfigFieldMeta extends StructuralModuleConfigFieldMeta {
   hint?: string;
+}
+
+export interface ComplianceModuleRuntimePrerequisiteMeta {
+  id: ComplianceModuleRuntimePrerequisiteId;
+  label: string;
+  infoCopy?: string;
+}
+
+export interface ComplianceModuleCategoryGroupMeta {
+  id: ComplianceModuleCategoryId;
+  title: string;
+  description: string;
+}
+
+export interface ComplianceModuleSelectionWarningMeta {
+  id: ComplianceModuleSelectionWarningId;
+  description: string;
+  relatedModuleIds: readonly string[];
 }
 
 /**
@@ -165,6 +191,8 @@ export interface ModuleConfigFieldMeta extends StructuralModuleConfigFieldMeta {
 export interface StructuralComplianceModuleOption {
   id: string;
   name: string;
+  category: ComplianceModuleCategoryId;
+  runtimePrerequisites: readonly ComplianceModuleRuntimePrerequisiteId[];
   requiredHooks: string[];
   review: ModuleReviewInfo;
   configFields: StructuralModuleConfigFieldMeta[];
@@ -174,10 +202,12 @@ export interface StructuralComplianceModuleOption {
  * UI-ready compliance-module entry: structural facts plus educational copy
  * joined from the copy package.
  */
-export interface ComplianceModuleOption extends StructuralComplianceModuleOption {
+export interface ComplianceModuleOption
+  extends Omit<StructuralComplianceModuleOption, 'runtimePrerequisites' | 'configFields'> {
   description: string;
   /** Longer tooltip copy. Omitted when no `infoCopy` entry is defined. */
   infoCopy?: string;
+  runtimePrerequisites: ComplianceModuleRuntimePrerequisiteMeta[];
   configFields: ModuleConfigFieldMeta[];
 }
 
@@ -240,6 +270,11 @@ export interface ComplianceHookMeta extends StructuralComplianceHookMeta {
   infoCopy?: string;
 }
 
+export interface ComplianceCatalogMetadata {
+  moduleCategories: readonly ComplianceModuleCategoryId[];
+  selectionWarningRules: readonly ComplianceModuleSelectionWarningRule[];
+}
+
 /**
  * Structural metadata emitted by codegen packages. Roles, hooks, and control
  * descriptors only carry structural labels; user-facing prose lives in
@@ -250,6 +285,7 @@ export interface StructuralEcosystemMetadata {
   identityControls: readonly StructuralFeatureControlMeta[];
   operatorRoles: readonly StructuralOperatorRoleMeta[];
   complianceHooks: readonly StructuralComplianceHookMeta[];
+  complianceCatalog: ComplianceCatalogMetadata;
   limits: {
     maxModulesPerHook: number;
     maxTrustedIssuers: number;
@@ -266,6 +302,7 @@ export interface TargetEcosystemMetadata {
   identityControls: readonly FeatureControlMeta[];
   operatorRoles: readonly OperatorRoleMeta[];
   complianceHooks: readonly ComplianceHookMeta[];
+  complianceCatalog: ComplianceCatalogMetadata;
   limits: StructuralEcosystemMetadata['limits'];
 }
 

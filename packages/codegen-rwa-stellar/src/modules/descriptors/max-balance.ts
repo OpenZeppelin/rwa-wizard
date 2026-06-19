@@ -7,6 +7,8 @@ import {
 export const maxBalanceModule = defineComplianceModuleDescriptor({
   id: 'max-balance',
   name: 'Max Balance',
+  category: 'supply-and-balance',
+  runtimePrerequisites: ['identity-registry'],
   requiredHooks: ['transferred', 'created', 'destroyed'],
   crateName: 'compliance-max-balance',
   review: { state: 'stable' },

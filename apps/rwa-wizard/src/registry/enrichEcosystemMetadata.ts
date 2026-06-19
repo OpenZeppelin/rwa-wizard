@@ -1,8 +1,14 @@
+import type {
+  ComplianceModuleCategoryId,
+  ComplianceModuleSelectionWarning,
+} from '@openzeppelin/codegen-rwa-common';
 import { getCopyForChain, isChainId, type ChainCopy } from '@openzeppelin/rwa-wizard-copy';
 
 import type {
   ComplianceHookMeta,
+  ComplianceModuleCategoryGroupMeta,
   ComplianceModuleOption,
+  ComplianceModuleSelectionWarningMeta,
   FeatureControlMeta,
   ModuleConfigFieldMeta,
   OperatorRoleMeta,
@@ -33,6 +39,7 @@ export function enrichEcosystemMetadata(
       identityControls: structural.identityControls.map(toPlaceholderControl),
       operatorRoles: structural.operatorRoles.map(toPlaceholderRole),
       complianceHooks: structural.complianceHooks.map(toPlaceholderHook),
+      complianceCatalog: structural.complianceCatalog,
     };
   }
 
@@ -103,10 +110,46 @@ function enrichModule(
     ...mod,
     description: moduleEntry.description,
     infoCopy: moduleEntry.infoCopy,
+    runtimePrerequisites: mod.runtimePrerequisites.map((id) => {
+      const entry = copy.notice(`compliance.module-prerequisite.${id}`);
+      return {
+        id,
+        label: entry.description,
+        infoCopy: entry.infoCopy,
+      };
+    }),
     configFields: mod.configFields.map((field): ModuleConfigFieldMeta => {
       const fieldEntry = copy.moduleField(mod.id, field.key);
       return { ...field, hint: fieldEntry.description || undefined };
     }),
+  };
+}
+
+export function enrichComplianceModuleCategoryGroup(
+  targetId: string,
+  category: ComplianceModuleCategoryId
+): ComplianceModuleCategoryGroupMeta | null {
+  if (!isChainId(targetId)) return null;
+  const copy = getCopyForChain(targetId);
+  const entry = copy.notice(`compliance.module-category.${category}`);
+  return {
+    id: category,
+    title: entry.title ?? category,
+    description: entry.description,
+  };
+}
+
+export function enrichComplianceSelectionWarning(
+  targetId: string,
+  warning: ComplianceModuleSelectionWarning
+): ComplianceModuleSelectionWarningMeta | null {
+  if (!isChainId(targetId)) return null;
+  const copy = getCopyForChain(targetId);
+  const entry = copy.notice(`compliance.selection-warning.${warning.id}`);
+  return {
+    id: warning.id,
+    description: entry.description,
+    relatedModuleIds: warning.relatedModuleIds,
   };
 }
 
@@ -130,6 +173,7 @@ function toPlaceholderModule(mod: StructuralComplianceModuleOption): ComplianceM
   return {
     ...mod,
     description: '',
+    runtimePrerequisites: [],
     configFields: mod.configFields.map((field): ModuleConfigFieldMeta => ({ ...field })),
   };
 }

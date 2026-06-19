@@ -1,5 +1,6 @@
 import { useCopy } from '../../../../app/providers/useCopy';
 import { Badge } from '../../../../components/shared/Badge';
+import { InfoTooltip } from '../../../../components/shared/InfoTooltip';
 import { renderInlineCopy } from '../../../../components/shared/renderInlineCopy';
 import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../../types/wizard';
 
@@ -10,7 +11,7 @@ interface HookWiringPreviewProps {
 }
 
 function moduleName(moduleId: string, availableModules: ComplianceModuleOption[]): string {
-  return availableModules.find((m) => m.id === moduleId)?.name ?? moduleId;
+  return availableModules.find((entry) => entry.id === moduleId)?.name ?? moduleId;
 }
 
 export function HookWiringPreview({
@@ -18,10 +19,10 @@ export function HookWiringPreview({
   hookRegistrations,
   availableModules,
 }: HookWiringPreviewProps) {
-  const activeHooks = complianceHooks.filter((h) => hookRegistrations.has(h.hook));
   const notice = useCopy().notice('compliance.hook-wiring-preview');
+  const emptyHookNotice = useCopy().notice('compliance.hook-wiring-preview.empty-hook');
 
-  if (activeHooks.length === 0) return null;
+  if (complianceHooks.length === 0) return null;
 
   return (
     <div className="space-y-3">
@@ -43,24 +44,37 @@ export function HookWiringPreview({
             </tr>
           </thead>
           <tbody>
-            {activeHooks.map((hookMeta) => {
+            {complianceHooks.map((hookMeta) => {
               const moduleIds = hookRegistrations.get(hookMeta.hook) ?? [];
               return (
                 <tr key={hookMeta.hook} className="border-b border-border last:border-0">
                   <td className="px-4 py-2.5 align-top">
-                    <div className="font-medium text-foreground">{hookMeta.displayName}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="font-medium text-foreground">{hookMeta.displayName}</div>
+                      {hookMeta.infoCopy && (
+                        <InfoTooltip label={`About the ${hookMeta.displayName} hook`}>
+                          {hookMeta.infoCopy}
+                        </InfoTooltip>
+                      )}
+                    </div>
                     <div className="mt-0.5 text-xs text-muted-foreground">
                       {hookMeta.description}
                     </div>
                   </td>
                   <td className="px-4 py-2.5">
-                    <div className="flex flex-wrap gap-1.5">
-                      {moduleIds.map((id) => (
-                        <Badge key={id} variant="secondary">
-                          {moduleName(id, availableModules)}
-                        </Badge>
-                      ))}
-                    </div>
+                    {moduleIds.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {moduleIds.map((id) => (
+                          <Badge key={id} variant="secondary">
+                            {moduleName(id, availableModules)}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        {emptyHookNotice.description}
+                      </span>
+                    )}
                   </td>
                 </tr>
               );

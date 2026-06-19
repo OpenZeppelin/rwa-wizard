@@ -83,6 +83,7 @@ export function WizardPage(): ReactElement {
   );
 
   const { steps, orderedStepIds } = useWizardSteps({
+    selectedTargetId,
     draftState,
     targetSnapshot,
     adapterCaps,

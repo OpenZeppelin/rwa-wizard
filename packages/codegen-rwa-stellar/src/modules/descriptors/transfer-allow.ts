@@ -8,6 +8,8 @@ import {
 export const transferAllowModule = defineComplianceModuleDescriptor({
   id: 'transfer-allow',
   name: 'Transfer Allow-list',
+  category: 'access-and-velocity',
+  runtimePrerequisites: [],
   requiredHooks: ['transferred'],
   crateName: 'compliance-transfer-allow',
   review: { state: 'stable' },
@@ -17,7 +19,7 @@ export const transferAllowModule = defineComplianceModuleDescriptor({
       label: 'Allowed Users',
       type: 'string[]',
       required: false,
-      placeholder: 'e.g. G..., G...',
+      valueKind: 'address-list',
     },
   ],
   deployment: {

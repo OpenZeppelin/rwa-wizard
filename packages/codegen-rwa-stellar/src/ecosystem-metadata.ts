@@ -1,3 +1,11 @@
+import type { ComplianceModuleSelectionWarningRule } from '@openzeppelin/codegen-rwa-common';
+
+import {
+  STELLAR_COMPLIANCE_MODULE_CATEGORIES,
+  STELLAR_COMPLIANCE_SELECTION_WARNING_RULES,
+  type StellarComplianceModuleCategoryId,
+} from './compliance-catalog-meta';
+
 // ---------------------------------------------------------------------------
 // Stellar-specific compliance hook type
 // ---------------------------------------------------------------------------
@@ -128,6 +136,10 @@ export interface StellarEcosystemMetadata {
   identityControls: readonly StellarAdminControlMeta[];
   operatorRoles: readonly StellarOperatorRoleMeta[];
   complianceHooks: readonly StellarComplianceHookMeta[];
+  complianceCatalog: {
+    moduleCategories: readonly StellarComplianceModuleCategoryId[];
+    selectionWarningRules: readonly ComplianceModuleSelectionWarningRule[];
+  };
   limits: {
     maxModulesPerHook: number;
     maxTrustedIssuers: number;
@@ -140,6 +152,10 @@ export function getEcosystemMetadata(): StellarEcosystemMetadata {
     identityControls: STELLAR_IDENTITY_CONTROLS,
     operatorRoles: STELLAR_OPERATOR_ROLES,
     complianceHooks: STELLAR_COMPLIANCE_HOOKS,
+    complianceCatalog: {
+      moduleCategories: STELLAR_COMPLIANCE_MODULE_CATEGORIES,
+      selectionWarningRules: STELLAR_COMPLIANCE_SELECTION_WARNING_RULES,
+    },
     limits: {
       maxModulesPerHook: STELLAR_MAX_MODULES_PER_HOOK,
       maxTrustedIssuers: STELLAR_MAX_TRUSTED_ISSUERS,

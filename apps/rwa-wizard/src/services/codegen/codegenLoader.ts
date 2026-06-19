@@ -4,6 +4,11 @@ import type {
   GenerateOptions,
   ProgressCallback,
 } from '@openzeppelin/codegen-core';
+import type {
+  ComplianceModuleCategoryId,
+  ComplianceModuleConfigValueKind,
+  ComplianceModuleRuntimePrerequisiteId,
+} from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
@@ -24,6 +29,8 @@ interface CodegenPackageModule {
   getAvailableModules: () => Array<{
     id: string;
     name: string;
+    category: ComplianceModuleCategoryId;
+    runtimePrerequisites: readonly ComplianceModuleRuntimePrerequisiteId[];
     requiredHooks: string[];
     review: { state: string; prUrl?: string };
     configFields: Array<{
@@ -32,6 +39,7 @@ interface CodegenPackageModule {
       type: string;
       required: boolean;
       placeholder?: string;
+      valueKind?: ComplianceModuleConfigValueKind;
     }>;
   }>;
   generateZip: (
@@ -115,6 +123,8 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
       return modules.map((m) => ({
         id: m.id,
         name: m.name,
+        category: m.category,
+        runtimePrerequisites: [...m.runtimePrerequisites],
         requiredHooks: [...m.requiredHooks],
         review: {
           state: m.review.state as StructuralComplianceModuleOption['review']['state'],
@@ -126,6 +136,8 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
           type: f.type as 'number' | 'string' | 'string[]',
           required: f.required,
           placeholder: f.placeholder,
+          valueKind:
+            f.valueKind as StructuralComplianceModuleOption['configFields'][number]['valueKind'],
         })),
       }));
     },

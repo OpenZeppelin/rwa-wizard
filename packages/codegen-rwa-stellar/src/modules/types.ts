@@ -1,5 +1,10 @@
+import type { ComplianceModuleConfigValueKind } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import type {
+  StellarComplianceModuleCategoryId,
+  StellarComplianceModuleRuntimePrerequisiteId,
+} from '../compliance-catalog-meta';
 import type { StellarComplianceHook } from '../ecosystem-metadata';
 
 // ---------------------------------------------------------------------------
@@ -31,6 +36,7 @@ export interface ModuleConfigField {
   type: 'number' | 'string' | 'string[]';
   required: boolean;
   placeholder?: string;
+  valueKind?: ComplianceModuleConfigValueKind;
 }
 
 // ---------------------------------------------------------------------------
@@ -47,6 +53,8 @@ export interface ModuleConfigField {
 export interface ComplianceModuleRegistryEntry {
   id: string;
   name: string;
+  category: StellarComplianceModuleCategoryId;
+  runtimePrerequisites: readonly StellarComplianceModuleRuntimePrerequisiteId[];
   requiredHooks: StellarComplianceHook[];
   /** Crate name used in generated Cargo.toml / wasm filenames */
   crateName: string;

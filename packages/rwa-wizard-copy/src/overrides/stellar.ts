@@ -29,4 +29,10 @@ export const STELLAR_OVERRIDE: ConceptOverride = {
     description:
       'Length of the rolling window in ledgers. At roughly 5 seconds per ledger, 1 day is about 17 280 ledgers.',
   },
+  'fieldHelper.address-list.placeholder': {
+    description: 'G... or C... address',
+  },
+  'fieldHelper.address-list.bulk-placeholder': {
+    description: 'G... or C... address (one per line, or comma-separated)',
+  },
 } as const;

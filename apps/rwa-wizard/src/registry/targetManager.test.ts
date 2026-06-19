@@ -9,7 +9,8 @@ const mockService: RwaCodegenService = {
     {
       id: 'supply-limit',
       name: 'Supply Limit',
-      description: 'Cap',
+      category: 'supply-and-balance',
+      runtimePrerequisites: [],
       requiredHooks: ['created', 'destroyed'],
       review: { state: 'stable' },
       configFields: [],
@@ -20,6 +21,10 @@ const mockService: RwaCodegenService = {
     identityControls: [],
     operatorRoles: [],
     complianceHooks: [],
+    complianceCatalog: {
+      moduleCategories: ['supply-and-balance'],
+      selectionWarningRules: [],
+    },
     limits: { maxModulesPerHook: 20, maxTrustedIssuers: 50 },
   }),
   generateZip: vi.fn(),

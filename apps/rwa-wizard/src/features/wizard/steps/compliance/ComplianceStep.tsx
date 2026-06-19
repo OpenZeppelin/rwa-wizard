@@ -1,36 +1,57 @@
 import { useCallback, useMemo } from 'react';
 
-import type { ComplianceConfig } from '@openzeppelin/rwa-config';
+import {
+  evaluateComplianceSelectionWarnings,
+  type ComplianceModuleSelectionWarningRule,
+} from '@openzeppelin/codegen-rwa-common';
+import type { ComplianceConfig, RWAConfig } from '@openzeppelin/rwa-config';
+import type { AddressingCapability } from '@openzeppelin/ui-types';
 
 import { useStepCopy } from '../../../../app/providers/useStepCopy';
 import { WizardFrame } from '../../../../components/shared/WizardFrame';
-import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../../types/wizard';
+import { enrichComplianceSelectionWarning } from '../../../../registry/enrichEcosystemMetadata';
+import type {
+  ComplianceHookMeta,
+  ComplianceModuleOption,
+  TargetId,
+} from '../../../../types/wizard';
+import { ComplianceSelectionWarnings } from './ComplianceSelectionWarnings';
 import { HookWiringPreview } from './HookWiringPreview';
 import { ModuleCatalog } from './ModuleCatalog';
 
 interface ComplianceStepProps {
+  targetId: TargetId;
   compliance: ComplianceConfig;
+  initialSupply: RWAConfig['token']['initialSupply'];
   availableModules: ComplianceModuleOption[];
   complianceHooks: readonly ComplianceHookMeta[];
+  moduleCategories: readonly string[];
+  selectionWarningRules: readonly ComplianceModuleSelectionWarningRule[];
+  addressing?: AddressingCapability;
   onUpdate: (patch: Partial<ComplianceConfig>) => void;
 }
 
 export function ComplianceStep({
+  targetId,
   compliance,
+  initialSupply,
   availableModules,
   complianceHooks,
+  moduleCategories,
+  selectionWarningRules,
+  addressing,
   onUpdate,
 }: ComplianceStepProps) {
   const stepCopy = useStepCopy('compliance');
   const selectedModuleIds = useMemo(
-    () => new Set(compliance.modules.map((m) => m.moduleId)),
+    () => new Set(compliance.modules.map((entry) => entry.moduleId)),
     [compliance.modules]
   );
 
   const handleToggleModule = useCallback(
     (moduleId: string) => {
-      if (compliance.modules.some((m) => m.moduleId === moduleId)) {
-        onUpdate({ modules: compliance.modules.filter((m) => m.moduleId !== moduleId) });
+      if (compliance.modules.some((entry) => entry.moduleId === moduleId)) {
+        onUpdate({ modules: compliance.modules.filter((entry) => entry.moduleId !== moduleId) });
       } else {
         onUpdate({ modules: [...compliance.modules, { moduleId }] });
       }
@@ -41,10 +62,10 @@ export function ComplianceStep({
   const handleConfigChange = useCallback(
     (moduleId: string, config: Record<string, unknown>) => {
       onUpdate({
-        modules: compliance.modules.map((m) =>
-          m.moduleId === moduleId
-            ? { ...m, config: Object.keys(config).length > 0 ? config : undefined }
-            : m
+        modules: compliance.modules.map((entry) =>
+          entry.moduleId === moduleId
+            ? { ...entry, config: Object.keys(config).length > 0 ? config : undefined }
+            : entry
         ),
       });
     },
@@ -53,27 +74,42 @@ export function ComplianceStep({
 
   const hookRegistrations = useMemo(() => {
     const map = new Map<string, string[]>();
-    for (const sel of compliance.modules) {
-      const meta = availableModules.find((m) => m.id === sel.moduleId);
+    for (const selection of compliance.modules) {
+      const meta = availableModules.find((entry) => entry.id === selection.moduleId);
       if (!meta) continue;
       for (const hook of meta.requiredHooks) {
         const list = map.get(hook) ?? [];
-        if (!list.includes(sel.moduleId)) list.push(sel.moduleId);
+        if (!list.includes(selection.moduleId)) list.push(selection.moduleId);
         map.set(hook, list);
       }
     }
     return map;
   }, [compliance.modules, availableModules]);
 
+  const selectionWarnings = useMemo(() => {
+    return evaluateComplianceSelectionWarnings(
+      { compliance, initialSupply },
+      compliance.modules.map((entry) => entry.moduleId),
+      selectionWarningRules
+    )
+      .map((warning) => enrichComplianceSelectionWarning(targetId, warning))
+      .filter((warning): warning is NonNullable<typeof warning> => warning !== null);
+  }, [targetId, compliance, initialSupply, selectionWarningRules]);
+
   return (
     <WizardFrame {...stepCopy} spacing="space-y-8">
       <ModuleCatalog
+        targetId={targetId}
         availableModules={availableModules}
+        moduleCategories={moduleCategories}
         selectedModuleIds={selectedModuleIds}
         selectedModules={compliance.modules}
         onToggleModule={handleToggleModule}
         onConfigChange={handleConfigChange}
+        addressing={addressing}
       />
+
+      <ComplianceSelectionWarnings warnings={selectionWarnings} />
 
       {compliance.modules.length > 0 && (
         <HookWiringPreview

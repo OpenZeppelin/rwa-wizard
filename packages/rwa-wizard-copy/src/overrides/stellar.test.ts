@@ -28,4 +28,10 @@ describe('STELLAR_OVERRIDE', () => {
     expect(manager.description).toMatch(/set_compliance_address/);
     expect(manager.infoCopy).toMatch(/only_role/);
   });
+
+  it('keeps Stellar address examples on the address-list placeholders', () => {
+    const copy = getCopyForChain('stellar');
+    expect(copy.fieldHelper('address-list.placeholder').description).toMatch(/G\.\.\./);
+    expect(copy.fieldHelper('address-list.bulk-placeholder').description).toMatch(/G\.\.\./);
+  });
 });

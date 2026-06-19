@@ -8,6 +8,8 @@ import {
 export const timeTransfersLimitsModule = defineComplianceModuleDescriptor({
   id: 'time-transfers-limits',
   name: 'Time-based Transfer Limits',
+  category: 'access-and-velocity',
+  runtimePrerequisites: ['identity-registry'],
   requiredHooks: ['transferred'],
   crateName: 'compliance-time-transfers-limits',
   review: { state: 'stable' },

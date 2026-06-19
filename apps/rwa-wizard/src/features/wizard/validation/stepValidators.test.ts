@@ -156,6 +156,8 @@ describe('isStepValid', () => {
     const jurisdictionModule: ComplianceModuleOption = {
       id: 'country-allowlist',
       name: 'Country Allowlist',
+      category: 'jurisdiction',
+      runtimePrerequisites: [],
       description: '',
       requiredHooks: [],
       review: { state: 'stable' },

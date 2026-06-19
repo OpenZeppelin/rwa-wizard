@@ -32,6 +32,8 @@ export function createTestCodegenService(): RwaCodegenService {
         {
           id: 'supply-limit',
           name: 'Supply Limit',
+          category: 'supply-and-balance',
+          runtimePrerequisites: [],
           requiredHooks: ['created', 'destroyed'],
           review: {
             state: 'stable',
@@ -49,6 +51,8 @@ export function createTestCodegenService(): RwaCodegenService {
         {
           id: 'max-balance',
           name: 'Max Balance',
+          category: 'supply-and-balance',
+          runtimePrerequisites: ['identity-registry'],
           requiredHooks: ['transferred', 'created', 'destroyed'],
           review: {
             state: 'stable',
@@ -66,6 +70,8 @@ export function createTestCodegenService(): RwaCodegenService {
         {
           id: 'country-restrict',
           name: 'Country Restriction',
+          category: 'jurisdiction',
+          runtimePrerequisites: ['identity-registry'],
           requiredHooks: ['transferred', 'created'],
           review: {
             state: 'stable',

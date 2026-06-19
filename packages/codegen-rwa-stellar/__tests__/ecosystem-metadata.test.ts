@@ -10,6 +10,10 @@ import {
   STELLAR_MAX_TRUSTED_ISSUERS,
   STELLAR_OPERATOR_ROLES,
 } from '../src/ecosystem-metadata';
+import {
+  STELLAR_COMPLIANCE_MODULE_CATEGORIES,
+  STELLAR_COMPLIANCE_SELECTION_WARNING_RULES,
+} from '../src/compliance-catalog-meta';
 
 describe('STELLAR_ADMIN_CONTROLS', () => {
   it('contains 3 controls (burnable, mintable, pausable)', () => {
@@ -149,6 +153,14 @@ describe('getEcosystemMetadata()', () => {
   it('returns all compliance hooks', () => {
     const meta = getEcosystemMetadata();
     expect(meta.complianceHooks).toBe(STELLAR_COMPLIANCE_HOOKS);
+  });
+
+  it('returns compliance catalog metadata', () => {
+    const meta = getEcosystemMetadata();
+    expect(meta.complianceCatalog.moduleCategories).toBe(STELLAR_COMPLIANCE_MODULE_CATEGORIES);
+    expect(meta.complianceCatalog.selectionWarningRules).toBe(
+      STELLAR_COMPLIANCE_SELECTION_WARNING_RULES
+    );
   });
 
   it('returns limits matching individual constants', () => {
