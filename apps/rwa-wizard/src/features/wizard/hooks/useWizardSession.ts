@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DEFAULT_TARGET_ID } from '../../../app/routes/wizardConstants';
 import { useWizardStore } from '../../../app/state/useWizardStore';
 import { wizardStore } from '../../../app/state/wizardStore';
+import {
+  getDeployGuidanceFromService,
+  resolveIncludeIdentitySupport,
+} from '../../../services/codegen/deployReadiness';
 import { useWizardDraftStorage } from '../../../storage';
 import { isTargetId, type TargetId, type WizardStepId } from '../../../types/wizard';
 import { getErrorMessage } from '../../../utils/errorReporting';
@@ -13,6 +17,10 @@ import { useTargetRuntime, type TargetRuntimeState } from './useTargetRuntime';
 
 /** Fixed minimum visible duration for each generation phase in the progress dialog. */
 const GENERATION_MIN_PHASE_DURATION_MS = 450;
+
+export interface UseWizardSessionOptions {
+  includeIdentitySupport?: boolean;
+}
 
 export interface WizardSession {
   activeDraftId: string | null;
@@ -45,7 +53,7 @@ export interface WizardSession {
  * purely presentational (steps + navigation + error banners), and makes
  * the state machine testable without the WizardLayout chrome in the way.
  */
-export function useWizardSession(): WizardSession {
+export function useWizardSession(options: UseWizardSessionOptions = {}): WizardSession {
   const activeDraftId = useWizardStore((s) => s.activeDraftId);
   const currentStep = useWizardStore((s) => s.currentStep);
   const targetId = useWizardStore((s) => s.targetId);
@@ -144,10 +152,19 @@ export function useWizardSession(): WizardSession {
     onPersistError: handlePersistError,
   });
 
+  const deployGuidance = useMemo(
+    () => getDeployGuidanceFromService(runtime.codegenService, draftState.config),
+    [runtime.codegenService, draftState.config]
+  );
+
   const generation = useGenerationFlow({
     draftId: activeDraftId,
     config: draftState.config,
     codegenService: runtime.codegenService,
+    includeIdentitySupport: resolveIncludeIdentitySupport(
+      deployGuidance,
+      options.includeIdentitySupport ?? false
+    ),
     // The user explicitly saves the file from the success dialog — browsers
     // don't tell us whether a download actually lands on disk, so forcing
     // an auto-download would let the UI claim "downloaded" when the user

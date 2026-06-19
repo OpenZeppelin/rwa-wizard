@@ -18,7 +18,7 @@ import type {
   StructuralEcosystemMetadata,
 } from '../../types/wizard';
 import { getCodegenRuntimeOptions, type RuntimeGenerateOptions } from './runtimeOptions';
-import type { RwaCodegenService, ValidationResultDTO } from './types';
+import type { DeployGuidanceDTO, RwaCodegenService, ValidationResultDTO } from './types';
 
 /** Shape of a codegen package module (e.g. @openzeppelin/codegen-rwa-*). */
 interface CodegenPackageModule {
@@ -48,6 +48,11 @@ interface CodegenPackageModule {
   ) => Promise<{ fileName: string; data: Blob }>;
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
   getCodegenInfoBlurb?: () => CodegenInfoBlurb;
+  generateZipWithIdentitySupport?: (
+    config: RWAConfig,
+    options?: GenerateOptions
+  ) => Promise<{ fileName: string; data: Blob }>;
+  getDeployGuidance?: (config: RWAConfig) => DeployGuidanceDTO;
 }
 
 function getDefaultGenerateOptions(targetId: string): RuntimeGenerateOptions | undefined {
@@ -146,9 +151,15 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
 
     getCodegenInfoBlurb: pkg.getCodegenInfoBlurb ? () => pkg.getCodegenInfoBlurb!() : undefined,
 
+    getDeployGuidance: pkg.getDeployGuidance
+      ? (config) => pkg.getDeployGuidance!(config)
+      : undefined,
+
+    supportsIdentitySupport: Boolean(pkg.generateZipWithIdentitySupport),
+
     async generateZip(
       config: RWAConfig,
-      options?: { onStatus?: (status: GenerationStatus) => void }
+      options?: { onStatus?: (status: GenerationStatus) => void; includeIdentitySupport?: boolean }
     ): Promise<GeneratedZipArtifact> {
       const onProgress: ProgressCallback | undefined = options?.onStatus
         ? (event) => {
@@ -159,7 +170,11 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
           }
         : undefined;
       const generateOptions = buildGenerateOptions(baseGenerateOptions, onProgress);
-      const result = await pkg.generateZip(config, generateOptions);
+      const zipFn =
+        options?.includeIdentitySupport && pkg.generateZipWithIdentitySupport
+          ? pkg.generateZipWithIdentitySupport.bind(pkg)
+          : pkg.generateZip.bind(pkg);
+      const result = await zipFn(config, generateOptions);
       return { fileName: result.fileName, data: result.data };
     },
   };

@@ -12,6 +12,7 @@ import {
 
 import type { GenerationJobState, GenerationPhase } from '../../../types/wizard';
 import { GenerationErrorState } from './GenerationErrorState';
+import { GenerationNextSteps } from './GenerationNextSteps';
 import { GenerationStatusPanel } from './GenerationStatusPanel';
 
 interface GenerationDialogProps {
@@ -20,6 +21,7 @@ interface GenerationDialogProps {
   onDownload: () => void;
   onRetry: () => void;
   onReset: () => void;
+  showPostDownloadSteps: boolean;
 }
 
 /**
@@ -53,6 +55,7 @@ export function GenerationDialog({
   onDownload,
   onRetry,
   onReset,
+  showPostDownloadSteps,
 }: GenerationDialogProps) {
   const { phase, zipFileName, errorMessage } = jobState;
   const isError = phase === 'error';
@@ -70,13 +73,13 @@ export function GenerationDialog({
 
   return (
     <Dialog open={phase !== 'idle'} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="overflow-hidden sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="py-2">
+        <div className="flex min-w-0 flex-col gap-3 py-2">
           {isError ? (
             <GenerationErrorState
               errorMessage={errorMessage ?? 'Generation failed.'}
@@ -84,7 +87,10 @@ export function GenerationDialog({
               onReset={onReset}
             />
           ) : (
-            <GenerationStatusPanel phase={phase} zipFileName={zipFileName} />
+            <>
+              <GenerationStatusPanel phase={phase} zipFileName={zipFileName} />
+              {isSuccess && showPostDownloadSteps && <GenerationNextSteps />}
+            </>
           )}
         </div>
 
