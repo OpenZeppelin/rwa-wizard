@@ -29,9 +29,29 @@ describe('STELLAR_OVERRIDE', () => {
     expect(manager.infoCopy).toMatch(/only_role/);
   });
 
-  it('keeps Stellar address examples on the address-list placeholders', () => {
+  it('documents testnet identity scaffolding for the review step tooltip', () => {
     const copy = getCopyForChain('stellar');
-    expect(copy.fieldHelper('address-list.placeholder').description).toMatch(/G\.\.\./);
-    expect(copy.fieldHelper('address-list.bulk-placeholder').description).toMatch(/G\.\.\./);
+    const notice = copy.notice('review.identity-support-scaffolding');
+
+    expect(notice.title).toBe('Testnet identity scaffolding');
+    expect(notice.description).toMatch(/not production KYC/i);
+    expect(notice.infoCopy).toMatch(/claim issuer/i);
+    expect(notice.infoCopy).toMatch(/tools\/sign-claim/);
+  });
+
+  it('documents deploy readiness copy for the review step panel', () => {
+    const copy = getCopyForChain('stellar');
+
+    expect(copy.notice('review.before-deploy').description).toMatch(/STELLAR_ACCOUNT/);
+    expect(copy.notice('review.deploy-signer-ack').description).toMatch(/Stellar CLI identity/i);
+  });
+
+  it('points post-generation success dialog to README instead of repeating deploy steps', () => {
+    const copy = getCopyForChain('stellar');
+    const notice = copy.notice('generation.post-download');
+
+    expect(notice.title).toBe('After download');
+    expect(notice.description).toMatch(/README\.md/i);
+    expect(notice.description).not.toMatch(/stellar keys generate/i);
   });
 });

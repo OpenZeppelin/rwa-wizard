@@ -21,6 +21,8 @@ describe('NOTICES_COPY', () => {
         'notice.compliance.selection-warning.initial-supply-requires-manual-mint',
         'notice.trusted-issuer.no-topics',
         'notice.trusted-issuer.duplicate',
+        'notice.review.before-deploy',
+        'notice.review.configured-admin',
       ],
     });
   });

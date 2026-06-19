@@ -76,4 +76,14 @@ export const NOTICES_COPY: ConceptDictionary = {
     id: 'notice.trusted-issuer.duplicate',
     description: 'Issuer already added',
   },
+  'notice.review.before-deploy': {
+    id: 'notice.review.before-deploy',
+    title: 'Before you deploy',
+    description: 'Review the deploy checklist before generating your project archive.',
+  },
+  'notice.review.configured-admin': {
+    id: 'notice.review.configured-admin',
+    title: 'Configured Admin',
+    description: 'Admin address embedded in the generated deploy script.',
+  },
 } as const;
