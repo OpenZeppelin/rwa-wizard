@@ -11,7 +11,6 @@ on:
         default: 'main'
         type: string
 
-
 env:
   VERSION: ${{ github.sha }}
 
@@ -31,10 +30,10 @@ jobs:
       security-events: write
 
     env:
-      REGISTRY: "${{ secrets.REGISTRY }}"
+      REGISTRY: '${{ secrets.REGISTRY }}'
       IMAGE_NAME: ${{ vars.IMAGE_NAME_STG }}
-      ROLE_FOR_OIDC: "${{ secrets.ROLE_FOR_OIDC }}"
-      ROLE_TO_ASSUME: "${{ secrets.ROLE_TO_ASSUME }}"
+      ROLE_FOR_OIDC: '${{ secrets.ROLE_FOR_OIDC }}'
+      ROLE_TO_ASSUME: '${{ secrets.ROLE_TO_ASSUME }}'
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
@@ -92,10 +91,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     env:
-      REGISTRY: "${{ secrets.REGISTRY }}"
+      REGISTRY: '${{ secrets.REGISTRY }}'
       IMAGE_NAME: ${{ vars.IMAGE_NAME_STG }}
-      ROLE_FOR_OIDC: "${{ secrets.ROLE_FOR_OIDC }}"
-      ROLE_TO_ASSUME: "${{ secrets.ROLE_TO_ASSUME }}"
+      ROLE_FOR_OIDC: '${{ secrets.ROLE_FOR_OIDC }}'
+      ROLE_TO_ASSUME: '${{ secrets.ROLE_TO_ASSUME }}'
       ECS_CLUSTER: ${{ vars.ECS_CLUSTER_STG }}
       ECS_SERVICE: ${{ vars.ECS_SERVICE_STG }}
       AWS_REGION: ${{ vars.AWS_REGION }}
