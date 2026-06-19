@@ -50,7 +50,7 @@ function readStringArrayConfig(
   }
   if (typeof value === 'string') {
     return value
-      .split(',')
+      .split(/[\n,]+/)
       .map((entry) => entry.trim())
       .filter((entry) => entry.length > 0);
   }
@@ -81,7 +81,11 @@ function evaluateSelectionWarningRule(
       }
       return null;
     case 'initial-supply-with-modules':
-      if (input.initialSupply !== undefined && selected.size > 0) {
+      if (
+        input.initialSupply !== undefined &&
+        String(input.initialSupply).trim() !== '' &&
+        selected.size > 0
+      ) {
         return { id: rule.id, relatedModuleIds: [...selectedModuleIds] };
       }
       return null;
@@ -124,19 +128,27 @@ export function groupComplianceModulesByCategory<T extends ComplianceModuleCatal
   modules: readonly T[],
   categoryOrder: readonly ComplianceModuleCategoryId[]
 ): Array<{ category: ComplianceModuleCategoryId; modules: T[] }> {
+  const resolvedOrder =
+    categoryOrder.length > 0
+      ? categoryOrder
+      : [...new Set(modules.map((mod) => mod.category))];
+
   const byCategory = new Map<ComplianceModuleCategoryId, T[]>();
-  for (const category of categoryOrder) {
+  for (const category of resolvedOrder) {
     byCategory.set(category, []);
   }
   for (const mod of modules) {
     const bucket = byCategory.get(mod.category);
-    if (!bucket) continue;
+    if (!bucket) {
+      byCategory.set(mod.category, [mod]);
+      continue;
+    }
     bucket.push(mod);
   }
-  return categoryOrder
-    .map((category) => ({
+  return [...byCategory.entries()]
+    .map(([category, groupedModules]) => ({
       category,
-      modules: byCategory.get(category) ?? [],
+      modules: groupedModules,
     }))
     .filter((group) => group.modules.length > 0);
 }

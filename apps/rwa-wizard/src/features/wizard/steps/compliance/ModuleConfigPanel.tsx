@@ -30,7 +30,9 @@ export function ModuleConfigPanel({
   const addressListCopy = useAddressListFieldCopy();
   const isSyncing = useRef(false);
   const onChangeRef = useRef(onChange);
+  const configRef = useRef(config);
   onChangeRef.current = onChange;
+  configRef.current = config;
 
   const scalarFields = useMemo(
     () => module.configFields.filter((field) => field.valueKind !== 'address-list'),
@@ -57,18 +59,18 @@ export function ModuleConfigPanel({
       if (isSyncing.current) return;
       if (hasPendingStringArrayInput(scalarFields, formValues)) return;
       const scalarConfig = fromFormValues(scalarFields, formValues);
-      const addressListConfig = readAddressListConfig(module.configFields, config);
+      const addressListConfig = readAddressListConfig(module.configFields, configRef.current);
       onChangeRef.current({ ...scalarConfig, ...addressListConfig });
     },
-    [scalarFields, module.configFields, config]
+    [scalarFields, module.configFields]
   );
 
   const flushToParent = useCallback(() => {
     if (isSyncing.current) return;
     const scalarConfig = fromFormValues(scalarFields, getValues());
-    const addressListConfig = readAddressListConfig(module.configFields, config);
+    const addressListConfig = readAddressListConfig(module.configFields, configRef.current);
     onChangeRef.current({ ...scalarConfig, ...addressListConfig });
-  }, [scalarFields, getValues, module.configFields, config]);
+  }, [scalarFields, getValues, module.configFields]);
 
   useEffect(() => {
     const sub = watch(handleWatch);
@@ -78,15 +80,19 @@ export function ModuleConfigPanel({
   const handleAddressListChange = useCallback(
     (fieldKey: string, addresses: string[]) => {
       const scalarConfig = fromFormValues(scalarFields, getValues());
-      const nextConfig = { ...scalarConfig, ...readAddressListConfig(module.configFields, config) };
+      const nextConfig = {
+        ...scalarConfig,
+        ...readAddressListConfig(module.configFields, configRef.current),
+      };
       if (addresses.length === 0) {
         delete nextConfig[fieldKey];
       } else {
         nextConfig[fieldKey] = addresses;
       }
+      configRef.current = nextConfig;
       onChangeRef.current(nextConfig);
     },
-    [scalarFields, getValues, module.configFields, config]
+    [scalarFields, getValues, module.configFields]
   );
 
   return (
@@ -154,7 +160,7 @@ function readStringArray(value: unknown): string[] {
   }
   if (typeof value === 'string') {
     return value
-      .split(',')
+      .split(/[\n,]+/)
       .map((entry) => entry.trim())
       .filter((entry) => entry.length > 0);
   }

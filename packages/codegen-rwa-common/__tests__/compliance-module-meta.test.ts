@@ -51,6 +51,15 @@ describe('evaluateComplianceSelectionWarnings', () => {
     );
     expect(warnings.map((warning) => warning.id)).toContain('initial-supply-warning');
   });
+
+  it('does not warn for empty initial supply with modules selected', () => {
+    const warnings = evaluateComplianceSelectionWarnings(
+      { compliance: { modules: [{ moduleId: 'module-x' }] }, initialSupply: '' },
+      ['module-x'],
+      SAMPLE_RULES
+    );
+    expect(warnings.map((warning) => warning.id)).not.toContain('initial-supply-warning');
+  });
 });
 
 describe('groupComplianceModulesByCategory', () => {
@@ -74,5 +83,27 @@ describe('groupComplianceModulesByCategory', () => {
     );
 
     expect(grouped.map((group) => group.category)).toEqual(['category-a', 'category-b']);
+  });
+
+  it('derives category order from modules when none is provided', () => {
+    const grouped = groupComplianceModulesByCategory(
+      [
+        {
+          id: 'module-b',
+          category: 'category-b',
+          runtimePrerequisites: [],
+          requiredHooks: ['transferred'],
+        },
+        {
+          id: 'module-a',
+          category: 'category-a',
+          runtimePrerequisites: [],
+          requiredHooks: ['created'],
+        },
+      ],
+      []
+    );
+
+    expect(grouped.map((group) => group.category)).toEqual(['category-b', 'category-a']);
   });
 });
