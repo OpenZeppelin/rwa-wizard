@@ -129,9 +129,7 @@ export function groupComplianceModulesByCategory<T extends ComplianceModuleCatal
   categoryOrder: readonly ComplianceModuleCategoryId[]
 ): Array<{ category: ComplianceModuleCategoryId; modules: T[] }> {
   const resolvedOrder =
-    categoryOrder.length > 0
-      ? categoryOrder
-      : [...new Set(modules.map((mod) => mod.category))];
+    categoryOrder.length > 0 ? categoryOrder : [...new Set(modules.map((mod) => mod.category))];
 
   const byCategory = new Map<ComplianceModuleCategoryId, T[]>();
   for (const category of resolvedOrder) {
