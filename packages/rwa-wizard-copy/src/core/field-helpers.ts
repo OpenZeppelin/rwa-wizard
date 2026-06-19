@@ -57,4 +57,17 @@ export const FIELD_HELPERS_COPY: ConceptDictionary = {
     description:
       'Address of the already-deployed governance contract (Governor, SCF, etc.). It becomes admin, and role changes execute as governance proposals.',
   },
+  'fieldHelper.address-list.format': {
+    id: 'fieldHelper.address-list.format',
+    description:
+      'Enter one address per line, or separate multiple addresses with commas. Each entry is validated before it is added.',
+  },
+  'fieldHelper.address-list.placeholder': {
+    id: 'fieldHelper.address-list.placeholder',
+    description: 'Enter an account address',
+  },
+  'fieldHelper.address-list.bulk-placeholder': {
+    id: 'fieldHelper.address-list.bulk-placeholder',
+    description: 'Account address (one per line, or comma-separated)',
+  },
 } as const;

@@ -8,6 +8,8 @@ import {
 export const countryRestrictModule = defineComplianceModuleDescriptor({
   id: 'country-restrict',
   name: 'Country Restriction',
+  category: 'jurisdiction',
+  runtimePrerequisites: ['identity-registry'],
   requiredHooks: ['transferred', 'created'],
   crateName: 'compliance-country-restrict',
   review: { state: 'stable' },
@@ -18,6 +20,7 @@ export const countryRestrictModule = defineComplianceModuleDescriptor({
       type: 'string[]',
       required: false,
       placeholder: 'e.g. US, KP',
+      valueKind: 'country-code-list',
     },
   ],
   deployment: {

@@ -19,6 +19,10 @@ const EMPTY_ECOSYSTEM_METADATA: StructuralEcosystemMetadata = {
   identityControls: [],
   operatorRoles: [],
   complianceHooks: [],
+  complianceCatalog: {
+    moduleCategories: [],
+    selectionWarningRules: [],
+  },
   limits: {
     maxModulesPerHook: 0,
     maxTrustedIssuers: 0,

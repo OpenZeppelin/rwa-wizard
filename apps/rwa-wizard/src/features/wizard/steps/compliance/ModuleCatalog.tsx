@@ -1,22 +1,28 @@
 import { Check, ExternalLink } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { KeyboardEvent } from 'react';
 
+import { groupComplianceModulesByCategory } from '@openzeppelin/codegen-rwa-common';
 import type { ComplianceModuleSelection } from '@openzeppelin/rwa-config';
+import type { AddressingCapability } from '@openzeppelin/ui-types';
 import { cn } from '@openzeppelin/ui-utils';
 
 import { useCopy } from '../../../../app/providers/useCopy';
 import { Badge } from '../../../../components/shared/Badge';
 import { InfoTooltip } from '../../../../components/shared/InfoTooltip';
-import type { ComplianceModuleOption } from '../../../../types/wizard';
+import { enrichComplianceModuleCategoryGroup } from '../../../../registry/enrichEcosystemMetadata';
+import type { ComplianceModuleOption, TargetId } from '../../../../types/wizard';
 import { ModuleConfigPanel } from './ModuleConfigPanel';
 
 interface ModuleCatalogProps {
+  targetId: TargetId;
   availableModules: ComplianceModuleOption[];
+  moduleCategories: readonly string[];
   selectedModuleIds: Set<string>;
   selectedModules: ComplianceModuleSelection[];
   onToggleModule: (moduleId: string) => void;
   onConfigChange: (moduleId: string, config: Record<string, unknown>) => void;
+  addressing?: AddressingCapability;
 }
 
 const HOOK_DISPLAY: Record<string, string> = {
@@ -30,31 +36,57 @@ function hookLabel(hook: string): string {
 }
 
 export function ModuleCatalog({
+  targetId,
   availableModules,
+  moduleCategories,
   selectedModuleIds,
   selectedModules,
   onToggleModule,
   onConfigChange,
+  addressing,
 }: ModuleCatalogProps) {
+  const groupedModules = useMemo(
+    () => groupComplianceModulesByCategory(availableModules, moduleCategories),
+    [availableModules, moduleCategories]
+  );
+
   if (availableModules.length === 0) {
     return <EmptyModuleCatalog />;
   }
 
   return (
-    <div className="space-y-3">
-      {availableModules.map((mod) => {
-        const selected = selectedModuleIds.has(mod.id);
-        const selection = selected ? selectedModules.find((s) => s.moduleId === mod.id) : undefined;
-
+    <div className="space-y-8">
+      {groupedModules.map(({ category, modules }) => {
+        const categoryMeta = enrichComplianceModuleCategoryGroup(targetId, category);
         return (
-          <ModuleRow
-            key={mod.id}
-            module={mod}
-            selected={selected}
-            config={selection?.config ?? {}}
-            onToggle={onToggleModule}
-            onConfigChange={onConfigChange}
-          />
+          <section key={category} className="space-y-3">
+            {categoryMeta && (
+              <div>
+                <h3 className="text-sm font-medium text-foreground">{categoryMeta.title}</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">{categoryMeta.description}</p>
+              </div>
+            )}
+            <div className="space-y-3">
+              {modules.map((mod) => {
+                const selected = selectedModuleIds.has(mod.id);
+                const selection = selected
+                  ? selectedModules.find((entry) => entry.moduleId === mod.id)
+                  : undefined;
+
+                return (
+                  <ModuleRow
+                    key={mod.id}
+                    module={mod}
+                    selected={selected}
+                    config={selection?.config ?? {}}
+                    onToggle={onToggleModule}
+                    onConfigChange={onConfigChange}
+                    addressing={addressing}
+                  />
+                );
+              })}
+            </div>
+          </section>
         );
       })}
     </div>
@@ -67,6 +99,7 @@ interface ModuleRowProps {
   config: Record<string, unknown>;
   onToggle: (moduleId: string) => void;
   onConfigChange: (moduleId: string, config: Record<string, unknown>) => void;
+  addressing?: AddressingCapability;
 }
 
 function EmptyModuleCatalog() {
@@ -78,7 +111,14 @@ function EmptyModuleCatalog() {
   );
 }
 
-function ModuleRow({ module, selected, config, onToggle, onConfigChange }: ModuleRowProps) {
+function ModuleRow({
+  module,
+  selected,
+  config,
+  onToggle,
+  onConfigChange,
+  addressing,
+}: ModuleRowProps) {
   const underReviewNotice = useCopy().notice('compliance.module-catalog.under-review-label');
   const handleClick = useCallback(() => onToggle(module.id), [module.id, onToggle]);
   const handleKeyDown = useCallback(
@@ -126,8 +166,17 @@ function ModuleRow({ module, selected, config, onToggle, onConfigChange }: Modul
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-medium text-foreground">{module.name}</p>
+            {module.infoCopy && (
+              <span
+                className="inline-flex items-center"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+              >
+                <InfoTooltip label={`About ${module.name}`}>{module.infoCopy}</InfoTooltip>
+              </span>
+            )}
             {isUnderReview && (
               <span
                 className="inline-flex items-center gap-1"
@@ -158,6 +207,26 @@ function ModuleRow({ module, selected, config, onToggle, onConfigChange }: Modul
             </a>
           )}
 
+          {module.runtimePrerequisites.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {module.runtimePrerequisites.map((prerequisite) => (
+                <span
+                  key={prerequisite.id}
+                  className="inline-flex items-center gap-1"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  <Badge variant="secondary" className="text-[11px]">
+                    {prerequisite.label}
+                  </Badge>
+                  {prerequisite.infoCopy && (
+                    <InfoTooltip label={prerequisite.label}>{prerequisite.infoCopy}</InfoTooltip>
+                  )}
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="mt-2 flex flex-wrap gap-1.5">
             {module.requiredHooks.map((hook) => (
               <Badge key={hook} variant="outline" className="text-[11px]">
@@ -175,7 +244,12 @@ function ModuleRow({ module, selected, config, onToggle, onConfigChange }: Modul
           onKeyDown={(e) => e.stopPropagation()}
         >
           <p className="mb-2 text-xs font-medium text-muted-foreground">Configuration</p>
-          <ModuleConfigPanel module={module} config={config} onChange={handleConfigChange} />
+          <ModuleConfigPanel
+            module={module}
+            config={config}
+            onChange={handleConfigChange}
+            addressing={addressing}
+          />
         </div>
       )}
     </div>

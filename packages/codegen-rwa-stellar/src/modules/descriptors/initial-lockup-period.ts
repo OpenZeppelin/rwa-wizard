@@ -7,6 +7,8 @@ import {
 export const initialLockupPeriodModule = defineComplianceModuleDescriptor({
   id: 'initial-lockup-period',
   name: 'Initial Lockup Period',
+  category: 'access-and-velocity',
+  runtimePrerequisites: [],
   requiredHooks: ['transferred', 'created', 'destroyed'],
   crateName: 'compliance-initial-lockup-period',
   review: { state: 'stable' },

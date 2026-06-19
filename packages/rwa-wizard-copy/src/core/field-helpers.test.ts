@@ -16,6 +16,9 @@ describe('FIELD_HELPERS_COPY', () => {
         'fieldHelper.owner-address.single-owner',
         'fieldHelper.owner-address.multi-sig',
         'fieldHelper.owner-address.dao',
+        'fieldHelper.address-list.format',
+        'fieldHelper.address-list.placeholder',
+        'fieldHelper.address-list.bulk-placeholder',
       ],
     });
   });

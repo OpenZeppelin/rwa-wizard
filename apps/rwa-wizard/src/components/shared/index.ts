@@ -1,4 +1,4 @@
-export { AddressListInput } from './AddressListInput';
+export { useAddressListFieldCopy } from './useAddressListFieldCopy';
 export { Badge } from './Badge';
 export { ErrorBanner } from './ErrorBanner';
 export type { ErrorBannerProps, ErrorBannerTone } from './ErrorBanner';

@@ -12,6 +12,11 @@ export {
   getUniqueModuleSelections,
   getUnderReviewModules,
 } from './module-summary';
+export {
+  COMPLIANCE_MODULE_CONFIG_VALUE_KINDS,
+  evaluateComplianceSelectionWarnings,
+  groupComplianceModulesByCategory,
+} from './compliance-module-meta';
 
 export type { ResolvedRoleAssignment, RoleResolutionOptions } from './access-control';
 export type {
@@ -21,3 +26,12 @@ export type {
   SelectedModuleSummary,
   UnderReviewModuleSummary,
 } from './module-summary';
+export type {
+  ComplianceModuleCatalogSlice,
+  ComplianceModuleCategoryId,
+  ComplianceModuleConfigValueKind,
+  ComplianceModuleRuntimePrerequisiteId,
+  ComplianceModuleSelectionWarning,
+  ComplianceModuleSelectionWarningId,
+  ComplianceModuleSelectionWarningRule,
+} from './compliance-module-meta';

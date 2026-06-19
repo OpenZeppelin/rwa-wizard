@@ -7,6 +7,8 @@ import {
 export const supplyLimitModule = defineComplianceModuleDescriptor({
   id: 'supply-limit',
   name: 'Supply Limit',
+  category: 'supply-and-balance',
+  runtimePrerequisites: [],
   requiredHooks: ['created', 'destroyed'],
   crateName: 'compliance-supply-limit',
   review: { state: 'stable' },

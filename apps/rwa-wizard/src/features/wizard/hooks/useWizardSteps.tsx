@@ -6,7 +6,7 @@ import type { WizardStepConfig } from '@openzeppelin/ui-components';
 import { isFeatureEnabled } from '../../../app/config/featureFlags';
 import type { RwaCodegenService } from '../../../services/codegen/types';
 import type { TargetAdapterCapabilities } from '../../../services/runtime';
-import type { TargetCapabilitySnapshot, WizardStepId } from '../../../types/wizard';
+import type { TargetCapabilitySnapshot, TargetId, WizardStepId } from '../../../types/wizard';
 import type { WizardDraftStateApi } from '../state/useWizardDraftState';
 import { AccessControlStep } from '../steps/access-control/AccessControlStep';
 import { AssetStep } from '../steps/asset/AssetStep';
@@ -17,6 +17,7 @@ import { ReviewStep } from '../steps/review/ReviewStep';
 import { isStepValid } from '../validation/stepValidators';
 
 export interface UseWizardStepsOptions {
+  selectedTargetId: TargetId;
   draftState: WizardDraftStateApi;
   targetSnapshot: TargetCapabilitySnapshot | null;
   adapterCaps: TargetAdapterCapabilities | null;
@@ -47,6 +48,7 @@ export interface UseWizardStepsResult {
  * step validity, so that is all we subscribe to.
  */
 export function useWizardSteps({
+  selectedTargetId,
   draftState,
   targetSnapshot,
   adapterCaps,
@@ -61,6 +63,8 @@ export function useWizardSteps({
     const identityControlsMeta = ecosystemMetadata?.identityControls ?? [];
     const operatorRoles = ecosystemMetadata?.operatorRoles ?? [];
     const complianceHooks = ecosystemMetadata?.complianceHooks ?? [];
+    const moduleCategories = ecosystemMetadata?.complianceCatalog.moduleCategories ?? [];
+    const selectionWarningRules = ecosystemMetadata?.complianceCatalog.selectionWarningRules ?? [];
     // Use Infinity while metadata is loading so the UI never falsely reports
     // "limit reached" during the initial render; the real limit replaces
     // this as soon as the adapter capability snapshot resolves.
@@ -107,9 +111,14 @@ export function useWizardSteps({
         title: 'Compliance',
         component: (
           <ComplianceStep
+            targetId={selectedTargetId}
             compliance={draftState.config.compliance}
+            initialSupply={draftState.config.token.initialSupply}
             availableModules={availableModules}
             complianceHooks={complianceHooks}
+            moduleCategories={moduleCategories}
+            selectionWarningRules={selectionWarningRules}
+            addressing={adapterCaps?.addressing}
             onUpdate={draftState.updateCompliance}
           />
         ),
@@ -146,7 +155,15 @@ export function useWizardSteps({
     }
 
     return list;
-  }, [draftState, targetSnapshot, adapterCaps, codegenService, codegenInfoBlurb, isGenerating]);
+  }, [
+    draftState,
+    selectedTargetId,
+    targetSnapshot,
+    adapterCaps,
+    codegenService,
+    codegenInfoBlurb,
+    isGenerating,
+  ]);
 
   // Derive the ordered step id list from the rendered steps so step-id
   // indexing stays in lockstep with feature flags (e.g. 'deployment'). A
