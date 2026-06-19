@@ -33,9 +33,9 @@
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish",
-    "dev:uikit:local": "LOCAL_UI_PATH=${LOCAL_UI_PATH:-../openzeppelin-ui} && LOCAL_UI_PATH=\"$LOCAL_UI_PATH\" oz-ui-dev use local --project \"$PWD\" --family ui",
-    "dev:adapters:local": "LOCAL_ADAPTERS_PATH=${LOCAL_ADAPTERS_PATH:-../openzeppelin-adapters} && LOCAL_ADAPTERS_PATH=\"$LOCAL_ADAPTERS_PATH\" oz-ui-dev use local --project \"$PWD\" --family adapters",
-    "dev:local": "LOCAL_UI_PATH=${LOCAL_UI_PATH:-../openzeppelin-ui} && LOCAL_ADAPTERS_PATH=${LOCAL_ADAPTERS_PATH:-../openzeppelin-adapters} && LOCAL_UI_PATH=\"$LOCAL_UI_PATH\" LOCAL_ADAPTERS_PATH=\"$LOCAL_ADAPTERS_PATH\" oz-ui-dev use local --project \"$PWD\" --family ui --family adapters",
+    "dev:uikit:local": "LOCAL_UI_PATH=\"${LOCAL_UI_PATH:-../openzeppelin-ui}\" && LOCAL_UI_PATH=\"$LOCAL_UI_PATH\" oz-ui-dev use local --project \"$PWD\" --family ui",
+    "dev:adapters:local": "LOCAL_ADAPTERS_PATH=\"${LOCAL_ADAPTERS_PATH:-../openzeppelin-adapters}\" && LOCAL_ADAPTERS_PATH=\"$LOCAL_ADAPTERS_PATH\" oz-ui-dev use local --project \"$PWD\" --family adapters",
+    "dev:local": "LOCAL_UI_PATH=\"${LOCAL_UI_PATH:-../openzeppelin-ui}\" && LOCAL_ADAPTERS_PATH=\"${LOCAL_ADAPTERS_PATH:-../openzeppelin-adapters}\" && LOCAL_UI_PATH=\"$LOCAL_UI_PATH\" LOCAL_ADAPTERS_PATH=\"$LOCAL_ADAPTERS_PATH\" oz-ui-dev use local --project \"$PWD\" --family ui --family adapters",
     "dev:npm": "oz-ui-dev use remote --project \"$PWD\"",
     "docker:dev": "docker-compose up --build"
   },
