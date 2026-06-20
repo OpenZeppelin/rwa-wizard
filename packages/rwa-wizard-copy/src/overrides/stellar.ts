@@ -35,4 +35,30 @@ export const STELLAR_OVERRIDE: ConceptOverride = {
   'fieldHelper.address-list.bulk-placeholder': {
     description: 'G... or C... address (one per line, or comma-separated)',
   },
+  'fieldHelper.owner-address.single-owner': {
+    description:
+      'Receives the admin role at deployment and is embedded in the generated deploy script. Use a Stellar CLI identity you control (`stellar keys generate <name> --fund`, then paste the G-address from `stellar keys address <name>`). Post-deploy configuration requires a signer for this address.',
+  },
+  'notice.review.before-deploy': {
+    id: 'notice.review.before-deploy',
+    description:
+      'Generation does not deploy on-chain. On {networkDisplayName}, run `./scripts/build.sh`, set `STELLAR_ACCOUNT` to a funded CLI identity whose address matches the configured Admin, then run `./scripts/deploy.sh`. See README.md for the full quick start.',
+  },
+  'notice.review.deploy-signer-ack': {
+    id: 'notice.review.deploy-signer-ack',
+    description: 'I will use a Stellar CLI identity that controls the configured Admin address.',
+  },
+  'notice.review.identity-support-scaffolding': {
+    id: 'notice.review.identity-support-scaffolding',
+    title: 'Testnet identity scaffolding',
+    description: 'Include testnet identity scaffolding (demo only, not production KYC).',
+    infoCopy:
+      '**How identity works:** Mints and transfers require each holder to have claims from a **trusted claim issuer** registered in CTI, an on-chain **identity contract** carrying those claims, and registration in IRS. The default export deploys CTI, IRS, and the Identity Verifier — not holder identity or issuer contracts.\n\n**What this enables:** Adds upstream **example** `contracts/claim-issuer` and `contracts/identity` crates, a `tools/sign-claim` helper for signing demo claims, and extra IRS helpers so you can exercise end-to-end testnet onboarding.\n\n**Limits:** Demo scaffolding only — not production KYC. It does not auto-onboard investors, auto-mint `initialSupply`, or replace your own claim-issuer infrastructure.',
+  },
+  'notice.generation.post-download': {
+    id: 'notice.generation.post-download',
+    title: 'After download',
+    description:
+      'Extract the archive and follow **README.md** for build, deploy, and troubleshooting.',
+  },
 } as const;

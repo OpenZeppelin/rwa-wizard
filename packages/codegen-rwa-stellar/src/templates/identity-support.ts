@@ -9,34 +9,18 @@ import {
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateWorkspaceToml } from './cargo/workspace-toml';
+import { generateDeploySh } from './scripts/deploy-sh';
 
 import { CRATE_NAMES } from '../constants';
 import { getModuleById } from '../modules/registry';
 import { StellarRwaGenerator } from '../stellar-rwa-generator';
 import { resolveUpstreamTemplateSource } from '../upstream/source';
 import type { UpstreamTemplateSource } from '../upstream/types';
+import { IDENTITY_SUPPORT_CONTRACTS, SIGN_CLAIM_TOOL } from './identity-support-contracts';
 import { generateLibRs } from './lib-rs';
+import { generateReadme } from './readme';
 
-export const IDENTITY_SUPPORT_CONTRACTS = [
-  {
-    id: 'claim-issuer',
-    crateName: 'rwa-claim-issuer-example',
-    dirPath: 'contracts/claim-issuer',
-    displayName: 'Claim Issuer',
-  },
-  {
-    id: 'identity',
-    crateName: 'rwa-identity-example',
-    dirPath: 'contracts/identity',
-    displayName: 'Identity',
-  },
-] as const;
-
-export const SIGN_CLAIM_TOOL = {
-  id: 'sign-claim',
-  dirPath: 'tools/sign-claim',
-  displayName: 'Sign Claim',
-} as const;
+export { IDENTITY_SUPPORT_CONTRACTS, SIGN_CLAIM_TOOL } from './identity-support-contracts';
 
 const IDENTITY_SUPPORT_WORKSPACE_DEPENDENCIES = {
   'ed25519-dalek': '"2.1.1"',
@@ -211,7 +195,15 @@ export function generateWithIdentitySupport(
         contractsLibraryPath: options?.contractsLibraryPath,
         repositoryUrl: templateSource.metadata.sourceRepoUrl,
       })
-    )
+    ),
+    createFile(
+      'README.md',
+      generateReadme(config, {
+        templateSourceMetadata: templateSource.metadata,
+        includeIdentitySupport: true,
+      })
+    ),
+    createFile('scripts/deploy.sh', generateDeploySh(config, { includeIdentitySupport: true }))
   );
 
   return {

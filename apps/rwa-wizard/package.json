@@ -25,7 +25,7 @@
     "@openzeppelin/codegen-rwa-stellar": "workspace:*",
     "@openzeppelin/rwa-config": "workspace:*",
     "@openzeppelin/rwa-wizard-copy": "workspace:*",
-    "@openzeppelin/ui-components": "^3.2.0",
+    "@openzeppelin/ui-components": "^3.3.0",
     "@openzeppelin/ui-react": "^3.0.0",
     "@openzeppelin/ui-renderer": "^3.0.0",
     "@openzeppelin/ui-storage": "^1.2.2",

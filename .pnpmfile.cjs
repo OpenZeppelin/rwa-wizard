@@ -11,36 +11,39 @@ const path = require('path');
 
 const CONFIG_FILE = '.openzeppelin-dev.json';
 const STANDARD_FAMILIES = {
-  ui: {
-    repoName: 'openzeppelin-ui',
-    envFlag: 'LOCAL_UI',
-    envNames: ['LOCAL_UI_PATH'],
-    defaultPath: '../openzeppelin-ui',
-    packageMap: {
-      '@openzeppelin/ui-types': 'packages/types',
-      '@openzeppelin/ui-utils': 'packages/utils',
-      '@openzeppelin/ui-styles': 'packages/styles',
-      '@openzeppelin/ui-components': 'packages/components',
-      '@openzeppelin/ui-renderer': 'packages/renderer',
-      '@openzeppelin/ui-react': 'packages/react',
-      '@openzeppelin/ui-storage': 'packages/storage',
-    },
+  "ui": {
+    "repoName": "openzeppelin-ui",
+    "envFlag": "LOCAL_UI",
+    "envNames": [
+      "LOCAL_UI_PATH"
+    ],
+    "defaultPath": "../openzeppelin-ui",
+    "packageMap": {
+      "@openzeppelin/ui-types": "packages/types",
+      "@openzeppelin/ui-utils": "packages/utils",
+      "@openzeppelin/ui-styles": "packages/styles",
+      "@openzeppelin/ui-components": "packages/components",
+      "@openzeppelin/ui-renderer": "packages/renderer",
+      "@openzeppelin/ui-react": "packages/react",
+      "@openzeppelin/ui-storage": "packages/storage"
+    }
   },
-  adapters: {
-    repoName: 'openzeppelin-adapters',
-    envFlag: 'LOCAL_ADAPTERS',
-    envNames: ['LOCAL_ADAPTERS_PATH'],
-    defaultPath: '../openzeppelin-adapters',
-    packageMap: {
-      '@openzeppelin/adapters-vite': 'packages/adapters-vite',
-      '@openzeppelin/adapter-runtime-utils': 'packages/adapter-runtime-utils',
-      '@openzeppelin/adapter-evm': 'packages/adapter-evm',
-      '@openzeppelin/adapter-midnight': 'packages/adapter-midnight',
-      '@openzeppelin/adapter-polkadot': 'packages/adapter-polkadot',
-      '@openzeppelin/adapter-solana': 'packages/adapter-solana',
-      '@openzeppelin/adapter-stellar': 'packages/adapter-stellar',
-    },
-  },
+  "adapters": {
+    "repoName": "openzeppelin-adapters",
+    "envFlag": "LOCAL_ADAPTERS",
+    "envNames": [
+      "LOCAL_ADAPTERS_PATH"
+    ],
+    "defaultPath": "../openzeppelin-adapters",
+    "packageMap": {
+      "@openzeppelin/adapters-vite": "packages/adapters-vite",
+      "@openzeppelin/adapter-evm": "packages/adapter-evm",
+      "@openzeppelin/adapter-midnight": "packages/adapter-midnight",
+      "@openzeppelin/adapter-polkadot": "packages/adapter-polkadot",
+      "@openzeppelin/adapter-solana": "packages/adapter-solana",
+      "@openzeppelin/adapter-stellar": "packages/adapter-stellar"
+    }
+  }
 };
 
 function isObject(value) {
@@ -94,7 +97,9 @@ function readProjectConfig(workspaceRoot) {
     const baseFamily = STANDARD_FAMILIES[familyKey];
     const filteredEnvNames =
       Array.isArray(familyOverrides.envNames) && familyOverrides.envNames.length > 0
-        ? familyOverrides.envNames.filter((value) => typeof value === 'string' && value.length > 0)
+        ? familyOverrides.envNames.filter(
+            (value) => typeof value === 'string' && value.length > 0
+          )
         : null;
     families[familyKey] = {
       ...baseFamily,
@@ -173,6 +178,46 @@ function resolvePackageDirectory(workspaceRoot, family, packageName, packagePath
   return absolutePath;
 }
 
+function findWorkspacePackage(repoRoot, packageName) {
+  const packagesDir = path.join(repoRoot, 'packages');
+  if (!fs.existsSync(packagesDir)) {
+    return null;
+  }
+
+  for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const packageRoot = path.join(packagesDir, entry.name);
+    const packageJsonPath = path.join(packageRoot, 'package.json');
+    if (!fs.existsSync(packageJsonPath)) {
+      continue;
+    }
+
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      if (packageJson.name === packageName) {
+        return getRealPath(packageRoot);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+function resolvePackageDirectoryByName(workspaceRoot, family, packageName) {
+  const explicitPackagePath = family.packageMap[packageName];
+  if (explicitPackagePath) {
+    return resolvePackageDirectory(workspaceRoot, family, packageName, explicitPackagePath);
+  }
+
+  const repoRoot = resolveRepoRoot(workspaceRoot, family);
+  return findWorkspacePackage(repoRoot, packageName);
+}
+
 function readPackedManifest(cacheDir, familyKey) {
   const manifestPath = path.join(cacheDir, `${familyKey}.json`);
   if (!fs.existsSync(manifestPath)) {
@@ -194,8 +239,10 @@ function rewriteDependencies(pkg, context, cacheDir, familyKey, family) {
   for (const depType of ['dependencies', 'devDependencies']) {
     if (!pkg[depType]) continue;
 
-    for (const [npmName, packagePath] of Object.entries(family.packageMap)) {
-      if (!pkg[depType][npmName]) continue;
+    for (const npmName of Object.keys(pkg[depType])) {
+      if (!npmName.startsWith('@openzeppelin/')) {
+        continue;
+      }
 
       const packedTarballPath = packedPackages && packedPackages[npmName];
       if (packedTarballPath && fs.existsSync(packedTarballPath)) {
@@ -204,40 +251,42 @@ function rewriteDependencies(pkg, context, cacheDir, familyKey, family) {
         continue;
       }
 
-      const absolutePath = resolvePackageDirectory(workspaceRoot, family, npmName, packagePath);
+      const absolutePath = resolvePackageDirectoryByName(workspaceRoot, family, npmName);
+      if (!absolutePath) {
+        continue;
+      }
+
       pkg[depType][npmName] = `file:${absolutePath}`;
-      context.log(`[local-dev] ${npmName} → ${absolutePath}`);
+      const source =
+        Object.prototype.hasOwnProperty.call(family.packageMap, npmName) ? '' : ' (workspace fallback)';
+      context.log(`[local-dev] ${npmName} → ${absolutePath}${source}`);
     }
   }
 }
 
 /**
- * Widen `^X.Y.Z` ranges on `@openzeppelin/adapter*` packages to also include
- * pre-release versions (`>=X.Y.Z-0 <(X+1).0.0`).
- *
- * This lets `pnpm install` resolve RC packages when the stable release has not
- * shipped yet, without changing `package.json`. Local `file:` rewrites are left
- * untouched because they no longer match the semver pattern.
+ * Widen caret ranges on adapter packages so pnpm can resolve pre-release
+ * versions (e.g. 2.0.0-rc.1) that a plain ^2.0.0 would exclude.
+ * Follows standard caret semantics for the upper bound.
+ * Skips deps already rewritten to file: paths by local-dev mode.
  */
 function allowAdapterPrereleases(pkg) {
   for (const depType of ['dependencies', 'devDependencies']) {
     if (!pkg[depType]) continue;
-
     for (const [name, range] of Object.entries(pkg[depType])) {
-      if (!name.startsWith('@openzeppelin/adapter') && !name.startsWith('@openzeppelin/adapters-')) {
+      if (typeof range !== 'string') continue;
+      if (!name.startsWith('@openzeppelin/adapter') && !name.startsWith('@openzeppelin/adapters-'))
         continue;
-      }
-
-      const match = range.match(/^\^(\d+)\.(\d+)\.(\d+)$/);
-      if (!match) continue;
-
-      const major = Number(match[1]);
-      const minor = Number(match[2]);
-      const patch = Number(match[3]);
-      const upperBound =
-        major > 0 ? `${major + 1}.0.0` : minor > 0 ? `0.${minor + 1}.0` : `0.0.${patch + 1}`;
-
-      pkg[depType][name] = `>=${major}.${minor}.${patch}-0 <${upperBound}`;
+      if (!range.startsWith('^')) continue;
+      const m = range.slice(1).match(/^(\d+)\.(\d+)\.(\d+)$/);
+      if (!m) continue;
+      const maj = Number(m[1]), min = Number(m[2]), pat = Number(m[3]);
+      const upper = maj > 0
+        ? `${maj + 1}.0.0`
+        : min > 0
+          ? `0.${min + 1}.0`
+          : `0.0.${pat + 1}`;
+      pkg[depType][name] = `>=${maj}.${min}.${pat}-0 <${upper}`;
     }
   }
 }

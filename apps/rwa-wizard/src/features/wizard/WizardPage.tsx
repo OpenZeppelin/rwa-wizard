@@ -4,6 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { WizardLayout } from '@openzeppelin/ui-components';
 
+import { SyncDeployReadinessToConfig } from './components/SyncDeployReadinessToConfig';
+import { DeployReadinessProvider } from './context/DeployReadinessProvider';
+import { useDeployReadiness } from './context/useDeployReadiness';
 import { useWizardNetworkRoute } from './hooks/useWizardNetworkRoute';
 import { useWizardSession } from './hooks/useWizardSession';
 import { useWizardSteps } from './hooks/useWizardSteps';
@@ -13,6 +16,7 @@ import { DEFAULT_WIZARD_NETWORK_ID, wizardPath } from '../../app/routes/wizardPa
 import { wizardStore } from '../../app/state/wizardStore';
 import { ErrorBannerStack } from '../../components/shared';
 import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
+import { getDeployGuidanceFromService } from '../../services/codegen/deployReadiness';
 import { exportDraftAsJson } from '../../services/download/exportDraftAsJson';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useWizardDraftStorage } from '../../storage';
@@ -27,8 +31,29 @@ import { GenerationDialog } from '../generation/components/GenerationDialog';
  * sync, and the two buttons on the last step (primary + secondary).
  */
 export function WizardPage(): ReactElement {
+  return (
+    <DeployReadinessProvider>
+      <WizardPageContent />
+    </DeployReadinessProvider>
+  );
+}
+
+/** Resets deploy-readiness toggles when the active draft or session reset changes. */
+function ResetDeployReadinessOnDraftChange({ token }: { token: string }): null {
+  const { setSignerAcknowledged, setIncludeIdentitySupport } = useDeployReadiness();
+
+  useEffect(() => {
+    setSignerAcknowledged(false);
+    setIncludeIdentitySupport(false);
+  }, [token, setSignerAcknowledged, setIncludeIdentitySupport]);
+
+  return null;
+}
+
+function WizardPageContent(): ReactElement {
   const navigate = useNavigate();
-  const session = useWizardSession();
+  const { signerAcknowledged, includeIdentitySupport } = useDeployReadiness();
+  const session = useWizardSession({ includeIdentitySupport });
   const storage = useWizardDraftStorage();
 
   const {
@@ -82,6 +107,11 @@ export function WizardPage(): ReactElement {
     [codegenService]
   );
 
+  const deployGuidance = useMemo(
+    () => getDeployGuidanceFromService(codegenService, draftState.config),
+    [codegenService, draftState.config]
+  );
+
   const { steps, orderedStepIds } = useWizardSteps({
     selectedTargetId,
     draftState,
@@ -90,6 +120,7 @@ export function WizardPage(): ReactElement {
     codegenService,
     codegenInfoBlurb,
     isGenerating,
+    deploySignerAcknowledged: deployGuidance == null || signerAcknowledged,
   });
 
   const currentStepIndex = orderedStepIds.indexOf(currentStep);
@@ -154,6 +185,8 @@ export function WizardPage(): ReactElement {
 
   return (
     <CopyProvider targetId={selectedTargetId}>
+      <ResetDeployReadinessOnDraftChange token={`${resetKey}-${activeDraftId ?? 'none'}`} />
+      {deployGuidance && <SyncDeployReadinessToConfig guidance={deployGuidance} />}
       <AdapterCapabilitiesProvider value={adapterCaps}>
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <ErrorBannerStack
@@ -189,6 +222,7 @@ export function WizardPage(): ReactElement {
             onDownload={handleDownload}
             onRetry={handleLastStepPrimary}
             onReset={reset}
+            showPostDownloadSteps={deployGuidance != null}
           />
         </main>
       </AdapterCapabilitiesProvider>

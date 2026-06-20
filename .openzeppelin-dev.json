@@ -2,9 +2,14 @@
   "version": 1,
   "cacheDir": ".packed-packages/local-dev",
   "families": {
-    "ui": {},
+    "ui": {
+      "defaultPath": "../openzeppelin-ui"
+    },
     "adapters": {
-      "envNames": ["LOCAL_ADAPTERS_PATH"]
+      "defaultPath": "../openzeppelin-adapters",
+      "envNames": [
+        "LOCAL_ADAPTERS_PATH"
+      ]
     }
   }
 }

@@ -297,7 +297,8 @@ describe('StellarRwaGenerator', () => {
       expect(readme).toContain('`deploy.sh` does not read it at runtime');
       expect(readme).toContain('`SOURCE_ACCOUNT`');
       expect(readme).toContain('`STELLAR_ACCOUNT`');
-      expect(readme).toContain('export STELLAR_ACCOUNT=alice');
+      expect(readme).toContain('export STELLAR_ACCOUNT=<your-identity>');
+      expect(readme).not.toContain('export STELLAR_ACCOUNT=alice');
       expect(readme).toContain('does **not** auto-mint it');
       expect(readme).toContain('Claim Issuer');
       expect(readme).toContain('Identity');

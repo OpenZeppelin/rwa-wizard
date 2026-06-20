@@ -11,10 +11,12 @@ interface MockGenerateZipOptions {
 
 const {
   generateZipMock,
+  generateZipWithIdentitySupportMock,
   getAvailableModulesMock,
   getCodegenRuntimeOptionsMock,
   getEcosystemMetadataMock,
   getCodegenInfoBlurbMock,
+  getDeployGuidanceMock,
   validateMock,
 } = vi.hoisted(() => ({
   validateMock: vi.fn(() => ({ valid: true, errors: [], warnings: [] })),
@@ -22,12 +24,22 @@ const {
   generateZipMock: vi.fn<
     (config: unknown, options?: MockGenerateZipOptions) => Promise<{ fileName: string; data: Blob }>
   >(async () => ({ fileName: 'test.zip', data: new Blob(['zip']) })),
+  generateZipWithIdentitySupportMock: vi.fn<
+    (config: unknown, options?: MockGenerateZipOptions) => Promise<{ fileName: string; data: Blob }>
+  >(async () => ({ fileName: 'test-identity.zip', data: new Blob(['zip']) })),
   getCodegenRuntimeOptionsMock: vi.fn(),
   getEcosystemMetadataMock: vi.fn(() => undefined),
   getCodegenInfoBlurbMock: vi.fn(() => ({
     title: 'Mock',
     description: 'Mock blurb',
     links: [],
+  })),
+  getDeployGuidanceMock: vi.fn(() => ({
+    adminAddress: 'GADMIN',
+    managerAddress: 'GADMIN',
+    adminEqualsManager: true,
+    networkDisplayName: 'Stellar Testnet',
+    networkIsTestnet: true,
   })),
 }));
 
@@ -43,8 +55,10 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   validate: validateMock,
   getAvailableModules: getAvailableModulesMock,
   generateZip: generateZipMock,
+  generateZipWithIdentitySupport: generateZipWithIdentitySupportMock,
   getEcosystemMetadata: getEcosystemMetadataMock,
   getCodegenInfoBlurb: getCodegenInfoBlurbMock,
+  getDeployGuidance: getDeployGuidanceMock,
 }));
 
 describe('loadCodegenService', () => {
@@ -149,5 +163,18 @@ describe('loadCodegenService', () => {
     expect(validateMock).toHaveBeenCalledWith(config, {
       allowUnderReviewModules: false,
     });
+  });
+
+  it('uses identity-support zip generation when requested', async () => {
+    const config = makeConfig();
+    getCodegenRuntimeOptionsMock.mockReturnValue(undefined);
+
+    const service = await loadCodegenService('stellar');
+    await service!.generateZip(config, { includeIdentitySupport: true });
+
+    expect(generateZipWithIdentitySupportMock).toHaveBeenCalledWith(config, {
+      allowUnderReviewModules: true,
+    });
+    expect(generateZipMock).not.toHaveBeenCalled();
   });
 });

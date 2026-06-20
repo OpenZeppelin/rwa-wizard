@@ -1,9 +1,22 @@
-import type { HTMLAttributes, TdHTMLAttributes } from 'react';
+import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
 
 import { cn } from '@openzeppelin/ui-utils';
 
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return <table className={cn('w-full caption-bottom text-sm', className)} {...props} />;
+}
+
+export function TableHeader({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
+  return <thead className={cn('border-b border-border bg-muted/40', className)} {...props} />;
+}
+
+export function TableHead({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <th
+      className={cn('px-4 py-2 text-left font-medium text-muted-foreground', className)}
+      {...props}
+    />
+  );
 }
 
 export function TableBody({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) {

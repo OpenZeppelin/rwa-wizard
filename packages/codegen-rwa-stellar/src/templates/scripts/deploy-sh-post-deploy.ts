@@ -168,8 +168,25 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
   return lines.join('\n');
 }
 
-export function buildInitialSupplyGuidance(config: RWAConfig): string[] {
+export interface DeployScriptGenerationOptions {
+  includeIdentitySupport?: boolean;
+}
+
+export function buildInitialSupplyGuidance(
+  config: RWAConfig,
+  options?: DeployScriptGenerationOptions
+): string[] {
   if (config.token.initialSupply === undefined) return [];
+
+  const identityScaffoldLines = options?.includeIdentitySupport
+    ? [
+        shellEcho('  This export includes example claim-issuer and identity crates (see README),'),
+        shellEcho('  but deploy.sh does not deploy or wire them automatically.'),
+      ]
+    : [
+        shellEcho('  The current generator does not scaffold claim-issuer or per-holder'),
+        shellEcho('  identity contracts.'),
+      ];
 
   return [
     ...shellSection('Initial Supply — Manual Mint Required'),
@@ -181,8 +198,7 @@ export function buildInitialSupplyGuidance(config: RWAConfig): string[] {
     shellEcho(''),
     shellEcho('  Why: Stellar identity verification requires each mint recipient to have'),
     shellEcho('  a verified identity contract with valid claims registered in IRS/CTI.'),
-    shellEcho('  The current generator does not scaffold claim-issuer or per-holder'),
-    shellEcho('  identity contracts.'),
+    ...identityScaffoldLines,
     shellEcho('  The mint amount must use on-chain base units, not display units.'),
     shellEcho(''),
     shellEcho('  Next steps:'),

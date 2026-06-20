@@ -45,7 +45,7 @@ export function GenerationStatusPanel({ phase, zipFileName }: GenerationStatusPa
     <div
       role="status"
       aria-live="polite"
-      className="animate-in fade-in rounded-lg border border-border/60 bg-muted/30 px-4 py-3 duration-200"
+      className="animate-in fade-in rounded-lg border border-border bg-muted/30 px-4 py-3 duration-200"
     >
       <ul className="space-y-1.5">
         {DISPLAY_PHASES.map((entry) => {

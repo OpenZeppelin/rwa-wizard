@@ -2,6 +2,14 @@ import { useCopy } from '../../../../app/providers/useCopy';
 import { Badge } from '../../../../components/shared/Badge';
 import { InfoTooltip } from '../../../../components/shared/InfoTooltip';
 import { renderInlineCopy } from '../../../../components/shared/renderInlineCopy';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../../components/shared/Table';
 import type { ComplianceHookMeta, ComplianceModuleOption } from '../../../../types/wizard';
 
 interface HookWiringPreviewProps {
@@ -34,21 +42,19 @@ export function HookWiringPreview({
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/40">
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">Hook</th>
-              <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                Registered Modules
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Hook</TableHead>
+              <TableHead>Registered Modules</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {complianceHooks.map((hookMeta) => {
               const moduleIds = hookRegistrations.get(hookMeta.hook) ?? [];
               return (
-                <tr key={hookMeta.hook} className="border-b border-border last:border-0">
-                  <td className="px-4 py-2.5 align-top">
+                <TableRow key={hookMeta.hook}>
+                  <TableCell className="px-4 py-2.5 align-top">
                     <div className="flex items-center gap-1.5">
                       <div className="font-medium text-foreground">{hookMeta.displayName}</div>
                       {hookMeta.infoCopy && (
@@ -60,8 +66,8 @@ export function HookWiringPreview({
                     <div className="mt-0.5 text-xs text-muted-foreground">
                       {hookMeta.description}
                     </div>
-                  </td>
-                  <td className="px-4 py-2.5">
+                  </TableCell>
+                  <TableCell className="px-4 py-2.5">
                     {moduleIds.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
                         {moduleIds.map((id) => (
@@ -75,12 +81,12 @@ export function HookWiringPreview({
                         {emptyHookNotice.description}
                       </span>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

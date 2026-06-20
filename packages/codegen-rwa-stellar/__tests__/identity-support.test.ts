@@ -43,4 +43,20 @@ describe('identity support templates', () => {
     expect(identityRegistryStorage).toContain('pub fn add_identity_country_data(');
     expect(identityRegistryStorage).toContain('initial_profiles: Vec<CountryData>');
   });
+
+  it('regenerates README and deploy.sh for identity-support exports', () => {
+    const result = generateWithIdentitySupport(createValidConfig());
+    const readme = result.files['README.md'] as string;
+    const deploySh = result.files['scripts/deploy.sh'] as string;
+
+    expect(readme).toContain('does **not** deploy or wire them automatically');
+    expect(readme).toContain('### Example / dev-only contracts');
+    expect(readme).toContain('IdentityClaims');
+    expect(readme).toContain('rwa_claim_issuer_example.wasm');
+    expect(readme).toContain('Preflight validates only the');
+    expect(readme).not.toContain('does not currently scaffold the upstream');
+
+    expect(deploySh).toContain('example claim-issuer and identity crates');
+    expect(deploySh).not.toContain('does not scaffold claim-issuer or per-holder');
+  });
 });

@@ -110,6 +110,16 @@ function buildTokenDeploymentDescriptor(config: RWAConfig): DeploymentDescriptor
   };
 }
 
+/** All workspace crate names deployed by `deploy.sh`, in deployment order. */
+export function getDeploymentCrateNames(config: RWAConfig): string[] {
+  const crateNames = buildCoreDeploymentDescriptors().map((descriptor) => descriptor.crateName);
+  crateNames.push(
+    ...buildModuleDeploymentDescriptors(config).map((descriptor) => descriptor.crateName)
+  );
+  crateNames.push(buildTokenDeploymentDescriptor(config).crateName);
+  return crateNames;
+}
+
 export function buildDeploymentSections(
   config: RWAConfig,
   networkFlag: string,

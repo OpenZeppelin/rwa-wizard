@@ -1,5 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 
+import { Banner } from '@openzeppelin/ui-components';
+
 import type { ComplianceModuleSelectionWarningMeta } from '../../../../types/wizard';
 
 interface ComplianceSelectionWarningsProps {
@@ -12,13 +14,14 @@ export function ComplianceSelectionWarnings({ warnings }: ComplianceSelectionWar
   return (
     <div className="space-y-2">
       {warnings.map((warning) => (
-        <div
+        <Banner
           key={warning.id}
-          className="flex gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-foreground"
+          variant="warning"
+          dismissible={false}
+          icon={<AlertTriangle className="size-4" aria-hidden />}
         >
-          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" aria-hidden="true" />
-          <p>{warning.description}</p>
-        </div>
+          {warning.description}
+        </Banner>
       ))}
     </div>
   );

@@ -25,6 +25,8 @@ export interface UseWizardStepsOptions {
   /** Optional first-step intro from the active target’s codegen package. */
   codegenInfoBlurb: CodegenInfoBlurb | null;
   isGenerating: boolean;
+  /** When false and deploy guidance is available, blocks Generate until acknowledged. */
+  deploySignerAcknowledged?: boolean;
 }
 
 export interface UseWizardStepsResult {
@@ -55,6 +57,7 @@ export function useWizardSteps({
   codegenService,
   codegenInfoBlurb,
   isGenerating,
+  deploySignerAcknowledged = true,
 }: UseWizardStepsOptions): UseWizardStepsResult {
   const steps = useMemo<WizardStepConfig[]>(() => {
     const availableModules = targetSnapshot?.availableModules ?? [];
@@ -71,13 +74,19 @@ export function useWizardSteps({
     const maxTrustedIssuers =
       ecosystemMetadata?.limits.maxTrustedIssuers ?? Number.POSITIVE_INFINITY;
     const documentManagerEnabled = draftState.config.token.documentManager.enabled;
+    const deployGuidance = codegenService?.getDeployGuidance?.(draftState.config) ?? null;
+    const supportsIdentitySupport = codegenService?.supportsIdentitySupport ?? false;
+    const requiresDeploySignerAck = deployGuidance != null;
 
     const validationCtx = {
       addressing: adapterCaps?.addressing,
       availableModules,
     };
     const validityFor = (id: WizardStepId) => isStepValid(id, draftState.config, validationCtx);
-    const reviewStepCanProceed = codegenService != null && !isGenerating;
+    const reviewStepCanProceed =
+      codegenService != null &&
+      !isGenerating &&
+      (!requiresDeploySignerAck || deploySignerAcknowledged);
 
     const list: WizardStepConfig[] = [
       {
@@ -140,7 +149,14 @@ export function useWizardSteps({
       {
         id: 'review',
         title: 'Review',
-        component: <ReviewStep config={draftState.config} availableModules={availableModules} />,
+        component: (
+          <ReviewStep
+            config={draftState.config}
+            availableModules={availableModules}
+            deployGuidance={deployGuidance}
+            supportsIdentitySupport={supportsIdentitySupport}
+          />
+        ),
         isValid: validityFor('review') && reviewStepCanProceed,
       },
     ];
@@ -163,6 +179,7 @@ export function useWizardSteps({
     codegenService,
     codegenInfoBlurb,
     isGenerating,
+    deploySignerAcknowledged,
   ]);
 
   // Derive the ordered step id list from the rendered steps so step-id

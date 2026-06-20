@@ -14,6 +14,8 @@ export interface UseGenerationFlowOptions {
   codegenService: RwaCodegenService | null;
   /** When true, the download step is triggered automatically on success. */
   autoDownload?: boolean;
+  /** Request dev/testnet identity scaffolding when supported by the codegen service. */
+  includeIdentitySupport?: boolean;
   /**
    * Minimum time (ms) to keep each phase on screen before advancing. Real work
    * can complete in single-digit milliseconds, which makes the progress list
@@ -60,6 +62,7 @@ export function useGenerationFlow({
   config,
   codegenService,
   autoDownload = true,
+  includeIdentitySupport = false,
   minPhaseDurationMs = 0,
 }: UseGenerationFlowOptions): UseGenerationFlowResult {
   const effectiveDraftId = draftId ?? '';
@@ -149,6 +152,7 @@ export function useGenerationFlow({
       let streamErrored = false;
       const [artifact] = await Promise.all([
         codegenService.generateZip(config, {
+          includeIdentitySupport,
           onStatus: (status) => {
             if (status.phase === 'error' && isActive()) {
               streamErrored = true;
@@ -197,7 +201,15 @@ export function useGenerationFlow({
         generatingRef.current = false;
       }
     }
-  }, [effectiveDraftId, config, codegenService, autoDownload, minPhaseDurationMs, setPhase]);
+  }, [
+    effectiveDraftId,
+    config,
+    codegenService,
+    autoDownload,
+    includeIdentitySupport,
+    minPhaseDurationMs,
+    setPhase,
+  ]);
 
   const download = useCallback(() => {
     const artifact = artifactRef.current;

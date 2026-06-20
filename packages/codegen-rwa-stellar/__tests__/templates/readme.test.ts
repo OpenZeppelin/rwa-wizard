@@ -139,12 +139,26 @@ describe('generateReadme', () => {
   });
 
   it('documents the required Stellar source account for deploy.sh', () => {
-    const readme = generateReadme(createValidConfig(), createReadmeContext());
+    const config = createValidConfig();
+    const readme = generateReadme(config, createReadmeContext());
 
     expect(readme).toContain('The script resolves');
     expect(readme).toContain('`SOURCE_ACCOUNT`');
     expect(readme).toContain('`STELLAR_ACCOUNT`');
-    expect(readme).toContain('export STELLAR_ACCOUNT=alice');
+    expect(readme).toContain('GCEXAMPLEOWNER');
+    expect(readme).toContain('export STELLAR_ACCOUNT=<your-identity>');
+    expect(readme).toContain('stellar keys generate always creates a new random address');
+    expect(readme).not.toContain('export STELLAR_ACCOUNT=alice');
+  });
+
+  it('includes configured access control and troubleshooting sections', () => {
+    const readme = generateReadme(createValidConfig(), createReadmeContext());
+
+    expect(readme).toContain('### Configured access control');
+    expect(readme).toContain('### Troubleshooting');
+    expect(readme).toContain('deployment-manifest.json');
+    expect(readme).toContain('--preflight');
+    expect(readme).toContain('Funded Stellar account');
   });
 
   it('explains that initial supply is not auto-minted on Stellar', () => {
@@ -153,7 +167,7 @@ describe('generateReadme', () => {
     expect(readme).toContain('does **not** auto-mint it');
     expect(readme).toContain('trusted claim issuer contract');
     expect(readme).toContain('per-holder identity contract with claims');
-    expect(readme).toContain('does not scaffold those investor-specific identity contracts');
+    expect(readme).toContain('does not include those investor-specific identity contracts');
     expect(readme).toContain('expressed in on-chain base units (smallest token units)');
     expect(readme).toContain('one whole token equals `10^18` base units');
   });
@@ -212,9 +226,7 @@ describe('generateReadme', () => {
       const labels = extractNodeLabels(extractMermaidBlock(readme));
 
       expect(labels).toContain('Deploy compliance module');
-      expect(labels).toContain(
-        'Post-deploy: configure modules and register hooks on Compliance'
-      );
+      expect(labels).toContain('Post-deploy: configure modules and register hooks on Compliance');
       expect(labels).not.toContain(expect.stringContaining('Deploy 2'));
     });
 
@@ -233,9 +245,7 @@ describe('generateReadme', () => {
       const labels = extractNodeLabels(extractMermaidBlock(readme));
 
       expect(labels).toContain('Deploy 2 compliance modules');
-      expect(labels).toContain(
-        'Post-deploy: configure modules and register hooks on Compliance'
-      );
+      expect(labels).toContain('Post-deploy: configure modules and register hooks on Compliance');
     });
 
     it('deduplicates modules — duplicate supply-limit counts as 1', () => {

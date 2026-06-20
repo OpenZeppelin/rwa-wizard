@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { CRATE_NAMES } from '../../src/constants';
 import { generateBuildSh } from '../../src/templates/scripts/build-sh';
 import { generateDeploySh } from '../../src/templates/scripts/deploy-sh';
 import { shellEscape } from '../../src/templates/scripts/deploy-sh-helpers';
@@ -47,12 +46,13 @@ describe('deploy.sh template', () => {
       const config = createValidConfig();
       const script = generateDeploySh(config);
 
-      const ctiPos = script.indexOf(CRATE_NAMES.claimTopicsIssuers);
-      const irsPos = script.indexOf(CRATE_NAMES.identityRegistryStorage);
-      const ivPos = script.indexOf(CRATE_NAMES.identityVerifier);
-      const compPos = script.indexOf(CRATE_NAMES.compliance);
-      const tokenPos = script.indexOf(CRATE_NAMES.rwaToken);
+      const ctiPos = script.indexOf('CTI_ADDRESS=$(');
+      const irsPos = script.indexOf('IRS_ADDRESS=$(');
+      const ivPos = script.indexOf('IDENTITY_VERIFIER_ADDRESS=$(');
+      const compPos = script.indexOf('COMPLIANCE_ADDRESS=$(');
+      const tokenPos = script.indexOf('RWA_TOKEN_ADDRESS=$(');
 
+      expect(ctiPos).toBeGreaterThan(-1);
       expect(ctiPos).toBeLessThan(irsPos);
       expect(irsPos).toBeLessThan(ivPos);
       expect(ivPos).toBeLessThan(compPos);
@@ -170,7 +170,32 @@ describe('deploy.sh template', () => {
 
       expect(script).toContain('SOURCE_ACCOUNT="${SOURCE_ACCOUNT:-${STELLAR_ACCOUNT:-}}"');
       expect(script).toContain('Missing Stellar source account.');
-      expect(script).toContain('Example: export STELLAR_ACCOUNT=alice');
+      expect(script).toContain('Example: export STELLAR_ACCOUNT=<identity-for-');
+    });
+
+    it('should support --preflight to validate without deploying', () => {
+      const config = createValidConfig();
+      const script = generateDeploySh(config);
+
+      expect(script).toContain('PREFLIGHT_ONLY=false');
+      expect(script).toContain('--preflight');
+      expect(script).toContain('Preflight checks passed');
+    });
+
+    it('should verify WASM artifacts exist before deploying', () => {
+      const config = createValidConfig();
+      const script = generateDeploySh(config);
+
+      expect(script).toContain('verify_wasm_artifacts');
+      expect(script).toContain('Run ./scripts/build.sh first');
+    });
+
+    it('should write deployment-manifest.json after successful deploy', () => {
+      const config = createValidConfig();
+      const script = generateDeploySh(config);
+
+      expect(script).toContain('write_deployment_manifest');
+      expect(script).toContain('deployment-manifest.json');
     });
   });
 
@@ -188,7 +213,9 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
 
       expect(script).toContain('ADMIN_SOURCE_ACCOUNT="${ADMIN_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
-      expect(script).toContain('MANAGER_SOURCE_ACCOUNT="${MANAGER_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
+      expect(script).toContain(
+        'MANAGER_SOURCE_ACCOUNT="${MANAGER_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"'
+      );
     });
 
     it('should warn when admin and manager addresses differ', () => {
@@ -199,7 +226,7 @@ describe('deploy.sh template', () => {
       expect(script).toContain('ADMIN_SOURCE_ACCOUNT and MANAGER_SOURCE_ACCOUNT');
     });
 
-    it('should verify CLI identity addresses when admin and manager differ', () => {
+    it('should verify CLI identity addresses for admin and manager signers', () => {
       const config = createValidConfig();
       const script = generateDeploySh(config);
 
@@ -209,17 +236,24 @@ describe('deploy.sh template', () => {
       expect(script).toContain('stellar keys address "$identity"');
     });
 
-    it('should only run role signer verification inside an admin != manager guard', () => {
-      const config = createValidConfig();
+    it('should always run role signer verification even when admin equals manager', () => {
+      const config = createValidConfig({
+        accessControl: {
+          ownership: { type: 'single-owner', ownerAddress: 'GCOWNERADDR' },
+          roles: [{ name: 'Manager', symbol: 'manager', addresses: ['GCOWNERADDR'] }],
+        },
+      });
       const script = generateDeploySh(config);
 
-      const guardStart = script.indexOf('if [ "$ADMIN" != "$MANAGER" ]; then');
+      expect(script).toContain('ADMIN="GCOWNERADDR"');
+      expect(script).toContain('MANAGER="GCOWNERADDR"');
+      expect(script).toContain('verify_role_signer "Admin" "$ADMIN" "$ADMIN_SOURCE_ACCOUNT"');
+      expect(script).toContain('verify_role_signer "Manager" "$MANAGER" "$MANAGER_SOURCE_ACCOUNT"');
       const adminVerify = script.indexOf('verify_role_signer "Admin"');
-      const managerVerify = script.indexOf('verify_role_signer "Manager"');
-
-      expect(guardStart).toBeGreaterThan(-1);
-      expect(adminVerify).toBeGreaterThan(guardStart);
-      expect(managerVerify).toBeGreaterThan(adminVerify);
+      const splitRoleGuard = script.indexOf('if [ "$ADMIN" != "$MANAGER" ]; then');
+      expect(adminVerify).toBeGreaterThan(-1);
+      expect(splitRoleGuard).toBeGreaterThan(-1);
+      expect(adminVerify).toBeGreaterThan(splitRoleGuard);
     });
 
     it('should use role-specific signers for post-deploy invoke commands', () => {
@@ -357,9 +391,7 @@ describe('deploy.sh template', () => {
       expect(script).toContain(
         `--limit '{"limit_duration": 17280, "limit_value": "25000"}' --operator "$MANAGER"`
       );
-      expect(script).not.toContain(
-        `--limit '{"limit_duration": 17280, "limit_value": 25000}'`
-      );
+      expect(script).not.toContain(`--limit '{"limit_duration": 17280, "limit_value": 25000}'`);
     });
 
     it('should configure IRS-dependent modules before binding them to Compliance', () => {
@@ -546,7 +578,9 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
 
       expect(script).toContain('https://stellar.expert/explorer/testnet/contract/${CTI_ADDRESS}');
-      expect(script).toContain('https://stellar.expert/explorer/testnet/contract/${RWA_TOKEN_ADDRESS}');
+      expect(script).toContain(
+        'https://stellar.expert/explorer/testnet/contract/${RWA_TOKEN_ADDRESS}'
+      );
     });
 
     it('should include stellar.expert links for mainnet using public network', () => {
@@ -556,7 +590,9 @@ describe('deploy.sh template', () => {
       const script = generateDeploySh(config);
 
       expect(script).toContain('https://stellar.expert/explorer/public/contract/${CTI_ADDRESS}');
-      expect(script).toContain('https://stellar.expert/explorer/public/contract/${RWA_TOKEN_ADDRESS}');
+      expect(script).toContain(
+        'https://stellar.expert/explorer/public/contract/${RWA_TOKEN_ADDRESS}'
+      );
     });
 
     it('should omit explorer links for custom RPC networks', () => {

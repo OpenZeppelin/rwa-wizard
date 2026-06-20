@@ -15,6 +15,15 @@ export interface ValidationResultDTO {
   warnings: Array<{ field: string; code: string; message: string }>;
 }
 
+/** Chain-agnostic deploy signer guidance surfaced by codegen when supported. */
+export interface DeployGuidanceDTO {
+  adminAddress: string;
+  managerAddress: string;
+  adminEqualsManager: boolean;
+  networkDisplayName: string;
+  networkIsTestnet: boolean;
+}
+
 /**
  * App-local codegen service boundary (contract: codegen-service-contract).
  * UI interacts only with this interface; real and mock implementations are interchangeable.
@@ -42,6 +51,10 @@ export interface RwaCodegenService {
   getCodegenInfoBlurb?: () => CodegenInfoBlurb;
   generateZip(
     config: RWAConfig,
-    options?: { onStatus?: (status: GenerationStatus) => void }
+    options?: { onStatus?: (status: GenerationStatus) => void; includeIdentitySupport?: boolean }
   ): Promise<GeneratedZipArtifact>;
+  /** Optional post-generation deploy guidance when the target exposes deploy semantics. */
+  getDeployGuidance?: (config: RWAConfig) => DeployGuidanceDTO;
+  /** Whether the codegen package can emit dev/testnet identity scaffolding. */
+  supportsIdentitySupport?: boolean;
 }

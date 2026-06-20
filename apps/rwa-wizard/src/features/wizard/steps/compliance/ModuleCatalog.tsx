@@ -4,6 +4,7 @@ import type { KeyboardEvent } from 'react';
 
 import { groupComplianceModulesByCategory } from '@openzeppelin/codegen-rwa-common';
 import type { ComplianceModuleSelection } from '@openzeppelin/rwa-config';
+import { EmptyState } from '@openzeppelin/ui-components';
 import type { AddressingCapability } from '@openzeppelin/ui-types';
 import { cn } from '@openzeppelin/ui-utils';
 
@@ -105,9 +106,12 @@ interface ModuleRowProps {
 function EmptyModuleCatalog() {
   const emptyNotice = useCopy().notice('compliance.module-catalog.empty');
   return (
-    <div className="rounded-lg border border-dashed border-border p-8 text-center">
-      <p className="text-sm text-muted-foreground">{emptyNotice.description}</p>
-    </div>
+    <EmptyState
+      size="small"
+      title="No compliance modules"
+      description={emptyNotice.description ?? ''}
+      className="rounded-lg border border-dashed border-border"
+    />
   );
 }
 
