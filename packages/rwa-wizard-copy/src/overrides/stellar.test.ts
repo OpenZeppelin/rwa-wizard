@@ -34,6 +34,7 @@ describe('STELLAR_OVERRIDE', () => {
     const notice = copy.notice('review.identity-support-scaffolding');
 
     expect(notice.title).toBe('Testnet identity scaffolding');
+    expect(notice.description).toMatch(/initial supply/i);
     expect(notice.description).toMatch(/not production KYC/i);
     expect(notice.infoCopy).toMatch(/claim issuer/i);
     expect(notice.infoCopy).toMatch(/tools\/sign-claim/);

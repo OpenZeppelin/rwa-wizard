@@ -52,7 +52,7 @@ export const COMPLIANCE_MODULES_COPY: ConceptDictionary = {
     description:
       'Per-identity ownership cap. Blocks transfers or mints that would push the recipient above the configured ceiling — useful for concentration limits and retail caps.',
     infoCopy:
-      'Tracks balances per ONCHAINID across the `transferred`, `created`, and `destroyed` hooks, so multiple wallets for the same investor share one bucket. Requires identity registry data at runtime.',
+      'Tracks balances per ONCHAINID across the `transferred`, `created`, and `destroyed` hooks, so multiple wallets for the same investor share one bucket. Requires identity registry data at runtime.\n\nThere is no special exemption for Admin or treasury: if you mint tokens to your own institution’s wallet, that wallet must stay under the cap too. Use a higher cap for large treasury holdings, mint in tranches, or distribute across multiple recipients.',
   },
   'moduleField.max-balance.maxBalance': {
     id: 'moduleField.max-balance.maxBalance',
