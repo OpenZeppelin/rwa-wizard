@@ -53,6 +53,16 @@ interface CodegenPackageModule {
     options?: GenerateOptions
   ) => Promise<{ fileName: string; data: Blob }>;
   getDeployGuidance?: (config: RWAConfig) => DeployGuidanceDTO;
+  getComplianceConfigWarnings?: (
+    config: RWAConfig,
+    options?: { includeDemoCountryChecks?: boolean }
+  ) => Array<{ id: string; relatedModuleIds: readonly string[] }>;
+  hasComplianceConfigBlockingIssues?: (
+    config: RWAConfig,
+    options?: { includeDemoCountryChecks?: boolean }
+  ) => boolean;
+  isDemoAutoMintConfigReady?: (config: RWAConfig) => boolean;
+  isComplianceConfigBlockingWarningId?: (id: string) => boolean;
 }
 
 function getDefaultGenerateOptions(targetId: string): RuntimeGenerateOptions | undefined {
@@ -153,6 +163,22 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
 
     getDeployGuidance: pkg.getDeployGuidance
       ? (config) => pkg.getDeployGuidance!(config)
+      : undefined,
+
+    getComplianceConfigWarnings: pkg.getComplianceConfigWarnings
+      ? (config, options) => pkg.getComplianceConfigWarnings!(config, options)
+      : undefined,
+
+    hasComplianceConfigBlockingIssues: pkg.hasComplianceConfigBlockingIssues
+      ? (config, options) => pkg.hasComplianceConfigBlockingIssues!(config, options)
+      : undefined,
+
+    isDemoAutoMintConfigReady: pkg.isDemoAutoMintConfigReady
+      ? (config) => pkg.isDemoAutoMintConfigReady!(config)
+      : undefined,
+
+    isComplianceConfigBlockingWarningId: pkg.isComplianceConfigBlockingWarningId
+      ? (id) => pkg.isComplianceConfigBlockingWarningId!(id)
       : undefined,
 
     supportsIdentitySupport: Boolean(pkg.generateZipWithIdentitySupport),

@@ -17,6 +17,9 @@ const {
   getEcosystemMetadataMock,
   getCodegenInfoBlurbMock,
   getDeployGuidanceMock,
+  getComplianceConfigWarningsMock,
+  hasComplianceConfigBlockingIssuesMock,
+  isDemoAutoMintConfigReadyMock,
   validateMock,
 } = vi.hoisted(() => ({
   validateMock: vi.fn(() => ({ valid: true, errors: [], warnings: [] })),
@@ -40,7 +43,12 @@ const {
     adminEqualsManager: true,
     networkDisplayName: 'Stellar Testnet',
     networkIsTestnet: true,
+    demoAutoMintEligible: true,
+    demoMintComplianceIssues: [],
   })),
+  getComplianceConfigWarningsMock: vi.fn(() => []),
+  hasComplianceConfigBlockingIssuesMock: vi.fn(() => false),
+  isDemoAutoMintConfigReadyMock: vi.fn(() => true),
 }));
 
 vi.mock('./runtimeOptions', () => ({
@@ -59,6 +67,11 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   getEcosystemMetadata: getEcosystemMetadataMock,
   getCodegenInfoBlurb: getCodegenInfoBlurbMock,
   getDeployGuidance: getDeployGuidanceMock,
+  getComplianceConfigWarnings: getComplianceConfigWarningsMock,
+  hasComplianceConfigBlockingIssues: hasComplianceConfigBlockingIssuesMock,
+  isDemoAutoMintConfigReady: isDemoAutoMintConfigReadyMock,
+  isComplianceConfigBlockingWarningId: (id: string) =>
+    id === 'initial-supply-exceeds-max-balance' || id === 'initial-supply-exceeds-supply-limit',
 }));
 
 describe('loadCodegenService', () => {

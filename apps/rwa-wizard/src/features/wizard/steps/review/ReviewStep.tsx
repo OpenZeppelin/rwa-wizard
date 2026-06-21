@@ -5,11 +5,12 @@ import { ConfigSummary } from '../../../../components/shared/ConfigSummary';
 import { WizardFrame } from '../../../../components/shared/WizardFrame';
 import type { DeployGuidanceDTO } from '../../../../services/codegen/types';
 import { useExplorer } from '../../../../services/runtime';
-import type { ComplianceModuleOption } from '../../../../types/wizard';
+import type { ComplianceModuleOption, TargetId } from '../../../../types/wizard';
 import { DeployReadinessPanel } from './DeployReadinessPanel';
 
 interface ReviewStepProps {
   config: RWAConfig;
+  targetId: TargetId;
   availableModules: ComplianceModuleOption[];
   deployGuidance: DeployGuidanceDTO | null;
   supportsIdentitySupport: boolean;
@@ -17,6 +18,7 @@ interface ReviewStepProps {
 
 export function ReviewStep({
   config,
+  targetId,
   availableModules,
   deployGuidance,
   supportsIdentitySupport,
@@ -34,8 +36,10 @@ export function ReviewStep({
         />
         {deployGuidance && (
           <DeployReadinessPanel
+            targetId={targetId}
             guidance={deployGuidance}
             supportsIdentitySupport={supportsIdentitySupport}
+            hasInitialSupply={config.token.initialSupply !== undefined}
           />
         )}
       </div>

@@ -13,6 +13,7 @@ import { enrichComplianceSelectionWarning } from '../../../../registry/enrichEco
 import type {
   ComplianceHookMeta,
   ComplianceModuleOption,
+  ComplianceModuleSelectionWarningMeta,
   TargetId,
 } from '../../../../types/wizard';
 import { ComplianceSelectionWarnings } from './ComplianceSelectionWarnings';
@@ -27,6 +28,8 @@ interface ComplianceStepProps {
   complianceHooks: readonly ComplianceHookMeta[];
   moduleCategories: readonly string[];
   selectionWarningRules: readonly ComplianceModuleSelectionWarningRule[];
+  configComplianceWarnings?: readonly ComplianceModuleSelectionWarningMeta[];
+  isComplianceWarningBlocking?: (id: string) => boolean;
   addressing?: AddressingCapability;
   onUpdate: (patch: Partial<ComplianceConfig>) => void;
 }
@@ -39,6 +42,8 @@ export function ComplianceStep({
   complianceHooks,
   moduleCategories,
   selectionWarningRules,
+  configComplianceWarnings = [],
+  isComplianceWarningBlocking,
   addressing,
   onUpdate,
 }: ComplianceStepProps) {
@@ -87,14 +92,38 @@ export function ComplianceStep({
   }, [compliance.modules, availableModules]);
 
   const selectionWarnings = useMemo(() => {
-    return evaluateComplianceSelectionWarnings(
+    const ruleWarnings = evaluateComplianceSelectionWarnings(
       { compliance, initialSupply },
       compliance.modules.map((entry) => entry.moduleId),
       selectionWarningRules
     )
-      .map((warning) => enrichComplianceSelectionWarning(targetId, warning))
+      .map((warning) => {
+        const enriched = enrichComplianceSelectionWarning(targetId, warning);
+        if (!enriched) return null;
+        return {
+          ...enriched,
+          blocking: isComplianceWarningBlocking?.(warning.id) ?? false,
+        };
+      })
       .filter((warning): warning is NonNullable<typeof warning> => warning !== null);
-  }, [targetId, compliance, initialSupply, selectionWarningRules]);
+
+    const merged = [...configComplianceWarnings];
+    const seen = new Set(merged.map((warning) => warning.id));
+    for (const warning of ruleWarnings) {
+      if (!seen.has(warning.id)) {
+        merged.push(warning);
+        seen.add(warning.id);
+      }
+    }
+    return merged;
+  }, [
+    targetId,
+    compliance,
+    initialSupply,
+    selectionWarningRules,
+    configComplianceWarnings,
+    isComplianceWarningBlocking,
+  ]);
 
   return (
     <WizardFrame {...stepCopy} spacing="space-y-8">

@@ -14,7 +14,7 @@ export type ErrorBannerTone = 'error' | 'warning' | 'info';
 
 export interface ErrorBannerProps {
   /** Primary message shown to the user. Required. */
-  message: string;
+  message: ReactNode;
   /** Optional callback invoked when the user dismisses the banner. If omitted, the banner is not dismissible. */
   onDismiss?: () => void;
   /** Label for the dismiss button. Kept for API compatibility; ui-components `Banner` uses an icon dismiss control. */

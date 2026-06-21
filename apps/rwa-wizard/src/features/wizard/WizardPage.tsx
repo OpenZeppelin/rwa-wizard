@@ -121,6 +121,7 @@ function WizardPageContent(): ReactElement {
     codegenInfoBlurb,
     isGenerating,
     deploySignerAcknowledged: deployGuidance == null || signerAcknowledged,
+    includeIdentitySupport,
   });
 
   const currentStepIndex = orderedStepIds.indexOf(currentStep);

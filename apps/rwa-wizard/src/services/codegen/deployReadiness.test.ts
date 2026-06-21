@@ -10,6 +10,8 @@ const testnetGuidance: DeployGuidanceDTO = {
   adminEqualsManager: false,
   networkDisplayName: 'Testnet',
   networkIsTestnet: true,
+  demoAutoMintEligible: true,
+  demoMintComplianceIssues: [],
 };
 
 describe('deployReadiness', () => {
