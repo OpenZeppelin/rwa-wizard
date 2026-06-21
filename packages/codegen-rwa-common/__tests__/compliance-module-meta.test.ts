@@ -52,6 +52,25 @@ describe('evaluateComplianceSelectionWarnings', () => {
     expect(warnings.map((warning) => warning.id)).toContain('initial-supply-warning');
   });
 
+  it('warns when initial supply exceeds a module scalar field', () => {
+    const warnings = evaluateComplianceSelectionWarnings(
+      {
+        compliance: { modules: [{ moduleId: 'module-x', config: { cap: '100' } }] },
+        initialSupply: '1000',
+      },
+      ['module-x'],
+      [
+        {
+          type: 'initial-supply-exceeds-module-scalar',
+          id: 'cap-too-low',
+          moduleId: 'module-x',
+          fieldKey: 'cap',
+        },
+      ]
+    );
+    expect(warnings.map((warning) => warning.id)).toContain('cap-too-low');
+  });
+
   it('does not warn for empty initial supply with modules selected', () => {
     const warnings = evaluateComplianceSelectionWarnings(
       { compliance: { modules: [{ moduleId: 'module-x' }] }, initialSupply: '' },
