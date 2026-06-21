@@ -198,6 +198,33 @@ export function buildInvokeCommand(
 }
 
 /**
+ * Build a read-only `stellar contract invoke` (`--send no`) for on-chain views.
+ */
+export function buildViewCommand(
+  contractAddr: string,
+  fnName: string,
+  args: string,
+  networkFlag: string
+): string {
+  const commandLines = [
+    'stellar contract invoke \\',
+    `  --id ${contractAddr} \\`,
+    '  --source-account "$SOURCE_ACCOUNT" \\',
+    `  ${networkFlag} \\`,
+    '  --send no \\',
+    '  -- \\',
+    `  ${fnName}`,
+  ];
+
+  if (args.trim().length > 0) {
+    commandLines[commandLines.length - 1] += ' \\';
+    commandLines.push(`  ${args}`);
+  }
+
+  return commandLines.join('\n');
+}
+
+/**
  * Convert a module id into the shell variable name used in `deploy.sh`.
  */
 export function moduleVarName(moduleId: string): string {

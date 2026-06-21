@@ -24,6 +24,7 @@ interface ContractTableRow {
 export interface ReadmeGenerationContext {
   templateSourceMetadata: UpstreamTemplateSourceMetadata;
   includeIdentitySupport?: boolean;
+  includeDemoAutoMint?: boolean;
 }
 
 /**
@@ -140,7 +141,10 @@ function renderBuildArtifactNote(config: RWAConfig, context: ReadmeGenerationCon
 
 function renderIdentityOnboardingArchitecture(context: ReadmeGenerationContext): string {
   if (context.includeIdentitySupport) {
-    return `This export includes upstream **example** Claim Issuer and per-holder Identity contracts under \`contracts/claim-issuer\` and \`contracts/identity\`, plus a \`tools/sign-claim\` helper. \`build.sh\` compiles them alongside the core contracts, but \`deploy.sh\` does **not** deploy or wire them automatically — use them for local/testnet onboarding demos after the core system is deployed.`;
+    const demoMintNote = context.includeDemoAutoMint
+      ? ' When `token.initialSupply` is set on testnet, this export also includes `scripts/bootstrap-demo-mint.sh` — a **demo-only** script that deploys the example contracts, onboards Admin with hardcoded demo claims, and mints the configured initial supply after `./scripts/deploy.sh`. It is educational scaffolding, not production KYC.'
+      : '';
+    return `This export includes upstream **example** Claim Issuer and per-holder Identity contracts under \`contracts/claim-issuer\` and \`contracts/identity\`, plus a \`tools/sign-claim\` helper. \`build.sh\` compiles them alongside the core contracts, but \`deploy.sh\` does **not** deploy or wire them automatically — use them for local/testnet onboarding demos after the core system is deployed.${demoMintNote}`;
   }
 
   return `This generated project does not include the upstream **Claim Issuer** or per-holder **Identity** example contracts used to onboard verified investors. Those contracts must exist before a recipient can pass Stellar identity verification and receive minted tokens. Enable testnet identity scaffolding in the wizard (or \`--include-identity-support\` in the CLI) to add the example crates.`;
@@ -181,7 +185,7 @@ function escapeMermaidNodeLabel(text: string): string {
 /**
  * Minimalist flowchart of the generated `build.sh` + `deploy.sh` pipeline, driven by config.
  */
-function renderE2eScriptFlowMermaid(config: RWAConfig): string {
+function renderE2eScriptFlowMermaid(config: RWAConfig, context: ReadmeGenerationContext): string {
   const networkDesc = getNetworkDescription(config);
   const modules = getUniqueModuleSelections(config.compliance.modules);
   const topicCount = config.identityVerification.claimTopics.length;
@@ -256,9 +260,10 @@ function renderE2eScriptFlowMermaid(config: RWAConfig): string {
 
   if (hasInitialSupply) {
     const nSup = id();
-    lines.push(
-      `  ${prev} --> ${nSup}["${escapeMermaidNodeLabel('Initial supply: manual mint guidance (stdout)')}"]`
-    );
+    const supplyLabel = context.includeDemoAutoMint
+      ? 'Initial supply: bootstrap-demo-mint.sh (testnet demo)'
+      : 'Initial supply: manual mint guidance (stdout)';
+    lines.push(`  ${prev} --> ${nSup}["${escapeMermaidNodeLabel(supplyLabel)}"]`);
     prev = nSup;
   }
 
@@ -298,10 +303,48 @@ function renderInitialSupplyNote(config: RWAConfig, context: ReadmeGenerationCon
   }
 
   const identityNote = context.includeIdentitySupport
-    ? 'This export includes example Claim Issuer and Identity crates (see Contracts), but `deploy.sh` does not deploy or wire them automatically — deploy them separately for testnet onboarding before minting.'
+    ? context.includeDemoAutoMint
+      ? 'This export includes `scripts/bootstrap-demo-mint.sh` (testnet demo only) which deploys the example Claim Issuer and Identity contracts, onboards Admin with demo claims, and mints the configured amount after `./scripts/deploy.sh`.'
+      : 'This export includes example Claim Issuer and Identity crates (see Contracts), but `deploy.sh` does not deploy or wire them automatically — deploy them separately for testnet onboarding before minting.'
     : 'This generated project scaffolds CTI, IRS, and the Identity Verifier, but it does not include those investor-specific identity contracts, so perform the mint manually after identity onboarding.';
 
   return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. ${identityNote} The configured initial supply is expressed in on-chain base units (smallest token units), not display units; with \`token.decimals = ${config.token.decimals}\`, one whole token equals \`10^${config.token.decimals}\` base units.\n`;
+}
+
+function renderDemoAutoMintWorkflow(context: ReadmeGenerationContext): string {
+  if (!context.includeDemoAutoMint) {
+    return '';
+  }
+
+  return `### Testnet demo auto-mint workflow
+
+This export targets **educational Scope A** on testnet: onboard Admin with example identity contracts and mint \`token.initialSupply\` after deploy. **Not production KYC.**
+
+Run scripts in this order (copy-paste friendly):
+
+\`\`\`bash
+# 1) Build + deploy the core system (same as every export)
+chmod +x scripts/build.sh scripts/deploy.sh
+./scripts/build.sh
+cargo fmt
+export STELLAR_ACCOUNT=<your-testnet-identity>
+./scripts/deploy.sh --preflight   # optional
+./scripts/deploy.sh
+
+# 2) Demo onboarding + mint (separate script — reads deployment-manifest.json)
+chmod +x scripts/bootstrap-demo-mint.sh
+./scripts/bootstrap-demo-mint.sh --preflight   # optional: \`created\` hook + on-chain limit check
+./scripts/bootstrap-demo-mint.sh               # deploy example issuer/identity, register Admin, mint
+
+# If preflight prints Manager invokes (supply limit, max balance, country allow-list),
+# run those commands yourself, then re-run bootstrap-demo-mint.sh.
+\`\`\`
+
+**What the bootstrap script does:** deploy example Claim Issuer → register in CTI → sign demo claims → deploy Identity for Admin → register in IRS (country CH / 756) → compliance preflight on the \`created\` hook → \`mint\` to Admin.
+
+**Fix conflicts in the wizard first when possible** (raise supply/max limits, allow CH, do not restrict CH). The wizard validates these before export when demo auto-mint is enabled.
+
+`;
 }
 
 /**
@@ -341,9 +384,13 @@ After building, run \`cargo fmt\` to apply canonical Rust formatting to the gene
 
 ## Deploy
 
-${renderDeployReadmeSections(config, networkDesc)}
+${renderDeployReadmeSections(config, networkDesc, {
+  includeDemoAutoMint: context.includeDemoAutoMint,
+})}
 
-${renderE2eScriptFlowMermaid(config)}
+${renderDemoAutoMintWorkflow(context)}
+
+${renderE2eScriptFlowMermaid(config, context)}
 
 ${renderInitialSupplyNote(config, context)}
 \`config.json\` is an informational snapshot of the exact source config used to generate this project. You can reuse it to regenerate or re-import the project later, but \`deploy.sh\` does not read it at runtime.

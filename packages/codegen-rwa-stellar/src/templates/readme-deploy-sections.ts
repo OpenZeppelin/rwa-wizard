@@ -19,11 +19,14 @@ function renderConfiguredAccessControlTable(config: RWAConfig): string {
   return lines.join('\n');
 }
 
-function renderQuickStart(config: RWAConfig): string {
+function renderQuickStart(config: RWAConfig, includeDemoAutoMint: boolean): string {
   const guidance = getDeployGuidance(config);
   const managerEnv = guidance.adminEqualsManager
     ? ''
     : `\nexport ADMIN_SOURCE_ACCOUNT=<admin-identity>\nexport MANAGER_SOURCE_ACCOUNT=<manager-identity>`;
+  const demoMintStep = includeDemoAutoMint
+    ? `\nchmod +x scripts/bootstrap-demo-mint.sh\n./scripts/bootstrap-demo-mint.sh   # testnet demo auto-mint (NOT production KYC)`
+    : '';
 
   return `\`\`\`bash
 # Prerequisites: Rust, Stellar CLI, wasm32v1-none target
@@ -42,11 +45,14 @@ cargo fmt
 
 export STELLAR_ACCOUNT=<your-identity>${managerEnv}
 ./scripts/deploy.sh --preflight   # optional: validate signers + WASM without deploying
-./scripts/deploy.sh
+./scripts/deploy.sh${demoMintStep}
 \`\`\``;
 }
 
-function renderDeploySignerSection(config: RWAConfig): string {
+function renderDeploySignerSection(
+  config: RWAConfig,
+  includeDemoAutoMint: boolean = false
+): string {
   const guidance = getDeployGuidance(config);
   const splitRoleBlock = guidance.adminEqualsManager
     ? ''
@@ -71,7 +77,7 @@ export MANAGER_SOURCE_ACCOUNT=manager-identity
 
 The chosen identity must control these addresses — post-deploy configuration signs with the Manager role (and Admin for admin-gated invokes). If you do not control the configured Admin address, regenerate the project in the wizard with an address from \`stellar keys address <your-identity>\`.
 
-${renderQuickStart(config)}
+${renderQuickStart(config, includeDemoAutoMint)}
 ${splitRoleBlock}
 Run \`./scripts/deploy.sh --preflight\` to validate signers and WASM artifacts without spending XLM on deployment.`;
 }
@@ -98,12 +104,18 @@ function renderTroubleshooting(config: RWAConfig): string {
 | Insufficient balance errors | Deploy signer unfunded | ${guidance.networkIsTestnet ? 'Fund on testnet: `stellar keys generate <name> --fund`' : 'Fund the deploy signer on the target network'} |`;
 }
 
-export function renderDeployReadmeSections(config: RWAConfig, networkDesc: string): string {
+export function renderDeployReadmeSections(
+  config: RWAConfig,
+  networkDesc: string,
+  options?: { includeDemoAutoMint?: boolean }
+): string {
+  const includeDemoAutoMint = options?.includeDemoAutoMint ?? false;
+
   return `Deploy all contracts to ${networkDesc}:
 
 ### Quick start
 
-${renderDeploySignerSection(config)}
+${renderDeploySignerSection(config, includeDemoAutoMint)}
 
 ### Configured access control
 

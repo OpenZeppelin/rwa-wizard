@@ -19,6 +19,32 @@ describe('deploy guidance', () => {
     expect(guidance.adminEqualsManager).toBe(false);
     expect(guidance.networkDisplayName).toBe('Stellar Testnet');
     expect(guidance.networkIsTestnet).toBe(true);
+    expect(guidance.demoAutoMintEligible).toBe(true);
+    expect(guidance.demoMintComplianceIssues).toEqual([]);
+  });
+
+  it('surfaces demo mint compliance preflight issues in deploy guidance', () => {
+    const guidance = getDeployGuidance(
+      createValidConfig({
+        token: { initialSupply: '1000' },
+        compliance: {
+          modules: [{ moduleId: 'supply-limit', config: { limit: '100' } }],
+        },
+      })
+    );
+
+    expect(guidance.demoMintComplianceIssues).toHaveLength(1);
+    expect(guidance.demoMintComplianceIssues[0]?.warningId).toBe(
+      'initial-supply-exceeds-supply-limit'
+    );
+    expect(guidance.demoMintComplianceIssues[0]?.moduleName).toBe('Supply Limit');
+  });
+
+  it('formats post-generation steps with demo bootstrap when eligible', () => {
+    const guidance = getDeployGuidance(createValidConfig());
+    const steps = formatDeployPostGenerationSteps(guidance);
+
+    expect(steps.join('\n')).toContain('bootstrap-demo-mint.sh');
   });
 
   it('formats post-generation steps without alice placeholder', () => {

@@ -9,6 +9,10 @@ import {
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateWorkspaceToml } from './cargo/workspace-toml';
+import {
+  generateBootstrapDemoMintSh,
+  shouldGenerateBootstrapDemoMintScript,
+} from './scripts/bootstrap-demo-mint-sh';
 import { generateDeploySh } from './scripts/deploy-sh';
 
 import { CRATE_NAMES } from '../constants';
@@ -182,10 +186,18 @@ export function generateWithIdentitySupport(
   const result = generator.generate(config, options);
   const templateSource = resolveUpstreamTemplateSource(options);
   const support = generateIdentitySupportFilesFromSource(templateSource);
+  const includeDemoAutoMint = shouldGenerateBootstrapDemoMintScript(config, true);
+  const readmeContext = {
+    templateSourceMetadata: templateSource.metadata,
+    includeIdentitySupport: true,
+    includeDemoAutoMint,
+  };
+  const deployScriptOptions = {
+    includeIdentitySupport: true,
+    includeDemoAutoMint,
+  };
 
-  const files = mergeFileTrees(
-    addTypedCountryDataHelper(result.files),
-    support.files,
+  const extraFiles = [
     createFile(
       'Cargo.toml',
       generateWorkspaceToml({
@@ -196,14 +208,20 @@ export function generateWithIdentitySupport(
         repositoryUrl: templateSource.metadata.sourceRepoUrl,
       })
     ),
-    createFile(
-      'README.md',
-      generateReadme(config, {
-        templateSourceMetadata: templateSource.metadata,
-        includeIdentitySupport: true,
-      })
-    ),
-    createFile('scripts/deploy.sh', generateDeploySh(config, { includeIdentitySupport: true }))
+    createFile('README.md', generateReadme(config, readmeContext)),
+    createFile('scripts/deploy.sh', generateDeploySh(config, deployScriptOptions)),
+  ];
+
+  if (includeDemoAutoMint) {
+    extraFiles.push(
+      createFile('scripts/bootstrap-demo-mint.sh', generateBootstrapDemoMintSh(config))
+    );
+  }
+
+  const files = mergeFileTrees(
+    addTypedCountryDataHelper(result.files),
+    support.files,
+    ...extraFiles
   );
 
   return {

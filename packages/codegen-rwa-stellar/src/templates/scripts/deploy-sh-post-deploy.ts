@@ -170,6 +170,7 @@ export function buildPostDeployConfig(config: RWAConfig, networkFlag: string): s
 
 export interface DeployScriptGenerationOptions {
   includeIdentitySupport?: boolean;
+  includeDemoAutoMint?: boolean;
 }
 
 export function buildInitialSupplyGuidance(
@@ -177,6 +178,32 @@ export function buildInitialSupplyGuidance(
   options?: DeployScriptGenerationOptions
 ): string[] {
   if (config.token.initialSupply === undefined) return [];
+
+  if (options?.includeDemoAutoMint) {
+    return [
+      ...shellSection('Initial Supply — Demo Auto-Mint Script Included'),
+      shellEcho('  Status:    deploy.sh does not auto-mint (identity verification required).'),
+      shellEcho(`  Requested: ${config.token.initialSupply} base units (from config)`),
+      shellEcho(
+        `  Decimals:  ${config.token.decimals} (1 whole token = 10^${config.token.decimals} base units)`
+      ),
+      shellEcho(''),
+      shellEcho('  This testnet export includes scripts/bootstrap-demo-mint.sh — a demo-only'),
+      shellEcho('  educational script (NOT production KYC) that will:'),
+      shellEcho('    1. Deploy the example Claim Issuer and register it in CTI'),
+      shellEcho('    2. Deploy an Identity contract for Admin and sign demo claims'),
+      shellEcho('    3. Register Admin in IRS'),
+      shellEcho('    4. Run compliance preflight on the `created` hook (see script output)'),
+      shellEcho(`    5. Mint ${config.token.initialSupply} base units to Admin`),
+      shellEcho(''),
+      shellEcho('  After ./scripts/deploy.sh completes:'),
+      shellEcho('    chmod +x scripts/bootstrap-demo-mint.sh'),
+      shellEcho('    ./scripts/bootstrap-demo-mint.sh --preflight   # optional compliance check'),
+      shellEcho(
+        '    ./scripts/bootstrap-demo-mint.sh               # full demo flow (run printed Manager invokes first if needed)'
+      ),
+    ];
+  }
 
   const identityScaffoldLines = options?.includeIdentitySupport
     ? [
