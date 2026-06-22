@@ -61,6 +61,15 @@ describe('bootstrap-demo-mint.sh template', () => {
     expect(script).not.toContain('--apply-manager-fixes');
     expect(script).toContain('Run this Manager invoke manually');
     expect(script).toContain('grep -qi testnet');
+    const managerLoad = script.indexOf('MANAGER="$(load_manifest_field manager)"');
+    const managerVerify = script.indexOf('verify_role_signer "Manager"');
+    expect(managerLoad).toBeGreaterThan(-1);
+    expect(managerVerify).toBeGreaterThan(managerLoad);
+    expect(script).toContain("awk '/--data/{print $2}'");
+    expect(script).toContain("awk '/--signature/{print $2}'");
+    expect(script).not.toContain("grep -oE '--data");
+    expect(script).toContain('\\`created\\`');
+    expect(script).not.toMatch(/echo "[^"]*`created`[^"]*"/);
   });
 
   it('shouldGenerateBootstrapDemoMintScript requires identity support flag', () => {
@@ -79,5 +88,7 @@ describe('bootstrap-demo-mint.sh template', () => {
     expect(script).toContain('Initial Supply — Demo Auto-Mint Script Included');
     expect(script).toContain('scripts/bootstrap-demo-mint.sh');
     expect(script).not.toContain('Manual Mint Required');
+    expect(script).toContain('\\`created\\`');
+    expect(script).not.toMatch(/echo "[^"]*`created`[^"]*"/);
   });
 });

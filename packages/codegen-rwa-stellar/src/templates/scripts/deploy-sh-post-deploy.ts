@@ -7,6 +7,7 @@ import {
   buildInvokeCommand,
   CLR,
   moduleVarName,
+  shellBacktickLiteral,
   shellEcho,
   shellEscape,
   shellSection,
@@ -193,7 +194,9 @@ export function buildInitialSupplyGuidance(
       shellEcho('    1. Deploy the example Claim Issuer and register it in CTI'),
       shellEcho('    2. Deploy an Identity contract for Admin and sign demo claims'),
       shellEcho('    3. Register Admin in IRS'),
-      shellEcho('    4. Run compliance preflight on the `created` hook (see script output)'),
+      shellEcho(
+        `    4. Run compliance preflight on the ${shellBacktickLiteral('created')} hook (see script output)`
+      ),
       shellEcho(`    5. Mint ${config.token.initialSupply} base units to Admin`),
       shellEcho(''),
       shellEcho('  After ./scripts/deploy.sh completes:'),

@@ -55,6 +55,11 @@ export function shellEcho(msg: string): string {
   return `echo "${msg}"`;
 }
 
+/** Wrap text in backticks safe for double-quoted bash `echo` (avoids command substitution). */
+export function shellBacktickLiteral(text: string): string {
+  return '\\`' + text + '\\`';
+}
+
 export function shellEchoRaw(msg: string): string {
   return `echo '${msg}'`;
 }

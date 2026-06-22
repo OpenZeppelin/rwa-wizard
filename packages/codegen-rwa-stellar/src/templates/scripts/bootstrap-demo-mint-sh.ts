@@ -22,6 +22,7 @@ import {
   buildRoleSignerPreflightChecks,
   buildViewCommand,
   moduleVarName,
+  shellBacktickLiteral,
   shellEcho,
   shellEscape,
   shellSection,
@@ -151,10 +152,14 @@ function buildCompliancePreflightSection(config: RWAConfig, networkFlag: string)
   lines.push('  local failed=0');
   lines.push('  echo ""');
   lines.push(
-    ...shellSubsection(`Compliance preflight — \`${DEMO_MINT_COMPLIANCE_HOOK}\` hook before mint`)
+    ...shellSubsection(
+      `Compliance preflight — ${shellBacktickLiteral(DEMO_MINT_COMPLIANCE_HOOK)} hook before mint`
+    )
   );
   lines.push(
-    shellEcho('  Mint runs Compliance modules registered on `created` in the same transaction.')
+    shellEcho(
+      `  Mint runs Compliance modules registered on ${shellBacktickLiteral(DEMO_MINT_COMPLIANCE_HOOK)} in the same transaction.`
+    )
   );
   lines.push(
     shellEcho(
@@ -192,7 +197,7 @@ function buildCompliancePreflightSection(config: RWAConfig, networkFlag: string)
     lines.push('echo ""');
     lines.push(
       shellEcho(
-        `${'${GREEN}'}  ✓ Wizard config has no \`${DEMO_MINT_COMPLIANCE_HOOK}\` conflicts for this demo mint.${'${RST}'}`
+        `${'${GREEN}'}  ✓ Wizard config has no ${shellBacktickLiteral(DEMO_MINT_COMPLIANCE_HOOK)} conflicts for this demo mint.${'${RST}'}`
       )
     );
     lines.push('  return 0');
@@ -223,7 +228,7 @@ function buildCompliancePreflightSection(config: RWAConfig, networkFlag: string)
   lines.push('  if [ "$failed" -ne 0 ]; then');
   lines.push(
     shellEcho(
-      `${'${YELLOW}'}  Compliance preflight failed — mint would revert on \`${DEMO_MINT_COMPLIANCE_HOOK}\`.${'${RST}'}`
+      `${'${YELLOW}'}  Compliance preflight failed — mint would revert on ${shellBacktickLiteral(DEMO_MINT_COMPLIANCE_HOOK)}.${'${RST}'}`
     )
   );
   lines.push(
@@ -311,9 +316,9 @@ export function generateBootstrapDemoMintSh(config: RWAConfig): string {
   sections.push('  exit 1');
   sections.push('fi');
   sections.push('');
-  sections.push(...buildRoleSignerPreflightChecks());
-  sections.push('');
   sections.push(...buildManifestLoader(contractVarNames));
+  sections.push('');
+  sections.push(...buildRoleSignerPreflightChecks());
   sections.push('');
   sections.push('if ! echo "$MANIFEST_NETWORK" | grep -qi testnet; then');
   sections.push(
@@ -410,10 +415,8 @@ export function generateBootstrapDemoMintSh(config: RWAConfig): string {
   sections.push('');
   sections.push('parse_signed_claim() {');
   sections.push('  local output="$1"');
-  sections.push(`  CLAIM_DATA=$(echo "$output" | grep -oE '--data [0-9a-f]+' | awk '{print $2}')`);
-  sections.push(
-    `  CLAIM_SIGNATURE=$(echo "$output" | grep -oE '--signature [0-9a-f]+' | awk '{print $2}')`
-  );
+  sections.push(`  CLAIM_DATA=$(echo "$output" | awk '/--data/{print $2}')`);
+  sections.push(`  CLAIM_SIGNATURE=$(echo "$output" | awk '/--signature/{print $2}')`);
   sections.push('  if [ -z "$CLAIM_DATA" ] || [ -z "$CLAIM_SIGNATURE" ]; then');
   sections.push('    echo "Could not parse signed claim output:"');
   sections.push('    echo "$output"');
