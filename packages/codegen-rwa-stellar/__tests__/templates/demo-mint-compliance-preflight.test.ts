@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatDemoMintPreflightModuleList,
   getDemoMintCompliancePreflightIssues,
   hasBlockingDemoMintComplianceIssues,
 } from '../../src/templates/demo-mint-compliance-preflight';
@@ -71,5 +72,35 @@ describe('demo mint compliance preflight', () => {
     );
 
     expect(issues).toEqual([]);
+  });
+
+  it('formats selected preflight module names for README troubleshooting copy', () => {
+    expect(
+      formatDemoMintPreflightModuleList(
+        createValidConfig({
+          compliance: {
+            modules: [
+              { moduleId: 'max-balance', config: { maxBalance: '10000000' } },
+              { moduleId: 'country-restrict', config: { restrictedCountries: ['US', 'KP'] } },
+              { moduleId: 'transfer-allow', config: { allowedUsers: ['GADMIN'] } },
+            ],
+          },
+        })
+      )
+    ).toBe('max balance and country restriction');
+
+    expect(
+      formatDemoMintPreflightModuleList(
+        createValidConfig({
+          compliance: {
+            modules: [
+              { moduleId: 'supply-limit', config: { limit: '10000000' } },
+              { moduleId: 'max-balance', config: { maxBalance: '10000000' } },
+              { moduleId: 'country-allow', config: { allowedCountries: ['CH'] } },
+            ],
+          },
+        })
+      )
+    ).toBe('supply limit, max balance, and country allow-list');
   });
 });

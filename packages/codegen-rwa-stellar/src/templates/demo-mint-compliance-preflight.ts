@@ -142,3 +142,35 @@ export function getDemoMintCompliancePreflightIssues(
 export function hasBlockingDemoMintComplianceIssues(config: RWAConfig): boolean {
   return getDemoMintCompliancePreflightIssues(config).some((issue) => issue.blocking);
 }
+
+const DEMO_MINT_PREFLIGHT_MODULE_IDS = [
+  'supply-limit',
+  'max-balance',
+  'country-allow',
+  'country-restrict',
+] as const;
+
+/**
+ * Human-readable list of selected modules checked by demo-mint preflight (for README copy).
+ */
+export function formatDemoMintPreflightModuleList(config: RWAConfig): string {
+  const names = getUniqueModuleSelections(config.compliance.modules)
+    .filter((selection) =>
+      (DEMO_MINT_PREFLIGHT_MODULE_IDS as readonly string[]).includes(selection.moduleId)
+    )
+    .map((selection) => getModuleDescriptorById(selection.moduleId)?.name)
+    .filter((name): name is string => Boolean(name));
+
+  if (names.length === 0) {
+    return 'compliance limits on the `created` hook';
+  }
+
+  const lower = names.map((name) => name.toLowerCase());
+  if (lower.length === 1) {
+    return lower[0]!;
+  }
+  if (lower.length === 2) {
+    return `${lower[0]!} and ${lower[1]!}`;
+  }
+  return `${lower.slice(0, -1).join(', ')}, and ${lower.at(-1)!}`;
+}

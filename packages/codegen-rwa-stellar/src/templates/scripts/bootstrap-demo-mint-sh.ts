@@ -26,6 +26,7 @@ import {
   shellEcho,
   shellEscape,
   shellSection,
+  shellSingleQuoteLiteral,
   shellSubsection,
 } from './deploy-sh-helpers';
 
@@ -447,7 +448,7 @@ export function generateBootstrapDemoMintSh(config: RWAConfig): string {
     buildInvokeCommand(
       '$IRS_ADDRESS',
       'add_identity_country_data',
-      `--account "$MINT_RECIPIENT" --identity "$IDENTITY_ADDRESS" --initial_profiles '${shellEscape(countryProfileJson)}' --operator "$MANAGER"`,
+      `--account "$MINT_RECIPIENT" --identity "$IDENTITY_ADDRESS" --initial_profiles '${shellSingleQuoteLiteral(countryProfileJson)}' --operator "$MANAGER"`,
       networkFlag
     )
   );

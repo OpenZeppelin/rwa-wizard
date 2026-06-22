@@ -6,6 +6,11 @@ export function shellEscape(value: string): string {
   return value.replace(/[\\"$`!]/g, '\\$&');
 }
 
+/** Escape a string for safe embedding inside single-quoted bash strings (e.g. JSON CLI args). */
+export function shellSingleQuoteLiteral(value: string): string {
+  return value.replace(/'/g, `'\\''`);
+}
+
 export const SEPARATOR = '═══════════════════════════════════════════════════════════════';
 export const THIN_SEPARATOR = '───────────────────────────────────────────────────────────────';
 

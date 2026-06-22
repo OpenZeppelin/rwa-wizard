@@ -11,6 +11,7 @@ import { CRATE_NAMES } from '../constants';
 import { resolveStellarDeploymentTarget } from '../deployment/target';
 import { getModuleById } from '../modules/registry';
 import type { UpstreamTemplateSourceMetadata } from '../upstream/types';
+import { formatDemoMintPreflightModuleList } from './demo-mint-compliance-preflight';
 import { IDENTITY_SUPPORT_CONTRACTS } from './identity-support-contracts';
 import { renderDeployReadmeSections, renderExtendedPrerequisites } from './readme-deploy-sections';
 
@@ -311,10 +312,12 @@ function renderInitialSupplyNote(config: RWAConfig, context: ReadmeGenerationCon
   return `If \`token.initialSupply\` is set, note that \`deploy.sh\` does **not** auto-mint it. The upstream claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before \`mint\` can pass identity verification. ${identityNote} The configured initial supply is expressed in on-chain base units (smallest token units), not display units; with \`token.decimals = ${config.token.decimals}\`, one whole token equals \`10^${config.token.decimals}\` base units.\n`;
 }
 
-function renderDemoAutoMintWorkflow(context: ReadmeGenerationContext): string {
+function renderDemoAutoMintWorkflow(config: RWAConfig, context: ReadmeGenerationContext): string {
   if (!context.includeDemoAutoMint) {
     return '';
   }
+
+  const preflightModules = formatDemoMintPreflightModuleList(config);
 
   return `### Testnet demo auto-mint workflow
 
@@ -336,7 +339,7 @@ chmod +x scripts/bootstrap-demo-mint.sh
 ./scripts/bootstrap-demo-mint.sh --preflight   # optional: \`created\` hook + on-chain limit check
 ./scripts/bootstrap-demo-mint.sh               # deploy example issuer/identity, register Admin, mint
 
-# If preflight prints Manager invokes (supply limit, max balance, country allow-list),
+# If preflight prints Manager invokes (${preflightModules}),
 # run those commands yourself, then re-run bootstrap-demo-mint.sh.
 \`\`\`
 
@@ -388,7 +391,7 @@ ${renderDeployReadmeSections(config, networkDesc, {
   includeDemoAutoMint: context.includeDemoAutoMint,
 })}
 
-${renderDemoAutoMintWorkflow(context)}
+${renderDemoAutoMintWorkflow(config, context)}
 
 ${renderE2eScriptFlowMermaid(config, context)}
 

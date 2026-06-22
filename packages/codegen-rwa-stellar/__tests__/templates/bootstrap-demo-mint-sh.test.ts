@@ -70,6 +70,10 @@ describe('bootstrap-demo-mint.sh template', () => {
     expect(script).not.toContain("grep -oE '--data");
     expect(script).toContain('\\`created\\`');
     expect(script).not.toMatch(/echo "[^"]*`created`[^"]*"/);
+    expect(script).toContain(
+      `--initial_profiles '[{"country":{"Individual":{"Residence":756}},"metadata":null}]'`
+    );
+    expect(script).not.toContain('\\"country\\"');
   });
 
   it('shouldGenerateBootstrapDemoMintScript requires identity support flag', () => {
