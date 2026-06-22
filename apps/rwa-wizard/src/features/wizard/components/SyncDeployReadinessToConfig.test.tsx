@@ -13,6 +13,8 @@ const testnetGuidance: DeployGuidanceDTO = {
   adminEqualsManager: false,
   networkDisplayName: 'Stellar Testnet',
   networkIsTestnet: true,
+  demoAutoMintEligible: true,
+  demoMintComplianceIssues: [],
 };
 
 const publicGuidance: DeployGuidanceDTO = {

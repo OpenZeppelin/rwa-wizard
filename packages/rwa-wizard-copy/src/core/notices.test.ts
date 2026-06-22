@@ -18,11 +18,16 @@ describe('NOTICES_COPY', () => {
         'notice.compliance.module-prerequisite.identity-registry',
         'notice.compliance.selection-warning.country-allow-and-restrict',
         'notice.compliance.selection-warning.transfer-allow-empty-list',
-        'notice.compliance.selection-warning.initial-supply-requires-manual-mint',
+        'notice.compliance.selection-warning.initial-supply-exceeds-supply-limit',
+        'notice.compliance.selection-warning.initial-supply-exceeds-max-balance',
+        'notice.compliance.selection-warning.demo-mint-country-not-allowed',
+        'notice.compliance.selection-warning.demo-mint-country-restricted',
+        'notice.compliance.selection-warning.initial-supply-compliance-reminder',
         'notice.trusted-issuer.no-topics',
         'notice.trusted-issuer.duplicate',
         'notice.review.before-deploy',
         'notice.review.configured-admin',
+        'notice.review.demo-mint-compliance-blocked',
       ],
     });
   });

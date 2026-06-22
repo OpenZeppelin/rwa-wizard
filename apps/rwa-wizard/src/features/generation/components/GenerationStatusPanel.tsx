@@ -1,5 +1,6 @@
 import { CheckCircle, Circle, Loader2 } from 'lucide-react';
 
+import { Banner } from '@openzeppelin/ui-components';
 import { cn } from '@openzeppelin/ui-utils';
 
 import type { GenerationPhase } from '../../../types/wizard';
@@ -42,12 +43,13 @@ export function GenerationStatusPanel({ phase, zipFileName }: GenerationStatusPa
   if (phase === 'idle') return null;
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="animate-in fade-in rounded-lg border border-border bg-muted/30 px-4 py-3 duration-200"
+    <Banner
+      variant="neutral"
+      size="compact"
+      dismissible={false}
+      className="animate-in fade-in duration-200"
     >
-      <ul className="space-y-1.5">
+      <ul role="status" aria-live="polite" className="space-y-1.5">
         {DISPLAY_PHASES.map((entry) => {
           const status = getRowStatus(entry, phase);
           const isSuccess = status === 'success';
@@ -85,6 +87,6 @@ export function GenerationStatusPanel({ phase, zipFileName }: GenerationStatusPa
           );
         })}
       </ul>
-    </div>
+    </Banner>
   );
 }

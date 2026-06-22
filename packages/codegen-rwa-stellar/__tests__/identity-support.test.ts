@@ -56,7 +56,34 @@ describe('identity support templates', () => {
     expect(readme).toContain('Preflight validates only the');
     expect(readme).not.toContain('does not currently scaffold the upstream');
 
-    expect(deploySh).toContain('example claim-issuer and identity crates');
+    expect(deploySh).toContain('Demo Auto-Mint Script Included');
+    expect(deploySh).toContain('scripts/bootstrap-demo-mint.sh');
     expect(deploySh).not.toContain('does not scaffold claim-issuer or per-holder');
+  });
+
+  it('emits bootstrap-demo-mint.sh when initial supply is configured on testnet', () => {
+    const result = generateWithIdentitySupport(
+      createValidConfig({ token: { initialSupply: '1000' } })
+    );
+
+    expect(result.files).toHaveProperty('scripts/bootstrap-demo-mint.sh');
+    const bootstrap = result.files['scripts/bootstrap-demo-mint.sh'] as string;
+    expect(bootstrap).toContain('bootstrap-demo-mint.sh is testnet-only');
+    expect(bootstrap).toContain('Mint configured initial supply to Admin');
+
+    const readme = result.files['README.md'] as string;
+    expect(readme).toContain('scripts/bootstrap-demo-mint.sh');
+    expect(readme).toContain('bootstrap-demo-mint.sh (testnet demo)');
+
+    const deploySh = result.files['scripts/deploy.sh'] as string;
+    expect(deploySh).toContain('Demo Auto-Mint Script Included');
+  });
+
+  it('omits bootstrap-demo-mint.sh when initial supply is undefined', () => {
+    const result = generateWithIdentitySupport(
+      createValidConfig({ token: { initialSupply: undefined } })
+    );
+
+    expect(result.files).not.toHaveProperty('scripts/bootstrap-demo-mint.sh');
   });
 });

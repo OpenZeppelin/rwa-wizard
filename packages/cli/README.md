@@ -193,7 +193,7 @@ All 5 core contracts are always generated. Compliance module contracts are added
 
 When the selected chain generator supports it, `--include-identity-support` adds **development and testnet-only** example onboarding scaffolding alongside the core project. It is meant for local demos, automated testnet flows, and e2e validation — not as a production KYC or holder-onboarding stack.
 
-On Stellar today this emits upstream example claim-issuer and identity contracts plus a `sign-claim` helper tool. Production deployments should use your own claim issuers and real holder identity onboarding instead.
+On Stellar today this emits upstream example claim-issuer and identity contracts plus a `sign-claim` helper tool. When `token.initialSupply` is set on a testnet target, the export also includes `scripts/bootstrap-demo-mint.sh` to onboard Admin and mint after `./scripts/deploy.sh` (demo-only). Production deployments should use your own claim issuers and real holder identity onboarding instead.
 
 ### Deploying with split admin/manager roles
 

@@ -182,6 +182,8 @@ export interface ComplianceModuleSelectionWarningMeta {
   id: ComplianceModuleSelectionWarningId;
   description: string;
   relatedModuleIds: readonly string[];
+  /** When true, the warning blocks wizard progression until resolved. */
+  blocking?: boolean;
 }
 
 /**

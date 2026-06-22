@@ -22,6 +22,13 @@ export interface DeployGuidanceDTO {
   adminEqualsManager: boolean;
   networkDisplayName: string;
   networkIsTestnet: boolean;
+  demoAutoMintEligible: boolean;
+  demoMintComplianceIssues: Array<{
+    warningId: string;
+    moduleName: string;
+    blocking: boolean;
+    autoFixable: boolean;
+  }>;
 }
 
 /**
@@ -55,6 +62,20 @@ export interface RwaCodegenService {
   ): Promise<GeneratedZipArtifact>;
   /** Optional post-generation deploy guidance when the target exposes deploy semantics. */
   getDeployGuidance?: (config: RWAConfig) => DeployGuidanceDTO;
+  /** Structural compliance config warnings (copy joined in the app enrichment seam). */
+  getComplianceConfigWarnings?: (
+    config: RWAConfig,
+    options?: { includeDemoCountryChecks?: boolean }
+  ) => Array<{ id: string; relatedModuleIds: readonly string[] }>;
+  /** Whether compliance + demo-mint config has blocking conflicts. */
+  hasComplianceConfigBlockingIssues?: (
+    config: RWAConfig,
+    options?: { includeDemoCountryChecks?: boolean }
+  ) => boolean;
+  /** Whether demo auto-mint export is config-ready (testnet + initial supply + no blockers). */
+  isDemoAutoMintConfigReady?: (config: RWAConfig) => boolean;
+  /** Whether a compliance selection warning id blocks Generate / Next. */
+  isComplianceConfigBlockingWarningId?: (id: string) => boolean;
   /** Whether the codegen package can emit dev/testnet identity scaffolding. */
   supportsIdentitySupport?: boolean;
 }

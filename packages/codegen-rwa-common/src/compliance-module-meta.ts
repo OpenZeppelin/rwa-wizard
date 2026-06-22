@@ -31,7 +31,13 @@ export interface ComplianceModuleSelectionWarning {
 export type ComplianceModuleSelectionWarningRule =
   | { type: 'modules-selected-together'; id: string; moduleIds: readonly string[] }
   | { type: 'empty-config-when-selected'; id: string; moduleId: string; fieldKey: string }
-  | { type: 'initial-supply-with-modules'; id: string };
+  | { type: 'initial-supply-with-modules'; id: string }
+  | {
+      type: 'initial-supply-exceeds-module-scalar';
+      id: string;
+      moduleId: string;
+      fieldKey: string;
+    };
 
 function hasModule(selectedIds: ReadonlySet<string>, moduleId: string): boolean {
   return selectedIds.has(moduleId);
@@ -55,6 +61,22 @@ function readStringArrayConfig(
       .filter((entry) => entry.length > 0);
   }
   return [];
+}
+
+function readScalarConfigValue(
+  compliance: RWAConfig['compliance'],
+  moduleId: string,
+  fieldKey: string
+): string | undefined {
+  const selection = compliance.modules.find((entry) => entry.moduleId === moduleId);
+  const value = selection?.config?.[fieldKey];
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  return undefined;
 }
 
 function evaluateSelectionWarningRule(
@@ -89,6 +111,27 @@ function evaluateSelectionWarningRule(
         return { id: rule.id, relatedModuleIds: [...selectedModuleIds] };
       }
       return null;
+    case 'initial-supply-exceeds-module-scalar': {
+      const initialSupply = input.initialSupply;
+      if (initialSupply === undefined || String(initialSupply).trim() === '') {
+        return null;
+      }
+      if (!hasModule(selected, rule.moduleId)) {
+        return null;
+      }
+      const configuredLimit = readScalarConfigValue(input.compliance, rule.moduleId, rule.fieldKey);
+      if (!configuredLimit) {
+        return null;
+      }
+      try {
+        if (BigInt(configuredLimit) < BigInt(initialSupply)) {
+          return { id: rule.id, relatedModuleIds: [rule.moduleId] };
+        }
+      } catch {
+        return null;
+      }
+      return null;
+    }
     default: {
       const _exhaustive: never = rule;
       return _exhaustive;

@@ -59,10 +59,30 @@ export const NOTICES_COPY: ConceptDictionary = {
     description:
       'Transfer Allow-list is selected without seed addresses. Deploy will succeed, but peer transfers remain blocked until you allow accounts on-chain.',
   },
-  'notice.compliance.selection-warning.initial-supply-requires-manual-mint': {
-    id: 'notice.compliance.selection-warning.initial-supply-requires-manual-mint',
+  'notice.compliance.selection-warning.initial-supply-exceeds-supply-limit': {
+    id: 'notice.compliance.selection-warning.initial-supply-exceeds-supply-limit',
     description:
-      'Initial supply is configured but generation does not auto-mint. Mint manually only after recipients satisfy identity verification and any selected compliance modules.',
+      'Supply Limit is below initial supply. The `created` compliance hook will reject the mint — raise the limit to at least initial supply (or remove the module).',
+  },
+  'notice.compliance.selection-warning.initial-supply-exceeds-max-balance': {
+    id: 'notice.compliance.selection-warning.initial-supply-exceeds-max-balance',
+    description:
+      'Max Balance is below initial supply. Admin cannot receive the full mint on the `created` hook — raise max balance to at least initial supply. In plain terms: this rule limits how many tokens any one wallet may hold. It applies to your Admin or treasury address too, not only outside investors. To mint the full initial amount to one address, raise the cap, mint in smaller batches, or split mints across multiple wallets.',
+  },
+  'notice.compliance.selection-warning.demo-mint-country-not-allowed': {
+    id: 'notice.compliance.selection-warning.demo-mint-country-not-allowed',
+    description:
+      'Country Allow-list does not include CH (756). The testnet demo bootstrap registers Admin with Switzerland — allow CH or adjust the list before export.',
+  },
+  'notice.compliance.selection-warning.demo-mint-country-restricted': {
+    id: 'notice.compliance.selection-warning.demo-mint-country-restricted',
+    description:
+      'Country Restriction blocks CH (756). The testnet demo bootstrap always uses Switzerland for Admin — remove CH from restricted countries to use demo auto-mint.',
+  },
+  'notice.compliance.selection-warning.initial-supply-compliance-reminder': {
+    id: 'notice.compliance.selection-warning.initial-supply-compliance-reminder',
+    description:
+      'Initial supply is set with compliance modules selected. Mint runs the `created` hook — ensure limits and jurisdiction rules accommodate your mint recipient before deploying.',
   },
   'notice.compliance.hook-wiring-preview.empty-hook': {
     id: 'notice.compliance.hook-wiring-preview.empty-hook',
@@ -85,5 +105,11 @@ export const NOTICES_COPY: ConceptDictionary = {
     id: 'notice.review.configured-admin',
     title: 'Configured Admin',
     description: 'Admin address embedded in the generated deploy script.',
+  },
+  'notice.review.demo-mint-compliance-blocked': {
+    id: 'notice.review.demo-mint-compliance-blocked',
+    title: 'Fix these before generating',
+    description:
+      'Demo auto-mint runs a compliance preflight on the `created` hook. Adjust module limits in the Compliance step, or disable identity scaffolding.',
   },
 } as const;

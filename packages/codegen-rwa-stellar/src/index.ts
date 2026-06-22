@@ -51,6 +51,16 @@ export {
 } from './templates/deploy-guidance';
 export type { DeployGuidance } from './templates/deploy-guidance';
 
+export {
+  COMPLIANCE_CONFIG_BLOCKING_WARNING_IDS,
+  getComplianceConfigWarnings,
+  getDemoMintComplianceWarningId,
+  hasComplianceConfigBlockingIssues,
+  isComplianceConfigBlockingWarningId,
+  isDemoAutoMintConfigReady,
+} from './templates/compliance-config-warnings';
+export type { ComplianceConfigWarningOptions } from './templates/compliance-config-warnings';
+
 /**
  * Auto-generate a Soroban-compatible role symbol from a human-readable role name.
  *

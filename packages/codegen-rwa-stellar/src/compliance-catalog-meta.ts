@@ -32,8 +32,4 @@ export const STELLAR_COMPLIANCE_SELECTION_WARNING_RULES = [
     moduleId: 'transfer-allow',
     fieldKey: 'allowedUsers',
   },
-  {
-    type: 'initial-supply-with-modules',
-    id: 'initial-supply-requires-manual-mint',
-  },
 ] as const satisfies readonly ComplianceModuleSelectionWarningRule[];

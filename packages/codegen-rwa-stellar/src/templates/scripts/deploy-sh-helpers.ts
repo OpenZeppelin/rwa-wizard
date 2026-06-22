@@ -6,6 +6,11 @@ export function shellEscape(value: string): string {
   return value.replace(/[\\"$`!]/g, '\\$&');
 }
 
+/** Escape a string for safe embedding inside single-quoted bash strings (e.g. JSON CLI args). */
+export function shellSingleQuoteLiteral(value: string): string {
+  return value.replace(/'/g, `'\\''`);
+}
+
 export const SEPARATOR = '═══════════════════════════════════════════════════════════════';
 export const THIN_SEPARATOR = '───────────────────────────────────────────────────────────────';
 
@@ -53,6 +58,11 @@ export function buildColorPreamble(): string[] {
  */
 export function shellEcho(msg: string): string {
   return `echo "${msg}"`;
+}
+
+/** Wrap text in backticks safe for double-quoted bash `echo` (avoids command substitution). */
+export function shellBacktickLiteral(text: string): string {
+  return '\\`' + text + '\\`';
 }
 
 export function shellEchoRaw(msg: string): string {
@@ -185,6 +195,33 @@ export function buildInvokeCommand(
     `  --id ${contractAddr} \\`,
     `  --source-account "${sourceAccountVar}" \\`,
     `  ${networkFlag} \\`,
+    '  -- \\',
+    `  ${fnName}`,
+  ];
+
+  if (args.trim().length > 0) {
+    commandLines[commandLines.length - 1] += ' \\';
+    commandLines.push(`  ${args}`);
+  }
+
+  return commandLines.join('\n');
+}
+
+/**
+ * Build a read-only `stellar contract invoke` (`--send no`) for on-chain views.
+ */
+export function buildViewCommand(
+  contractAddr: string,
+  fnName: string,
+  args: string,
+  networkFlag: string
+): string {
+  const commandLines = [
+    'stellar contract invoke \\',
+    `  --id ${contractAddr} \\`,
+    '  --source-account "$SOURCE_ACCOUNT" \\',
+    `  ${networkFlag} \\`,
+    '  --send no \\',
     '  -- \\',
     `  ${fnName}`,
   ];

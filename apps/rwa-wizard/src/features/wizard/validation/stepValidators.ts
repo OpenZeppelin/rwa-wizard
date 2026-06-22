@@ -21,6 +21,8 @@ import {
 export interface StepValidationContext {
   addressing?: AddressingCapability;
   availableModules?: ComplianceModuleOption[];
+  /** When false, compliance step blocks progression (config conflicts with initial supply / demo mint). */
+  complianceConfigReady?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,6 +65,7 @@ function isValidIdentityStep(config: RWAConfig, ctx: StepValidationContext): boo
 }
 
 function isValidComplianceStep(config: RWAConfig, ctx: StepValidationContext): boolean {
+  if (ctx.complianceConfigReady === false) return false;
   if (!ctx.availableModules) return true;
   for (const selection of config.compliance.modules) {
     const meta = ctx.availableModules.find((m) => m.id === selection.moduleId);
@@ -109,10 +112,8 @@ function isValidDeploymentStep(): boolean {
   return true;
 }
 
-function isValidReviewStep(): boolean {
-  // Review is the terminal step — its "Next" is the Generate action, which
-  // has its own validation and disabled-state handling.
-  return true;
+function isValidReviewStep(ctx: StepValidationContext): boolean {
+  return ctx.complianceConfigReady !== false;
 }
 
 // ---------------------------------------------------------------------------
@@ -144,6 +145,6 @@ export function isStepValid(
     case 'deployment':
       return isValidDeploymentStep();
     case 'review':
-      return isValidReviewStep();
+      return isValidReviewStep(ctx);
   }
 }

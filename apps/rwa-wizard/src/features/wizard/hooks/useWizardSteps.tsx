@@ -4,6 +4,8 @@ import type { CodegenInfoBlurb } from '@openzeppelin/codegen-core';
 import type { WizardStepConfig } from '@openzeppelin/ui-components';
 
 import { isFeatureEnabled } from '../../../app/config/featureFlags';
+import { enrichComplianceSelectionWarning } from '../../../registry/enrichEcosystemMetadata';
+import { resolveIncludeIdentitySupport } from '../../../services/codegen/deployReadiness';
 import type { RwaCodegenService } from '../../../services/codegen/types';
 import type { TargetAdapterCapabilities } from '../../../services/runtime';
 import type { TargetCapabilitySnapshot, TargetId, WizardStepId } from '../../../types/wizard';
@@ -27,6 +29,7 @@ export interface UseWizardStepsOptions {
   isGenerating: boolean;
   /** When false and deploy guidance is available, blocks Generate until acknowledged. */
   deploySignerAcknowledged?: boolean;
+  includeIdentitySupport?: boolean;
 }
 
 export interface UseWizardStepsResult {
@@ -58,6 +61,7 @@ export function useWizardSteps({
   codegenInfoBlurb,
   isGenerating,
   deploySignerAcknowledged = true,
+  includeIdentitySupport = false,
 }: UseWizardStepsOptions): UseWizardStepsResult {
   const steps = useMemo<WizardStepConfig[]>(() => {
     const availableModules = targetSnapshot?.availableModules ?? [];
@@ -77,16 +81,53 @@ export function useWizardSteps({
     const deployGuidance = codegenService?.getDeployGuidance?.(draftState.config) ?? null;
     const supportsIdentitySupport = codegenService?.supportsIdentitySupport ?? false;
     const requiresDeploySignerAck = deployGuidance != null;
+    const initialSupply = draftState.config.token.initialSupply;
+    const identitySupportEnabled = resolveIncludeIdentitySupport(
+      deployGuidance,
+      includeIdentitySupport
+    );
+    const includeDemoCountryChecks =
+      identitySupportEnabled &&
+      deployGuidance?.networkIsTestnet === true &&
+      initialSupply !== undefined &&
+      initialSupply.trim().length > 0;
+    const complianceWarningOptions = { includeDemoCountryChecks };
+    const complianceConfigReady =
+      codegenService?.hasComplianceConfigBlockingIssues?.(
+        draftState.config,
+        complianceWarningOptions
+      ) !== true;
+    const demoAutoMintConfigReady =
+      !identitySupportEnabled ||
+      codegenService?.isDemoAutoMintConfigReady?.(draftState.config) !== false;
+
+    const configComplianceWarnings =
+      codegenService
+        ?.getComplianceConfigWarnings?.(draftState.config, complianceWarningOptions)
+        ?.map((warning) => {
+          const enriched = enrichComplianceSelectionWarning(selectedTargetId, warning);
+          if (!enriched) return null;
+          return {
+            ...enriched,
+            blocking: codegenService.isComplianceConfigBlockingWarningId?.(warning.id) ?? false,
+          };
+        })
+        .filter((warning): warning is NonNullable<typeof warning> => warning !== null) ?? [];
+
+    const isComplianceWarningBlocking = (id: string) =>
+      codegenService?.isComplianceConfigBlockingWarningId?.(id) ?? false;
 
     const validationCtx = {
       addressing: adapterCaps?.addressing,
       availableModules,
+      complianceConfigReady: complianceConfigReady && demoAutoMintConfigReady,
     };
     const validityFor = (id: WizardStepId) => isStepValid(id, draftState.config, validationCtx);
     const reviewStepCanProceed =
       codegenService != null &&
       !isGenerating &&
-      (!requiresDeploySignerAck || deploySignerAcknowledged);
+      (!requiresDeploySignerAck || deploySignerAcknowledged) &&
+      demoAutoMintConfigReady;
 
     const list: WizardStepConfig[] = [
       {
@@ -127,6 +168,8 @@ export function useWizardSteps({
             complianceHooks={complianceHooks}
             moduleCategories={moduleCategories}
             selectionWarningRules={selectionWarningRules}
+            configComplianceWarnings={configComplianceWarnings}
+            isComplianceWarningBlocking={isComplianceWarningBlocking}
             addressing={adapterCaps?.addressing}
             onUpdate={draftState.updateCompliance}
           />
@@ -151,6 +194,7 @@ export function useWizardSteps({
         title: 'Review',
         component: (
           <ReviewStep
+            targetId={selectedTargetId}
             config={draftState.config}
             availableModules={availableModules}
             deployGuidance={deployGuidance}
@@ -180,6 +224,7 @@ export function useWizardSteps({
     codegenInfoBlurb,
     isGenerating,
     deploySignerAcknowledged,
+    includeIdentitySupport,
   ]);
 
   // Derive the ordered step id list from the rendered steps so step-id

@@ -5,8 +5,22 @@ import { getManagerDeploymentAddress } from './scripts/deploy-sh-token';
 
 import { generateRoleSymbol } from '../constants';
 import { resolveStellarDeploymentTarget } from '../deployment/target';
+import { getDemoMintComplianceWarningId } from './compliance-config-warnings';
+import { isDemoAutoMintEligible } from './demo-auto-mint';
+import {
+  getDemoMintCompliancePreflightIssues,
+  type DemoMintCompliancePreflightIssue,
+} from './demo-mint-compliance-preflight';
 
 const roleResolutionOptions = { generateRoleSymbol };
+
+export type DemoMintComplianceIssueSummary = Pick<
+  DemoMintCompliancePreflightIssue,
+  'moduleName' | 'blocking' | 'autoFixable'
+> & {
+  /** Joined to `notice.compliance.selection-warning.*` in the wizard app. */
+  warningId: string;
+};
 
 /** Structured deploy guidance shared by generated README, CLI, and wizard UI. */
 export interface DeployGuidance {
@@ -15,6 +29,8 @@ export interface DeployGuidance {
   adminEqualsManager: boolean;
   networkDisplayName: string;
   networkIsTestnet: boolean;
+  demoAutoMintEligible: boolean;
+  demoMintComplianceIssues: DemoMintComplianceIssueSummary[];
 }
 
 /** Resolve deployment signer requirements from the project config. */
@@ -29,6 +45,17 @@ export function getDeployGuidance(config: RWAConfig): DeployGuidance {
     adminEqualsManager: adminAddress === managerAddress,
     networkDisplayName: deployment.displayName,
     networkIsTestnet: deployment.networkFlag.includes('testnet'),
+    demoAutoMintEligible: isDemoAutoMintEligible(config),
+    demoMintComplianceIssues: isDemoAutoMintEligible(config)
+      ? getDemoMintCompliancePreflightIssues(config).map(
+          ({ moduleId, moduleName, blocking, autoFixable }) => ({
+            warningId: getDemoMintComplianceWarningId(moduleId),
+            moduleName,
+            blocking,
+            autoFixable,
+          })
+        )
+      : [],
   };
 }
 
@@ -38,7 +65,7 @@ export function formatDeployPostGenerationSteps(guidance: DeployGuidance): strin
     ? 'use an existing funded CLI identity whose address matches Admin, or regenerate the project in the wizard with `stellar keys address <your-identity>`'
     : 'use an existing CLI identity whose address matches Admin, or regenerate the project in the wizard with your address';
 
-  return [
+  const steps = [
     'Next steps after extracting the archive:',
     `1. Export a Stellar CLI identity that controls Admin (${guidance.adminAddress}): ${identityHint}`,
     '2. chmod +x scripts/build.sh scripts/deploy.sh',
@@ -47,6 +74,16 @@ export function formatDeployPostGenerationSteps(guidance: DeployGuidance): strin
     '5. ./scripts/deploy.sh --preflight   # optional readiness check',
     '6. ./scripts/deploy.sh',
   ];
+
+  if (guidance.demoAutoMintEligible) {
+    steps.push(
+      '7. chmod +x scripts/bootstrap-demo-mint.sh',
+      '8. ./scripts/bootstrap-demo-mint.sh --preflight   # optional: verify compliance before onboarding',
+      '9. ./scripts/bootstrap-demo-mint.sh               # demo onboarding + mint (run Manager fixes manually if preflight prints them)'
+    );
+  }
+
+  return steps;
 }
 
 /** Short checklist items for wizard review step. */
