@@ -82,7 +82,12 @@ export function useWizardSteps({
     const supportsIdentitySupport = codegenService?.supportsIdentitySupport ?? false;
     const requiresDeploySignerAck = deployGuidance != null;
     const initialSupply = draftState.config.token.initialSupply;
+    const identitySupportEnabled = resolveIncludeIdentitySupport(
+      deployGuidance,
+      includeIdentitySupport
+    );
     const includeDemoCountryChecks =
+      identitySupportEnabled &&
       deployGuidance?.networkIsTestnet === true &&
       initialSupply !== undefined &&
       initialSupply.trim().length > 0;
@@ -92,10 +97,6 @@ export function useWizardSteps({
         draftState.config,
         complianceWarningOptions
       ) !== true;
-    const identitySupportEnabled = resolveIncludeIdentitySupport(
-      deployGuidance,
-      includeIdentitySupport
-    );
     const demoAutoMintConfigReady =
       !identitySupportEnabled ||
       codegenService?.isDemoAutoMintConfigReady?.(draftState.config) !== false;

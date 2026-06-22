@@ -113,7 +113,7 @@ export function DeployReadinessPanel({
           </div>
         )}
 
-        {showDemoAutoMintReady && (
+        {showDemoAutoMintReady && guidance.demoMintComplianceIssues.length === 0 && (
           <Banner
             variant="success"
             size="compact"

@@ -39,7 +39,10 @@ export function ReviewStep({
             targetId={targetId}
             guidance={deployGuidance}
             supportsIdentitySupport={supportsIdentitySupport}
-            hasInitialSupply={config.token.initialSupply !== undefined}
+            hasInitialSupply={
+              config.token.initialSupply !== undefined &&
+              config.token.initialSupply.trim().length > 0
+            }
           />
         )}
       </div>
