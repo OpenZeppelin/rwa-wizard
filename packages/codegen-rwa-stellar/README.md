@@ -104,11 +104,13 @@ For non-preset environments, switch `deployment.target` to `kind: 'custom'` and 
 
 The emitted `config.json` is an informational snapshot of the source `RWAConfig`. It is useful for regeneration or UI re-import, but the generated `deploy.sh` does not read it at runtime.
 
-If `token.initialSupply` is set, the generated `deploy.sh` does **not** auto-mint it. The upstream Stellar claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before `mint` can succeed. The current generator scaffolds CTI, IRS, and the identity verifier, but not those investor-specific identity contracts.
+If `token.initialSupply` is set, the generated `deploy.sh` does **not** auto-mint it. The upstream Stellar claim-based identity flow requires a trusted claim issuer contract, a per-holder identity contract with claims, and IRS registration for the mint recipient before `mint` can succeed. The default export scaffolds CTI, IRS, and the identity verifier, but not holder-specific identity contracts.
 
 ### Dev/testnet identity scaffolding
 
 `generateWithIdentitySupport()` adds upstream **example** claim-issuer and identity contracts plus a `sign-claim` helper for exercising complete local and testnet identity flows. This is development and demo scaffolding only — **not for production**. Use real claim issuers and holder onboarding in live deployments.
+
+When `token.initialSupply` is set on a **testnet** target, identity-support exports also emit `scripts/bootstrap-demo-mint.sh`. That script reads `deployment-manifest.json` after `./scripts/deploy.sh`, deploys the example issuer and Admin identity contracts, registers demo claims, runs a compliance preflight on the `created` hook, and mints the configured initial supply to Admin. It uses hardcoded demo signing keys — educational Scope A only, not production KYC.
 
 The Stellar testnet e2e script (`pnpm e2e:testnet`) uses this path internally. The CLI exposes the same behavior via `--include-identity-support`.
 
@@ -137,7 +139,7 @@ Notes:
 - Run `./scripts/deploy.sh --preflight` first to validate signers and WASM artifacts without spending XLM.
 - When the configured owner and Manager role use different addresses, also set `ADMIN_SOURCE_ACCOUNT` and `MANAGER_SOURCE_ACCOUNT` to the Stellar CLI identities that control those addresses.
 - If owner and Manager share the same address, `SOURCE_ACCOUNT` is enough for deploy and post-deploy configuration when it matches that shared address.
-- If your config sets `token.initialSupply`, expect a validation warning and a successful deploy without auto-minting; mint only after onboarding a verified recipient identity and claim stack.
+- If your config sets `token.initialSupply`, expect a successful deploy without auto-minting. With identity scaffolding on testnet, run `./scripts/bootstrap-demo-mint.sh` after deploy (see generated README); otherwise mint manually after onboarding a verified recipient identity and claim stack.
 - If you need an explicit signer override, you can also pass `--sign-with-key <identity>` or use `STELLAR_SIGN_WITH_KEY`.
 - Pass `--contracts-library-path /absolute/path/to/stellar-contracts` if you want the manual flow to use local path dependencies instead of the bundled git-pinned source.
 
