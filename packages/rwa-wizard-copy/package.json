@@ -1,6 +1,6 @@
 {
   "name": "@openzeppelin/rwa-wizard-copy",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Chain-neutral T-REX educational copy (descriptions, tooltip content) for the RWA Wizard UI.",
   "type": "module",
