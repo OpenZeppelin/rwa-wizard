@@ -3,6 +3,16 @@ name: Pre-requisites
 description: |
   Setup Pre-requisites for CI
 
+inputs:
+  node-version:
+    description: Node.js version for setup-node
+    required: false
+    default: "24"
+  package-manager-cache:
+    description: Enable setup-node dependency caching (disable for release builds)
+    required: false
+    default: "true"
+
 runs:
   using: composite
   steps:
@@ -10,12 +20,20 @@ runs:
       with:
         run_install: false
 
-    - name: Use node@22
-      uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+    - name: Use Node.js ${{ inputs.node-version }}
+      if: ${{ inputs.package-manager-cache == 'true' }}
+      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
       with:
-        node-version: 22.18.0
-        cache: 'pnpm'
+        node-version: ${{ inputs.node-version }}
+        cache: pnpm
+
+    - name: Use Node.js ${{ inputs.node-version }} (no dependency cache)
+      if: ${{ inputs.package-manager-cache != 'true' }}
+      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        package-manager-cache: ${{ inputs.package-manager-cache }}
 
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: pnpm install-deps
       shell: bash

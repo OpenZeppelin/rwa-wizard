@@ -27,3 +27,5 @@ When a PR with a changeset is merged to main:
 
 1. The changesets bot will create a "Version Packages" PR
 2. When that PR is merged, packages are published to npm with SLSA provenance
+
+Publishing uses **npm OIDC trusted publishing** from `.github/workflows/publish.yml` (no `NPM_TOKEN` secret). Each published package on npmjs.org must list this repository and workflow filename under **Settings → Trusted Publishers** before the first automated publish succeeds.
