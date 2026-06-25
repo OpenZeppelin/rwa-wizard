@@ -8,6 +8,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why this release run is being triggered (e.g. retry after NPM_TOKEN fix)'
+        required: false
+        type: string
 
 # Prevent concurrent release operations
 concurrency:
