@@ -1,7 +1,7 @@
 {
   "name": "@openzeppelin/codegen-core",
   "private": false,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Chain-agnostic code generation pipeline engine with file tree assembly, ZIP packaging, validation framework, and progress reporting.",
   "keywords": [
     "openzeppelin",

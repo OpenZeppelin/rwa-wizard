@@ -1,7 +1,7 @@
 {
   "name": "@openzeppelin/codegen-rwa-common",
   "private": false,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Shared RWA-domain helpers for OpenZeppelin code generators.",
   "keywords": [
     "openzeppelin",
