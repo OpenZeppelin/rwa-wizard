@@ -1,5 +1,13 @@
 # @openzeppelin/codegen-rwa-stellar
 
+## 0.1.1
+
+### Patch Changes
+
+- [#40](https://github.com/OpenZeppelin/rwa-wizard/pull/40) [`273eaab`](https://github.com/OpenZeppelin/rwa-wizard/commit/273eaabdc36254c3281d4b274dc8519f30bbf860) Thanks [@pasevin](https://github.com/pasevin)! - chore(deps): bump `@openzeppelin/adapter-stellar` to `^2.1.1`
+
+  Adopt the latest published `@openzeppelin/adapter-stellar` release, which (together with the matching `@openzeppelin/adapter-evm` and `@openzeppelin/ui-*` bumps in the app) resolves the outstanding Dependabot transitive security advisories upstream.
+
 ## 0.1.0
 
 ### Minor Changes
