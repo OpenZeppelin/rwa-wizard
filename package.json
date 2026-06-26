@@ -104,7 +104,7 @@
       "react-router": "^7.15.0",
       "socket.io-parser": "^4.2.6",
       "form-data": "^4.0.6",
-      "ua-parser-js@2": "^2.0.10",
+      "ua-parser-js@2": "2.0.7",
       "uuid@8": "^11.1.1",
       "uuid@9": "^11.1.1",
       "ip-address": "^10.1.1",
