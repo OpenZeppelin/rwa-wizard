@@ -4,7 +4,10 @@ const { getPluginConfigs } = require('./.eslint/utils.cjs');
 // Import plugins
 const reactPlugin = require('eslint-plugin-react');
 const reactHooksPlugin = require('eslint-plugin-react-hooks');
-const reactRefreshPlugin = require('eslint-plugin-react-refresh');
+// eslint-plugin-react-refresh >=0.5 ships ESM with the plugin on `.default`;
+// fall back to the module itself for older CJS (<=0.4.x) builds.
+const reactRefreshModule = require('eslint-plugin-react-refresh');
+const reactRefreshPlugin = reactRefreshModule.default ?? reactRefreshModule;
 const typescriptPlugin = require('@typescript-eslint/eslint-plugin');
 const typescriptParser = require('@typescript-eslint/parser');
 const importPlugin = require('eslint-plugin-import');
