@@ -36,8 +36,10 @@ export interface UpstreamTemplateSourceMetadata extends CoreTemplateSourceMetada
   checkoutRoot?: string;
 }
 
-export interface UpstreamTemplateSource
-  extends TemplateSource<UpstreamTemplateKind, UpstreamTemplateSourceMetadata> {
+export interface UpstreamTemplateSource extends TemplateSource<
+  UpstreamTemplateKind,
+  UpstreamTemplateSourceMetadata
+> {
   metadata: UpstreamTemplateSourceMetadata;
   getTemplate(kind: UpstreamTemplateKind, id: string): string;
   getTemplatePayload(kind: UpstreamTemplateKind, id: string): UpstreamTemplatePayload;

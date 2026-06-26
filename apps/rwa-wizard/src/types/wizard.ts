@@ -204,8 +204,10 @@ export interface StructuralComplianceModuleOption {
  * UI-ready compliance-module entry: structural facts plus educational copy
  * joined from the copy package.
  */
-export interface ComplianceModuleOption
-  extends Omit<StructuralComplianceModuleOption, 'runtimePrerequisites' | 'configFields'> {
+export interface ComplianceModuleOption extends Omit<
+  StructuralComplianceModuleOption,
+  'runtimePrerequisites' | 'configFields'
+> {
   description: string;
   /** Longer tooltip copy. Omitted when no `infoCopy` entry is defined. */
   infoCopy?: string;
