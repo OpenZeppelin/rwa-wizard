@@ -23,6 +23,11 @@ out/
 coverage/
 *.tsbuildinfo
 
+# `npm pack --json` metadata artifact emitted by the SLSA release builder.
+# npm pack falls back to .gitignore for exclusions, so ignoring it both keeps
+# the empty file out of the published tarball and out of release commits.
+pack.json
+
 # Test reports
 packages/builder/test-results/
 
