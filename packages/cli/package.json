@@ -1,7 +1,7 @@
 {
   "name": "@openzeppelin/rwa-wizard-cli",
   "private": false,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI tool for generating RWA token projects. Interactive wizard and headless JSON config modes with file tree or ZIP output.",
   "keywords": [
     "openzeppelin",
