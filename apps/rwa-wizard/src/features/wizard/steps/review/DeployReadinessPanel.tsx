@@ -1,10 +1,11 @@
 import { formatCopy } from '@openzeppelin/rwa-wizard-copy';
-import { AddressDisplay, Banner, Checkbox, Label } from '@openzeppelin/ui-components';
+import { Banner, Checkbox, Label } from '@openzeppelin/ui-components';
 
 import { useCopy } from '../../../../app/providers/useCopy';
 import { InfoNoticeBanner } from '../../../../components/shared/InfoNoticeBanner';
 import { InfoTooltip } from '../../../../components/shared/InfoTooltip';
 import { renderInlineCopy } from '../../../../components/shared/renderInlineCopy';
+import { ResolvedAddressDisplay } from '../../../../components/shared/ResolvedAddressDisplay';
 import { enrichComplianceSelectionWarning } from '../../../../registry/enrichEcosystemMetadata';
 import type { DeployGuidanceDTO } from '../../../../services/codegen/types';
 import { useExplorer } from '../../../../services/runtime';
@@ -57,7 +58,7 @@ export function DeployReadinessPanel({
         {deployIntro && <div>{renderInlineCopy(deployIntro)}</div>}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span>{configuredAdminNotice.title ?? ''}</span>
-          <AddressDisplay
+          <ResolvedAddressDisplay
             address={guidance.adminAddress}
             variant="inline"
             disableLabel

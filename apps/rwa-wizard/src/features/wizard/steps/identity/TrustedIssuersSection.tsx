@@ -7,18 +7,12 @@ import type {
   IdentityVerificationConfig,
   TrustedIssuer,
 } from '@openzeppelin/rwa-config';
-import {
-  AddressDisplay,
-  AddressField,
-  Button,
-  Card,
-  CardContent,
-  Label,
-} from '@openzeppelin/ui-components';
+import { AddressField, Button, Card, CardContent, Label } from '@openzeppelin/ui-components';
 import { cn } from '@openzeppelin/ui-utils';
 
 import { useCopy } from '../../../../app/providers/useCopy';
 import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { ResolvedAddressDisplay } from '../../../../components/shared/ResolvedAddressDisplay';
 import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 import { TogglePill } from '../../../../components/shared/TogglePill';
 import { useAddressing, useExplorer } from '../../../../services/runtime';
@@ -191,7 +185,7 @@ function IssuerRow({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <AddressDisplay
+        <ResolvedAddressDisplay
           address={issuer.address}
           variant="chip"
           truncateWhenLabeled

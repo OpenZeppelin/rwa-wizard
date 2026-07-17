@@ -18,6 +18,10 @@ const evmNetworksFixture: NetworkConfig[] = [
   { id: 'ethereum', ecosystem: 'evm', name: 'Ethereum' } as NetworkConfig,
 ];
 
+const { mockCreateRuntime } = vi.hoisted(() => ({
+  mockCreateRuntime: vi.fn(),
+}));
+
 vi.mock('@openzeppelin/adapter-stellar/networks', () => ({
   networks: stellarNetworksFixture,
 }));
@@ -31,7 +35,7 @@ vi.mock('@openzeppelin/adapter-stellar', () => ({
     id: 'stellar',
     networks: stellarNetworksFixture,
     capabilities: {},
-    createRuntime: vi.fn(),
+    createRuntime: (...args: unknown[]) => mockCreateRuntime(...args),
   },
 }));
 
@@ -40,7 +44,7 @@ vi.mock('@openzeppelin/adapter-evm', () => ({
     id: 'evm',
     networks: evmNetworksFixture,
     capabilities: {},
-    createRuntime: vi.fn(),
+    createRuntime: (...args: unknown[]) => mockCreateRuntime(...args),
   },
 }));
 
@@ -49,6 +53,7 @@ describe('ecosystemManager', () => {
 
   beforeEach(async () => {
     vi.resetModules();
+    mockCreateRuntime.mockReset();
     manager = await import('./ecosystemManager');
   });
 
@@ -117,6 +122,26 @@ describe('ecosystemManager', () => {
 
     it('returns undefined for unsupported ecosystems', async () => {
       expect(await manager.getEcosystemDefinition('polkadot')).toBeUndefined();
+    });
+  });
+
+  describe('getRuntime', () => {
+    it('creates a runtime via the ecosystem definition', async () => {
+      const network = stellarNetworksFixture[0];
+      const mockRuntime = { networkConfig: network, dispose: vi.fn() };
+      mockCreateRuntime.mockResolvedValue(mockRuntime);
+
+      const options = { nameResolution: { enableMainnetL1MissFallback: true as const } };
+      const runtime = await manager.getRuntime(network, options);
+
+      expect(mockCreateRuntime).toHaveBeenCalledWith('composer', network, options);
+      expect(runtime).toBe(mockRuntime);
+    });
+
+    it('throws for unsupported ecosystems', async () => {
+      await expect(
+        manager.getRuntime({ id: 'x', ecosystem: 'polkadot', name: 'X' } as NetworkConfig)
+      ).rejects.toThrow('Unsupported ecosystem: polkadot');
     });
   });
 
