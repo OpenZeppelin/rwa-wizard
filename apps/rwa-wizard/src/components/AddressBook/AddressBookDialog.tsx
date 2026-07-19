@@ -132,6 +132,7 @@ export function AddressBookDialog({ open, onOpenChange }: AddressBookDialogProps
         <AddressBookWidget
           {...widgetProps}
           title="Saved Addresses"
+          enableNameResolution
           resolveNetwork={resolveNetwork}
           resolveExplorerUrl={resolveExplorerUrl}
           resolveAddressing={resolveAddressing}
