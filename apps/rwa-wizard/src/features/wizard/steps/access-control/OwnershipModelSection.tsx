@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { FieldValues } from 'react-hook-form';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import type { OwnershipModel } from '@openzeppelin/rwa-config';
-import { AddressField, Card, CardContent } from '@openzeppelin/ui-components';
+import { AddressFieldWithResolvedPreview, Card, CardContent } from '@openzeppelin/ui-components';
+import { ResolvedAddressFieldPreviewWithNameResolution } from '@openzeppelin/ui-renderer';
 
 import { useCopy } from '../../../../app/providers/useCopy';
 import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { useWizardStore } from '../../../../app/state/useWizardStore';
 import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 import { SelectableCard } from '../../../../components/shared/SelectableCard';
 import { useAddressing } from '../../../../services/runtime';
@@ -28,6 +30,7 @@ interface AddressFormValues {
 
 export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSectionProps) {
   const addressing = useAddressing();
+  const previewNetworkId = useWizardStore((s) => s.activeNetworkId) ?? undefined;
   const copy = useCopy();
   const sectionCopy = useSectionCopy('ownership-model');
   const currentAddress =
@@ -43,6 +46,8 @@ export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSec
     defaultValues: { ownerAddress: currentAddress },
     mode: 'onChange',
   });
+
+  const previewAddress = useWatch({ control, name: 'ownerAddress' });
 
   useEffect(() => {
     isSyncing.current = true;
@@ -99,7 +104,7 @@ export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSec
           })}
         </div>
 
-        <AddressField
+        <AddressFieldWithResolvedPreview
           id="owner-address"
           name="ownerAddress"
           label={addressLabel}
@@ -107,6 +112,15 @@ export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSec
           helperText={addressHint}
           control={control}
           addressing={addressing ?? undefined}
+          previewAddress={previewAddress}
+          previewNetworkId={previewNetworkId}
+          preview={
+            <ResolvedAddressFieldPreviewWithNameResolution
+              address={previewAddress}
+              networkId={previewNetworkId}
+              addressing={addressing ?? undefined}
+            />
+          }
         />
       </CardContent>
     </Card>

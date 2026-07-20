@@ -7,12 +7,12 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-  AddressDisplay,
 } from '@openzeppelin/ui-components';
 import { cn } from '@openzeppelin/ui-utils';
 
 import type { ComplianceModuleOption } from '../../types/wizard';
 import { Badge } from './Badge';
+import { ResolvedAddressDisplay } from './ResolvedAddressDisplay';
 import { Table, TableBody, TableCell, TableRow } from './Table';
 
 // ---------------------------------------------------------------------------
@@ -248,7 +248,7 @@ function AccessControlSection({
           {ownerAddress && (
             <Field label="Owner Address">
               <div className="min-w-0 break-all">
-                <AddressDisplay
+                <ResolvedAddressDisplay
                   address={ownerAddress}
                   variant="inline"
                   truncateWhenLabeled
@@ -284,7 +284,7 @@ function AccessControlSection({
                     <div className="flex flex-col divide-y divide-border/60">
                       {role.addresses.map((addr) => (
                         <div key={addr} className="w-full min-w-0 py-2 first:pt-0 last:pb-0">
-                          <AddressDisplay
+                          <ResolvedAddressDisplay
                             address={addr}
                             variant="inline"
                             truncateWhenLabeled

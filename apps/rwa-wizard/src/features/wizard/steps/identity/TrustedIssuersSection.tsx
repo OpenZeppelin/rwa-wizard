@@ -1,6 +1,6 @@
 import { AlertTriangle, Plus, X } from 'lucide-react';
 import { useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import type {
   ClaimTopic,
@@ -8,17 +8,19 @@ import type {
   TrustedIssuer,
 } from '@openzeppelin/rwa-config';
 import {
-  AddressDisplay,
-  AddressField,
+  AddressFieldWithResolvedPreview,
   Button,
   Card,
   CardContent,
   Label,
 } from '@openzeppelin/ui-components';
+import { ResolvedAddressFieldPreviewWithNameResolution } from '@openzeppelin/ui-renderer';
 import { cn } from '@openzeppelin/ui-utils';
 
 import { useCopy } from '../../../../app/providers/useCopy';
 import { useSectionCopy } from '../../../../app/providers/useStepCopy';
+import { useWizardStore } from '../../../../app/state/useWizardStore';
+import { ResolvedAddressDisplay } from '../../../../components/shared/ResolvedAddressDisplay';
 import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 import { TogglePill } from '../../../../components/shared/TogglePill';
 import { useAddressing, useExplorer } from '../../../../services/runtime';
@@ -39,6 +41,7 @@ export function TrustedIssuersSection({
   onUpdate,
 }: TrustedIssuersSectionProps) {
   const addressing = useAddressing();
+  const previewNetworkId = useWizardStore((s) => s.activeNetworkId) ?? undefined;
   const explorer = useExplorer();
   const sectionCopy = useSectionCopy('trusted-issuers');
   const copy = useCopy();
@@ -53,6 +56,7 @@ export function TrustedIssuersSection({
     mode: 'onChange',
   });
 
+  const previewAddress = useWatch({ control, name: 'address' });
   const draftAddress = watch('address');
   const trimmedDraft = draftAddress?.trim() ?? '';
 
@@ -123,7 +127,7 @@ export function TrustedIssuersSection({
         <div className="space-y-1">
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <AddressField
+              <AddressFieldWithResolvedPreview
                 id="trusted-issuer-address"
                 name="address"
                 label="Claim Issuer Contract Address"
@@ -138,6 +142,15 @@ export function TrustedIssuersSection({
                 control={control}
                 addressing={addressing ?? undefined}
                 validation={{ required: false }}
+                previewAddress={previewAddress}
+                previewNetworkId={previewNetworkId}
+                preview={
+                  <ResolvedAddressFieldPreviewWithNameResolution
+                    address={previewAddress}
+                    networkId={previewNetworkId}
+                    addressing={addressing ?? undefined}
+                  />
+                }
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -191,7 +204,7 @@ function IssuerRow({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <AddressDisplay
+        <ResolvedAddressDisplay
           address={issuer.address}
           variant="chip"
           truncateWhenLabeled

@@ -18,9 +18,11 @@
 import { ecosystemMetadata as evmMetadata } from '@openzeppelin/adapter-evm/metadata';
 import { ecosystemMetadata as stellarMetadata } from '@openzeppelin/adapter-stellar/metadata';
 import type {
+  CreateRuntimeOptions,
   Ecosystem,
   EcosystemExport,
   EcosystemMetadata,
+  EcosystemRuntime,
   NetworkConfig,
 } from '@openzeppelin/ui-types';
 import { logger } from '@openzeppelin/ui-utils';
@@ -206,4 +208,21 @@ export async function getNetworkById(id: string): Promise<NetworkConfig | undefi
     if (found) return found;
   }
   return undefined;
+}
+
+/**
+ * Creates a fresh runtime for the given network. This is intentionally a
+ * factory (no caching) because RuntimeProvider owns the runtime lifecycle —
+ * it caches active runtimes in its own registry and disposes them when they
+ * are no longer needed.
+ */
+export async function getRuntime(
+  networkConfig: NetworkConfig,
+  options?: CreateRuntimeOptions
+): Promise<EcosystemRuntime> {
+  if (!isSupported(networkConfig.ecosystem)) {
+    throw new Error(`Unsupported ecosystem: ${networkConfig.ecosystem}`);
+  }
+  const def = await loadAdapterModule(networkConfig.ecosystem);
+  return def.createRuntime('composer', networkConfig, options);
 }

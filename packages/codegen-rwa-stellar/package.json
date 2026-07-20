@@ -73,7 +73,7 @@
     "@openzeppelin/codegen-core": "workspace:*",
     "@openzeppelin/codegen-rwa-common": "workspace:*",
     "@openzeppelin/rwa-config": "workspace:*",
-    "@openzeppelin/ui-types": "^3.1.1",
+    "@openzeppelin/ui-types": "^3.3.0",
     "i18n-iso-countries": "^7.14.0"
   },
   "license": "AGPL-3.0",

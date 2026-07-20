@@ -27,3 +27,16 @@ jobs:
         with:
           fail-on-severity: high
           deny-licenses: AGPL-1.0-only, AGPL-1.0-or-later, AGPL-3.0-only, AGPL-3.0-or-later
+          allow-dependencies-licenses: >-
+            pkg:npm/@openzeppelin/adapter-evm,
+            pkg:npm/@openzeppelin/adapter-stellar,
+            pkg:npm/@openzeppelin/relayer-sdk,
+            pkg:npm/@openzeppelin/ui-components,
+            pkg:npm/@openzeppelin/ui-dev-cli,
+            pkg:npm/@openzeppelin/ui-react,
+            pkg:npm/@openzeppelin/ui-renderer,
+            pkg:npm/@openzeppelin/ui-storage,
+            pkg:npm/@openzeppelin/ui-styles,
+            pkg:npm/@openzeppelin/ui-tailwind-utils,
+            pkg:npm/@openzeppelin/ui-types,
+            pkg:npm/@openzeppelin/ui-utils
