@@ -63,6 +63,14 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        // WalletConnect was removed and its provider is stripped from the
+        // install tree, but @wagmi/connectors still ships an unreachable
+        // walletConnect module that dynamically imports it. Rollup resolves
+        // dynamic imports even when unreachable, so point it at a stub.
+        '@walletconnect/ethereum-provider': path.resolve(
+          __dirname,
+          './src/shims/walletconnect-removed.ts'
+        ),
       },
     },
     // Polyfills for Node.js globals used by wallet SDKs (e.g., @hot-wallet/sdk, @near-js/crypto)
