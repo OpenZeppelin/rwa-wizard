@@ -29,7 +29,12 @@ export interface ModuleConfigFieldInfo {
 export interface ComplianceModuleInfo {
   id: string;
   name: string;
-  description: string;
+  /**
+   * Optional: ComplianceModuleRegistryEntry does not currently carry a
+   * description, so this is unset for Stellar modules. Previously typed as
+   * required, which made the CLI render "undefined" in the module picker.
+   */
+  description?: string;
   /** Hooks the module is automatically registered on at deploy time. */
   requiredHooks: string[];
   review: ModuleReviewInfo;

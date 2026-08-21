@@ -40,16 +40,13 @@ export const STELLAR_OVERRIDE: ConceptOverride = {
       'Receives the admin role at deployment and is embedded in the generated deploy script. Use a Stellar CLI identity you control (`stellar keys generate <name> --fund`, then paste the G-address from `stellar keys address <name>`). Post-deploy configuration requires a signer for this address.',
   },
   'notice.review.before-deploy': {
-    id: 'notice.review.before-deploy',
     description:
       'Generation does not deploy on-chain. On {networkDisplayName}, run `./scripts/build.sh`, set `STELLAR_ACCOUNT` to a funded CLI identity whose address matches the configured Admin, then run `./scripts/deploy.sh`. See README.md for the full quick start.',
   },
   'notice.review.deploy-signer-ack': {
-    id: 'notice.review.deploy-signer-ack',
     description: 'I will use a Stellar CLI identity that controls the configured Admin address.',
   },
   'notice.review.identity-support-scaffolding': {
-    id: 'notice.review.identity-support-scaffolding',
     title: 'Testnet identity scaffolding',
     description:
       'Include testnet identity scaffolding so the export can onboard Admin and mint your configured initial supply after deploy (demo only — not production KYC).',
@@ -57,13 +54,11 @@ export const STELLAR_OVERRIDE: ConceptOverride = {
       '**How identity works:** Mints and transfers require each holder to have claims from a **trusted claim issuer** registered in CTI, an on-chain **identity contract** carrying those claims, and registration in IRS. The default export deploys CTI, IRS, and the Identity Verifier — not holder identity or issuer contracts.\n\n**What this enables:** Adds upstream **example** `contracts/claim-issuer` and `contracts/identity` crates, a `tools/sign-claim` helper for signing demo claims, and extra IRS helpers so you can exercise end-to-end testnet onboarding. When `initialSupply` is set, also emits `scripts/bootstrap-demo-mint.sh` to onboard Admin and mint after `./scripts/deploy.sh`.\n\n**Limits:** Demo scaffolding only — not production KYC. Uses hardcoded demo signing keys; does not replace your own claim-issuer infrastructure or onboard arbitrary investors.',
   },
   'notice.review.demo-auto-mint-ready': {
-    id: 'notice.review.demo-auto-mint-ready',
     title: 'Demo auto-mint-ready',
     description:
       'With identity scaffolding enabled and initial supply configured, this testnet export includes `scripts/bootstrap-demo-mint.sh`. It runs a compliance preflight on the `created` hook before minting — no silent limit changes.',
   },
   'notice.generation.post-download': {
-    id: 'notice.generation.post-download',
     title: 'After download',
     description:
       'Extract the archive and follow **README.md** for build, deploy, and troubleshooting.',

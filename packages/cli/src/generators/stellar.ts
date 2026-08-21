@@ -84,7 +84,6 @@ export const stellarAdapter: GeneratorAdapter = {
     return getAvailableModules().map((m) => ({
       id: m.id,
       name: m.name,
-      description: m.description,
       requiredHooks: [...m.requiredHooks],
       review: { state: m.review.state, ...(m.review.prUrl ? { prUrl: m.review.prUrl } : {}) },
       configFields: m.configFields.map((f) => ({
@@ -93,7 +92,6 @@ export const stellarAdapter: GeneratorAdapter = {
         type: f.type,
         required: f.required,
         ...(f.placeholder !== undefined ? { placeholder: f.placeholder } : {}),
-        ...(f.hint !== undefined ? { hint: f.hint } : {}),
       })),
     }));
   },

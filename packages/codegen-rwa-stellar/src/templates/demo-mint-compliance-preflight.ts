@@ -172,5 +172,5 @@ export function formatDemoMintPreflightModuleList(config: RWAConfig): string {
   if (lower.length === 2) {
     return `${lower[0]!} and ${lower[1]!}`;
   }
-  return `${lower.slice(0, -1).join(', ')}, and ${lower.at(-1)!}`;
+  return `${lower.slice(0, -1).join(', ')}, and ${lower[lower.length - 1]!}`;
 }
