@@ -69,7 +69,7 @@
     "format:check": "prettier --check \"src/**/*.ts\" --config ../../.prettierrc.cjs"
   },
   "dependencies": {
-    "@openzeppelin/adapter-stellar": "^2.1.1",
+    "@openzeppelin/adapter-stellar": "^4.0.0",
     "@openzeppelin/codegen-core": "workspace:*",
     "@openzeppelin/codegen-rwa-common": "workspace:*",
     "@openzeppelin/rwa-config": "workspace:*",
