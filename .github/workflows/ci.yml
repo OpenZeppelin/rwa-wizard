@@ -35,6 +35,11 @@ jobs:
         # no node_modules, so this fails fast before the install.
         run: node scripts/check-dependency-licenses.cjs
 
+      - name: Adapter peer version check
+        # The adapters enforce ui-* minimums at runtime only, so a stale pin
+        # builds and tests clean and then fails in the browser.
+        run: node scripts/check-adapter-peers.cjs
+
       - name: Build all packages
         run: pnpm build
         env:
