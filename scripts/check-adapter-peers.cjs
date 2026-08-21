@@ -134,9 +134,12 @@ if (failures.length > 0) {
     '\nThe adapters throw on this at runtime, not at build time, so the app compiles\n' +
       'and tests cleanly and then fails in the browser with the network runtime stuck\n' +
       'in a failed state.\n\n' +
-      'Fix: raise the @openzeppelin/ui-* versions in apps/role-manager/package.json AND\n' +
-      'the overrides in pnpm-workspace.yaml -- the overrides pin exact versions and will\n' +
-      'otherwise force the app ranges straight back down.\n'
+      'Fix: raise the @openzeppelin/ui-* ranges in the workspace package.json files\n' +
+      'that declare them, then reinstall so the lockfile resolves the newer versions.\n' +
+      'Note a caret range alone may not be enough: ^3.3.0 already permits 3.5.1, so a\n' +
+      'stale lockfile entry stays stale until it is re-resolved.\n' +
+      'If this repo gains pnpm-workspace.yaml overrides for @openzeppelin/ui-*, raise\n' +
+      'those too -- they pin exact versions and would force the ranges back down.\n'
   );
   process.exit(1);
 }
