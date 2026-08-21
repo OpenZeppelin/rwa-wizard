@@ -84,7 +84,10 @@ describe('Stellar Adapter', () => {
       for (const m of modules) {
         expect(m).toHaveProperty('id');
         expect(m).toHaveProperty('name');
-        expect(m).toHaveProperty('description');
+        // `description` is intentionally not asserted: ComplianceModuleRegistryEntry
+        // does not carry one, so this previously passed only because the key existed
+        // with an undefined value -- which is what made the CLI print "undefined".
+        expect(typeof m.name).toBe('string');
         expect(m).toHaveProperty('requiredHooks');
         expect(Array.isArray(m.requiredHooks)).toBe(true);
         expect(m).toHaveProperty('review');

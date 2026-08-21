@@ -25,7 +25,7 @@ export async function complianceStep(
     options: availableModules.map((m) => ({
       value: m.id,
       label: m.name,
-      hint: `${m.description} (hooks: ${hookList(m)})${m.review.state === 'under-review' ? ' ⚠ under review' : ''}`,
+      hint: `${m.description ? `${m.description} ` : ''}(hooks: ${hookList(m)})${m.review.state === 'under-review' ? ' ⚠ under review' : ''}`,
     })),
     required: false,
   });

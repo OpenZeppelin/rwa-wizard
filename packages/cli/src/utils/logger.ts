@@ -19,9 +19,11 @@ export const logger = {
 
   fileWritten: (path: string) => console.log(pc.dim(`  ${path}`)),
 
-  moduleEntry: (id: string, name: string, description: string, hooks: string[]) => {
+  moduleEntry: (id: string, name: string, description: string | undefined, hooks: string[]) => {
     console.log(`  ${pc.bold(pc.cyan(id))}`);
-    console.log(`    ${name} — ${description}`);
+    // Modules do not all carry a description; printing the separator regardless
+    // rendered "Name — undefined".
+    console.log(`    ${name}${description ? ` — ${description}` : ''}`);
     console.log(`    Hooks: ${hooks.join(', ')}`);
     console.log('');
   },

@@ -88,7 +88,7 @@ export function formatDeployPostGenerationSteps(guidance: DeployGuidance): strin
 
 /** Short checklist items for wizard review step. */
 export function formatDeployReadinessChecklist(
-  config: RWAConfig,
+  _config: RWAConfig,
   guidance: DeployGuidance
 ): string[] {
   const fundStep = guidance.networkIsTestnet
