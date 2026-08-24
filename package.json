@@ -96,6 +96,7 @@
   "packageManager": "pnpm@10.22.0",
   "pnpm": {
     "overrides": {
+      "@metamask/eth-json-rpc-provider": "^2.2.0",
       "axios": "^1.16.0",
       "protobufjs": "^7.6.3",
       "@protobufjs/utf8": "^1.1.1",
