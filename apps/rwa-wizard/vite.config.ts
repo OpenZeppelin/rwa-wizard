@@ -71,6 +71,11 @@ export default defineConfig(({ mode }) => {
           __dirname,
           './src/shims/walletconnect-removed.ts'
         ),
+        // The MetaMask SDK is stripped from the install tree for licence reasons
+        // (proprietary, Non-Commercial Use only). @wagmi/connectors still ships an
+        // unreachable metaMask module that dynamically imports it, so point it at a
+        // stub for the same reason as WalletConnect above.
+        '@metamask/sdk': path.resolve(__dirname, './src/shims/metamask-removed.ts'),
       },
     },
     // Polyfills for Node.js globals used by wallet SDKs (e.g., @hot-wallet/sdk, @near-js/crypto)
