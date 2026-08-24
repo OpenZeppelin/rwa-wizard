@@ -69,11 +69,11 @@
     "format:check": "prettier --check \"src/**/*.ts\" --config ../../.prettierrc.cjs"
   },
   "dependencies": {
-    "@openzeppelin/adapter-stellar": "^4.0.0",
+    "@openzeppelin/adapter-stellar": "^4.0.1",
     "@openzeppelin/codegen-core": "workspace:*",
     "@openzeppelin/codegen-rwa-common": "workspace:*",
     "@openzeppelin/rwa-config": "workspace:*",
-    "@openzeppelin/ui-types": "^3.5.1",
+    "@openzeppelin/ui-types": "^3.5.2",
     "i18n-iso-countries": "^7.14.0"
   },
   "license": "AGPL-3.0",
