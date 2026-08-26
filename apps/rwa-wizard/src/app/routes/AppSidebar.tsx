@@ -18,6 +18,7 @@ import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialo
 import { DraftImportDialog } from '../../features/draft-management/components/DraftImportDialog';
 import { DraftList } from '../../features/draft-management/components/DraftList';
 import { TargetSelectorSidebar } from '../../features/target-catalog/components/TargetSelectorSidebar';
+import { useAnalyticsNetworkResolver } from '../../hooks/useAnalyticsNetworkContext';
 import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
 import { listTargets } from '../../registry/targets';
 import { exportAllDraftsAsJson } from '../../services/download/exportDraftAsJson';
@@ -46,6 +47,7 @@ interface AppSidebarProps {
  */
 export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps): ReactElement {
   const activeDraftId = useWizardStore((s) => s.activeDraftId);
+  const activeNetworkId = useWizardStore((s) => s.activeNetworkId);
   const selectedTargetId = useWizardStore((s) => s.targetId);
   const savingDraftId = useWizardStore((s) => s.savingDraftId);
   const draftListRefreshTick = useWizardStore((s) => s.draftListRefreshTick);
@@ -54,6 +56,7 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
   const draftList = useDraftList();
   const storage = useWizardDraftStorage();
   const { trackTargetSelected, trackDraftOpened, trackConfigExported } = useRwaWizardAnalytics();
+  const resolveAnalyticsNetwork = useAnalyticsNetworkResolver();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [addressBookOpen, setAddressBookOpen] = useState(false);
   const location = useLocation();
@@ -77,11 +80,12 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
       // entries so this branch is a belt-and-braces guard.
       const resolved = isTargetId(targetId) ? targetId : DEFAULT_TARGET_ID;
       wizardStore.setTargetId(resolved);
-      trackTargetSelected(resolved);
-      navigate(wizardPath(defaultWizardNetworkIdForTarget(resolved)));
+      const networkId = defaultWizardNetworkIdForTarget(resolved);
+      trackTargetSelected(resolved, resolveAnalyticsNetwork(networkId));
+      navigate(wizardPath(networkId));
       onMobileOpenChange(false);
     },
-    [navigate, onMobileOpenChange, trackTargetSelected]
+    [navigate, onMobileOpenChange, resolveAnalyticsNetwork, trackTargetSelected]
   );
 
   const handleLoadDraft = useCallback(
@@ -105,9 +109,11 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
   );
 
   const handleExportAllDrafts = useCallback(async () => {
-    trackConfigExported('all_drafts');
+    // `activeNetworkId` is only set while `/wizard/:networkId` is mounted; the
+    // export otherwise reports `'unknown'` rather than guessing a network.
+    trackConfigExported('all_drafts', resolveAnalyticsNetwork(activeNetworkId));
     await exportAllDraftsAsJson(storage);
-  }, [storage, trackConfigExported]);
+  }, [storage, activeNetworkId, resolveAnalyticsNetwork, trackConfigExported]);
 
   const headerContent = (
     <div className="mb-8">
