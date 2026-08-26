@@ -43,11 +43,9 @@ pnpm test:coverage
 
 ### Core Modules
 
-
 | Module  | Description                                               | Documentation                              |
 | ------- | --------------------------------------------------------- | ------------------------------------------ |
 | Storage | IndexedDB persistence layer for contracts and preferences | [Storage Docs](src/core/storage/README.md) |
-
 
 ## Project Structure
 
@@ -87,7 +85,6 @@ apps/rwa-wizard/src/
 
 ## Scripts
 
-
 | Script               | Description               |
 | -------------------- | ------------------------- |
 | `pnpm dev`           | Start development server  |
@@ -101,7 +98,6 @@ apps/rwa-wizard/src/
 | `pnpm lint:fix`      | Run ESLint with auto-fix  |
 | `pnpm format`        | Format code with Prettier |
 | `pnpm format:check`  | Check code formatting     |
-
 
 ## Local Development with UI Kit and Adapters
 
@@ -134,6 +130,32 @@ The local development workflow uses the published `oz-ui-dev` CLI together with 
 - Paths are configurable via `LOCAL_UI_PATH` and `LOCAL_ADAPTERS_PATH`
 
 See the root `[docs/LOCAL_DEVELOPMENT.md](../../docs/LOCAL_DEVELOPMENT.md)` guide for clone layout, troubleshooting, and workflow details.
+
+## Analytics
+
+The app reports Google Analytics 4 events through the shared `AnalyticsProvider` / `AnalyticsService` from `@openzeppelin/ui-react` (`VITE_GA_TAG_ID`; disabled unless the `analytics_enabled` feature flag is on). Wizard-specific events live in `src/hooks/useRwaWizardAnalytics.ts`; the network dimensions are resolved by `src/hooks/useAnalyticsNetworkContext.ts` from the active `/wizard/:networkId` route (preset deployment target first, URL segment second).
+
+Rules:
+
+- `network_id` and `ecosystem` are registered GA custom dimensions. Do not rename any parameter below.
+- Every string dimension falls back to the literal `'unknown'` — never `undefined` or an empty string, which GA4 silently drops.
+- Never send account addresses or free-form user text. `error_snippet` is whitespace-collapsed and truncated to 120 characters.
+
+| Event                  | Parameters                                                                 | Fired from                                      | When                                                   |
+| ---------------------- | -------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------ |
+| `page_view`            | `page_title`, `page_path`                                                  | `components/analytics/TrackedRoute.tsx`         | Route pathname changes on `/wizard/:networkId`         |
+| `wizard_step`          | `step_number`, `step_name`, `network_id`, `ecosystem`                      | `features/wizard/WizardPage.tsx`                | Step navigation (1-indexed step being entered)         |
+| `target_selected`      | `target_id`, `network_id`, `ecosystem`                                     | `app/routes/AppSidebar.tsx`                     | "Create … RWA" click; network is the destination route |
+| `draft_opened`         | `source` (`sidebar_recent`)                                                | `app/routes/AppSidebar.tsx`                     | Recent-asset row click                                 |
+| `projects_imported`    | `count`                                                                    | `features/draft-management/…/DraftImportDialog` | JSON import succeeded                                  |
+| `config_exported`      | `export_scope` (`single_draft` \| `all_drafts`), `network_id`, `ecosystem` | `WizardPage.tsx` / `AppSidebar.tsx`             | Export Configuration / sidebar Export click            |
+| `project_generated`    | `target_id`, `zip_file_name`, `network_id`, `ecosystem`                    | `features/wizard/WizardPage.tsx`                | Once per successful generation job                     |
+| `generation_failed`    | `target_id`, `error_snippet` (≤120 chars), `network_id`, `ecosystem`       | `features/wizard/WizardPage.tsx`                | Once per failed generation job                         |
+| `wizard_cancelled`     | `target_id`, `network_id`, `ecosystem`                                     | `features/wizard/WizardPage.tsx`                | Cancel on the wizard chrome                            |
+| `zip_download_clicked` | `target_id`, `network_id`, `ecosystem`                                     | `features/wizard/WizardPage.tsx`                | Download on the success dialog                         |
+| `address_book_opened`  | `network_id`, `ecosystem`                                                  | `components/AddressBook/AddressBookDialog.tsx`  | Dialog opens (false → true), not on network change     |
+
+`network_id` is the adapter `NetworkConfig.id` (e.g. `stellar-testnet`); `ecosystem` is `stellar` / `evm`. Outside the wizard route (or before the network catalogue has loaded) both are `'unknown'`.
 
 ## Codegen Runtime Overrides
 
@@ -174,4 +196,3 @@ These variables are read when the Vite dev server starts:
 - `vitest` - Testing framework
 - `tailwindcss` - CSS framework
 - `fake-indexeddb` - IndexedDB mock for testing
-
