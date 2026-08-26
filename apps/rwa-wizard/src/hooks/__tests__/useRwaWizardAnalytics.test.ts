@@ -262,6 +262,11 @@ describe('useRwaWizardAnalytics', () => {
       expect(orUnknown('')).toBe(UNKNOWN_ANALYTICS_VALUE);
       expect(orUnknown(null)).toBe(UNKNOWN_ANALYTICS_VALUE);
       expect(orUnknown(undefined)).toBe(UNKNOWN_ANALYTICS_VALUE);
+      expect(orUnknown('   ')).toBe(UNKNOWN_ANALYTICS_VALUE);
+    });
+
+    it('orUnknown trims surrounding whitespace so GA does not see distinct values', () => {
+      expect(orUnknown('  stellar ')).toBe('stellar');
     });
   });
 

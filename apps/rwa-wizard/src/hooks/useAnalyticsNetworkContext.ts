@@ -9,7 +9,7 @@ import type { AnalyticsNetworkContext } from './useRwaWizardAnalytics';
  *
  * The ecosystem is looked up in the lightweight `/networks` catalogue (see
  * {@link useAllNetworks}); until that catalogue has loaded — or when the id is
- * unknown — the ecosystem is left `undefined` and the analytics hook sends
+ * unknown — the ecosystem is left `null` and the analytics hook sends
  * `'unknown'`. An explicit `ecosystemHint` (e.g. from a preset deployment
  * target) wins over the lookup so events are complete before the catalogue
  * resolves.

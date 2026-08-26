@@ -16,7 +16,8 @@ import { useAnalytics } from '@openzeppelin/ui-react';
 export const UNKNOWN_ANALYTICS_VALUE = 'unknown';
 
 export function orUnknown(value: string | null | undefined): string {
-  return value && value.trim().length > 0 ? value : UNKNOWN_ANALYTICS_VALUE;
+  const trimmed = value?.trim() ?? '';
+  return trimmed.length > 0 ? trimmed : UNKNOWN_ANALYTICS_VALUE;
 }
 
 /**
