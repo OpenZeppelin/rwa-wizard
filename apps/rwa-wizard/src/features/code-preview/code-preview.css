@@ -1,0 +1,179 @@
+/*
+  Code preview theme — matches OpenZeppelin Contracts Wizard.
+
+  SF-3 `CodeView` emits standard `hljs-*` class names and ships no theme, so the
+  consumer supplies one. Contracts Wizard imports `highlight.js/styles/atom-one-dark.css`
+  globally; the wizard cannot do that because the rest of the app is a light UI and
+  CSS has no way to scope an `@import`. Every rule below is therefore the real
+  Atom One Dark stylesheet copied verbatim under `.rwa-code-preview-code`.
+  `code-preview.theme.test.ts` diffs this file against the highlight.js copy the kit
+  depends on, so the two cannot drift.
+
+  Palette (Atom One Dark UI, used for the pane chrome and the file tree):
+    editor bg   #282c34   sidebar bg  #21252b   selected row #2c313a
+    foreground  #abb2bf   dim / chevrons #5c6370   ui border #181a1f   accent #528bff
+
+  Font: `--monospace` from Contracts Wizard `vars.css`, verbatim.
+
+  These rules are intentionally unlayered so they beat the kit's Tailwind
+  utilities (`bg-background`, `[&_.hljs-keyword]:text-primary`, …) regardless of
+  specificity.
+*/
+
+.rwa-code-preview {
+  --rwa-code-preview-font:
+    ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --rwa-code-preview-editor-bg: #282c34; /* Atom One Dark base — equals `.hljs` background below */
+  --rwa-code-preview-sidebar-bg: #21252b;
+  --rwa-code-preview-fg: #abb2bf;
+  --rwa-code-preview-fg-dim: #5c6370;
+  --rwa-code-preview-selected-bg: #2c313a;
+  --rwa-code-preview-ui-border: #181a1f;
+  --rwa-code-preview-accent: #528bff;
+
+  color-scheme: dark;
+  background: var(--rwa-code-preview-editor-bg);
+  color: var(--rwa-code-preview-fg);
+}
+
+/* Empty state ("Select a file…") sits on the editor background. */
+.rwa-code-preview-empty {
+  border-color: var(--rwa-code-preview-fg-dim);
+  color: var(--rwa-code-preview-fg-dim);
+}
+
+/* ---- Code pane ------------------------------------------------------------ */
+
+.rwa-code-preview-code {
+  background: var(--rwa-code-preview-editor-bg);
+  color: var(--rwa-code-preview-fg);
+  border-color: transparent;
+  border-radius: 0;
+}
+
+.rwa-code-preview-code,
+.rwa-code-preview-code .hljs {
+  font-family: var(--rwa-code-preview-font);
+}
+
+/* Stellar import hyperlinks (SF-11) render as underlined anchors; use Atom's link hue. */
+.rwa-code-preview-code a {
+  color: #61aeee;
+}
+
+/* ---- File tree ------------------------------------------------------------ */
+
+/*
+  The kit `FileTree` wraps `@pierre/trees`, which renders in a shadow root and is
+  themed through its public `--trees-*-override` custom properties read from the
+  host. Setting them on the wizard-owned root className is the supported route;
+  the kit's inner `data-slot`s are internal and are not targeted here.
+*/
+.rwa-code-preview-tree {
+  --trees-bg-override: var(--rwa-code-preview-sidebar-bg);
+  --trees-fg-override: var(--rwa-code-preview-fg);
+  --trees-fg-muted-override: var(--rwa-code-preview-fg-dim);
+  --trees-selected-bg-override: var(--rwa-code-preview-selected-bg);
+  --trees-selected-fg-override: var(--rwa-code-preview-fg);
+  --trees-border-color-override: var(--rwa-code-preview-ui-border);
+  --trees-accent-override: var(--rwa-code-preview-accent);
+
+  background: var(--rwa-code-preview-sidebar-bg);
+  color: var(--rwa-code-preview-fg);
+  /* Breathing room so the first and last rows do not touch the pane edges. */
+  padding-block: 0.375rem;
+}
+
+/* ---- Selected-file status chip (bottom-right of the code pane, VS Code style) ---- */
+
+.rwa-code-preview-status {
+  background: color-mix(in srgb, var(--rwa-code-preview-sidebar-bg) 92%, transparent);
+  color: var(--rwa-code-preview-fg);
+  font-family: var(--rwa-code-preview-font);
+}
+
+/* ---- highlight.js/styles/atom-one-dark.css, scoped ------------------------ */
+/* Copied verbatim (colour rules only; the `pre code.hljs` layout rules are the kit's job). */
+
+/*
+
+Atom One Dark by Daniel Gamage
+Original One Dark Syntax theme from https://github.com/atom/one-dark-syntax
+
+base:    #282c34
+mono-1:  #abb2bf
+mono-2:  #818896
+mono-3:  #5c6370
+hue-1:   #56b6c2
+hue-2:   #61aeee
+hue-3:   #c678dd
+hue-4:   #98c379
+hue-5:   #e06c75
+hue-5-2: #be5046
+hue-6:   #d19a66
+hue-6-2: #e6c07b
+
+*/
+.rwa-code-preview-code .hljs {
+  color: #abb2bf;
+  background: #282c34;
+}
+.rwa-code-preview-code .hljs-comment,
+.rwa-code-preview-code .hljs-quote {
+  color: #5c6370;
+  font-style: italic;
+}
+.rwa-code-preview-code .hljs-doctag,
+.rwa-code-preview-code .hljs-keyword,
+.rwa-code-preview-code .hljs-formula {
+  color: #c678dd;
+}
+.rwa-code-preview-code .hljs-section,
+.rwa-code-preview-code .hljs-name,
+.rwa-code-preview-code .hljs-selector-tag,
+.rwa-code-preview-code .hljs-deletion,
+.rwa-code-preview-code .hljs-subst {
+  color: #e06c75;
+}
+.rwa-code-preview-code .hljs-literal {
+  color: #56b6c2;
+}
+.rwa-code-preview-code .hljs-string,
+.rwa-code-preview-code .hljs-regexp,
+.rwa-code-preview-code .hljs-addition,
+.rwa-code-preview-code .hljs-attribute,
+.rwa-code-preview-code .hljs-meta .hljs-string {
+  color: #98c379;
+}
+.rwa-code-preview-code .hljs-attr,
+.rwa-code-preview-code .hljs-variable,
+.rwa-code-preview-code .hljs-template-variable,
+.rwa-code-preview-code .hljs-type,
+.rwa-code-preview-code .hljs-selector-class,
+.rwa-code-preview-code .hljs-selector-attr,
+.rwa-code-preview-code .hljs-selector-pseudo,
+.rwa-code-preview-code .hljs-number {
+  color: #d19a66;
+}
+.rwa-code-preview-code .hljs-symbol,
+.rwa-code-preview-code .hljs-bullet,
+.rwa-code-preview-code .hljs-link,
+.rwa-code-preview-code .hljs-meta,
+.rwa-code-preview-code .hljs-selector-id,
+.rwa-code-preview-code .hljs-title {
+  color: #61aeee;
+}
+.rwa-code-preview-code .hljs-built_in,
+.rwa-code-preview-code .hljs-title.class_,
+.rwa-code-preview-code .hljs-class .hljs-title {
+  color: #e6c07b;
+}
+.rwa-code-preview-code .hljs-emphasis {
+  font-style: italic;
+}
+.rwa-code-preview-code .hljs-strong {
+  font-weight: bold;
+}
+.rwa-code-preview-code .hljs-link {
+  text-decoration: underline;
+}

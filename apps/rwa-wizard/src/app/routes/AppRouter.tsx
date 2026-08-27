@@ -22,7 +22,7 @@ function AppShell(): ReactElement {
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <AppSidebar mobileOpen={mobileOpen} onMobileOpenChange={setMobileOpen} />
 
-      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex h-[calc(100dvh-var(--bottom-sheet-inset,0px))] min-w-0 flex-1 flex-col overflow-hidden transition-[height] duration-200 ease-out motion-reduce:transition-none [html[data-bottom-sheet-inset=resizing]_&]:transition-none">
         <Header title="Real World Asset" onOpenSidebar={() => setMobileOpen(true)} />
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -46,7 +46,10 @@ function AppShell(): ReactElement {
           </Routes>
         </div>
 
-        <Footer />
+        {/* Hidden while an inset code-preview sheet is open so the reclaimed space goes to the form. */}
+        <div className="[html[data-bottom-sheet-inset]_&]:hidden">
+          <Footer />
+        </div>
       </div>
     </div>
   );

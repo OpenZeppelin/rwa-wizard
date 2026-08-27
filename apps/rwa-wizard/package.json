@@ -32,6 +32,7 @@
     "@openzeppelin/ui-styles": "^1.1.1",
     "@openzeppelin/ui-types": "^3.5.2",
     "@openzeppelin/ui-utils": "^4.0.1",
+    "@pierre/trees": "1.0.0-beta.6",
     "lucide-react": "^0.555.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

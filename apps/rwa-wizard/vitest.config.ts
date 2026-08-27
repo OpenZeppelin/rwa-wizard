@@ -1,3 +1,4 @@
+import path from 'path';
 import type { UserConfig } from 'vite';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
@@ -11,6 +12,18 @@ async function resolveViteConfig(mode: string): Promise<UserConfig> {
 
 export default defineConfig(async ({ mode }) =>
   mergeConfig(await resolveViteConfig(mode), {
+    resolve: {
+      alias: {
+        '@openzeppelin/ui-components/code-view': path.resolve(
+          __dirname,
+          './src/test/shims/ui-code-view.tsx'
+        ),
+        '@openzeppelin/ui-components/file-tree': path.resolve(
+          __dirname,
+          './src/test/shims/ui-file-tree.tsx'
+        ),
+      },
+    },
     test: {
       globals: true,
       environment: 'happy-dom',

@@ -28,6 +28,7 @@ const mockService: RwaCodegenService = {
     limits: { maxModulesPerHook: 20, maxTrustedIssuers: 50 },
   }),
   generateZip: vi.fn(),
+  generateFileTree: vi.fn(),
 };
 
 const mockAdapterCapabilities: TargetAdapterCapabilities = {

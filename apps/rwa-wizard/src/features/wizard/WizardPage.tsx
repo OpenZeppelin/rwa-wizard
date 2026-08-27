@@ -16,10 +16,14 @@ import { DEFAULT_WIZARD_NETWORK_ID, wizardPath } from '../../app/routes/wizardPa
 import { wizardStore } from '../../app/state/wizardStore';
 import { ErrorBannerStack } from '../../components/shared';
 import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
-import { getDeployGuidanceFromService } from '../../services/codegen/deployReadiness';
+import {
+  getDeployGuidanceFromService,
+  resolveIncludeIdentitySupport,
+} from '../../services/codegen/deployReadiness';
 import { exportDraftAsJson } from '../../services/download/exportDraftAsJson';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useWizardDraftStorage } from '../../storage';
+import { CodePreviewDrawer, CodePreviewTrigger, useCodePreview } from '../code-preview';
 import { GenerationDialog } from '../generation/components/GenerationDialog';
 
 /**
@@ -111,6 +115,19 @@ function WizardPageContent(): ReactElement {
     () => getDeployGuidanceFromService(codegenService, draftState.config),
     [codegenService, draftState.config]
   );
+
+  const resolvedIdentitySupport = useMemo(
+    () => resolveIncludeIdentitySupport(deployGuidance, includeIdentitySupport),
+    [deployGuidance, includeIdentitySupport]
+  );
+
+  const preview = useCodePreview({
+    codegenService,
+    draftConfig: draftState.config,
+    moduleCatalog: targetSnapshot?.availableModules ?? [],
+    currentStepId: currentStep,
+    includeIdentitySupport: resolvedIdentitySupport,
+  });
 
   const { steps, orderedStepIds } = useWizardSteps({
     selectedTargetId,
@@ -211,12 +228,36 @@ function WizardPageContent(): ReactElement {
             currentStepIndex={effectiveStepIndex}
             onStepChange={handleStepChange}
             onCancel={handleCancel}
+            navActions={
+              <CodePreviewTrigger show={preview.showTrigger} triggerProps={preview.triggerProps} />
+            }
             lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
             onLastStepPrimary={handleLastStepPrimary}
             lastStepSecondaryLabel="Export Configuration"
             onLastStepSecondary={handleLastStepSecondary}
             lastStepSecondaryDisabled={!activeDraftId}
           />
+          {preview.showTrigger ? (
+            <CodePreviewDrawer
+              open={preview.persistence.open}
+              onOpenChange={preview.setOpen}
+              height={preview.persistence.height}
+              onHeightChange={preview.setHeight}
+              sheetId={preview.sheetId}
+              phase={preview.phase}
+              selectedPath={preview.selectedPath}
+              onSelectedPathChange={preview.setSelectedPath}
+              files={preview.phase.kind === 'ready' ? preview.phase.files : null}
+              changedPaths={preview.phase.kind === 'ready' ? preview.phase.changedPaths : undefined}
+              substitutedKeys={
+                preview.phase.kind === 'ready' || preview.phase.kind === 'error'
+                  ? preview.phase.substitutedKeys
+                  : []
+              }
+              errorMessages={preview.phase.kind === 'error' ? preview.phase.messages : undefined}
+              tools={preview.layout}
+            />
+          ) : null}
           <GenerationDialog
             jobState={generationJobState}
             isGenerating={isGenerating}
