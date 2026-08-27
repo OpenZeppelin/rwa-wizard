@@ -102,3 +102,9 @@ $RECYCLE.BIN/
 .npm_token
 /.agent-os
 /.cursorignore
+
+# Local working directory
+/artifacts/
+
+# Local agent workspace
+/.maestri/
