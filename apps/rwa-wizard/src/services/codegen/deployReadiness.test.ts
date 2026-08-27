@@ -25,6 +25,7 @@ describe('deployReadiness', () => {
       validate: async () => ({ valid: true, errors: [], warnings: [] }),
       getAvailableModules: async () => [],
       generateZip: async () => ({ fileName: 'x.zip', data: new Blob() }),
+      generateFileTree: async () => ({ files: { 'README.md': '# x\n' } }),
       getDeployGuidance: () => testnetGuidance,
     };
 

@@ -125,6 +125,21 @@ describe('Codegen Service Contract Parity', () => {
     });
   });
 
+  describe('generateFileTree()', () => {
+    it('returns a GeneratedFileTreeArtifact with a README.md file (INV-22)', async () => {
+      const config = makeConfig({
+        token: { ...createDefaultRwaConfig().token, name: 'Test', symbol: 'TST' },
+      });
+      const result = await testService.generateFileTree(config);
+      expect(result).toHaveProperty('files');
+      expect(result.files['README.md']).toBe('# Test RWA project for Test\n');
+    });
+
+    it('is required on the service object (INV-22)', () => {
+      expect(typeof testService.generateFileTree).toBe('function');
+    });
+  });
+
   describe('getCodegenService() resolver', () => {
     it('returns null when real codegen is not loaded', () => {
       const service = getCodegenService('stellar');

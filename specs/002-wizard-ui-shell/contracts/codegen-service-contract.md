@@ -9,19 +9,30 @@ Defines the single app-local boundary between the React UI shell and real or moc
 - Validate draft configuration against the selected target
 - Expose target-specific module availability
 - Generate downloadable ZIP results for successful handoff
+- Generate an in-memory file tree for preview that matches the ZIP (same generators, identity toggle)
 - Normalize progress and error shapes for the UI
 - Allow mock and real implementations to be swapped transparently
 
 ## Interface
 
 ```ts
+interface GenerateArtifactOptions {
+  onStatus?: (status: GenerationStatus) => void;
+  includeIdentitySupport?: boolean;
+}
+
+interface GeneratedFileTreeArtifact {
+  files: FileTree; // project-relative keys from GenerationResult.files, not ZIP entry names
+}
+
 interface RwaCodegenService {
   validate(config: RWAConfig): Promise<ValidationResult>;
   getAvailableModules(): Promise<ComplianceModuleOption[]>;
-  generateZip(
+  generateZip(config: RWAConfig, options?: GenerateArtifactOptions): Promise<GeneratedZipArtifact>;
+  generateFileTree(
     config: RWAConfig,
-    options?: { onStatus?: (status: GenerationStatus) => void }
-  ): Promise<GeneratedZipArtifact>;
+    options?: GenerateArtifactOptions
+  ): Promise<GeneratedFileTreeArtifact>;
 }
 ```
 
@@ -64,6 +75,8 @@ interface GeneratedZipArtifact {
   fileName: string;
   data: Blob;
 }
+
+type FileTree = Record<string, string | Uint8Array>;
 ```
 
 ## Real Implementation Rules
@@ -71,7 +84,9 @@ interface GeneratedZipArtifact {
 - The first real implementation is backed by `@openzeppelin/codegen-rwa-stellar`.
 - The service must accept and return the canonical package-level types wherever possible.
 - The UI shell must not recreate target-specific validation rules locally.
-- ZIP delivery is the primary successful outcome for the first iteration.
+- ZIP delivery remains the download outcome. Preview uses `generateFileTree`, which calls package `generate` / `generateWithIdentitySupport` — never unzipping.
+- Tree keys are generator paths. JSZip adds one root folder named from the sanitized token symbol. SC-002 compares maps after stripping that single ZIP prefix.
+- `generateFileTree` throws `CodegenInvalidConfigError` (`CODEGEN_INVALID_CONFIG`), `CodegenGenerationError` (`CODEGEN_GENERATION_FAILED`), or `CodegenUnsupportedError` (`CODEGEN_GENERATE_UNSUPPORTED`). Callers catch; the method still rejects rather than returning a partial tree.
 
 ## Mock Implementation Rules
 
@@ -87,10 +102,14 @@ interface GeneratedZipArtifact {
 | `getAvailableModules` | Runtime unavailable          | Show an empty or fallback module state without breaking other steps                              |
 | `generateZip`         | Real generator unavailable   | Use documented mock only if the gap is explicitly tracked; otherwise show generation unavailable |
 | `generateZip`         | ZIP delivery failure         | Show generation failure and do not imply the file was downloaded                                 |
+| `generateFileTree`    | Invalid config after fill    | Throw `CodegenInvalidConfigError`; UI shows structured preview error, React tree does not crash  |
+| `generateFileTree`    | Other generator failure      | Throw `CodegenGenerationError`                                                                   |
+| `generateFileTree`    | Package has no `generate`    | Throw `CodegenUnsupportedError`; do not fall back to unzipping                                   |
 
 ## Test Expectations
 
 - Real and mock implementations satisfy the same contract
 - Validation errors map cleanly to field-level UI states
 - Generated ZIP success produces a browser-downloadable artifact
+- For a real stellar service, unzip + strip one root folder + compare keys and bytes against `generateFileTree` (identity on and off). Do not assert that parity against `createTestCodegenService` (its Blob is not a JSZip archive)
 - Generator failure never destroys the current draft

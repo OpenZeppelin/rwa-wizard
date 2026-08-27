@@ -2,6 +2,7 @@ import { toSummaryPhase } from '@openzeppelin/codegen-core';
 import type {
   CodegenInfoBlurb,
   GenerateOptions,
+  GenerationResult,
   ProgressCallback,
 } from '@openzeppelin/codegen-core';
 import type {
@@ -13,12 +14,18 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
   GeneratedZipArtifact,
-  GenerationStatus,
   StructuralComplianceModuleOption,
   StructuralEcosystemMetadata,
 } from '../../types/wizard';
+import { CodegenUnsupportedError, toCodegenError } from './errors';
 import { getCodegenRuntimeOptions, type RuntimeGenerateOptions } from './runtimeOptions';
-import type { DeployGuidanceDTO, RwaCodegenService, ValidationResultDTO } from './types';
+import type {
+  DeployGuidanceDTO,
+  GenerateArtifactOptions,
+  GeneratedFileTreeArtifact,
+  RwaCodegenService,
+  ValidationResultDTO,
+} from './types';
 
 /** Shape of a codegen package module (e.g. @openzeppelin/codegen-rwa-*). */
 interface CodegenPackageModule {
@@ -46,6 +53,8 @@ interface CodegenPackageModule {
     config: RWAConfig,
     options?: GenerateOptions
   ) => Promise<{ fileName: string; data: Blob }>;
+  generate?: (config: RWAConfig, options?: GenerateOptions) => GenerationResult;
+  generateWithIdentitySupport?: (config: RWAConfig, options?: GenerateOptions) => GenerationResult;
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
   getCodegenInfoBlurb?: () => CodegenInfoBlurb;
   generateZipWithIdentitySupport?: (
@@ -112,6 +121,19 @@ function buildGenerateOptions(
     ...base,
     ...(onProgress ? { onProgress } : {}),
   };
+}
+
+function onProgressFrom(
+  onStatus: GenerateArtifactOptions['onStatus']
+): ProgressCallback | undefined {
+  return onStatus
+    ? (event) => {
+        onStatus({
+          phase: toSummaryPhase(event.phase),
+          message: event.message,
+        });
+      }
+    : undefined;
 }
 
 function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCodegenService {
@@ -185,23 +207,50 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
 
     async generateZip(
       config: RWAConfig,
-      options?: { onStatus?: (status: GenerationStatus) => void; includeIdentitySupport?: boolean }
+      options?: GenerateArtifactOptions
     ): Promise<GeneratedZipArtifact> {
-      const onProgress: ProgressCallback | undefined = options?.onStatus
-        ? (event) => {
-            options.onStatus?.({
-              phase: toSummaryPhase(event.phase),
-              message: event.message,
-            });
-          }
-        : undefined;
-      const generateOptions = buildGenerateOptions(baseGenerateOptions, onProgress);
+      const generateOptions = buildGenerateOptions(
+        baseGenerateOptions,
+        onProgressFrom(options?.onStatus)
+      );
       const zipFn =
         options?.includeIdentitySupport && pkg.generateZipWithIdentitySupport
           ? pkg.generateZipWithIdentitySupport.bind(pkg)
           : pkg.generateZip.bind(pkg);
       const result = await zipFn(config, generateOptions);
       return { fileName: result.fileName, data: result.data };
+    },
+
+    async generateFileTree(
+      config: RWAConfig,
+      options?: GenerateArtifactOptions
+    ): Promise<GeneratedFileTreeArtifact> {
+      // INV-7: do not call a missing generate, do not unzip ZIP as fallback.
+      if (typeof pkg.generate !== 'function') {
+        throw new CodegenUnsupportedError(targetId);
+      }
+
+      // INV-5 / INV-16: same options merge as ZIP; no invented packaging event.
+      const generateOptions = buildGenerateOptions(
+        baseGenerateOptions,
+        onProgressFrom(options?.onStatus)
+      );
+
+      // INV-4 / INV-9 / INV-15 / INV-19: one generate dispatch, never validate()
+      // and never generateZip.
+      const generateFn =
+        options?.includeIdentitySupport && pkg.generateWithIdentitySupport
+          ? pkg.generateWithIdentitySupport.bind(pkg)
+          : pkg.generate.bind(pkg);
+
+      try {
+        const result = generateFn(config, generateOptions);
+        // INV-1 / INV-2 / INV-20: return package files as-is, no prefix, no clone.
+        return { files: result.files };
+      } catch (err) {
+        // INV-8 / INV-18: typed rejection, never a partial tree.
+        toCodegenError(err);
+      }
     },
   };
 }

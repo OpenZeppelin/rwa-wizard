@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { makeConfig } from '../../test/fixtures/wizardFixtures';
 import { loadCodegenService } from './codegenLoader';
+import { CodegenUnsupportedError } from './errors';
 
 interface MockGenerateZipOptions {
   contractsLibraryPath?: string;
@@ -62,6 +63,9 @@ vi.mock('@openzeppelin/codegen-core', () => ({
 vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   validate: validateMock,
   getAvailableModules: getAvailableModulesMock,
+  // Explicit undefined so typeof pkg.generate !== 'function' (INV-7). A missing
+  // mock export makes Vitest throw on access instead of the typed error.
+  generate: undefined,
   generateZip: generateZipMock,
   generateZipWithIdentitySupport: generateZipWithIdentitySupportMock,
   getEcosystemMetadata: getEcosystemMetadataMock,
@@ -79,6 +83,7 @@ describe('loadCodegenService', () => {
     validateMock.mockClear();
     getAvailableModulesMock.mockClear();
     generateZipMock.mockClear();
+    generateZipWithIdentitySupportMock.mockClear();
     getCodegenRuntimeOptionsMock.mockReset();
     getEcosystemMetadataMock.mockClear();
     getCodegenInfoBlurbMock.mockClear();
@@ -189,5 +194,28 @@ describe('loadCodegenService', () => {
       allowUnderReviewModules: true,
     });
     expect(generateZipMock).not.toHaveBeenCalled();
+  });
+
+  it('tracks supportsIdentitySupport from the zip function, not generate (INV-17)', async () => {
+    const service = await loadCodegenService('stellar');
+    expect(service?.supportsIdentitySupport).toBe(true);
+  });
+
+  it('returns null for unknown targets (INV-13)', async () => {
+    expect(await loadCodegenService('evm')).toBeNull();
+  });
+
+  it('throws CodegenUnsupportedError when generate is missing and does not unzip (INV-7)', async () => {
+    const service = await loadCodegenService('stellar');
+    await expect(service!.generateFileTree(makeConfig())).rejects.toSatisfy((err: unknown) => {
+      expect(err).toBeInstanceOf(CodegenUnsupportedError);
+      if (err instanceof CodegenUnsupportedError) {
+        expect(err.code).toBe('CODEGEN_GENERATE_UNSUPPORTED');
+        expect(err.targetId).toBe('stellar');
+      }
+      return true;
+    });
+    expect(generateZipMock).not.toHaveBeenCalled();
+    expect(generateZipWithIdentitySupportMock).not.toHaveBeenCalled();
   });
 });
