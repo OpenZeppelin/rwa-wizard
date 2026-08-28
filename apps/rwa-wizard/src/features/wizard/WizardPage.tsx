@@ -133,6 +133,9 @@ function WizardPageContent(): ReactElement {
     draftConfig: draftState.config,
     moduleCatalog: targetSnapshot?.availableModules ?? [],
     currentStepId: currentStep,
+    // `WizardLayout` is remounted on `resetKey`, but this hook lives above that
+    // boundary and would otherwise never learn the draft was replaced.
+    draftEpoch: resetKey,
     includeIdentitySupport: resolvedIdentitySupport,
   });
 

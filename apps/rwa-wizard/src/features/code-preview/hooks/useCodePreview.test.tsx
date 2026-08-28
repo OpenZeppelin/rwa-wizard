@@ -1,5 +1,3 @@
-import '../code-preview.mocks';
-
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -65,9 +63,10 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
 
   it('clears change marks when currentStepId changes (INV-7)', async () => {
     const service = createTestCodegenService();
+    const initialDraft = completeDraft();
     const base = defaultPreviewHookOptions({
       codegenService: service,
-      draftConfig: createDefaultRwaConfig(),
+      draftConfig: initialDraft,
       currentStepId: 'asset',
     });
 
@@ -78,13 +77,67 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
 
     await waitForPreviewReady(() => result.current);
 
-    rerender({ ...base, currentStepId: 'identity' });
+    // Earn the marks first. Asserting they are empty after a step change is
+    // worth nothing while they were empty before it too, and this suite spent
+    // the whole initiative unable to tell "reset on step change" from "never
+    // set anything".
+    const edited = { ...initialDraft, token: { ...initialDraft.token, name: 'Renamed Token' } };
+    rerender({ ...base, draftConfig: edited });
+    await flushPreviewDebounce();
+    expect((await waitForPreviewReady(() => result.current)).changedPaths).toContain('README.md');
+
+    // Now vary the step and nothing else. Waiting on the marks rather than on
+    // `ready`: the phase is already ready from the edit above, so a wait for
+    // readiness returns the previous tick's result and reads whatever the
+    // assertion is looking for out of the wrong render.
+    rerender({ ...base, draftConfig: edited, currentStepId: 'identity' });
+
+    await waitFor(() => {
+      expect(
+        result.current.phase.kind === 'ready' && result.current.phase.changedPaths,
+        'INV-7: marks reset on step change until this step is edited'
+      ).toEqual([]);
+    });
+  });
+
+  it('re-baselines when the service under the step changes (INV-7)', async () => {
+    const initialDraft = completeDraft();
+    const base = defaultPreviewHookOptions({
+      codegenService: createTestCodegenService({ fileTreeVariant: ' (target A)' }),
+      draftConfig: initialDraft,
+      currentStepId: 'asset',
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+
     await waitForPreviewReady(() => result.current);
 
-    expect(
-      result.current.phase.kind === 'ready' && result.current.phase.changedPaths,
-      'INV-7: marks reset on step change until this step is edited'
-    ).toEqual([]);
+    const edited = { ...initialDraft, token: { ...initialDraft.token, name: 'Renamed Token' } };
+    rerender({ ...base, draftConfig: edited });
+    await flushPreviewDebounce();
+    expect((await waitForPreviewReady(() => result.current)).changedPaths).toContain('README.md');
+
+    // Now vary the service and nothing else. A second target generates a
+    // different tree from the same config, so every file would read as changed
+    // if it were measured against the previous target's baseline.
+    rerender({
+      ...base,
+      draftConfig: edited,
+      codegenService: createTestCodegenService({ fileTreeVariant: ' (target B)' }),
+    });
+    await flushPreviewDebounce();
+
+    await waitFor(() => {
+      const ready = result.current.phase;
+      expect(ready.kind === 'ready' && ready.files['README.md']).toContain('target B');
+      expect(
+        ready.kind === 'ready' && ready.changedPaths,
+        'INV-7: the marks describe edits within a step, not the switch of target'
+      ).toEqual([]);
+    });
   });
 
   it('accumulates change marks when draftConfig changes without step change (INV-7)', async () => {
@@ -332,6 +385,48 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
       edited.changedPaths.length,
       'INV-7: a step whose entry generate failed must still mark later edits'
     ).toBeGreaterThan(0);
+  });
+
+  /**
+   * The baseline was blind to which draft it described. Cancel returns the
+   * store to `initialState`, whose step is `asset` — so cancelling on that step
+   * changes neither the step nor the service, and the same is true of
+   * hydrating a stored draft whose saved step is the current one. The
+   * abandoned draft's baseline survived, and the new draft's very first tree
+   * was diffed against it: a fresh draft with no edits arrived pre-marked.
+   *
+   * This case varies draft identity alone — same step, same service instance,
+   * a config that differs the way a discarded draft's would.
+   */
+  it('drops the baseline when the draft underneath it is replaced (INV-7)', async () => {
+    const service = createTestCodegenService();
+    const abandonedDraft = completeDraft();
+    const base = defaultPreviewHookOptions({
+      codegenService: service,
+      draftConfig: abandonedDraft,
+      currentStepId: 'asset',
+      draftEpoch: 0,
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+    await waitForPreviewReady(() => result.current);
+
+    // Cancel: a new draft on the same step, generated by the same service.
+    rerender({
+      ...base,
+      draftConfig: createDefaultRwaConfig(),
+      draftEpoch: 1,
+    });
+    await flushPreviewDebounce();
+    const ready = await waitForPreviewReady(() => result.current);
+
+    expect(
+      ready.changedPaths,
+      'INV-7: a fresh draft has changed nothing; the marks must not describe the discarded one'
+    ).toEqual([]);
   });
 
   it('keeps the maximized height on the window as the window grows', async () => {

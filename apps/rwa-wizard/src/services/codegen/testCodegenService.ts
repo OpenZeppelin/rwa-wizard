@@ -6,13 +6,20 @@ import { CodegenInvalidConfigError } from './errors';
 import type { GenerateArtifactOptions, RwaCodegenService, ValidationResultDTO } from './types';
 
 /** Same payload string as the dummy ZIP blob — not a real archive (INV-22). */
-function dummyProjectText(config: RWAConfig): string {
-  return `# Test RWA project for ${config.token.name}\n`;
+function dummyProjectText(config: RWAConfig, variant = ''): string {
+  return `# Test RWA project for ${config.token.name}${variant}\n`;
 }
 
 export interface TestCodegenServiceOptions {
   /** When true, `generateFileTree` throws a typed invalid-config error (INV-10). */
   readonly failGenerateFileTree?: boolean;
+  /**
+   * Marks this service's output as its own, the way two real targets generate
+   * different trees from one config. Without it two instances are byte-for-byte
+   * identical, which makes any assertion about *which* service produced a tree
+   * pass whether or not the code tells them apart.
+   */
+  readonly fileTreeVariant?: string;
 }
 
 /**
@@ -116,7 +123,7 @@ export function createTestCodegenService(options?: TestCodegenServiceOptions): R
       }
 
       // INV-16: no packaging event. INV-22: README.md matches dummy ZIP payload text.
-      return { files: { 'README.md': dummyProjectText(config) } };
+      return { files: { 'README.md': dummyProjectText(config, options?.fileTreeVariant) } };
     },
   };
 }
