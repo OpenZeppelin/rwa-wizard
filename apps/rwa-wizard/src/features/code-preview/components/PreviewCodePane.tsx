@@ -1,6 +1,7 @@
 import { memo, useMemo, type ReactElement } from 'react';
 
 import type { FileTree } from '@openzeppelin/codegen-core';
+import { formatCopy } from '@openzeppelin/rwa-wizard-copy';
 import { CodeView } from '@openzeppelin/ui-components/code-view';
 
 import { useCopy } from '../../../app/providers/useCopy';
@@ -44,7 +45,9 @@ function PreviewCodePaneImpl(props: PreviewCodePaneProps): ReactElement {
         source={source}
         language={languageForPath(selectedPath)}
         decorateToken={decorateToken}
-        aria-label={`${selectedPath} source code`}
+        aria-label={formatCopy(copy.notice('code-preview.source-label').description, {
+          path: selectedPath,
+        })}
         className="rwa-code-preview-code h-full min-h-0 flex-1"
       />
       {/* VS Code-style status chip: selected path, pinned so it never moves other chrome. */}

@@ -41,6 +41,9 @@ describe('NOTICES_COPY', () => {
         'notice.code-preview.show-file-tree',
         'notice.code-preview.maximize',
         'notice.code-preview.restore-size',
+        'notice.code-preview.file-tree-label',
+        'notice.code-preview.source-label',
+        'notice.code-preview.close',
       ],
     });
   });

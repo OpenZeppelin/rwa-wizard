@@ -57,6 +57,7 @@ export function CodePreviewDrawer(props: {
       onHeightChange={onHeightChange}
       header={previewDrawerHeader({ phase, substitutedKeys, tools })}
       layout="inset"
+      closeLabel={copy.notice('code-preview.close').description}
     >
       <PreviewDrawerBody
         phase={phase}

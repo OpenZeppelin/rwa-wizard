@@ -159,6 +159,18 @@ export const NOTICES_COPY: ConceptDictionary = {
     id: 'notice.code-preview.restore-size',
     description: 'Restore preview size',
   },
+  'notice.code-preview.file-tree-label': {
+    id: 'notice.code-preview.file-tree-label',
+    description: 'Generated project files',
+  },
+  'notice.code-preview.source-label': {
+    id: 'notice.code-preview.source-label',
+    description: '{path} source code',
+  },
+  'notice.code-preview.close': {
+    id: 'notice.code-preview.close',
+    description: 'Close generated code preview',
+  },
   'notice.review.demo-mint-compliance-blocked': {
     id: 'notice.review.demo-mint-compliance-blocked',
     title: 'Fix these before generating',

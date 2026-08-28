@@ -3,6 +3,8 @@ import { useMemo, type ReactElement } from 'react';
 import type { FileTree } from '@openzeppelin/codegen-core';
 import { FileTree as KitFileTree } from '@openzeppelin/ui-components/file-tree';
 
+import { useCopy } from '../../../app/providers/useCopy';
+
 export function PreviewFileTreePane(props: {
   files: FileTree;
   selectedPath: string | null;
@@ -10,6 +12,7 @@ export function PreviewFileTreePane(props: {
   onSelectedPathChange: (path: string | null) => void;
 }): ReactElement {
   const { files, selectedPath, changedPaths, onSelectedPathChange } = props;
+  const copy = useCopy();
 
   // `useCodePreview` returns the same `files` reference while generate inputs are
   // unchanged, so this only recomputes when the tree actually changed. INV-3, INV-10
@@ -17,7 +20,7 @@ export function PreviewFileTreePane(props: {
 
   return (
     <KitFileTree
-      aria-label="Generated project files"
+      aria-label={copy.notice('code-preview.file-tree-label').description}
       className="rwa-code-preview-tree h-full min-h-0 w-[280px] shrink-0"
       paths={paths}
       selectedPath={selectedPath}
