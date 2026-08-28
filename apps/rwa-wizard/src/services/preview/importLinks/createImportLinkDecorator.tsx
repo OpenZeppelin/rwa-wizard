@@ -92,16 +92,19 @@ function renderLinkedLeaf(
  * Factory for SF-10's `decorateToken` prop.
  *
  * Closes over the revision and the import targets the codegen service reports
- * for the loaded target; callers memoize per reference (INV-10). A `null`
- * revision or absent links disable decoration, which is the case for any target
- * whose package reports neither — so the decorator exists only where the active
- * package supplies something to link to.
+ * for the loaded target; callers memoize per reference (INV-10).
+ *
+ * Returns `null` — not a decorator that declines every token — when the active
+ * package supplies nothing to link to, so that callers can leave the prop off
+ * and `CodeView` skips the per-leaf call entirely on a file that has no links
+ * to draw. A target whose package reports no revision or no targets is the
+ * common case, and a 700-line file is thousands of leaves.
  */
 export function createImportLinkDecorator(
   revision: StructuralUpstreamSourceRevision | null,
   links: StructuralUpstreamImportLinks | null,
   options?: ImportLinkDecoratorOptions
-): CodeViewTokenDecorator {
+): CodeViewTokenDecorator | null {
   const degradeMode = options?.degradeMode ?? 'repo-root';
   const linksAvailable =
     revision !== null &&
@@ -110,7 +113,7 @@ export function createImportLinkDecorator(
     !(revision.commitHash === null && degradeMode === 'plain-text');
 
   if (!linksAvailable) {
-    return () => undefined; // INV-2, INV-8
+    return null; // INV-2, INV-8
   }
 
   const identifiers = links.targets.map((target) => target.identifier);

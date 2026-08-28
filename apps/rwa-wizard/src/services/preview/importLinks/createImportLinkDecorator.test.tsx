@@ -16,12 +16,23 @@ import {
 } from '../../../test/helpers/importLinkFixtures';
 import { createImportLinkDecorator } from './createImportLinkDecorator';
 
+/**
+ * The factory returns `null` when there is nothing to link, so a case about how
+ * a decorator treats a token has to assert one exists before asking.
+ */
+function decoratorFor(
+  ...args: Parameters<typeof createImportLinkDecorator>
+): NonNullable<ReturnType<typeof createImportLinkDecorator>> {
+  const decorator = createImportLinkDecorator(...args);
+  if (decorator === null) {
+    throw new Error('expected these links to produce a decorator');
+  }
+  return decorator;
+}
+
 describe('createImportLinkDecorator request/response (INV-8, INV-16)', () => {
   it('returns undefined for a language the links do not describe (INV-8)', () => {
-    const decorator = createImportLinkDecorator(
-      gitModeRevision(FIXTURE_REV_A),
-      SAMPLE_IMPORT_LINKS
-    );
+    const decorator = decoratorFor(gitModeRevision(FIXTURE_REV_A), SAMPLE_IMPORT_LINKS);
 
     expect(
       decorator({
@@ -32,40 +43,28 @@ describe('createImportLinkDecorator request/response (INV-8, INV-16)', () => {
     ).toBeUndefined();
   });
 
-  it('returns undefined when revision is null (INV-8)', () => {
-    const decorator = createImportLinkDecorator(null, SAMPLE_IMPORT_LINKS);
-
-    expect(
-      decorator({
-        source: SAMPLE_USE_SOURCE,
-        language: SAMPLE_LANGUAGE,
-        token: { text: SAMPLE_USE_LEAF, offset: SAMPLE_USE_LEAF_OFFSET },
-      })
-    ).toBeUndefined();
+  it('produces no decorator when revision is null (INV-8)', () => {
+    expect(createImportLinkDecorator(null, SAMPLE_IMPORT_LINKS)).toBeNull();
   });
 
   /**
    * A target whose codegen package reports no import links gets no decorator at
    * all, which is what stops the preview from linking one ecosystem's
-   * identifiers in another ecosystem's generated code.
+   * identifiers in another ecosystem's generated code — and what keeps CodeView
+   * from calling a decorator per leaf on a file that has nothing to link.
    */
-  it('returns undefined when the package reports no import links (INV-8)', () => {
-    const decorator = createImportLinkDecorator(gitModeRevision(FIXTURE_REV_A), null);
-
+  it('produces no decorator when the package reports no import links (INV-8)', () => {
+    expect(createImportLinkDecorator(gitModeRevision(FIXTURE_REV_A), null)).toBeNull();
     expect(
-      decorator({
-        source: SAMPLE_USE_SOURCE,
-        language: SAMPLE_LANGUAGE,
-        token: { text: SAMPLE_USE_LEAF, offset: SAMPLE_USE_LEAF_OFFSET },
+      createImportLinkDecorator(gitModeRevision(FIXTURE_REV_A), {
+        ...SAMPLE_IMPORT_LINKS,
+        targets: [],
       })
-    ).toBeUndefined();
+    ).toBeNull();
   });
 
   it('skips identifier-like text outside an import line (INV-16)', () => {
-    const decorator = createImportLinkDecorator(
-      gitModeRevision(FIXTURE_REV_A),
-      SAMPLE_IMPORT_LINKS
-    );
+    const decorator = decoratorFor(gitModeRevision(FIXTURE_REV_A), SAMPLE_IMPORT_LINKS);
     const commentSource = '// stellar_access is mentioned here\n';
 
     expect(
@@ -79,10 +78,7 @@ describe('createImportLinkDecorator request/response (INV-8, INV-16)', () => {
   });
 
   it('links reported identifiers on an import line when revision is present (INV-16)', () => {
-    const decorator = createImportLinkDecorator(
-      gitModeRevision(FIXTURE_REV_A),
-      SAMPLE_IMPORT_LINKS
-    );
+    const decorator = decoratorFor(gitModeRevision(FIXTURE_REV_A), SAMPLE_IMPORT_LINKS);
 
     expect(
       hrefFromDecorator(decorator),
@@ -92,7 +88,7 @@ describe('createImportLinkDecorator request/response (INV-8, INV-16)', () => {
 
   it('applies whatever import syntax the package reports, not a fixed one', () => {
     const source = 'require pkg_thing;\nuse pkg_thing;\n';
-    const decorator = createImportLinkDecorator(gitModeRevision(FIXTURE_REV_A), {
+    const decorator = decoratorFor(gitModeRevision(FIXTURE_REV_A), {
       language: SAMPLE_LANGUAGE,
       importLinePrefix: 'require ',
       targets: [{ identifier: 'pkg_thing', path: 'src/thing' }],
@@ -115,22 +111,16 @@ describe('createImportLinkDecorator request/response (INV-8, INV-16)', () => {
 });
 
 describe('createImportLinkDecorator degrade modes (INV-3, INV-8)', () => {
-  it('plain-text degrade emits no anchor elements for local-path revision (INV-3, INV-8)', () => {
-    const decorator = createImportLinkDecorator(localPathRevision(), SAMPLE_IMPORT_LINKS, {
-      degradeMode: 'plain-text',
-    });
-
+  it('plain-text degrade produces no decorator for a local-path revision (INV-3, INV-8)', () => {
     expect(
-      decorator({
-        source: SAMPLE_USE_SOURCE,
-        language: SAMPLE_LANGUAGE,
-        token: { text: SAMPLE_USE_LEAF, offset: SAMPLE_USE_LEAF_OFFSET },
+      createImportLinkDecorator(localPathRevision(), SAMPLE_IMPORT_LINKS, {
+        degradeMode: 'plain-text',
       })
-    ).toBeUndefined();
+    ).toBeNull();
   });
 
   it('repo-root degrade links to normalized repoUrl without /tree/ (INV-3)', () => {
-    const decorator = createImportLinkDecorator(localPathRevision(), SAMPLE_IMPORT_LINKS);
+    const decorator = decoratorFor(localPathRevision(), SAMPLE_IMPORT_LINKS);
     const href = hrefFromDecorator(decorator);
 
     expect(href, 'INV-3: local-path degrade must not invent a commit-pinned URL').toBe(
@@ -142,10 +132,7 @@ describe('createImportLinkDecorator degrade modes (INV-3, INV-8)', () => {
 
 describe('createImportLinkDecorator source fidelity (INV-15)', () => {
   it('preserves the full leaf text when splitting into fragments (INV-15)', () => {
-    const decorator = createImportLinkDecorator(
-      gitModeRevision(FIXTURE_REV_A),
-      SAMPLE_IMPORT_LINKS
-    );
+    const decorator = decoratorFor(gitModeRevision(FIXTURE_REV_A), SAMPLE_IMPORT_LINKS);
 
     const node = decorator({
       source: SAMPLE_USE_SOURCE,

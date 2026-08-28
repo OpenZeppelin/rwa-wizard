@@ -65,18 +65,20 @@ export function memoizedPreviewLinks(
   links: StructuralUpstreamImportLinks | null = SAMPLE_IMPORT_LINKS
 ): {
   revision: StructuralUpstreamSourceRevision | null;
-  decorator: CodeViewTokenDecorator;
+  decorator: CodeViewTokenDecorator | null;
 } {
   return { revision, decorator: createImportLinkDecorator(revision, links) };
 }
 
 export function hrefFromDecorator(
-  decorator: CodeViewTokenDecorator,
+  decorator: CodeViewTokenDecorator | null,
   source: string = SAMPLE_USE_SOURCE,
   tokenText: string = SAMPLE_USE_LEAF,
   offset: number = SAMPLE_USE_LEAF_OFFSET
 ): string | undefined {
-  const node = decorator({
+  // A null factory result and a decorator that declines the token are the same
+  // outcome on screen: nothing linked.
+  const node = decorator?.({
     source,
     language: 'rust',
     token: { text: tokenText, offset },
@@ -91,12 +93,12 @@ export function hrefFromDecorator(
 }
 
 export function anchorCountFromDecorator(
-  decorator: CodeViewTokenDecorator,
+  decorator: CodeViewTokenDecorator | null,
   source: string = SAMPLE_USE_SOURCE,
   tokenText: string = SAMPLE_USE_LEAF,
   offset: number = SAMPLE_USE_LEAF_OFFSET
 ): number {
-  const node = decorator({
+  const node = decorator?.({
     source,
     language: 'rust',
     token: { text: tokenText, offset },

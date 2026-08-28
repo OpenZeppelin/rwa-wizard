@@ -49,7 +49,7 @@ function PreviewCodePaneImpl(props: PreviewCodePaneProps): ReactElement {
       <CodeView
         source={source}
         language={languageForPath(selectedPath)}
-        decorateToken={decorateToken}
+        decorateToken={decorateToken ?? undefined}
         aria-label={formatCopy(copy.notice('code-preview.source-label').description, {
           path: selectedPath,
         })}
