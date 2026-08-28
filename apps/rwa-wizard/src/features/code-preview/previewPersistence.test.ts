@@ -1,5 +1,3 @@
-import './code-preview.mocks';
-
 import { describe, expect, it } from 'vitest';
 
 import {

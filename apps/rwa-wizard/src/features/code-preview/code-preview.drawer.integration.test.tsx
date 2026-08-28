@@ -1,6 +1,4 @@
-import './code-preview.mocks';
-
-import { fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRef } from 'react';
 
@@ -104,10 +102,12 @@ describe('code-preview drawer composition', () => {
       />
     );
 
-    // The notice lives in the sheet's header slot, outside the scrolling body.
-    expect(screen.getByTestId('bottom-sheet-header')).toHaveTextContent(
-      /accessControl\.ownership\.ownerAddress/
-    );
+    // The notice lives in the sheet's real header slot, outside the scrolling
+    // body. Queried by the attribute the kit actually renders: the assertion
+    // used to name a `data-testid` only the local stand-in emitted, so it
+    // described the stand-in rather than the sheet the wizard ships.
+    const header = document.querySelector('[data-slot="bottom-sheet-header"]');
+    expect(header).toHaveTextContent(/accessControl\.ownership\.ownerAddress/);
     expect(screen.getByText(/accessControl\.ownership\.ownerAddress/)).toBeInTheDocument();
     expect(screen.getByText(/Invalid configuration/i)).toBeInTheDocument();
   });
@@ -212,44 +212,5 @@ describe('code-preview drawer composition', () => {
     const field = screen.getByTestId('wizard-input');
     field.focus();
     expect(document.activeElement).toBe(field);
-  });
-
-  it('keeps wizard field focus while the drawer is open (INV-13)', async () => {
-    const service = createTestCodegenService();
-    const base = defaultPreviewHookOptions({ codegenService: service, debounceMs: 0 });
-    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
-      initialProps: base,
-    });
-
-    const ready = await waitForPreviewReady(() => result.current);
-
-    render(
-      <>
-        <input data-testid="wizard-field" defaultValue="" />
-        <CodePreviewDrawer
-          open
-          onOpenChange={() => {}}
-          height={480}
-          onHeightChange={() => {}}
-          sheetId={result.current.sheetId}
-          phase={ready}
-          selectedPath={result.current.selectedPath}
-          onSelectedPathChange={() => {}}
-          files={ready.files}
-          changedPaths={ready.changedPaths}
-          substitutedKeys={ready.substitutedKeys}
-          errorMessages={undefined}
-          sourceRevision={null}
-          importLinks={null}
-        />
-      </>
-    );
-
-    const field = screen.getByTestId('wizard-field') as HTMLInputElement;
-    field.focus();
-    fireEvent.change(field, { target: { value: 'typed' } });
-
-    expect(document.activeElement).toBe(field);
-    expect(field).toHaveValue('typed');
   });
 });

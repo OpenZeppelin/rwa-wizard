@@ -171,3 +171,45 @@ describe('code preview focus restoration (INV-14)', () => {
     ).toBe(field);
   });
 });
+
+/**
+ * INV-13. The preview sheet is non-modal: the whole reason it is a region and
+ * not a dialog is that the user keeps editing the form underneath it while it
+ * is open. Only the real sheet can answer this, since what would break it —
+ * a focus trap, an inert background, a mount-time focus move — are behaviours
+ * a stand-in does not have and therefore cannot lose.
+ */
+describe('code preview non-modality (INV-13)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('never takes focus from the wizard form while the sheet is open', async () => {
+    render(
+      <>
+        <input data-testid="wizard-field" defaultValue="" />
+        <PreviewHost />
+      </>
+    );
+
+    const field = screen.getByTestId('wizard-field');
+    act(() => field.focus());
+
+    await openSheet();
+
+    // Opening must not pull focus into the sheet, and focusing the form back
+    // must not be undone by anything watching for focus leaving the sheet.
+    expect(document.activeElement, 'opening the sheet moved focus').toBe(field);
+
+    act(() => field.focus());
+    fireEvent.change(field, { target: { value: 'typed' } });
+
+    expect(document.activeElement).toBe(field);
+    expect(field).toHaveValue('typed');
+    expect(screen.getByRole('button', { name: CLOSE_LABEL })).toBeInTheDocument();
+  });
+});
