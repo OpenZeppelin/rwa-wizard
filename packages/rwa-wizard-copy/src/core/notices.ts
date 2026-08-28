@@ -106,6 +106,59 @@ export const NOTICES_COPY: ConceptDictionary = {
     title: 'Configured Admin',
     description: 'Admin address embedded in the generated deploy script.',
   },
+  'notice.code-preview.trigger-show': {
+    id: 'notice.code-preview.trigger-show',
+    description: 'View generated code',
+  },
+  'notice.code-preview.trigger-hide': {
+    id: 'notice.code-preview.trigger-hide',
+    description: 'Hide generated code',
+  },
+  'notice.code-preview.sheet-label': {
+    id: 'notice.code-preview.sheet-label',
+    description: 'Generated project preview',
+  },
+  'notice.code-preview.generating': {
+    id: 'notice.code-preview.generating',
+    description: 'Generating preview…',
+  },
+  'notice.code-preview.no-file-selected': {
+    id: 'notice.code-preview.no-file-selected',
+    description: 'Select a file to view its generated source.',
+  },
+  'notice.code-preview.substitutions': {
+    id: 'notice.code-preview.substitutions',
+    description: 'Preview placeholders (not in your draft):',
+  },
+  'notice.code-preview.render-failed': {
+    id: 'notice.code-preview.render-failed',
+    description:
+      'Preview could not render this content. Close and reopen the preview to try again.',
+  },
+  'notice.code-preview.generate-failed': {
+    id: 'notice.code-preview.generate-failed',
+    description: 'Preview generation failed. Check your configuration and try again.',
+  },
+  'notice.code-preview.tools-group': {
+    id: 'notice.code-preview.tools-group',
+    description: 'Preview layout',
+  },
+  'notice.code-preview.hide-file-tree': {
+    id: 'notice.code-preview.hide-file-tree',
+    description: 'Hide file tree',
+  },
+  'notice.code-preview.show-file-tree': {
+    id: 'notice.code-preview.show-file-tree',
+    description: 'Show file tree',
+  },
+  'notice.code-preview.maximize': {
+    id: 'notice.code-preview.maximize',
+    description: 'Maximize preview',
+  },
+  'notice.code-preview.restore-size': {
+    id: 'notice.code-preview.restore-size',
+    description: 'Restore preview size',
+  },
   'notice.review.demo-mint-compliance-blocked': {
     id: 'notice.review.demo-mint-compliance-blocked',
     title: 'Fix these before generating',
