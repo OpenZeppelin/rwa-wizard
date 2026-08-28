@@ -138,6 +138,42 @@ function readViewportHeight(): number {
   return typeof window !== 'undefined' ? window.innerHeight : 0;
 }
 
+/**
+ * Whether `node` is inside `container` in the composed tree — the tree the user
+ * sees — rather than in the light-DOM tree that `Node.contains` walks.
+ *
+ * `contains` stops at every shadow boundary, and the kit's file tree renders
+ * its rows inside an open shadow root, so a focused row is inside the sheet by
+ * every meaning a user has and outside it by `contains`. That gap is currently
+ * closed for us by someone else: `document.activeElement` is specified to
+ * retarget to the outermost host in the document tree, so the value this hook
+ * passes in has already been lifted out of the shadow tree. The walk is here so
+ * that the guard answers the question it means to ask instead of resting on a
+ * retargeting rule enforced elsewhere — the same question stays correct for a
+ * node taken from `shadowRoot.activeElement` or a `composedPath()`, where no
+ * retargeting applies.
+ *
+ * Closed shadow roots are deliberately unreachable from outside: `getRootNode`
+ * yields a root whose `host` is null, the walk ends, and "not inside" is the
+ * only answer available.
+ */
+function containsComposed(container: Element | null, node: Node | null): boolean {
+  if (container === null) {
+    return false;
+  }
+
+  let current: Node | null = node;
+  while (current !== null) {
+    if (container.contains(current)) {
+      return true;
+    }
+    const root = current.getRootNode();
+    current = root instanceof ShadowRoot ? root.host : null;
+  }
+
+  return false;
+}
+
 interface PreviewTickSuccess {
   readonly kind: 'success';
   readonly files: FileTree;
@@ -554,19 +590,19 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     }
 
     // The kit keeps the region mounted through its exit transition and never
-    // moves focus, so on the two closes that matter for keyboard users — the
-    // sheet's own Close button and Escape from inside — focus is still on an
-    // element within the sheet at this point, and only lands on `<body>` a
-    // couple of hundred milliseconds later when the region unmounts.
+    // moves focus, so at this point focus is still on whatever element inside
+    // the sheet the user closed from, and only lands on `<body>` a couple of
+    // hundred milliseconds later when the region unmounts.
     //
-    // So the question is not "is focus on `<body>`" but "is the focused element
-    // about to disappear". Focus inside the closing sheet, or already dropped
-    // to `<body>`, means restore to the trigger; focus anywhere else was moved
+    // The question is therefore not "is focus on `<body>`" but "is the focused
+    // element about to disappear" — and that has to be asked of the composed
+    // tree, the one the user sees, rather than of the light DOM. Focus doomed
+    // by the close means restore to the trigger; focus anywhere else was moved
     // there deliberately and stealing it back would be worse than the drop.
     const active = document.activeElement;
     const sheet = document.getElementById(sheetId);
     const focusIsDoomed =
-      active === null || active === document.body || (sheet?.contains(active) ?? false);
+      active === null || active === document.body || containsComposed(sheet, active);
 
     if (!focusIsDoomed) {
       return;

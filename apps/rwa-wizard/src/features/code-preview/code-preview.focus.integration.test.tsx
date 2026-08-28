@@ -14,12 +14,7 @@ import { defaultPreviewHookOptions } from '../../test/helpers/codePreviewHarness
 const CLOSE_LABEL = coreCopy.notice('code-preview.close').description;
 const TRIGGER_LABEL = coreCopy.notice('code-preview.trigger-show').description;
 
-/**
- * The trigger and the sheet wired together the way `WizardPage` wires them.
- * Deliberately without `./code-preview.mocks`: that file replaces the kit
- * barrel with a hand-written BottomSheet that has no close control, no Escape
- * handling and no exit transition — none of the paths under test here.
- */
+/** The trigger and the sheet wired together the way `WizardPage` wires them. */
 function PreviewHost(): ReactElement {
   // Built once: fresh option objects on every render would re-key the preview
   // effects and spin.
@@ -59,6 +54,22 @@ async function openSheet(): Promise<HTMLElement> {
   const trigger = screen.getByRole('button', { name: TRIGGER_LABEL });
   fireEvent.click(trigger);
   return waitFor(() => screen.getByRole('button', { name: CLOSE_LABEL }));
+}
+
+/** Focuses a file row inside the tree's shadow root and returns it. */
+function focusedFileTreeRow(region: HTMLElement): Element {
+  const host = Array.from(region.querySelectorAll('*')).find((el) => el.shadowRoot !== null);
+  if (host === undefined) {
+    throw new Error('expected the file tree to mount a shadow root inside the sheet');
+  }
+
+  const row = host.shadowRoot?.querySelector('[role="treeitem"]');
+  if (!(row instanceof HTMLElement)) {
+    throw new Error('expected a focusable row inside the file tree');
+  }
+
+  act(() => row.focus());
+  return row;
 }
 
 /**
@@ -107,6 +118,29 @@ describe('code preview focus restoration (INV-14)', () => {
     }
 
     act(() => closeButton.focus());
+    fireEvent.keyDown(region, { key: 'Escape' });
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByRole('button', { name: TRIGGER_LABEL }));
+    });
+  });
+
+  it('returns focus to the trigger when Escape closes it from inside the file tree', async () => {
+    render(<PreviewHost />);
+
+    const closeButton = await openSheet();
+    const region = closeButton.closest('[data-slot="bottom-sheet"]');
+    if (!(region instanceof HTMLElement)) {
+      throw new Error('expected the sheet region to be mounted');
+    }
+
+    // The file tree renders its rows behind an open shadow root, so this is the
+    // one place in the sheet where the focused node is not a light-DOM
+    // descendant of the region. Focus a row the way arrowing into the tree
+    // does, then close with Escape as the kit's region handler receives it.
+    const row = focusedFileTreeRow(region);
+    expect(row.getRootNode(), 'the row must be inside a shadow root').toBeInstanceOf(ShadowRoot);
+
     fireEvent.keyDown(region, { key: 'Escape' });
 
     await waitFor(() => {
