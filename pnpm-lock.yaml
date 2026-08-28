@@ -64,8 +64,8 @@ importers:
         specifier: 4.5.1
         version: 4.5.1(prettier@3.8.5)
       '@openzeppelin/ui-dev-cli':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/openzeppelin-ui/packages/dev-cli
-        version: file:../openzeppelin-ui/packages/dev-cli
+        specifier: ^1.3.0
+        version: 1.3.0
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.1.18
@@ -166,11 +166,11 @@ importers:
   apps/rwa-wizard:
     dependencies:
       '@openzeppelin/adapter-evm':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/adapters/openzeppelin-adapter-evm-5.0.0.tgz
-        version: file:.packed-packages/local-dev/adapters/openzeppelin-adapter-evm-5.0.0.tgz(d306b4fe4c8bcb7af00064b295a6501b)
+        specifier: '>=5.0.0-0 <6.0.0'
+        version: 5.0.0(d381d5b311583745393a2535482c9469)
       '@openzeppelin/adapter-stellar':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/adapters/openzeppelin-adapter-stellar-4.0.1.tgz
-        version: file:.packed-packages/local-dev/adapters/openzeppelin-adapter-stellar-4.0.1.tgz(@openzeppelin/ui-components@file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3))(@openzeppelin/ui-types@file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz)(@openzeppelin/ui-utils@file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz)(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: '>=4.0.1-0 <5.0.0'
+        version: 4.0.1(@openzeppelin/ui-components@3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3))(@openzeppelin/ui-types@3.5.2)(@openzeppelin/ui-utils@4.0.1)(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@openzeppelin/codegen-core':
         specifier: workspace:*
         version: link:../../packages/codegen-core
@@ -187,26 +187,26 @@ importers:
         specifier: workspace:*
         version: link:../../packages/rwa-wizard-copy
       '@openzeppelin/ui-components':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz
-        version: file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+        specifier: ^3.8.3
+        version: 3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
       '@openzeppelin/ui-react':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/ui/openzeppelin-ui-react-3.3.2.tgz
-        version: file:.packed-packages/local-dev/ui/openzeppelin-ui-react-3.3.2.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+        specifier: ^3.3.2
+        version: 3.3.2(@babel/runtime@7.29.7)(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
       '@openzeppelin/ui-renderer':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/ui/openzeppelin-ui-renderer-3.4.2.tgz
-        version: file:.packed-packages/local-dev/ui/openzeppelin-ui-renderer-3.4.2.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+        specifier: ^3.4.2
+        version: 3.4.2(@babel/runtime@7.29.7)(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
       '@openzeppelin/ui-storage':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/ui/openzeppelin-ui-storage-1.2.5.tgz
-        version: file:.packed-packages/local-dev/ui/openzeppelin-ui-storage-1.2.5.tgz(@types/react@19.2.8)(react@19.2.7)
+        specifier: ^1.2.5
+        version: 1.2.5(@types/react@19.2.8)(react@19.2.7)
       '@openzeppelin/ui-styles':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/ui/openzeppelin-ui-styles-1.1.1.tgz
-        version: file:.packed-packages/local-dev/ui/openzeppelin-ui-styles-1.1.1.tgz
+        specifier: ^1.1.1
+        version: 1.1.1
       '@openzeppelin/ui-types':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-        version: file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
+        specifier: ^3.5.2
+        version: 3.5.2
       '@openzeppelin/ui-utils':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
-        version: file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
+        specifier: ^4.0.1
+        version: 4.0.1
       '@pierre/trees':
         specifier: 1.0.0-beta.6
         version: 1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -284,8 +284,8 @@ importers:
   packages/codegen-rwa-stellar:
     dependencies:
       '@openzeppelin/adapter-stellar':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/adapters/openzeppelin-adapter-stellar-4.0.1.tgz
-        version: file:.packed-packages/local-dev/adapters/openzeppelin-adapter-stellar-4.0.1.tgz(@openzeppelin/ui-components@3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3))(@openzeppelin/ui-types@file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz)(@openzeppelin/ui-utils@4.0.1)(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)
+        specifier: '>=4.0.1-0 <5.0.0'
+        version: 4.0.1(@openzeppelin/ui-components@3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3))(@openzeppelin/ui-types@3.5.2)(@openzeppelin/ui-utils@4.0.1)(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@openzeppelin/codegen-core':
         specifier: workspace:*
         version: link:../codegen-core
@@ -296,8 +296,8 @@ importers:
         specifier: workspace:*
         version: link:../config
       '@openzeppelin/ui-types':
-        specifier: file:/Users/ghost/dev/repos/OpenZeppelin/rwa-wizard/.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-        version: file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
+        specifier: ^3.5.2
+        version: 3.5.2
       i18n-iso-countries:
         specifier: ^7.14.0
         version: 7.14.0
@@ -1197,9 +1197,8 @@ packages:
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
 
-  '@openzeppelin/adapter-evm@file:.packed-packages/local-dev/adapters/openzeppelin-adapter-evm-5.0.0.tgz':
-    resolution: {integrity: sha512-ipeMqTOz2OK2dW/TawXveZXRsz8U0+2T5MJbbS/cvV3UUNBqPBbTarJ5ew2TvjWvinIO/cTVrlEp/cs9F8d/VA==, tarball: file:.packed-packages/local-dev/adapters/openzeppelin-adapter-evm-5.0.0.tgz}
-    version: 5.0.0
+  '@openzeppelin/adapter-evm@5.0.0':
+    resolution: {integrity: sha512-/78k0Ev4MoEYgZHGAelxtaKOgEAwCOoLNXu8L02k+zGowPC2yDIm6dHJWRgeJHJGTdcCxbmg+jGZPaEtIWM21g==}
     peerDependencies:
       '@openzeppelin/ui-components': ^2.0.0
       '@openzeppelin/ui-react': ^2.0.1
@@ -1213,9 +1212,8 @@ packages:
       viem: ^2.35.0
       wagmi: ^2.15.0
 
-  '@openzeppelin/adapter-stellar@file:.packed-packages/local-dev/adapters/openzeppelin-adapter-stellar-4.0.1.tgz':
-    resolution: {integrity: sha512-l+088nywLm1HGceNKRF5jrBf2OBgRg5p7+KjOYB4f1blp9qiQBd6ZJ1uCJN6z47Jd5ThrwxsM1O81bkCFLGwBg==, tarball: file:.packed-packages/local-dev/adapters/openzeppelin-adapter-stellar-4.0.1.tgz}
-    version: 4.0.1
+  '@openzeppelin/adapter-stellar@4.0.1':
+    resolution: {integrity: sha512-fBg96i5rk//35BwBGJFYvf/2OCee+OM3rwkquwXo9bCMRHq3OPaWizH+91R/zBoS934xJ7utXXaHLUhyPVgYSw==}
     peerDependencies:
       '@openzeppelin/ui-components': ^2.0.0
       '@openzeppelin/ui-types': ^3.2.0
@@ -1234,62 +1232,42 @@ packages:
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@openzeppelin/ui-components@file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz':
-    resolution: {integrity: sha512-k2iCugrcIxAiS5nwfnTKggP+v+uCw8bMwxvuMEUHirBOyYZZMesfQBgP50okP6s33dM5agUXi7EYlsMP8LPvCg==, tarball: file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz}
-    version: 3.8.3
-    peerDependencies:
-      '@pierre/trees': 1.0.0-beta.6
-      react: ^19.0.0
-      react-dom: ^19.0.0
-    peerDependenciesMeta:
-      '@pierre/trees':
-        optional: true
-
-  '@openzeppelin/ui-dev-cli@file:../openzeppelin-ui/packages/dev-cli':
-    resolution: {directory: ../openzeppelin-ui/packages/dev-cli, type: directory}
+  '@openzeppelin/ui-dev-cli@1.3.0':
+    resolution: {integrity: sha512-Q1BldxQ7wE6g+oDZ19USnnPfQlx0G7pLlPBHLNCE05Co7qZRbiC3gPQqHfgC1wCPBtAgd6nB3G4/IjFylVN66g==}
     engines: {node: '>=22.13.0'}
     hasBin: true
 
-  '@openzeppelin/ui-react@file:.packed-packages/local-dev/ui/openzeppelin-ui-react-3.3.2.tgz':
-    resolution: {integrity: sha512-gnJOj/YW0B7MQBId8/iftLSIGJLzLIeJqpVhJMCLEf/cSkCRCS5cjZgWpa4e83gTvkL7/htehh7qwK+KnMcA3g==, tarball: file:.packed-packages/local-dev/ui/openzeppelin-ui-react-3.3.2.tgz}
-    version: 3.3.2
+  '@openzeppelin/ui-react@3.3.2':
+    resolution: {integrity: sha512-YjCMw3tMRaHv6IE9yIIKMT8NbmzEy7J1ZEGzrdQ3irWz7yheh3YFmPBBISuwDyrCmBT9CgH4t7FRXddQapfCvw==}
     peerDependencies:
       '@tanstack/react-query': ^5.0.0
       react: ^19.0.0
       react-dom: ^19.0.0
 
-  '@openzeppelin/ui-renderer@file:.packed-packages/local-dev/ui/openzeppelin-ui-renderer-3.4.2.tgz':
-    resolution: {integrity: sha512-3pjby0/NDkXP9itZ4efQhb/nngb83k0BWm6WUJ4Fha5AhvajzOebyWfrRxeaSlpulGVpgn9FPB8uQXzUS4qVzA==, tarball: file:.packed-packages/local-dev/ui/openzeppelin-ui-renderer-3.4.2.tgz}
-    version: 3.4.2
+  '@openzeppelin/ui-renderer@3.4.2':
+    resolution: {integrity: sha512-Rj8eqJq94uhCxEkT1Y9p1WbgDL8o6O5t352/51EQ4/IziqyU19VXlyKywnFkbmec/5bYb4tV+4nSgqv2nhQ96g==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
       react-hook-form: ^7.0.0
 
-  '@openzeppelin/ui-storage@file:.packed-packages/local-dev/ui/openzeppelin-ui-storage-1.2.5.tgz':
-    resolution: {integrity: sha512-oQYf8j3Kr7JT3EeFhHZdYP3jZ/MA/sWtsQQ3gPFukPud7GKrHFt1VJ5chJw2TRcwxVnJfMEacKFoYibQhJ3qkA==, tarball: file:.packed-packages/local-dev/ui/openzeppelin-ui-storage-1.2.5.tgz}
-    version: 1.2.5
+  '@openzeppelin/ui-storage@1.2.5':
+    resolution: {integrity: sha512-FpLchogsZIW95rD3mdvbuhuvk7czrC7spjLOl8iMR3aZb/TDw6+8xEA/kH4qqIf/DvfWhl4qa1EaWxWCn7ILkg==}
     peerDependencies:
       react: ^19.0.0
 
-  '@openzeppelin/ui-styles@file:.packed-packages/local-dev/ui/openzeppelin-ui-styles-1.1.1.tgz':
-    resolution: {integrity: sha512-C6PT9OXbeqfK243UCx9mf1dmKGINCOplaRJ3Xf9vVRBjs7NYxSA1BbM30kgIw7KIxID6AtM1aKnsNMoaiNe1MQ==, tarball: file:.packed-packages/local-dev/ui/openzeppelin-ui-styles-1.1.1.tgz}
-    version: 1.1.1
+  '@openzeppelin/ui-styles@1.1.1':
+    resolution: {integrity: sha512-WCFXsXdNaPOfIxYUzFMOrO0H+gDL51yXAFU2/W0srSHlm1/aOrKg3SLxX1RIPslvmJ09/W0gEl/rNpc8znEDmA==}
 
-  '@openzeppelin/ui-tailwind-utils@file:../openzeppelin-ui/packages/tailwind-utils':
-    resolution: {directory: ../openzeppelin-ui/packages/tailwind-utils, type: directory}
+  '@openzeppelin/ui-tailwind-utils@1.0.1':
+    resolution: {integrity: sha512-AAM64QJ0ihj/DMBE0SLYLnkiVQx6NuDdgb7cewfWVU1ZqrmNvnrfLpDwTQ6NHqtIO7VO3y89SgVPYWBdJpyCBQ==}
     engines: {node: '>=22.13.0'}
 
-  '@openzeppelin/ui-types@file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz':
-    resolution: {integrity: sha512-jpd02v3dyqtjpaMbaE7aHWQC3juvVdEt61+jHAIVaIM+vphBg52FvUfvonwnegFmJ36c91TSIQoJhAaCn9bOTQ==, tarball: file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz}
-    version: 3.5.2
+  '@openzeppelin/ui-types@3.5.2':
+    resolution: {integrity: sha512-4fVfhHlzwK6MzpAGws3XJVQ5ynQRXIlJmrJdWU/Num88roe2rZ+9h7a9AM884i0BcEr0I1XPaxFuRKrj3l3qyg==}
 
   '@openzeppelin/ui-utils@4.0.1':
     resolution: {integrity: sha512-EHw2q4ZD2hE+vbpDsmY3AV6Kb88yFHviAHlKiLxPS/cJboawtGPoexIwGE90f6uKhUmcGjax53GQTmPDnjWJxg==}
-
-  '@openzeppelin/ui-utils@file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz':
-    resolution: {integrity: sha512-QIB13JZiaZmOsHyNYm8KzAmC7e3wqxJx0CFY/096+IJe2B1PRCcLxprJfqFTu/GBSZQaIssYUPrQ4hcXqvWRGA==, tarball: file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz}
-    version: 4.0.1
 
   '@oxc-project/types@0.107.0':
     resolution: {integrity: sha512-QFDRbYfV2LVx8tyqtyiah3jQPUj1mK2+RYwxyFWyGoys6XJnwTdlzO6rdNNHOPorHAu5Uo34oWRKcvNpbJarmQ==}
@@ -4459,14 +4437,6 @@ packages:
   hastscript@9.0.1:
     resolution: {integrity: sha512-g7df9rMFX/SPi34tyGCyUBREQoKkapwdY/T04Qn9TDWfHhAYt4/I0gMVirzK5wEzeUqIjEB+LXC/ypb7Aqno5w==}
 
-  highlight.js@11.11.2:
-    resolution: {integrity: sha512-oaXMACAU0kzOMXBjWpNcX+vlwSBCIAiZ9BHa7gA15NOTtT2L/l8OSZDuqS2XppOhZBPJ7hm4o8ep2kyuip2uEQ==}
-    engines: {node: '>=12.0.0'}
-
-  highlight.js@11.12.0:
-    resolution: {integrity: sha512-nbfWpyRMcMrPMmDwJB+dhX/eiaPKtc2RB+0QZskqJ3WjRA/FDS0e9hZrx8EC/lbEv8gXy98FcDbNa/dspAaJMg==}
-    engines: {node: '>=12.0.0'}
-
   hmac-drbg@1.0.1:
     resolution: {integrity: sha512-Tti3gMqLdZfhOQY1Mzf/AanLiqh1WTiJgEj26ZuYQ9fbkLomzGchCws4FyrSd4VkpBfiNhaE1On+lOz894jvXg==}
 
@@ -5096,9 +5066,6 @@ packages:
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
-
-  lowlight@3.3.0:
-    resolution: {integrity: sha512-0JNhgFoPvP6U6lE/UdVsSq99tn6DhjjpAj5MxG49ewd2mOBVtwWYIT8ClyABhq198aXXODMU6Ox8DrGy/CpTZQ==}
 
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
@@ -8144,13 +8111,13 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@openzeppelin/adapter-evm@file:.packed-packages/local-dev/adapters/openzeppelin-adapter-evm-5.0.0.tgz(d306b4fe4c8bcb7af00064b295a6501b)':
+  '@openzeppelin/adapter-evm@5.0.0(d381d5b311583745393a2535482c9469)':
     dependencies:
       '@openzeppelin/relayer-sdk': 1.9.0
-      '@openzeppelin/ui-components': file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
-      '@openzeppelin/ui-react': file:.packed-packages/local-dev/ui/openzeppelin-ui-react-3.3.2.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-      '@openzeppelin/ui-utils': file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
+      '@openzeppelin/ui-components': 3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+      '@openzeppelin/ui-react': 3.3.2(@babel/runtime@7.29.7)(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+      '@openzeppelin/ui-types': 3.5.2
+      '@openzeppelin/ui-utils': 4.0.1
       '@rainbow-me/rainbowkit': 2.2.10(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(viem@2.48.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76))(wagmi@2.19.5(@tanstack/query-core@5.90.16)(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react@19.2.8)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(preact-render-to-string@6.6.5(preact@11.0.0-beta.0))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)(viem@2.48.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76))
       '@tanstack/react-query': 5.90.16(react@19.2.7)
       '@wagmi/connectors': 5.7.13(@wagmi/core@2.22.1(@tanstack/query-core@5.90.16)(@types/react@19.2.8)(react@19.2.7)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.7))(viem@2.48.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)))(bufferutil@4.1.0)(preact-render-to-string@6.6.5(preact@11.0.0-beta.0))(typescript@5.9.3)(utf-8-validate@5.0.10)(viem@2.48.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76)
@@ -8176,12 +8143,12 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@openzeppelin/adapter-stellar@file:.packed-packages/local-dev/adapters/openzeppelin-adapter-stellar-4.0.1.tgz(@openzeppelin/ui-components@3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3))(@openzeppelin/ui-types@file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz)(@openzeppelin/ui-utils@4.0.1)(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@openzeppelin/adapter-stellar@4.0.1(@openzeppelin/ui-components@3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3))(@openzeppelin/ui-types@3.5.2)(@openzeppelin/ui-utils@4.0.1)(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@creit.tech/stellar-wallets-kit': 1.9.5(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@openzeppelin/relayer-sdk': 1.9.0
       '@openzeppelin/ui-components': 3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3)
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
+      '@openzeppelin/ui-types': 3.5.2
       '@openzeppelin/ui-utils': 4.0.1
       '@stellar/stellar-sdk': 14.4.3
       '@stellar/stellar-xdr-json': 23.0.0
@@ -8202,13 +8169,13 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@openzeppelin/adapter-stellar@file:.packed-packages/local-dev/adapters/openzeppelin-adapter-stellar-4.0.1.tgz(@openzeppelin/ui-components@file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3))(@openzeppelin/ui-types@file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz)(@openzeppelin/ui-utils@file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz)(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)':
+  '@openzeppelin/adapter-stellar@4.0.1(@openzeppelin/ui-components@3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3))(@openzeppelin/ui-types@3.5.2)(@openzeppelin/ui-utils@4.0.1)(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@creit.tech/stellar-wallets-kit': 1.9.5(@stellar/stellar-base@14.0.4)(bufferutil@4.1.0)(near-api-js@5.1.1)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@openzeppelin/relayer-sdk': 1.9.0
-      '@openzeppelin/ui-components': file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-      '@openzeppelin/ui-utils': file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
+      '@openzeppelin/ui-components': 3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+      '@openzeppelin/ui-types': 3.5.2
+      '@openzeppelin/ui-utils': 4.0.1
       '@stellar/stellar-sdk': 14.4.3
       '@stellar/stellar-xdr-json': 23.0.0
       '@web3icons/react': 4.1.17(react@19.2.7)(typescript@5.9.3)
@@ -8237,8 +8204,8 @@ snapshots:
 
   '@openzeppelin/ui-components@3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@3.4.19(yaml@2.8.2))(typescript@5.9.3)':
     dependencies:
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-      '@openzeppelin/ui-utils': file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
+      '@openzeppelin/ui-types': 3.5.2
+      '@openzeppelin/ui-utils': 4.0.1
       '@radix-ui/react-accordion': 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-checkbox': 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-collapsible': 1.1.12(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -8275,10 +8242,10 @@ snapshots:
       - tailwindcss
       - typescript
 
-  '@openzeppelin/ui-components@file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)':
+  '@openzeppelin/ui-components@3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)':
     dependencies:
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-      '@openzeppelin/ui-utils': file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
+      '@openzeppelin/ui-types': 3.5.2
+      '@openzeppelin/ui-utils': 4.0.1
       '@radix-ui/react-accordion': 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-checkbox': 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-collapsible': 1.1.12(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -8298,9 +8265,7 @@ snapshots:
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       date-fns: 4.4.0
-      highlight.js: 11.12.0
       lodash: 4.18.1
-      lowlight: 3.3.0
       lucide-react: 0.510.0(react@19.2.7)
       next-themes: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react: 19.2.7
@@ -8310,8 +8275,6 @@ snapshots:
       sonner: 2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       tailwind-merge: 3.5.0
       tailwindcss-animate: 1.0.7(tailwindcss@4.1.18)
-    optionalDependencies:
-      '@pierre/trees': 1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     transitivePeerDependencies:
       - '@babel/runtime'
       - '@types/react'
@@ -8319,37 +8282,36 @@ snapshots:
       - tailwindcss
       - typescript
 
-  '@openzeppelin/ui-dev-cli@file:../openzeppelin-ui/packages/dev-cli':
+  '@openzeppelin/ui-dev-cli@1.3.0':
     dependencies:
       '@clack/prompts': 0.10.1
-      '@openzeppelin/ui-tailwind-utils': file:../openzeppelin-ui/packages/tailwind-utils
+      '@openzeppelin/ui-tailwind-utils': 1.0.1
       commander: 13.1.0
       picocolors: 1.1.1
 
-  '@openzeppelin/ui-react@file:.packed-packages/local-dev/ui/openzeppelin-ui-react-3.3.2.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)':
+  '@openzeppelin/ui-react@3.3.2(@babel/runtime@7.29.7)(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)':
     dependencies:
-      '@openzeppelin/ui-components': file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-      '@openzeppelin/ui-utils': file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
+      '@openzeppelin/ui-components': 3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+      '@openzeppelin/ui-types': 3.5.2
+      '@openzeppelin/ui-utils': 4.0.1
       '@tanstack/react-query': 5.90.16(react@19.2.7)
       lucide-react: 0.510.0(react@19.2.7)
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
     transitivePeerDependencies:
       - '@babel/runtime'
-      - '@pierre/trees'
       - '@types/react'
       - '@types/react-dom'
       - tailwindcss
       - typescript
 
-  '@openzeppelin/ui-renderer@file:.packed-packages/local-dev/ui/openzeppelin-ui-renderer-3.4.2.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)':
+  '@openzeppelin/ui-renderer@3.4.2(@babel/runtime@7.29.7)(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.79.0(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)':
     dependencies:
       '@hookform/resolvers': 4.1.3(react-hook-form@7.79.0(react@19.2.7))
-      '@openzeppelin/ui-components': file:.packed-packages/local-dev/ui/openzeppelin-ui-components-3.8.3.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
-      '@openzeppelin/ui-react': file:.packed-packages/local-dev/ui/openzeppelin-ui-react-3.3.2.tgz(@babel/runtime@7.29.7)(@pierre/trees@1.0.0-beta.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-      '@openzeppelin/ui-utils': file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
+      '@openzeppelin/ui-components': 3.8.3(@babel/runtime@7.29.7)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+      '@openzeppelin/ui-react': 3.3.2(@babel/runtime@7.29.7)(@tanstack/react-query@5.90.16(react@19.2.7))(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(tailwindcss@4.1.18)(typescript@5.9.3)
+      '@openzeppelin/ui-types': 3.5.2
+      '@openzeppelin/ui-utils': 4.0.1
       '@radix-ui/react-checkbox': 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-label': 2.1.8(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@radix-ui/react-progress': 1.1.8(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -8363,40 +8325,31 @@ snapshots:
       tailwind-merge: 3.5.0
     transitivePeerDependencies:
       - '@babel/runtime'
-      - '@pierre/trees'
       - '@tanstack/react-query'
       - '@types/react'
       - '@types/react-dom'
       - tailwindcss
       - typescript
 
-  '@openzeppelin/ui-storage@file:.packed-packages/local-dev/ui/openzeppelin-ui-storage-1.2.5.tgz(@types/react@19.2.8)(react@19.2.7)':
+  '@openzeppelin/ui-storage@1.2.5(@types/react@19.2.8)(react@19.2.7)':
     dependencies:
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-      '@openzeppelin/ui-utils': file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz
+      '@openzeppelin/ui-types': 3.5.2
+      '@openzeppelin/ui-utils': 4.0.1
       dexie: 4.2.1
       dexie-react-hooks: 1.1.7(@types/react@19.2.8)(dexie@4.2.1)(react@19.2.7)
       react: 19.2.7
     transitivePeerDependencies:
       - '@types/react'
 
-  '@openzeppelin/ui-styles@file:.packed-packages/local-dev/ui/openzeppelin-ui-styles-1.1.1.tgz': {}
+  '@openzeppelin/ui-styles@1.1.1': {}
 
-  '@openzeppelin/ui-tailwind-utils@file:../openzeppelin-ui/packages/tailwind-utils': {}
+  '@openzeppelin/ui-tailwind-utils@1.0.1': {}
 
-  '@openzeppelin/ui-types@file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz': {}
+  '@openzeppelin/ui-types@3.5.2': {}
 
   '@openzeppelin/ui-utils@4.0.1':
     dependencies:
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
-      clsx: 2.1.1
-      tailwind-merge: 3.5.0
-      uuid: 14.0.0
-      validator: 13.15.26
-
-  '@openzeppelin/ui-utils@file:.packed-packages/local-dev/ui/openzeppelin-ui-utils-4.0.1.tgz':
-    dependencies:
-      '@openzeppelin/ui-types': file:.packed-packages/local-dev/ui/openzeppelin-ui-types-3.5.2.tgz
+      '@openzeppelin/ui-types': 3.5.2
       clsx: 2.1.1
       tailwind-merge: 3.5.0
       uuid: 14.0.0
@@ -11845,10 +11798,6 @@ snapshots:
       property-information: 7.1.0
       space-separated-tokens: 2.0.2
 
-  highlight.js@11.11.2: {}
-
-  highlight.js@11.12.0: {}
-
   hmac-drbg@1.0.1:
     dependencies:
       hash.js: 1.1.7
@@ -12461,12 +12410,6 @@ snapshots:
   lossless-json@4.3.0: {}
 
   loupe@3.2.1: {}
-
-  lowlight@3.3.0:
-    dependencies:
-      '@types/hast': 3.0.4
-      devlop: 1.1.0
-      highlight.js: 11.11.2
 
   lru-cache@10.4.3: {}
 
