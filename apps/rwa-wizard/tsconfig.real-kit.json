@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "tsBuildInfoFile": null
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/openzeppelin-ui-bottom-sheet.d.ts",
+    "src/openzeppelin-ui-preview-subpaths.d.ts"
+  ]
+}
