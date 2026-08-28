@@ -355,6 +355,31 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('keeps the maximized height on the window as the window grows', async () => {
+    const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+    await waitForPreviewReady(() => result.current);
+
+    act(() => {
+      result.current.layout.onToggleMaximize();
+    });
+    expect(result.current.persistence.height).toBe(window.innerHeight);
+
+    const taller = window.innerHeight + 240;
+    act(() => {
+      window.innerHeight = taller;
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    expect(
+      result.current.persistence.height,
+      'maximized means as tall as the window, not as tall as the window once was'
+    ).toBe(taller);
+    expect(result.current.layout.maximized).toBe(true);
+  });
+
   it('maximize uses the viewport height, keeps the stored height, and restores it', async () => {
     const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
     const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {

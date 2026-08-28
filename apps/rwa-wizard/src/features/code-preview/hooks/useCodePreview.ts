@@ -115,6 +115,10 @@ function serviceIdentity(service: RwaCodegenService | null): string {
   return identity;
 }
 
+function readViewportHeight(): number {
+  return typeof window !== 'undefined' ? window.innerHeight : 0;
+}
+
 interface PreviewTickSuccess {
   readonly kind: 'success';
   readonly files: FileTree;
@@ -188,15 +192,34 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
   } = useCodePreviewPersistence();
   const [maximized, setMaximized] = useState(false);
 
-  const viewportHeight = (): number => (typeof window !== 'undefined' ? window.innerHeight : 0);
-  const height = maximized ? viewportHeight() : storedHeight;
+  const [viewportHeight, setViewportHeight] = useState(readViewportHeight);
+
+  // Maximized means "as tall as the window", so the height has to track the
+  // window rather than the value captured when maximize was pressed. The kit
+  // only clamps on resize, and a taller window leaves the old value legal, so
+  // without this the sheet stayed short while still claiming to be maximized
+  // and the inset variable held a stale value.
+  useEffect(() => {
+    if (!maximized || typeof window === 'undefined') {
+      return;
+    }
+
+    const syncViewport = (): void => setViewportHeight(readViewportHeight());
+    syncViewport(); // the window may have changed size before maximize
+    window.addEventListener('resize', syncViewport);
+    return () => window.removeEventListener('resize', syncViewport);
+  }, [maximized]);
+
+  const height = maximized ? viewportHeight : storedHeight;
 
   const setHeight = useCallback(
     (next: number) => {
       // A user-driven resize below the viewport ends maximize; the stored height then
       // tracks the drag as usual. A clamp report equal to the viewport keeps it.
+      // Read the window here rather than the state above: a clamp report and the
+      // resize listener answer the same event, in no guaranteed order.
       if (maximized) {
-        if (next >= viewportHeight()) {
+        if (next >= readViewportHeight()) {
           return;
         }
         setMaximized(false);
