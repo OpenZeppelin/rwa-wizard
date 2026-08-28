@@ -276,30 +276,9 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     localStorage.removeItem(CODE_PREVIEW_OPEN_STORAGE_KEY);
   });
 
-  it('returns focus to the trigger when the drawer closes (INV-14)', async () => {
-    const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
-    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
-      initialProps: base,
-    });
-    await waitForPreviewReady(() => result.current);
-
-    const trigger = document.createElement('button');
-    document.body.append(trigger);
-    result.current.triggerProps.ref.current = trigger;
-
-    act(() => {
-      result.current.setOpen(true);
-    });
-
-    // The sheet unmounts on close and the kit leaves focus on `<body>`.
-    act(() => {
-      (document.activeElement as HTMLElement | null)?.blur();
-      result.current.setOpen(false);
-    });
-
-    expect(document.activeElement).toBe(trigger);
-    trigger.remove();
-  });
+  // Focus restoration is covered by code-preview.focus-restore.integration.test.tsx,
+  // which closes the real sheet. Staging the condition here with a manual blur
+  // passed for the wrong reason: the real close paths never produce it.
 
   it('baselines on the first success when the step-entry generate failed (INV-7)', async () => {
     // The baseline had exactly one writer — the step-entry generate — and it is

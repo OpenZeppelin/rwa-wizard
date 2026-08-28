@@ -511,19 +511,27 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
       return;
     }
 
-    // The sheet unmounts on close — via the trigger, the header button, or
-    // Escape — and the kit deliberately does not move focus, leaving it on
-    // `<body>`. Restore it to the trigger, which owns `aria-controls`.
-    // Skip when something else already holds focus: the close may have come
-    // from an interaction that legitimately moved focus elsewhere, and stealing
-    // it back would be worse than the drop.
+    // The kit keeps the region mounted through its exit transition and never
+    // moves focus, so on the two closes that matter for keyboard users — the
+    // sheet's own Close button and Escape from inside — focus is still on an
+    // element within the sheet at this point, and only lands on `<body>` a
+    // couple of hundred milliseconds later when the region unmounts.
+    //
+    // So the question is not "is focus on `<body>`" but "is the focused element
+    // about to disappear". Focus inside the closing sheet, or already dropped
+    // to `<body>`, means restore to the trigger; focus anywhere else was moved
+    // there deliberately and stealing it back would be worse than the drop.
     const active = document.activeElement;
-    if (active !== null && active !== document.body) {
+    const sheet = document.getElementById(sheetId);
+    const focusIsDoomed =
+      active === null || active === document.body || (sheet?.contains(active) ?? false);
+
+    if (!focusIsDoomed) {
       return;
     }
 
     triggerRef.current?.focus();
-  }, [open]);
+  }, [open, sheetId]);
 
   return {
     persistence: { open, height },
