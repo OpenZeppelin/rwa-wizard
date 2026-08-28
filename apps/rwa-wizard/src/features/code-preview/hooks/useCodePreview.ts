@@ -269,11 +269,7 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
   );
 
   const runPreviewTick = useCallback(
-    async (
-      config: RWAConfig,
-      requestId: number,
-      options: { isStepEntry: boolean }
-    ): Promise<PreviewTickResult> => {
+    async (config: RWAConfig, requestId: number): Promise<PreviewTickResult> => {
       if (!codegenService) {
         return {
           kind: 'error',
@@ -325,9 +321,12 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
       lastGenerateKeyRef.current = generateKey;
       cachedFilesRef.current = files;
 
-      if (options.isStepEntry) {
-        stepSnapshotRef.current = createStepFileTreeSnapshot(files, generateKey); // INV-7
-      }
+      // The first success on a step is the baseline, whichever effect produced
+      // it. Writing it only from the step-entry path left the step with no
+      // baseline for its whole lifetime whenever the entry generate errored or
+      // was discarded by a concurrent tick — and a null baseline reports no
+      // marks at all. INV-7
+      stepSnapshotRef.current ??= createStepFileTreeSnapshot(files, generateKey);
 
       const changedPaths = listChangedPaths(stepSnapshotRef.current, files, generateKey); // INV-10
 
@@ -396,9 +395,7 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     setPhase((prev) => (prev.kind === 'ready' ? prev : { kind: 'loading' }));
 
     void (async () => {
-      const result = await runPreviewTickRef.current(draftConfigRef.current, requestId, {
-        isStepEntry: true,
-      });
+      const result = await runPreviewTickRef.current(draftConfigRef.current, requestId);
 
       if (requestId !== requestIdRef.current) {
         return;
@@ -451,7 +448,7 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     });
 
     void (async () => {
-      const result = await runPreviewTick(debouncedConfig, requestId, { isStepEntry: false });
+      const result = await runPreviewTick(debouncedConfig, requestId);
 
       if (requestId !== requestIdRef.current) {
         return;

@@ -301,6 +301,60 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     trigger.remove();
   });
 
+  it('baselines on the first success when the step-entry generate failed (INV-7)', async () => {
+    // The baseline had exactly one writer — the step-entry generate — and it is
+    // never retried. When that generate errored, the step kept a null snapshot
+    // for its whole lifetime, and a null snapshot reports no marks at all, so
+    // every later edit on that step went unmarked.
+    let shouldFail = true;
+    const base = createTestCodegenService();
+    const service: RwaCodegenService = {
+      ...base,
+      async generateFileTree(config: RWAConfig, generateOptions) {
+        if (shouldFail) {
+          throw new Error('entry generate failed');
+        }
+        return base.generateFileTree(config, generateOptions);
+      },
+    };
+
+    const initialDraft = completeDraft();
+    const options = defaultPreviewHookOptions({
+      codegenService: service,
+      draftConfig: initialDraft,
+      currentStepId: 'asset',
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: options }
+    );
+
+    await waitFor(() => {
+      expect(result.current.phase.kind).toBe('error');
+    });
+
+    // The user fixes whatever broke generation; the preview recovers.
+    shouldFail = false;
+    rerender({ ...options, draftConfig: { ...initialDraft } });
+    await flushPreviewDebounce();
+    const recovered = await waitForPreviewReady(() => result.current);
+    expect(recovered.changedPaths, 'the recovering generate is the new baseline').toEqual([]);
+
+    // ...and then edits something else on the same step.
+    rerender({
+      ...options,
+      draftConfig: { ...initialDraft, token: { ...initialDraft.token, name: 'Renamed Token' } },
+    });
+    await flushPreviewDebounce();
+    const edited = await waitForPreviewReady(() => result.current);
+
+    expect(
+      edited.changedPaths.length,
+      'INV-7: a step whose entry generate failed must still mark later edits'
+    ).toBeGreaterThan(0);
+  });
+
   it('maximize uses the viewport height, keeps the stored height, and restores it', async () => {
     const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
     const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
