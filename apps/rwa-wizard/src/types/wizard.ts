@@ -239,6 +239,29 @@ export interface StructuralUpstreamImportLinks {
 }
 
 /**
+ * Ranking kind for one generated path, as this app understands it.
+ *
+ * Owned here, not imported from a codegen package: the loader is the only
+ * package seam (EVM will not share the stellar module). `unknown` is a
+ * member so a missing service method and an unrecognized package string
+ * both degrade to an explicit kind. Callers must not recover a kind from
+ * a filename.
+ */
+export type StructuralGeneratedFileKind = 'contract' | 'script' | 'provenance-and-docs' | 'unknown';
+
+const STRUCTURAL_GENERATED_FILE_KINDS = [
+  'contract',
+  'script',
+  'provenance-and-docs',
+  'unknown',
+] as const satisfies readonly StructuralGeneratedFileKind[];
+
+/** True when `value` is one of the four ranking kinds this app will switch on. */
+export function isStructuralGeneratedFileKind(value: string): value is StructuralGeneratedFileKind {
+  return (STRUCTURAL_GENERATED_FILE_KINDS as readonly string[]).includes(value);
+}
+
+/**
  * Structural compliance-module entry as emitted by the codegen package.
  * Copy (description, info tooltip) lives in `@openzeppelin/rwa-wizard-copy`.
  */

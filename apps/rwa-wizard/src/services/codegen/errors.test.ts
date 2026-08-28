@@ -115,6 +115,21 @@ describe('createTestCodegenService generateFileTree (INV-10, INV-16, INV-22)', (
     expect(await zip.data.text()).toBe(tree.files['README.md']);
   });
 
+  it('returns injected kinds and unknown otherwise, with no stellar path table (INV-10)', () => {
+    const service = createTestCodegenService({
+      fileKinds: { 'a/b.rs': 'contract' },
+    });
+
+    expect(service.getGeneratedFileKind?.('a/b.rs')).toBe('contract');
+    expect(service.getGeneratedFileKind?.('other')).toBe('unknown');
+  });
+
+  it('defaults every path to unknown when fileKinds is omitted (INV-10)', () => {
+    const service = createTestCodegenService();
+    expect(service.getGeneratedFileKind?.('a/b.rs')).toBe('unknown');
+    expect(service.getGeneratedFileKind?.('README.md')).toBe('unknown');
+  });
+
   it('does not emit a packaging onStatus event (INV-16)', async () => {
     const service = createTestCodegenService();
     const phases: string[] = [];

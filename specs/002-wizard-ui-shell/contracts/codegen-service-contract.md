@@ -33,6 +33,7 @@ interface RwaCodegenService {
     config: RWAConfig,
     options?: GenerateArtifactOptions
   ): Promise<GeneratedFileTreeArtifact>;
+  getGeneratedFileKind?: (path: string) => StructuralGeneratedFileKind;
 }
 ```
 
@@ -77,6 +78,8 @@ interface GeneratedZipArtifact {
 }
 
 type FileTree = Record<string, string | Uint8Array>;
+
+type StructuralGeneratedFileKind = 'contract' | 'script' | 'provenance-and-docs' | 'unknown';
 ```
 
 ## Real Implementation Rules
@@ -87,11 +90,13 @@ type FileTree = Record<string, string | Uint8Array>;
 - ZIP delivery remains the download outcome. Preview uses `generateFileTree`, which calls package `generate` / `generateWithIdentitySupport` — never unzipping.
 - Tree keys are generator paths. JSZip adds one root folder named from the sanitized token symbol. SC-002 compares maps after stripping that single ZIP prefix.
 - `generateFileTree` throws `CodegenInvalidConfigError` (`CODEGEN_INVALID_CONFIG`), `CodegenGenerationError` (`CODEGEN_GENERATION_FAILED`), or `CodegenUnsupportedError` (`CODEGEN_GENERATE_UNSUPPORTED`). Callers catch; the method still rejects rather than returning a partial tree.
+- Optional `getGeneratedFileKind(path)` reports the generator's ranking kind (`contract` | `script` | `provenance-and-docs` | `unknown`) for a project-relative path. Omitted by targets that do not classify. Callers treat a missing method as `unknown` for every path and must not recover a kind from the filename. The loader narrows an unrecognized package string to `unknown` for that path and warns; it does not drop the file or disable ranking for other paths.
 
 ## Mock Implementation Rules
 
 - Mocks must preserve the same input/output contract as the real service.
 - Mock validation results, module catalogs, and ZIP outputs must be deterministic and documented in the mock gap register.
+- `createTestCodegenService` accepts optional `fileKinds`. Lookup uses that map, else `unknown`. The double must not hardcode Stellar paths as kind keys.
 - Components must not need to know whether they are using a real or mock codegen service.
 
 ## Error Semantics

@@ -6,6 +6,7 @@ import type {
   GenerationStatus,
   StructuralComplianceModuleOption,
   StructuralEcosystemMetadata,
+  StructuralGeneratedFileKind,
   StructuralUpstreamImportLinks,
   StructuralUpstreamSourceRevision,
 } from '../../types/wizard';
@@ -89,6 +90,12 @@ export interface RwaCodegenService {
    * renders no import links at all rather than guessing.
    */
   getUpstreamImportLinks?: () => StructuralUpstreamImportLinks | null;
+  /**
+   * Generator-owned ranking kind for a project-relative path.
+   * Omitted by targets that do not classify. Callers treat a missing
+   * method like `unknown` for every path. They do not inspect the path.
+   */
+  getGeneratedFileKind?: (path: string) => StructuralGeneratedFileKind;
   /**
    * Optional introductory blurb: title, description, and reference links from
    * the ecosystem codegen package (same data can surface in CLI output or UI).

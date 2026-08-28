@@ -20,6 +20,7 @@ const {
   getEcosystemMetadataMock,
   getUpstreamSourceRevisionMock,
   getUpstreamImportLinksMock,
+  getGeneratedFileKindMock,
   getCodegenInfoBlurbMock,
   getDeployGuidanceMock,
   getComplianceConfigWarningsMock,
@@ -47,6 +48,7 @@ const {
     importLinePrefix: 'use ',
     targets: [{ identifier: 'stellar_access', path: 'packages/access' }],
   })),
+  getGeneratedFileKindMock: vi.fn((_path: string) => 'unknown'),
   getCodegenInfoBlurbMock: vi.fn(() => ({
     title: 'Mock',
     description: 'Mock blurb',
@@ -85,6 +87,7 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   getEcosystemMetadata: getEcosystemMetadataMock,
   getUpstreamSourceRevision: getUpstreamSourceRevisionMock,
   getUpstreamImportLinks: getUpstreamImportLinksMock,
+  getGeneratedFileKind: getGeneratedFileKindMock,
   getCodegenInfoBlurb: getCodegenInfoBlurbMock,
   getDeployGuidance: getDeployGuidanceMock,
   getComplianceConfigWarnings: getComplianceConfigWarningsMock,
@@ -104,6 +107,8 @@ describe('loadCodegenService', () => {
     getEcosystemMetadataMock.mockClear();
     getUpstreamSourceRevisionMock.mockClear();
     getUpstreamImportLinksMock.mockClear();
+    getGeneratedFileKindMock.mockReset();
+    getGeneratedFileKindMock.mockImplementation((_path: string) => 'unknown');
     getCodegenInfoBlurbMock.mockClear();
   });
 
@@ -156,6 +161,102 @@ describe('loadCodegenService', () => {
       warn.mockRestore();
     }
   );
+
+  it.each(['contract', 'script', 'provenance-and-docs', 'unknown'] as const)(
+    'passes through generated file kind %s (INV-5)',
+    async (kind) => {
+      getGeneratedFileKindMock.mockReturnValueOnce(kind);
+
+      const service = await loadCodegenService('stellar');
+
+      expect(service?.getGeneratedFileKind?.('a/path')).toBe(kind);
+      expect(getGeneratedFileKindMock).toHaveBeenCalledWith('a/path');
+      expect(getGeneratedFileKindMock).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it.each(['Contract', 'manifest', ''])(
+    'degrades unrecognized generated file kind %j to unknown and keeps the path (INV-5)',
+    async (kind) => {
+      const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+      getGeneratedFileKindMock.mockImplementation((path: string) =>
+        path === 'bad' ? kind : 'script'
+      );
+
+      const service = await loadCodegenService('stellar');
+
+      expect(service?.getGeneratedFileKind?.('bad')).toBe('unknown');
+      expect(service?.getGeneratedFileKind?.('good')).toBe('script');
+      expect(warn).toHaveBeenCalledWith(
+        'CodegenLoader',
+        `Ignoring generated file kind "${kind}": not in the closed ranking set.`
+      );
+      const warnMessage = String(warn.mock.calls[0]?.[1] ?? '');
+      expect(warnMessage, 'INV-13: warn interpolates the kind, not the draft').not.toContain(
+        'GCEXAMPLEOWNER'
+      );
+      expect(warnMessage).not.toContain('Acme Real Estate Token');
+      warn.mockRestore();
+    }
+  );
+
+  it('keeps every tree path when one kind is unrecognized (INV-5)', async () => {
+    const tree = {
+      'contracts/example/src/contract.rs': 'pub fn f() {}',
+      'scripts/deploy.sh': '#!/bin/sh\n',
+      'config.json': '{}',
+    } as const;
+    const reported: Record<string, string> = {
+      'contracts/example/src/contract.rs': 'contract',
+      'scripts/deploy.sh': 'script',
+      'config.json': 'manifest',
+    };
+
+    getGeneratedFileKindMock.mockImplementation((path: string) => reported[path] ?? 'unknown');
+
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    const service = await loadCodegenService('stellar');
+
+    const classified: Record<string, string> = {};
+    for (const path of Object.keys(tree)) {
+      classified[path] = service!.getGeneratedFileKind!(path);
+    }
+
+    expect(
+      Object.keys(classified).sort(),
+      'INV-5: an unrecognized kind must not drop the file from the classified set'
+    ).toEqual(Object.keys(tree).sort());
+    expect(classified['config.json']).toBe('unknown');
+    expect(classified['contracts/example/src/contract.rs']).toBe('contract');
+    expect(classified['scripts/deploy.sh']).toBe('script');
+    expect(warn).toHaveBeenCalledWith(
+      'CodegenLoader',
+      'Ignoring generated file kind "manifest": not in the closed ranking set.'
+    );
+    warn.mockRestore();
+  });
+
+  it('does not warn when the reported kind is in the closed set (INV-11)', async () => {
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    getGeneratedFileKindMock.mockReturnValueOnce('contract');
+
+    const service = await loadCodegenService('stellar');
+    service?.getGeneratedFileKind?.('a/path');
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('calls getGeneratedFileKind with the path only (INV-4)', async () => {
+    getGeneratedFileKindMock.mockReturnValueOnce('contract');
+
+    const service = await loadCodegenService('stellar');
+    service?.getGeneratedFileKind?.('a/path');
+
+    expect(getGeneratedFileKindMock).toHaveBeenCalledTimes(1);
+    expect(getGeneratedFileKindMock).toHaveBeenCalledWith('a/path');
+    expect(getGeneratedFileKindMock.mock.calls[0]).toHaveLength(1);
+  });
 
   it('allows under-review modules by default for stellar validation', async () => {
     const config = makeConfig();

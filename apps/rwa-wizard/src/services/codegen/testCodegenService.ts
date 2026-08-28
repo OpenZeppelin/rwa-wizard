@@ -1,7 +1,11 @@
 import type { CodegenInfoBlurb } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import type { GeneratedZipArtifact, StructuralComplianceModuleOption } from '../../types/wizard';
+import type {
+  GeneratedZipArtifact,
+  StructuralComplianceModuleOption,
+  StructuralGeneratedFileKind,
+} from '../../types/wizard';
 import { CodegenInvalidConfigError } from './errors';
 import type { GenerateArtifactOptions, RwaCodegenService, ValidationResultDTO } from './types';
 
@@ -20,6 +24,11 @@ export interface TestCodegenServiceOptions {
    * pass whether or not the code tells them apart.
    */
   readonly fileTreeVariant?: string;
+  /**
+   * Ranking kinds this double reports. Paths not in the map are `unknown`.
+   * Do not put Stellar filenames here — tests inject the kinds they need.
+   */
+  readonly fileKinds?: Readonly<Record<string, StructuralGeneratedFileKind>>;
 }
 
 /**
@@ -36,6 +45,8 @@ export function createTestCodegenService(options?: TestCodegenServiceOptions): R
 
   return {
     getCodegenInfoBlurb: () => testBlurb,
+
+    getGeneratedFileKind: (path) => options?.fileKinds?.[path] ?? 'unknown',
 
     async validate(_config: RWAConfig): Promise<ValidationResultDTO> {
       return { valid: true, errors: [], warnings: [] };

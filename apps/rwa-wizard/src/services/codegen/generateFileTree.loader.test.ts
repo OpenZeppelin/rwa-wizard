@@ -73,6 +73,7 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
     importLinePrefix: 'use ',
     targets: [{ identifier: 'stellar_access', path: 'packages/access' }],
   })),
+  getGeneratedFileKind: vi.fn(() => 'unknown'),
   getCodegenInfoBlurb: vi.fn(() => ({ title: 'Mock', description: 'Mock blurb', links: [] })),
   getDeployGuidance: vi.fn(),
   getComplianceConfigWarnings: vi.fn(() => []),

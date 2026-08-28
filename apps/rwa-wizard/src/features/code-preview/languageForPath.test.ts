@@ -11,6 +11,9 @@ describe('languageForPath (INV-19)', () => {
     ['README.md', 'markdown'],
     ['LICENSE', 'plaintext'],
     ['notes.TXT', 'plaintext'],
+    // INV-8 exclusion: this map is CodeView grammars, not ranking kinds.
+    // sign-claim is .rs so it highlights as rust; getGeneratedFileKind reports unknown.
+    ['tools/sign-claim/src/main.rs', 'rust'],
   ] as const)('maps %s → %s', (path, expected) => {
     expect(languageForPath(path)).toBe(expected);
   });

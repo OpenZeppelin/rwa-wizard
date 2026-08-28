@@ -62,6 +62,37 @@ describe('generateFileTree auth boundary (INV-13, INV-14, INV-24)', () => {
       'INV-14: only codegenLoader.ts may import @openzeppelin/codegen-rwa-stellar in app source'
     ).toEqual([]);
   });
+
+  it('does not import GENERATED_FILE_KINDS or getGeneratedFileKind from stellar outside the loader (INV-9)', () => {
+    const loader = join(SRC_ROOT, 'services/codegen/codegenLoader.ts');
+    const violations: string[] = [];
+    for (const file of walkSourceFiles(SRC_ROOT)) {
+      if (file === loader) continue;
+      const source = readFileSync(file, 'utf8');
+      const importLines = source.split('\n').filter((line) => {
+        if (!STELLAR_PACKAGE_IMPORT.test(line)) return false;
+        return (
+          line.includes('GENERATED_FILE_KINDS') ||
+          line.includes('getGeneratedFileKind') ||
+          line.includes('GeneratedFileKind')
+        );
+      });
+      if (importLines.length === 0) continue;
+      violations.push(
+        `${relative(SRC_ROOT, file)}: ${importLines.map((line) => line.trim()).join(' | ')}`
+      );
+    }
+    expect(
+      violations,
+      'INV-9: kinds reach the app through the loader seam, not a stellar type import'
+    ).toEqual([]);
+  });
+
+  it('exposes getGeneratedFileKind on the stellar wrapper (INV-14)', async () => {
+    const service = await loadCodegenService('stellar');
+    expect(service).not.toBeNull();
+    expect(typeof service!.getGeneratedFileKind).toBe('function');
+  });
 });
 
 describe('hosts embed via RwaCodegenService (INV-24)', () => {
@@ -83,5 +114,14 @@ describe('hosts embed via RwaCodegenService (INV-24)', () => {
     const artifact = await secondHostPreview(service!);
     expect(artifact.files).toBeTypeOf('object');
     expect(Object.keys(artifact.files).length).toBeGreaterThan(0);
+  });
+
+  it('lets a second host classify through an injected service (INV-14)', async () => {
+    const service = await loadCodegenService('stellar');
+    function secondHostKind(injected: RwaCodegenService, path: string) {
+      return injected.getGeneratedFileKind?.(path) ?? 'unknown';
+    }
+    expect(secondHostKind(service!, 'config.json')).toBe('provenance-and-docs');
+    expect(secondHostKind(service!, 'Cargo.toml')).toBe('unknown');
   });
 });

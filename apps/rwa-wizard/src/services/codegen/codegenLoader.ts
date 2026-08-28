@@ -14,13 +14,15 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 import { isCodeViewLanguage } from '@openzeppelin/ui-components/code-view';
 import { logger } from '@openzeppelin/ui-utils';
 
-import type {
-  GeneratedZipArtifact,
-  StructuralComplianceModuleOption,
-  StructuralEcosystemMetadata,
-  StructuralUpstreamImportLinks,
-  StructuralUpstreamImportTarget,
-  StructuralUpstreamSourceRevision,
+import {
+  isStructuralGeneratedFileKind,
+  type GeneratedZipArtifact,
+  type StructuralComplianceModuleOption,
+  type StructuralEcosystemMetadata,
+  type StructuralGeneratedFileKind,
+  type StructuralUpstreamImportLinks,
+  type StructuralUpstreamImportTarget,
+  type StructuralUpstreamSourceRevision,
 } from '../../types/wizard';
 import { CodegenUnsupportedError, toCodegenError } from './errors';
 import { getCodegenRuntimeOptions, type RuntimeGenerateOptions } from './runtimeOptions';
@@ -66,6 +68,23 @@ function toImportLinks(reported: ReportedImportLinks): StructuralUpstreamImportL
   };
 }
 
+/**
+ * Narrows a package's reported kind to the closed set this app ranks on.
+ *
+ * Unlike `toImportLinks`, a bad value degrades that path to `unknown` and
+ * leaves every other path alone. A file with an unknown kind is still a
+ * file the user needs to see; a link with an unrenderable language is not
+ * a link. Do not unify these two seams.
+ */
+function toGeneratedFileKind(reported: string): StructuralGeneratedFileKind {
+  if (isStructuralGeneratedFileKind(reported)) return reported;
+  logger.warn(
+    'CodegenLoader',
+    `Ignoring generated file kind "${reported}": not in the closed ranking set.`
+  );
+  return 'unknown';
+}
+
 /** Shape of a codegen package module (e.g. @openzeppelin/codegen-rwa-*). */
 interface CodegenPackageModule {
   validate: (
@@ -97,6 +116,7 @@ interface CodegenPackageModule {
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
   getUpstreamSourceRevision?: (options?: GenerateOptions) => StructuralUpstreamSourceRevision;
   getUpstreamImportLinks?: () => ReportedImportLinks;
+  getGeneratedFileKind?: (path: string) => string;
   getCodegenInfoBlurb?: () => CodegenInfoBlurb;
   generateZipWithIdentitySupport?: (
     config: RWAConfig,
@@ -230,6 +250,13 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
 
     getUpstreamImportLinks: pkg.getUpstreamImportLinks
       ? () => toImportLinks(pkg.getUpstreamImportLinks!())
+      : undefined,
+
+    // INV-4: path only — kind is layout, not a generation. Do not forward
+    // baseGenerateOptions. INV-5: narrow per path; do not drop the file.
+    // INV-6: no try/catch; a throw here is a package bug.
+    getGeneratedFileKind: pkg.getGeneratedFileKind
+      ? (path) => toGeneratedFileKind(pkg.getGeneratedFileKind!(path))
       : undefined,
 
     getCodegenInfoBlurb: pkg.getCodegenInfoBlurb ? () => pkg.getCodegenInfoBlurb!() : undefined,
