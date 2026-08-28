@@ -84,10 +84,11 @@ export interface RwaCodegenService {
    * Identifiers the generated source imports and where they live upstream, so
    * the UI can link them without recognising this ecosystem's naming.
    *
-   * Omitted by targets whose generated source imports nothing linkable; the UI
-   * then renders no import links at all rather than guessing.
+   * Omitted by targets whose generated source imports nothing linkable, and
+   * `null` when the package reported links the UI cannot honour; the UI then
+   * renders no import links at all rather than guessing.
    */
-  getUpstreamImportLinks?: () => StructuralUpstreamImportLinks;
+  getUpstreamImportLinks?: () => StructuralUpstreamImportLinks | null;
   /**
    * Optional introductory blurb: title, description, and reference links from
    * the ecosystem codegen package (same data can surface in CLI output or UI).

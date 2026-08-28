@@ -7,6 +7,7 @@ import type {
 } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 import { CHAIN_IDS, isChainId, type ChainId } from '@openzeppelin/rwa-wizard-copy';
+import type { CodeViewLanguage } from '@openzeppelin/ui-components/code-view';
 
 /** Re-export canonical config for wizard and codegen boundaries. */
 export type { RWAConfig } from '@openzeppelin/rwa-config';
@@ -224,8 +225,14 @@ export interface StructuralUpstreamImportTarget {
  * knowledge in the UI (constitution §I).
  */
 export interface StructuralUpstreamImportLinks {
-  /** Language id of the files these identifiers appear in. */
-  readonly language: string;
+  /**
+   * Language of the files these identifiers appear in, as one of the grammars
+   * the code pane renders. The decorator only acts on a file whose language
+   * matches, so a package reporting `Rust` or `rs` would disable every link and
+   * report nothing; narrowing here forces that mismatch to be caught where the
+   * package's value enters the app rather than discovered as missing links.
+   */
+  readonly language: CodeViewLanguage;
   /** A line imports only if it starts with this once leading whitespace is trimmed. */
   readonly importLinePrefix: string;
   readonly targets: readonly StructuralUpstreamImportTarget[];

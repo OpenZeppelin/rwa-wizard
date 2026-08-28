@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { logger } from '@openzeppelin/ui-utils';
+
 import { makeConfig } from '../../test/fixtures/wizardFixtures';
 import { loadCodegenService } from './codegenLoader';
 import { CodegenUnsupportedError } from './errors';
@@ -120,6 +122,40 @@ describe('loadCodegenService', () => {
       expect.objectContaining({ contractsLibraryPath: '../stellar-contracts' })
     );
   });
+
+  /**
+   * The language a package reports has to be one the code pane renders, because
+   * the decorator links only inside files whose language matches. A package
+   * that reports its own spelling breaks that contract in a way the preview can
+   * only express as an absence of links, so the seam rejects it by name.
+   */
+  it('passes through import links whose language the code preview renders', async () => {
+    const service = await loadCodegenService('stellar');
+
+    expect(service?.getUpstreamImportLinks?.()).toEqual({
+      language: 'rust',
+      importLinePrefix: 'use ',
+      targets: [{ identifier: 'stellar_access', path: 'packages/access' }],
+    });
+  });
+
+  it.each(['Rust', 'rs', 'rust-lang'])(
+    'drops import links reported under the unrenderable language %s',
+    async (language) => {
+      const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+      getUpstreamImportLinksMock.mockReturnValueOnce({
+        language,
+        importLinePrefix: 'use ',
+        targets: [{ identifier: 'stellar_access', path: 'packages/access' }],
+      });
+
+      const service = await loadCodegenService('stellar');
+
+      expect(service?.getUpstreamImportLinks?.()).toBeNull();
+      expect(warn).toHaveBeenCalledWith('CodegenLoader', expect.stringContaining(language));
+      warn.mockRestore();
+    }
+  );
 
   it('allows under-review modules by default for stellar validation', async () => {
     const config = makeConfig();

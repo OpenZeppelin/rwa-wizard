@@ -11,12 +11,15 @@ import type {
   ComplianceModuleRuntimePrerequisiteId,
 } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
+import { isCodeViewLanguage } from '@openzeppelin/ui-components/code-view';
+import { logger } from '@openzeppelin/ui-utils';
 
 import type {
   GeneratedZipArtifact,
   StructuralComplianceModuleOption,
   StructuralEcosystemMetadata,
   StructuralUpstreamImportLinks,
+  StructuralUpstreamImportTarget,
   StructuralUpstreamSourceRevision,
 } from '../../types/wizard';
 import { CodegenUnsupportedError, toCodegenError } from './errors';
@@ -28,6 +31,40 @@ import type {
   RwaCodegenService,
   ValidationResultDTO,
 } from './types';
+
+/**
+ * Import links as a codegen package reports them, before this app has checked
+ * anything: the language is whatever string the package chose.
+ */
+interface ReportedImportLinks {
+  readonly language: string;
+  readonly importLinePrefix: string;
+  readonly targets: readonly StructuralUpstreamImportTarget[];
+}
+
+/**
+ * Narrows a package's reported links to what the code pane can act on.
+ *
+ * The decorator only links inside files whose language matches, so a package
+ * reporting `Rust` or `rs` produces a preview with no links and no complaint —
+ * a contract broken in one package and observable only as an absence in the
+ * other. Failing it here names the package and the value.
+ */
+function toImportLinks(reported: ReportedImportLinks): StructuralUpstreamImportLinks | null {
+  if (!isCodeViewLanguage(reported.language)) {
+    logger.warn(
+      'CodegenLoader',
+      `Ignoring upstream import links: language "${reported.language}" is not one the code preview can render.`
+    );
+    return null;
+  }
+
+  return {
+    language: reported.language,
+    importLinePrefix: reported.importLinePrefix,
+    targets: reported.targets,
+  };
+}
 
 /** Shape of a codegen package module (e.g. @openzeppelin/codegen-rwa-*). */
 interface CodegenPackageModule {
@@ -59,7 +96,7 @@ interface CodegenPackageModule {
   generateWithIdentitySupport?: (config: RWAConfig, options?: GenerateOptions) => GenerationResult;
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
   getUpstreamSourceRevision?: (options?: GenerateOptions) => StructuralUpstreamSourceRevision;
-  getUpstreamImportLinks?: () => StructuralUpstreamImportLinks;
+  getUpstreamImportLinks?: () => ReportedImportLinks;
   getCodegenInfoBlurb?: () => CodegenInfoBlurb;
   generateZipWithIdentitySupport?: (
     config: RWAConfig,
@@ -192,7 +229,7 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
       : undefined,
 
     getUpstreamImportLinks: pkg.getUpstreamImportLinks
-      ? () => pkg.getUpstreamImportLinks!()
+      ? () => toImportLinks(pkg.getUpstreamImportLinks!())
       : undefined,
 
     getCodegenInfoBlurb: pkg.getCodegenInfoBlurb ? () => pkg.getCodegenInfoBlurb!() : undefined,

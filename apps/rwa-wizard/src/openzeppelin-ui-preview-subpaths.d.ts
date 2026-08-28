@@ -39,6 +39,10 @@ declare module '@openzeppelin/ui-components/code-view' {
   }
 
   export function CodeView(props: CodeViewProps): React.ReactElement;
+
+  export const CODE_VIEW_LANGUAGES: readonly CodeViewLanguage[];
+
+  export function isCodeViewLanguage(value: string): value is CodeViewLanguage;
 }
 
 declare module '@openzeppelin/ui-components/file-tree' {
