@@ -28,7 +28,7 @@ export function CodePreviewDrawer(props: {
   /** Upstream coordinates from the codegen service; `null` disables import links. */
   sourceRevision: StructuralUpstreamSourceRevision | null;
   /** Linkable import identifiers reported by the codegen service. */
-  importLinks?: StructuralUpstreamImportLinks | null;
+  importLinks: StructuralUpstreamImportLinks | null;
   /** Tree / maximize toggles for the header. Omit to render the header without tools. */
   tools?: CodePreviewLayoutTools;
 }): ReactElement {
@@ -46,7 +46,7 @@ export function CodePreviewDrawer(props: {
     substitutedKeys,
     errorMessages,
     sourceRevision,
-    importLinks = null,
+    importLinks,
     tools,
   } = props;
 

@@ -46,6 +46,7 @@ function renderDrawer(copy: ChainCopy): ReactElement {
         substitutedKeys={[]}
         errorMessages={undefined}
         sourceRevision={null}
+        importLinks={null}
       />
     </CopyContext.Provider>
   );
