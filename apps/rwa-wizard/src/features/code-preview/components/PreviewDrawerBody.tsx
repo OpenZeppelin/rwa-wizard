@@ -3,6 +3,8 @@ import type { ReactElement } from 'react';
 
 import type { FileTree } from '@openzeppelin/codegen-core';
 
+import { useCopy } from '../../../app/providers/useCopy';
+import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
 import type { CodePreviewPhase } from '../hooks/useCodePreview';
 import { PreviewCodePane } from './PreviewCodePane';
 import { PreviewContentErrorBoundary } from './PreviewContentErrorBoundary';
@@ -22,6 +24,8 @@ export function PreviewDrawerBody(props: {
   changedPaths: readonly string[] | undefined;
   errorMessages: readonly string[] | undefined;
   boundaryResetKey: string;
+  /** Upstream coordinates from the codegen service; `null` disables import links. */
+  sourceRevision: StructuralUpstreamSourceRevision | null;
   /** Show the file tree pane. Default true. */
   treeVisible?: boolean;
 }): ReactElement {
@@ -32,15 +36,18 @@ export function PreviewDrawerBody(props: {
     changedPaths,
     errorMessages,
     boundaryResetKey,
+    sourceRevision,
     treeVisible = true,
   } = props;
+
+  const copy = useCopy();
 
   return (
     <div className="flex h-full min-h-0 flex-col px-4 pb-3 pt-1">
       {phase.kind === 'loading' || phase.kind === 'idle' ? (
         <div className="flex min-h-0 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" aria-hidden />
-          Generating preview…
+          {copy.notice('code-preview.generating').description}
         </div>
       ) : null}
 
@@ -49,7 +56,10 @@ export function PreviewDrawerBody(props: {
       ) : null}
 
       {phase.kind === 'ready' ? (
-        <PreviewContentErrorBoundary resetKey={boundaryResetKey}>
+        <PreviewContentErrorBoundary
+          resetKey={boundaryResetKey}
+          message={copy.notice('code-preview.render-failed').description}
+        >
           <div className="rwa-code-preview flex min-h-0 flex-1 overflow-hidden rounded-md">
             {/* Kept mounted (preserves expansion state) and animated on width. */}
             <div
@@ -65,7 +75,11 @@ export function PreviewDrawerBody(props: {
                 onSelectedPathChange={onSelectedPathChange}
               />
             </div>
-            <PreviewCodePane files={phase.files} selectedPath={selectedPath} />
+            <PreviewCodePane
+              files={phase.files}
+              selectedPath={selectedPath}
+              sourceRevision={sourceRevision}
+            />
           </div>
         </PreviewContentErrorBoundary>
       ) : null}

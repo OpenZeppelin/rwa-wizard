@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { FIXTURE_REV_A, STELLAR_REPO_URL } from '../../../test/helpers/stellarImportFixtures';
+import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
 import { buildStellarCrateUrl } from './buildStellarCrateUrl';
-import type { StellarSourceRevision } from './types';
 
 function revision(
-  partial: Partial<StellarSourceRevision> & Pick<StellarSourceRevision, 'repoUrl'>
-): StellarSourceRevision {
+  partial: Partial<StructuralUpstreamSourceRevision> &
+    Pick<StructuralUpstreamSourceRevision, 'repoUrl'>
+): StructuralUpstreamSourceRevision {
   return {
     commitHash: null,
     mode: 'local-path',
-    provenance: 'cargo-manifest',
     ...partial,
   };
 }

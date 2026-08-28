@@ -187,6 +187,26 @@ export interface ComplianceModuleSelectionWarningMeta {
 }
 
 /**
+ * Upstream coordinates of the library code a generator emits against, reported
+ * by the codegen package itself.
+ *
+ * Chain-neutral by construction: every field is a coordinate, not chain
+ * vocabulary, so any target able to point at its own upstream can supply it.
+ * The wizard consumes it to link generated import paths at the revision that
+ * produced them. It used to derive the same facts by running regexes over the
+ * generated `Cargo.toml` and README — chain-specific parsing in the UI, and
+ * brittle besides, since a template prose edit silently broke every link.
+ */
+export interface StructuralUpstreamSourceRevision {
+  /** Browser URL for the upstream repository, without a `.git` suffix. */
+  readonly repoUrl: string;
+  /** Commit the generated code is pinned to, or `null` when it pins none. */
+  readonly commitHash: string | null;
+  /** Whether the generated project pins a revision or points at a working copy. */
+  readonly mode: 'git-revision' | 'local-path';
+}
+
+/**
  * Structural compliance-module entry as emitted by the codegen package.
  * Copy (description, info tooltip) lives in `@openzeppelin/rwa-wizard-copy`.
  */

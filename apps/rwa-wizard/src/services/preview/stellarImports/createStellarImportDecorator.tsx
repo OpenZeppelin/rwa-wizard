@@ -2,13 +2,10 @@ import { Fragment, type ReactNode } from 'react';
 
 import type { CodeViewTokenDecorator } from '@openzeppelin/ui-components/code-view';
 
+import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
 import { buildStellarCrateUrl } from './buildStellarCrateUrl';
 import { matchStellarCratesInText } from './matchStellarCratesInText';
-import type {
-  StellarCrateMatch,
-  StellarImportDecoratorOptions,
-  StellarSourceRevision,
-} from './types';
+import type { StellarCrateMatch, StellarImportDecoratorOptions } from './types';
 
 function lineStartsWithUse(source: string, offset: number): boolean {
   const lineStart = source.lastIndexOf('\n', offset - 1) + 1;
@@ -35,7 +32,7 @@ function relativeMatches(
 function renderLinkedLeaf(
   tokenText: string,
   matches: Array<StellarCrateMatch & { relStart: number; relEnd: number }>,
-  revision: StellarSourceRevision,
+  revision: StructuralUpstreamSourceRevision,
   degradeMode: StellarImportDecoratorOptions['degradeMode']
 ): ReactNode {
   const parts: ReactNode[] = [];
@@ -75,10 +72,13 @@ function renderLinkedLeaf(
 
 /**
  * Factory for SF-10's `decorateToken` prop.
- * Closes over a revision snapshot; SF-8 should memoize per `files` reference (INV-10).
+ *
+ * Closes over the revision the codegen service reports for the loaded target;
+ * callers memoize per revision reference (INV-10). `null` disables decoration,
+ * which is the case for any target that does not report one.
  */
 export function createStellarImportDecorator(
-  revision: StellarSourceRevision | null,
+  revision: StructuralUpstreamSourceRevision | null,
   options?: StellarImportDecoratorOptions
 ): CodeViewTokenDecorator {
   const degradeMode = options?.degradeMode ?? 'repo-root';

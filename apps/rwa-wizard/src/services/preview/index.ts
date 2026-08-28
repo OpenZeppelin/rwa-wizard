@@ -13,19 +13,19 @@ export {
   PREVIEW_TOKEN_SYMBOL,
 } from './placeholders';
 export { toPreviewConfig } from './toPreviewConfig';
-export type { PreviewConfigResult, PreviewModuleCatalog } from './toPreviewConfig';
+export type {
+  PreviewConfigResult,
+  PreviewModuleCatalog,
+  PreviewModuleEntry,
+} from './toPreviewConfig';
 export {
   buildStellarCrateUrl,
   createStellarImportDecorator,
   matchStellarCratesInText,
-  resolveStellarSourceRevision,
   STELLAR_CRATE_REPO_PATHS,
 } from './stellarImports';
 export type {
   StellarCrateMatch,
-  StellarDependencyMode,
   StellarImportDecoratorOptions,
   StellarLinkDegradeMode,
-  StellarRevisionProvenance,
-  StellarSourceRevision,
 } from './stellarImports';

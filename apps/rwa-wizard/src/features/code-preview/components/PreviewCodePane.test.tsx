@@ -5,43 +5,79 @@ import * as previewServices from '../../../services/preview';
 import {
   FIXTURE_REV_A,
   FIXTURE_REV_B,
-  gitModeTree,
+  gitModeRevision,
   SAMPLE_USE_SOURCE,
 } from '../../../test/helpers/stellarImportFixtures';
 import { PreviewCodePane } from './PreviewCodePane';
 
-describe('PreviewCodePane revision memo wiring (INV-8)', () => {
-  it('re-resolves revision and decorator when the files prop changes', () => {
-    const revisionSpy = vi.spyOn(previewServices, 'resolveStellarSourceRevision');
-    const decoratorSpy = vi.spyOn(previewServices, 'createStellarImportDecorator');
+const CONTRACT_PATH = 'rwa-token/src/contract.rs';
 
-    const filesA = gitModeTree(FIXTURE_REV_A);
-    const filesB = gitModeTree(FIXTURE_REV_B);
+function files(): Record<string, string> {
+  return { [CONTRACT_PATH]: SAMPLE_USE_SOURCE };
+}
+
+describe('PreviewCodePane revision memo wiring (INV-8)', () => {
+  it('rebuilds the decorator when the reported revision changes', () => {
+    const decoratorSpy = vi.spyOn(previewServices, 'createStellarImportDecorator');
+    const revisionA = gitModeRevision(FIXTURE_REV_A);
+    const revisionB = gitModeRevision(FIXTURE_REV_B);
+    const tree = files();
 
     const { rerender } = render(
-      <PreviewCodePane files={filesA} selectedPath="rwa-token/src/contract.rs" />
+      <PreviewCodePane files={tree} selectedPath={CONTRACT_PATH} sourceRevision={revisionA} />
     );
 
-    expect(revisionSpy).toHaveBeenCalledWith(filesA);
-    const decoratorCallsAfterA = decoratorSpy.mock.calls.length;
+    expect(decoratorSpy).toHaveBeenCalledWith(revisionA);
+    const callsAfterA = decoratorSpy.mock.calls.length;
 
-    rerender(<PreviewCodePane files={filesB} selectedPath="rwa-token/src/contract.rs" />);
+    rerender(
+      <PreviewCodePane files={tree} selectedPath={CONTRACT_PATH} sourceRevision={revisionB} />
+    );
 
-    expect(revisionSpy).toHaveBeenLastCalledWith(filesB);
+    expect(decoratorSpy).toHaveBeenLastCalledWith(revisionB);
     expect(
       decoratorSpy.mock.calls.length,
-      'INV-8: decorator memo must rebuild when files-derived revision changes'
-    ).toBeGreaterThan(decoratorCallsAfterA);
+      'INV-8: decorator memo must rebuild when the revision changes'
+    ).toBeGreaterThan(callsAfterA);
+
+    decoratorSpy.mockRestore();
+  });
+
+  /**
+   * The pane re-rendered on every drag `pointermove` even though none of its
+   * props moved, re-reconciling the whole file through the per-leaf decorator.
+   */
+  it('does not re-render when the parent re-renders with identical props', () => {
+    const decoratorSpy = vi.spyOn(previewServices, 'createStellarImportDecorator');
+    const revision = gitModeRevision(FIXTURE_REV_A);
+    const tree = files();
+
+    const { rerender } = render(
+      <PreviewCodePane files={tree} selectedPath={CONTRACT_PATH} sourceRevision={revision} />
+    );
+    const callsAfterMount = decoratorSpy.mock.calls.length;
+
+    rerender(
+      <PreviewCodePane files={tree} selectedPath={CONTRACT_PATH} sourceRevision={revision} />
+    );
+
+    expect(decoratorSpy.mock.calls.length, 'memoised pane must skip identical renders').toBe(
+      callsAfterMount
+    );
+
+    decoratorSpy.mockRestore();
   });
 
   it('renders source from the selected path on the provided files object (INV-8, INV-1)', () => {
-    const contractPath = 'rwa-token/src/contract.rs';
-    const files = gitModeTree(FIXTURE_REV_A);
-    files[contractPath] = SAMPLE_USE_SOURCE;
+    render(
+      <PreviewCodePane
+        files={files()}
+        selectedPath={CONTRACT_PATH}
+        sourceRevision={gitModeRevision(FIXTURE_REV_A)}
+      />
+    );
 
-    render(<PreviewCodePane files={files} selectedPath={contractPath} />);
-
-    const pane = screen.getByLabelText(`${contractPath} source code`);
+    const pane = screen.getByLabelText(`${CONTRACT_PATH} source code`);
     expect(pane.textContent?.replace(/\s+/g, ' ').trim()).toContain(
       'use stellar_access::access_control'
     );

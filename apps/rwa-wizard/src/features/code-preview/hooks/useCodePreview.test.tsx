@@ -14,6 +14,7 @@ import {
 } from '../../../test/helpers/codePreviewHarness';
 import { completeDraft, stellarPreviewCatalog } from '../../../test/helpers/previewConfig';
 import { createDefaultRwaConfig } from '../../../utils/defaultRwaConfig';
+import { CODE_PREVIEW_OPEN_STORAGE_KEY } from '../previewPersistence';
 import type { UseCodePreviewOptions } from './useCodePreview';
 import { useCodePreview } from './useCodePreview';
 
@@ -194,6 +195,110 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     expect(generateSpy).toHaveBeenLastCalledWith(expect.anything(), {
       includeIdentitySupport: true,
     });
+    // The tree changing is not enough: the step baseline is keyed the same way,
+    // so an omitted dimension there re-baselines on the post-toggle tree and
+    // silently reports no marks for a file that demonstrably appeared.
+    expect(
+      result.current.phase.kind === 'ready' && result.current.phase.changedPaths,
+      'INV-10: the file the toggle added must be marked as changed'
+    ).toContain('identity/README.md');
+  });
+
+  it('regenerates when only the codegen service changes (INV-1 cache key)', async () => {
+    // Same config, same generate options, different service. Keyed without
+    // service identity the cache returns the previous target's tree.
+    const base = createTestCodegenService();
+    const serviceFor = (marker: string): RwaCodegenService => ({
+      ...base,
+      async generateFileTree(
+        config: RWAConfig,
+        generateOptions?: { includeIdentitySupport?: boolean }
+      ) {
+        const artifact = await base.generateFileTree(config, generateOptions);
+        return { files: { ...artifact.files, [`${marker}/README.md`]: `# ${marker}` } };
+      },
+    });
+
+    const options = defaultPreviewHookOptions({
+      codegenService: serviceFor('alpha'),
+      draftConfig: completeDraft(),
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: options }
+    );
+
+    const before = await waitForPreviewReady(() => result.current);
+    expect(before.files).toHaveProperty('alpha/README.md');
+
+    rerender({ ...options, codegenService: serviceFor('beta') });
+    await flushPreviewDebounce();
+
+    await waitFor(() => {
+      expect(result.current.phase.kind === 'ready' && result.current.phase.files).toHaveProperty(
+        'beta/README.md'
+      );
+    });
+    expect(result.current.phase.kind === 'ready' && result.current.phase.files).not.toHaveProperty(
+      'alpha/README.md'
+    );
+  });
+
+  it('keeps the persisted open state while the codegen service is still loading (INV-12)', async () => {
+    // The runtime resolves its service asynchronously, so `null` at mount means
+    // "not loaded yet". Treating it as "no service" closed the drawer and
+    // persisted that, which made the stored open state unrestorable.
+    localStorage.setItem(CODE_PREVIEW_OPEN_STORAGE_KEY, 'true');
+
+    const base = defaultPreviewHookOptions({
+      codegenService: null,
+      isCodegenServiceLoading: true,
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+
+    expect(result.current.persistence.open).toBe(true);
+    expect(localStorage.getItem(CODE_PREVIEW_OPEN_STORAGE_KEY)).toBe('true');
+
+    rerender({
+      ...base,
+      codegenService: createTestCodegenService(),
+      isCodegenServiceLoading: false,
+    });
+
+    await waitForPreviewReady(() => result.current);
+    expect(result.current.persistence.open).toBe(true);
+    expect(result.current.showTrigger).toBe(true);
+    localStorage.removeItem(CODE_PREVIEW_OPEN_STORAGE_KEY);
+  });
+
+  it('returns focus to the trigger when the drawer closes (INV-14)', async () => {
+    const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+    await waitForPreviewReady(() => result.current);
+
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    result.current.triggerProps.ref.current = trigger;
+
+    act(() => {
+      result.current.setOpen(true);
+    });
+
+    // The sheet unmounts on close and the kit leaves focus on `<body>`.
+    act(() => {
+      (document.activeElement as HTMLElement | null)?.blur();
+      result.current.setOpen(false);
+    });
+
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
   });
 
   it('maximize uses the viewport height, keeps the stored height, and restores it', async () => {

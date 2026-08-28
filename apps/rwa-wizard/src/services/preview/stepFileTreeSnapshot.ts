@@ -1,29 +1,32 @@
-import { computeConfigHash, type FileTree } from '@openzeppelin/codegen-core';
-import type { RWAConfig } from '@openzeppelin/rwa-config';
+import type { FileTree } from '@openzeppelin/codegen-core';
 
 import { cloneFileTree } from './cloneFileTree';
 
 /**
  * Immutable baseline captured when the user enters a wizard step.
  * `files` is a deep copy — never the live object returned from generateFileTree.
- * `configHash` is `computeConfigHash(previewConfig)` for the same preview config
- * that produced `files` (after SF-5 `toPreviewConfig`, before generate).
+ *
+ * `generateKey` identifies *every* input that produced `files`, not just the
+ * config: the preview config hash, the generate options, and the codegen
+ * service instance. Storing only the config hash made the identical-inputs
+ * short-circuit in `listChangedPaths` swallow an identity-support toggle, which
+ * changes the tree without changing the config.
  */
 export interface StepFileTreeSnapshot {
   readonly files: FileTree;
-  readonly configHash: string;
+  readonly generateKey: string;
 }
 
 /**
  * Build a step-entry snapshot from a successful generate result.
- * Caller must pass the preview config that was used for this generate.
+ * Caller must pass the same generate key it used to produce `files`.
  */
 export function createStepFileTreeSnapshot(
   files: FileTree,
-  previewConfig: RWAConfig
+  generateKey: string
 ): StepFileTreeSnapshot {
   return {
     files: cloneFileTree(files), // INV-4, INV-9, INV-13
-    configHash: computeConfigHash(previewConfig), // INV-4, INV-17
+    generateKey, // INV-4, INV-17
   };
 }

@@ -1,7 +1,9 @@
 import { Info } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { useCopy } from '../../../app/providers/useCopy';
 import { ErrorBanner } from '../../../components/shared/ErrorBanner';
+import { errorBannerIconClassName } from '../../../components/shared/errorBannerTone';
 
 /**
  * Lists every substituted key verbatim. INV-2
@@ -14,6 +16,7 @@ export function PreviewSubstitutionsNotice(props: {
   substitutedKeys: readonly string[];
 }): ReactElement | null {
   const { substitutedKeys } = props;
+  const copy = useCopy();
 
   if (substitutedKeys.length === 0) {
     return null;
@@ -23,10 +26,12 @@ export function PreviewSubstitutionsNotice(props: {
     <ErrorBanner
       tone="info"
       className="min-w-0 flex-1 px-3 py-1.5"
-      icon={<Info className="size-4 text-blue-600" aria-hidden />}
+      icon={<Info className={`size-4 ${errorBannerIconClassName('info')}`} aria-hidden />}
       message={
         <>
-          <span className="font-medium">Preview placeholders (not in your draft):</span>{' '}
+          <span className="font-medium">
+            {copy.notice('code-preview.substitutions').description}
+          </span>{' '}
           {substitutedKeys.join(', ')}
         </>
       }

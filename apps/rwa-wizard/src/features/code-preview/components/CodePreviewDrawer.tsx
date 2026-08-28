@@ -3,6 +3,8 @@ import type { ReactElement } from 'react';
 import type { FileTree } from '@openzeppelin/codegen-core';
 import { BottomSheet } from '@openzeppelin/ui-components';
 
+import { useCopy } from '../../../app/providers/useCopy';
+import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
 import type { CodePreviewLayoutTools, CodePreviewPhase } from '../hooks/useCodePreview';
 import { PreviewDrawerBody } from './PreviewDrawerBody';
 import { previewDrawerHeader } from './PreviewDrawerHeader';
@@ -20,6 +22,8 @@ export function CodePreviewDrawer(props: {
   changedPaths: readonly string[] | undefined;
   substitutedKeys: readonly string[];
   errorMessages: readonly string[] | undefined;
+  /** Upstream coordinates from the codegen service; `null` disables import links. */
+  sourceRevision: StructuralUpstreamSourceRevision | null;
   /** Tree / maximize toggles for the header. Omit to render the header without tools. */
   tools?: CodePreviewLayoutTools;
 }): ReactElement {
@@ -36,15 +40,17 @@ export function CodePreviewDrawer(props: {
     changedPaths,
     substitutedKeys,
     errorMessages,
+    sourceRevision,
     tools,
   } = props;
 
+  const copy = useCopy();
   const boundaryResetKey = `${sheetId}-${open ? 'open' : 'closed'}`;
 
   return (
     <BottomSheet
       id={sheetId}
-      aria-label="Generated project preview"
+      aria-label={copy.notice('code-preview.sheet-label').description}
       open={open}
       onOpenChange={onOpenChange}
       height={height}
@@ -59,6 +65,7 @@ export function CodePreviewDrawer(props: {
         files={files}
         changedPaths={changedPaths}
         errorMessages={errorMessages}
+        sourceRevision={sourceRevision}
         treeVisible={tools?.treeVisible ?? true}
         boundaryResetKey={boundaryResetKey}
       />

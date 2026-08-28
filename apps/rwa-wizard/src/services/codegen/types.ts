@@ -6,6 +6,7 @@ import type {
   GenerationStatus,
   StructuralComplianceModuleOption,
   StructuralEcosystemMetadata,
+  StructuralUpstreamSourceRevision,
 } from '../../types/wizard';
 
 /**
@@ -69,6 +70,15 @@ export interface RwaCodegenService {
    * `getCodegenInfoBlurb` (CLI / UI).
    */
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
+  /**
+   * Upstream coordinates for the library code this target's generated project
+   * depends on, resolved with the same generate options the service uses. Lets
+   * the UI link generated import paths at the exact revision behind them
+   * without reading the generated files back.
+   *
+   * Omitted by targets that do not vendor an external source library.
+   */
+  getUpstreamSourceRevision?: () => StructuralUpstreamSourceRevision;
   /**
    * Optional introductory blurb: title, description, and reference links from
    * the ecosystem codegen package (same data can surface in CLI output or UI).

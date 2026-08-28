@@ -1,10 +1,17 @@
 import { Component, type ErrorInfo, type ReactElement, type ReactNode } from 'react';
 
+import { logger } from '@openzeppelin/ui-utils';
+
 import { ErrorBanner } from '../../../components/shared/ErrorBanner';
 
 interface PreviewContentErrorBoundaryProps {
   readonly children: ReactNode;
   readonly resetKey: string;
+  /**
+   * Fallback text. Owned by `@openzeppelin/rwa-wizard-copy` and passed in:
+   * a class component cannot call `useCopy`.
+   */
+  readonly message: string;
 }
 
 interface PreviewContentErrorBoundaryState {
@@ -23,10 +30,7 @@ export class PreviewContentErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console -- dev-only diagnostic for preview pane failures
-      console.error('Code preview content error', error, info);
-    }
+    logger.error('CODE_PREVIEW', 'Preview content failed to render', error, info);
   }
 
   componentDidUpdate(prevProps: PreviewContentErrorBoundaryProps): void {
@@ -37,12 +41,7 @@ export class PreviewContentErrorBoundary extends Component<
 
   render(): ReactElement {
     if (this.state.hasError) {
-      return (
-        <ErrorBanner
-          tone="error"
-          message="Preview could not render this content. Close and reopen the preview to try again."
-        />
-      );
+      return <ErrorBanner tone="error" message={this.props.message} />;
     }
 
     return <>{this.props.children}</>;

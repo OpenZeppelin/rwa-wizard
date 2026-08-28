@@ -16,6 +16,7 @@ const {
   getAvailableModulesMock,
   getCodegenRuntimeOptionsMock,
   getEcosystemMetadataMock,
+  getUpstreamSourceRevisionMock,
   getCodegenInfoBlurbMock,
   getDeployGuidanceMock,
   getComplianceConfigWarningsMock,
@@ -33,6 +34,11 @@ const {
   >(async () => ({ fileName: 'test-identity.zip', data: new Blob(['zip']) })),
   getCodegenRuntimeOptionsMock: vi.fn(),
   getEcosystemMetadataMock: vi.fn(() => undefined),
+  getUpstreamSourceRevisionMock: vi.fn((_options?: unknown) => ({
+    repoUrl: 'https://github.com/OpenZeppelin/stellar-contracts',
+    commitHash: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+    mode: 'git-revision' as const,
+  })),
   getCodegenInfoBlurbMock: vi.fn(() => ({
     title: 'Mock',
     description: 'Mock blurb',
@@ -69,6 +75,7 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   generateZip: generateZipMock,
   generateZipWithIdentitySupport: generateZipWithIdentitySupportMock,
   getEcosystemMetadata: getEcosystemMetadataMock,
+  getUpstreamSourceRevision: getUpstreamSourceRevisionMock,
   getCodegenInfoBlurb: getCodegenInfoBlurbMock,
   getDeployGuidance: getDeployGuidanceMock,
   getComplianceConfigWarnings: getComplianceConfigWarningsMock,
@@ -86,7 +93,24 @@ describe('loadCodegenService', () => {
     generateZipWithIdentitySupportMock.mockClear();
     getCodegenRuntimeOptionsMock.mockReset();
     getEcosystemMetadataMock.mockClear();
+    getUpstreamSourceRevisionMock.mockClear();
     getCodegenInfoBlurbMock.mockClear();
+  });
+
+  /**
+   * The revision must be resolved with the same options generation runs under,
+   * or a local-checkout build would advertise a pinned commit its manifest
+   * never emits and every generated import link would point at the wrong tree.
+   */
+  it('resolves the upstream revision with the same base generate options', async () => {
+    getCodegenRuntimeOptionsMock.mockReturnValue({ contractsLibraryPath: '../stellar-contracts' });
+
+    const service = await loadCodegenService('stellar');
+    service?.getUpstreamSourceRevision?.();
+
+    expect(getUpstreamSourceRevisionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ contractsLibraryPath: '../stellar-contracts' })
+    );
   });
 
   it('allows under-review modules by default for stellar validation', async () => {

@@ -2,6 +2,9 @@ import './code-preview.mocks';
 
 import { fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRef } from 'react';
+
+import { coreCopy } from '@openzeppelin/rwa-wizard-copy';
 
 import { CodePreviewDrawer } from './components/CodePreviewDrawer';
 import { CodePreviewTrigger } from './components/CodePreviewTrigger';
@@ -10,6 +13,7 @@ import type { UseCodePreviewOptions } from './hooks/useCodePreview';
 import { useCodePreview } from './hooks/useCodePreview';
 
 import { createTestCodegenService } from '../../services/codegen/testCodegenService';
+import type { RwaCodegenService } from '../../services/codegen/types';
 import {
   defaultPreviewHookOptions,
   waitForPreviewReady,
@@ -53,6 +57,7 @@ describe('code-preview drawer composition', () => {
         changedPaths={ready.changedPaths}
         substitutedKeys={ready.substitutedKeys}
         errorMessages={undefined}
+        sourceRevision={null}
       />
     );
 
@@ -93,6 +98,7 @@ describe('code-preview drawer composition', () => {
         changedPaths={undefined}
         substitutedKeys={result.current.phase.substitutedKeys}
         errorMessages={result.current.phase.messages}
+        sourceRevision={null}
       />
     );
 
@@ -105,7 +111,17 @@ describe('code-preview drawer composition', () => {
   });
 
   it('passes the full generated path list to FileTree (INV-3)', async () => {
-    const service = createTestCodegenService();
+    const files = {
+      'README.md': '# readme',
+      'Cargo.toml': '[workspace]',
+      'contracts/rwa-token/Cargo.toml': '[package]',
+      'contracts/rwa-token/src/contract.rs': 'fn main() {}',
+      'scripts/deploy.sh': '#!/bin/sh',
+    };
+    const service: RwaCodegenService = {
+      ...createTestCodegenService(),
+      generateFileTree: async () => ({ files }),
+    };
     const base = defaultPreviewHookOptions({ codegenService: service, debounceMs: 0 });
     const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
       initialProps: base,
@@ -113,7 +129,7 @@ describe('code-preview drawer composition', () => {
 
     const ready = await waitForPreviewReady(() => result.current);
 
-    render(
+    const { container } = render(
       <PreviewDrawerBody
         phase={ready}
         selectedPath="README.md"
@@ -122,12 +138,25 @@ describe('code-preview drawer composition', () => {
         changedPaths={ready.changedPaths}
         errorMessages={undefined}
         boundaryResetKey="ready"
+        sourceRevision={null}
       />
     );
 
-    expect(screen.getByTestId('path-count').textContent).toBe(
-      String(Object.keys(ready.files).length)
-    );
+    // Asserted against the real kit tree rather than a stand-in, so a path the
+    // wizard drops on the way in cannot be papered over by a local double.
+    const rows = await waitFor(() => {
+      const host = container.querySelector('file-tree-container');
+      const root = host instanceof HTMLElement ? host.shadowRoot : null;
+      const found = [...(root?.querySelectorAll('[data-item-path]') ?? [])].map((node) =>
+        node.getAttribute('data-item-path')
+      );
+      expect(found.length).toBeGreaterThan(0);
+      return new Set(found);
+    });
+
+    for (const path of Object.keys(files)) {
+      expect(rows, `every generated path must reach the tree: ${path}`).toContain(path);
+    }
   });
 
   it('renders no trigger when show is false (INV-4)', () => {
@@ -138,6 +167,7 @@ describe('code-preview drawer composition', () => {
           'aria-expanded': false,
           'aria-controls': undefined,
           onClick: () => {},
+          ref: createRef<HTMLButtonElement>(),
         }}
       />
     );
@@ -167,11 +197,14 @@ describe('code-preview drawer composition', () => {
           changedPaths={[]}
           errorMessages={undefined}
           boundaryResetKey="throw-case"
+          sourceRevision={null}
         />
       </div>
     );
 
-    expect(screen.getByText(/Preview could not render this content/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(coreCopy.notice('code-preview.render-failed').description)
+    ).toBeInTheDocument();
     const field = screen.getByTestId('wizard-input');
     field.focus();
     expect(document.activeElement).toBe(field);
@@ -202,6 +235,7 @@ describe('code-preview drawer composition', () => {
           changedPaths={ready.changedPaths}
           substitutedKeys={ready.substitutedKeys}
           errorMessages={undefined}
+          sourceRevision={null}
         />
       </>
     );

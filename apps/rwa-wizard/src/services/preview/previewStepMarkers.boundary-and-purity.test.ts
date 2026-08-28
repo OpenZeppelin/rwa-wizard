@@ -3,7 +3,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 
-import { completeDraft } from '../../test/helpers/previewConfig';
 import {
   cloneFileTree,
   createStepFileTreeSnapshot,
@@ -23,6 +22,9 @@ const STEP_MARKER_SOURCES = [
 ] as const;
 
 const FORBIDDEN_IMPORT = /(?:from\s+|import\s*\(\s*)['"]@openzeppelin\/codegen-rwa-stellar['"]/;
+
+/** Opaque to these helpers — they only ever compare it for equality. */
+const ENTRY_KEY = 'config-a|identity:0|service:svc-1';
 
 describe('preview step-marker module boundary (INV-11, INV-16)', () => {
   it('step-marker modules do not import @openzeppelin/codegen-rwa-stellar', () => {
@@ -58,15 +60,14 @@ describe('preview step-marker module boundary (INV-11, INV-16)', () => {
   });
 
   it('can be embedded by a host with plain FileTree maps (INV-16)', () => {
-    const config = completeDraft();
-    const snapshot = createStepFileTreeSnapshot({ 'a.txt': '1' }, config);
+    const snapshot = createStepFileTreeSnapshot({ 'a.txt': '1' }, ENTRY_KEY);
     expect(listChangedPaths(snapshot, { 'a.txt': '2' }, 'other')).toEqual(['a.txt']);
   });
 });
 
 describe('preview step-marker purity (INV-8, INV-10, INV-12)', () => {
   it('does not throw for empty trees, null snapshot, or large key sets', () => {
-    const snapshot = createStepFileTreeSnapshot({}, completeDraft());
+    const snapshot = createStepFileTreeSnapshot({}, ENTRY_KEY);
     const large: Record<string, string> = {};
     for (let i = 0; i < 50; i++) large[`file-${i}.txt`] = `body-${i}`;
 
@@ -78,8 +79,7 @@ describe('preview step-marker purity (INV-8, INV-10, INV-12)', () => {
   it('does not log during pure transforms (INV-12)', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const config = completeDraft();
-    const snapshot = createStepFileTreeSnapshot({ 'a.txt': '1' }, config);
+    const snapshot = createStepFileTreeSnapshot({ 'a.txt': '1' }, ENTRY_KEY);
 
     cloneFileTree({ 'a.txt': '1' });
     fileContentsEqual('a', 'b');
@@ -97,7 +97,7 @@ describe('preview step-marker return shape (INV-15)', () => {
   it('returns only path strings, never file bodies', () => {
     const snapshot = createStepFileTreeSnapshot(
       { 'secret.json': '{"owner":"sensitive"}' },
-      completeDraft()
+      ENTRY_KEY
     );
     const changed = listChangedPaths(
       snapshot,

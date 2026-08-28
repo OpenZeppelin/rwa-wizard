@@ -1,12 +1,12 @@
+import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
 import { STELLAR_CRATE_REPO_PATHS } from './stellarCratePaths';
-import type { StellarSourceRevision } from './types';
 
 /**
  * Build a GitHub tree URL for a mapped crate at a pinned revision.
  * When `commitHash` is null, returns `repoUrl` only (repo root, INV-3).
  */
 export function buildStellarCrateUrl(
-  revision: StellarSourceRevision,
+  revision: StructuralUpstreamSourceRevision,
   crateId: string
 ): string | null {
   const repoPath = STELLAR_CRATE_REPO_PATHS[crateId];

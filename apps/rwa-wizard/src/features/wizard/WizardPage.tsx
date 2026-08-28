@@ -72,8 +72,14 @@ function WizardPageContent(): ReactElement {
     resetKey,
     resetSession,
   } = session;
-  const { targetSnapshot, adapterCaps, codegenService, targetLoadError, clearTargetLoadError } =
-    runtime;
+  const {
+    targetSnapshot,
+    adapterCaps,
+    codegenService,
+    isRuntimeLoading,
+    targetLoadError,
+    clearTargetLoadError,
+  } = runtime;
   const { generate, isGenerating, jobState: generationJobState, download, reset } = generation;
 
   const {
@@ -123,6 +129,7 @@ function WizardPageContent(): ReactElement {
 
   const preview = useCodePreview({
     codegenService,
+    isCodegenServiceLoading: isRuntimeLoading,
     draftConfig: draftState.config,
     moduleCatalog: targetSnapshot?.availableModules ?? [],
     currentStepId: currentStep,
@@ -255,6 +262,7 @@ function WizardPageContent(): ReactElement {
                   : []
               }
               errorMessages={preview.phase.kind === 'error' ? preview.phase.messages : undefined}
+              sourceRevision={preview.sourceRevision}
               tools={preview.layout}
             />
           ) : null}

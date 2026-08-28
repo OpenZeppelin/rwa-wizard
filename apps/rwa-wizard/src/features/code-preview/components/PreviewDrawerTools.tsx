@@ -1,6 +1,7 @@
 import { Maximize2, Minimize2, PanelLeft, PanelLeftClose } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { useCopy } from '../../../app/providers/useCopy';
 import type { CodePreviewLayoutTools } from '../hooks/useCodePreview';
 
 const TOOL_BUTTON_CLASSES =
@@ -12,15 +13,27 @@ const TOOL_BUTTON_CLASSES =
  */
 export function PreviewDrawerTools(props: CodePreviewLayoutTools): ReactElement {
   const { treeVisible, onToggleTree, maximized, onToggleMaximize } = props;
+  const copy = useCopy();
+
+  const treeLabel = copy.notice(
+    treeVisible ? 'code-preview.hide-file-tree' : 'code-preview.show-file-tree'
+  ).description;
+  const sizeLabel = copy.notice(
+    maximized ? 'code-preview.restore-size' : 'code-preview.maximize'
+  ).description;
 
   return (
-    <div className="flex shrink-0 items-center gap-0.5" role="group" aria-label="Preview layout">
+    <div
+      className="flex shrink-0 items-center gap-0.5"
+      role="group"
+      aria-label={copy.notice('code-preview.tools-group').description}
+    >
       <button
         type="button"
         className={TOOL_BUTTON_CLASSES}
         aria-pressed={!treeVisible}
-        aria-label={treeVisible ? 'Hide file tree' : 'Show file tree'}
-        title={treeVisible ? 'Hide file tree' : 'Show file tree'}
+        aria-label={treeLabel}
+        title={treeLabel}
         onClick={onToggleTree}
       >
         {treeVisible ? (
@@ -33,8 +46,8 @@ export function PreviewDrawerTools(props: CodePreviewLayoutTools): ReactElement 
         type="button"
         className={TOOL_BUTTON_CLASSES}
         aria-pressed={maximized}
-        aria-label={maximized ? 'Restore preview size' : 'Maximize preview'}
-        title={maximized ? 'Restore preview size' : 'Maximize preview'}
+        aria-label={sizeLabel}
+        title={sizeLabel}
         onClick={onToggleMaximize}
       >
         {maximized ? (

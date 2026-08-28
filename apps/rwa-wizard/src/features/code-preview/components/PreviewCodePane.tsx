@@ -1,38 +1,37 @@
-import { useMemo, type ReactElement } from 'react';
+import { memo, useMemo, type ReactElement } from 'react';
 
 import type { FileTree } from '@openzeppelin/codegen-core';
 import { CodeView } from '@openzeppelin/ui-components/code-view';
 
-import {
-  createStellarImportDecorator,
-  resolveStellarSourceRevision,
-} from '../../../services/preview';
+import { useCopy } from '../../../app/providers/useCopy';
+import { createStellarImportDecorator } from '../../../services/preview';
+import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
 import { languageForPath } from '../languageForPath';
 
 function fileContentToString(content: string | Uint8Array): string {
   return typeof content === 'string' ? content : new TextDecoder().decode(content);
 }
 
-export function PreviewCodePane(props: {
+interface PreviewCodePaneProps {
   files: FileTree | null;
   selectedPath: string | null;
-}): ReactElement {
-  const { files, selectedPath } = props;
+  /** Upstream coordinates from the codegen service; `null` disables import links. */
+  sourceRevision: StructuralUpstreamSourceRevision | null;
+}
 
-  const revision = useMemo(
-    () => (files ? resolveStellarSourceRevision(files) : null),
-    [files] // INV-8
-  );
+function PreviewCodePaneImpl(props: PreviewCodePaneProps): ReactElement {
+  const { files, selectedPath, sourceRevision } = props;
+  const copy = useCopy();
 
   const decorateToken = useMemo(
-    () => createStellarImportDecorator(revision),
-    [revision] // INV-8
+    () => createStellarImportDecorator(sourceRevision),
+    [sourceRevision] // INV-8
   );
 
   if (!files || !selectedPath || !(selectedPath in files)) {
     return (
       <div className="rwa-code-preview-empty m-3 flex min-h-0 flex-1 items-center justify-center rounded-md border border-dashed px-4 text-sm">
-        Select a file to view its generated source.
+        {copy.notice('code-preview.no-file-selected').description}
       </div>
     ); // INV-19
   }
@@ -58,3 +57,10 @@ export function PreviewCodePane(props: {
     </div>
   );
 }
+
+/**
+ * Memoised because the sheet re-renders on every drag `pointermove` while none
+ * of these props change. Without it each frame re-reconciled a whole file
+ * through `CodeView`'s per-leaf decorator.
+ */
+export const PreviewCodePane = memo(PreviewCodePaneImpl);

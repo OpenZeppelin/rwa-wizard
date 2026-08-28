@@ -4,20 +4,19 @@ import { Fragment, type ReactElement } from 'react';
 
 import {
   FIXTURE_REV_A,
-  gitModeTree,
+  gitModeRevision,
   hrefFromDecorator,
-  localPathTree,
+  localPathRevision,
   SAMPLE_USE_LEAF,
   SAMPLE_USE_LEAF_OFFSET,
   SAMPLE_USE_SOURCE,
   STELLAR_REPO_URL,
 } from '../../../test/helpers/stellarImportFixtures';
 import { createStellarImportDecorator } from './createStellarImportDecorator';
-import { resolveStellarSourceRevision } from './parseStellarSourceRevision';
 
 describe('createStellarImportDecorator request/response (INV-8, INV-16)', () => {
   it('returns undefined for non-rust languages (INV-8)', () => {
-    const revision = resolveStellarSourceRevision(gitModeTree(FIXTURE_REV_A));
+    const revision = gitModeRevision(FIXTURE_REV_A);
     const decorator = createStellarImportDecorator(revision);
     expect(
       decorator({
@@ -40,7 +39,7 @@ describe('createStellarImportDecorator request/response (INV-8, INV-16)', () => 
   });
 
   it('skips crate-like text outside a use line (INV-16)', () => {
-    const revision = resolveStellarSourceRevision(gitModeTree(FIXTURE_REV_A));
+    const revision = gitModeRevision(FIXTURE_REV_A);
     const decorator = createStellarImportDecorator(revision);
     const commentSource = '// stellar_access is mentioned here\n';
     expect(
@@ -53,7 +52,7 @@ describe('createStellarImportDecorator request/response (INV-8, INV-16)', () => 
   });
 
   it('decorates mapped crates on a use line when revision is present (INV-16)', () => {
-    const revision = resolveStellarSourceRevision(gitModeTree(FIXTURE_REV_A));
+    const revision = gitModeRevision(FIXTURE_REV_A);
     const decorator = createStellarImportDecorator(revision);
     const href = hrefFromDecorator(decorator);
     expect(href, 'INV-16: use-line gate must allow links when revision exists').toContain(
@@ -64,7 +63,7 @@ describe('createStellarImportDecorator request/response (INV-8, INV-16)', () => 
 
 describe('createStellarImportDecorator degrade modes (INV-3, INV-8)', () => {
   it('plain-text degrade emits no anchor elements for local-path revision (INV-3, INV-8)', () => {
-    const revision = resolveStellarSourceRevision(localPathTree());
+    const revision = localPathRevision();
     const decorator = createStellarImportDecorator(revision, { degradeMode: 'plain-text' });
     expect(
       decorator({
@@ -76,7 +75,7 @@ describe('createStellarImportDecorator degrade modes (INV-3, INV-8)', () => {
   });
 
   it('repo-root degrade links to normalized repoUrl without /tree/ (INV-3)', () => {
-    const revision = resolveStellarSourceRevision(localPathTree());
+    const revision = localPathRevision();
     const decorator = createStellarImportDecorator(revision);
     const href = hrefFromDecorator(decorator);
     expect(href, 'INV-3: local-path degrade must not invent a commit-pinned URL').toBe(
@@ -88,7 +87,7 @@ describe('createStellarImportDecorator degrade modes (INV-3, INV-8)', () => {
 
 describe('createStellarImportDecorator source fidelity (INV-15)', () => {
   it('preserves the full leaf text when splitting into fragments (INV-15)', () => {
-    const revision = resolveStellarSourceRevision(gitModeTree(FIXTURE_REV_A));
+    const revision = gitModeRevision(FIXTURE_REV_A);
     const decorator = createStellarImportDecorator(revision);
     const node = decorator({
       source: SAMPLE_USE_SOURCE,

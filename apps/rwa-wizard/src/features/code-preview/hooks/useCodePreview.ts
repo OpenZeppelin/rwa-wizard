@@ -1,18 +1,21 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type RefObject } from 'react';
 
 import { computeConfigHash, type FileTree } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import { useCopy } from '../../../app/providers/useCopy';
 import { CodegenInvalidConfigError } from '../../../services/codegen/errors';
 import type { RwaCodegenService } from '../../../services/codegen/types';
 import {
   createStepFileTreeSnapshot,
   listChangedPaths,
   toPreviewConfig,
-  type PreviewModuleCatalog,
   type StepFileTreeSnapshot,
 } from '../../../services/preview';
-import type { ComplianceModuleOption } from '../../../types/wizard';
+import type {
+  ComplianceModuleOption,
+  StructuralUpstreamSourceRevision,
+} from '../../../types/wizard';
 import { defaultSelectedPath } from '../defaultSelectedPath';
 import { useCodePreviewPersistence } from './useCodePreviewPersistence';
 import { useDebouncedValue } from './useDebouncedValue';
@@ -35,6 +38,13 @@ export type CodePreviewPhase =
 
 export interface UseCodePreviewOptions {
   readonly codegenService: RwaCodegenService | null;
+  /**
+   * Whether the target runtime is still resolving `codegenService`. A `null`
+   * service means two different things — "not loaded yet" and "this target
+   * cannot generate" — and only the second should close and un-persist the
+   * drawer. Conflating them wiped the stored open state on every page load.
+   */
+  readonly isCodegenServiceLoading?: boolean;
   readonly draftConfig: RWAConfig;
   readonly moduleCatalog: readonly ComplianceModuleOption[];
   readonly currentStepId: string;
@@ -68,12 +78,42 @@ export interface UseCodePreviewResult {
     readonly 'aria-expanded': boolean;
     readonly 'aria-controls': string | undefined;
     readonly onClick: () => void;
+    /**
+     * Must be attached to the trigger element. Closing the sheet unmounts the
+     * region that held focus; the kit leaves restoration to the host, so the
+     * hook focuses this element to keep focus off `<body>`.
+     */
+    readonly ref: RefObject<HTMLButtonElement | null>;
   };
   readonly sheetId: string;
   readonly showTrigger: boolean;
+  /**
+   * Upstream source coordinates reported by the loaded codegen service, for
+   * linking generated import paths. `null` when the target reports none.
+   */
+  readonly sourceRevision: StructuralUpstreamSourceRevision | null;
 }
 
-const GENERIC_GENERATE_ERROR = 'Preview generation failed. Check your configuration and try again.';
+/**
+ * Stable per-instance identity for a codegen service, so the generate key can
+ * cover "which generator produced this tree" without depending on render order.
+ * A `WeakMap` keeps this from retaining services after a target switch.
+ */
+const serviceIdentities = new WeakMap<RwaCodegenService, string>();
+let nextServiceIdentity = 0;
+
+function serviceIdentity(service: RwaCodegenService | null): string {
+  if (service === null) {
+    return 'none';
+  }
+
+  let identity = serviceIdentities.get(service);
+  if (identity === undefined) {
+    identity = `svc-${(nextServiceIdentity += 1)}`;
+    serviceIdentities.set(service, identity);
+  }
+  return identity;
+}
 
 interface PreviewTickSuccess {
   readonly kind: 'success';
@@ -91,7 +131,16 @@ interface PreviewTickFailure {
 
 type PreviewTickResult = PreviewTickSuccess | PreviewTickFailure;
 
-function mapGenerateError(err: unknown, substitutedKeys: readonly string[]): PreviewTickFailure {
+/**
+ * Codegen validation errors are already user-facing prose from the package;
+ * anything else collapses to `genericMessage`, which the caller reads from
+ * `@openzeppelin/rwa-wizard-copy`.
+ */
+function mapGenerateError(
+  err: unknown,
+  substitutedKeys: readonly string[],
+  genericMessage: string
+): PreviewTickFailure {
   if (err instanceof CodegenInvalidConfigError) {
     return {
       kind: 'error',
@@ -103,13 +152,14 @@ function mapGenerateError(err: unknown, substitutedKeys: readonly string[]): Pre
   return {
     kind: 'error',
     substitutedKeys,
-    messages: [GENERIC_GENERATE_ERROR],
+    messages: [genericMessage],
   };
 }
 
 export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewResult {
   const {
     codegenService,
+    isCodegenServiceLoading = false,
     draftConfig,
     moduleCatalog,
     currentStepId,
@@ -119,6 +169,14 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
 
   const sheetId = useId();
   const showTrigger = codegenService !== null;
+  const genericGenerateError = useCopy().notice('code-preview.generate-failed').description;
+
+  // Structural metadata from the generator, not scraped out of its output:
+  // stable for the life of the service, so it is memoised on service identity.
+  const sourceRevision = useMemo(
+    () => codegenService?.getUpstreamSourceRevision?.() ?? null,
+    [codegenService]
+  );
 
   const {
     open,
@@ -162,11 +220,15 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
 
   const stepSnapshotRef = useRef<StepFileTreeSnapshot | null>(null);
   /**
-   * Cache key for `cachedFilesRef`. Must cover every input that changes generate
-   * output — `computeConfigHash` hashes the config only, so generate options
-   * (`includeIdentitySupport`) are appended. Keyed on config alone, toggling
-   * identity support returned the previous tree and the preview silently
-   * disagreed with the archive.
+   * Cache key for `cachedFilesRef`. Must cover every input of
+   * `generateFileTree` — the preview config, the generate options, and the
+   * service that runs them:
+   *
+   * - preview config hash — `computeConfigHash` covers this dimension only;
+   * - `includeIdentitySupport` — a generate option, absent from the config, so
+   *   keyed on the hash alone a toggle returned the previous tree;
+   * - service identity — the same config generates a different tree per target,
+   *   so a target switch would otherwise serve the previous target's files.
    */
   const lastGenerateKeyRef = useRef<string | null>(null);
   const cachedFilesRef = useRef<FileTree | null>(null);
@@ -182,17 +244,28 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
   const draftConfigRef = useRef(draftConfig);
   draftConfigRef.current = draftConfig;
 
-  /** Key covering every generate input: preview config hash + generate options. */
+  /**
+   * A different service generates a different tree from the same config, so its
+   * arrival invalidates the cached tree and the step baseline alike. Clearing
+   * only when the service became `null` left the previous target's files cached
+   * behind a key that no longer described them.
+   */
+  const lastServiceRef = useRef<RwaCodegenService | null>(codegenService);
+  if (lastServiceRef.current !== codegenService) {
+    lastServiceRef.current = codegenService;
+    stepSnapshotRef.current = null;
+    lastGenerateKeyRef.current = null;
+    cachedFilesRef.current = null;
+  }
+
+  /** Key covering every generate input: config hash + generate options + service. */
   const computeGenerateKey = useCallback(
     (config: RWAConfig): string => {
-      const previewInput = toPreviewConfig(
-        config,
-        moduleCatalog as unknown as PreviewModuleCatalog
-      );
+      const previewInput = toPreviewConfig(config, moduleCatalog);
       const configHash = computeConfigHash(previewInput.config);
-      return `${configHash}|identity:${includeIdentitySupport ? 1 : 0}`;
+      return `${configHash}|identity:${includeIdentitySupport ? 1 : 0}|service:${serviceIdentity(codegenService)}`;
     },
-    [includeIdentitySupport, moduleCatalog]
+    [codegenService, includeIdentitySupport, moduleCatalog]
   );
 
   const runPreviewTick = useCallback(
@@ -205,14 +278,11 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
         return {
           kind: 'error',
           substitutedKeys: [],
-          messages: [GENERIC_GENERATE_ERROR],
+          messages: [genericGenerateError],
         };
       }
 
-      const previewInput = toPreviewConfig(
-        config,
-        moduleCatalog as unknown as PreviewModuleCatalog
-      ); // INV-6 — shim reads id + configFields only; enriched catalog is compatible at runtime
+      const previewInput = toPreviewConfig(config, moduleCatalog); // INV-6
       const configHash = computeConfigHash(previewInput.config);
       const generateKey = computeGenerateKey(config);
       let files = cachedFilesRef.current;
@@ -232,7 +302,7 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
             };
           }
 
-          return mapGenerateError(err, previewInput.substitutedKeys);
+          return mapGenerateError(err, previewInput.substitutedKeys, genericGenerateError);
         }
       }
 
@@ -248,7 +318,7 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
         return {
           kind: 'error',
           substitutedKeys: previewInput.substitutedKeys,
-          messages: [GENERIC_GENERATE_ERROR],
+          messages: [genericGenerateError],
         };
       }
 
@@ -256,10 +326,10 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
       cachedFilesRef.current = files;
 
       if (options.isStepEntry) {
-        stepSnapshotRef.current = createStepFileTreeSnapshot(files, previewInput.config); // INV-7
+        stepSnapshotRef.current = createStepFileTreeSnapshot(files, generateKey); // INV-7
       }
 
-      const changedPaths = listChangedPaths(stepSnapshotRef.current, files, configHash); // INV-10
+      const changedPaths = listChangedPaths(stepSnapshotRef.current, files, generateKey); // INV-10
 
       return {
         kind: 'success',
@@ -269,7 +339,13 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
         changedPaths,
       };
     },
-    [codegenService, computeGenerateKey, includeIdentitySupport, moduleCatalog]
+    [
+      codegenService,
+      computeGenerateKey,
+      genericGenerateError,
+      includeIdentitySupport,
+      moduleCatalog,
+    ]
   );
 
   const applyReadyResult = useCallback((result: PreviewTickSuccess) => {
@@ -289,16 +365,24 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     });
   }, []);
 
+  // A tick can be requested from an effect whose deps deliberately exclude the
+  // generate inputs, so it reads the current callbacks through refs rather than
+  // listing them as dependencies.
+  const computeGenerateKeyRef = useRef(computeGenerateKey);
+  computeGenerateKeyRef.current = computeGenerateKey;
+  const runPreviewTickRef = useRef(runPreviewTick);
+  runPreviewTickRef.current = runPreviewTick;
+
   useEffect(() => {
-    if (!codegenService) {
+    // Only a settled `null` means "this target cannot generate". While the
+    // runtime is still resolving, `codegenService` is also `null`, and closing
+    // the drawer here persisted `open: false` on every page load — which made
+    // the stored open state unrestorable and the storage key dead.
+    if (codegenService === null && !isCodegenServiceLoading) {
       setOpen(false);
       setPhase({ kind: 'idle' });
-      stepSnapshotRef.current = null;
-      lastGenerateKeyRef.current = null;
-      cachedFilesRef.current = null;
-      return;
     }
-  }, [codegenService, setOpen]);
+  }, [codegenService, isCodegenServiceLoading, setOpen]);
 
   useEffect(() => {
     if (!codegenService) {
@@ -306,13 +390,15 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     }
 
     const requestId = ++requestIdRef.current;
-    stepEntryHandledKeyRef.current = computeGenerateKey(draftConfigRef.current);
+    stepEntryHandledKeyRef.current = computeGenerateKeyRef.current(draftConfigRef.current);
     stepSnapshotRef.current = null;
 
     setPhase((prev) => (prev.kind === 'ready' ? prev : { kind: 'loading' }));
 
     void (async () => {
-      const result = await runPreviewTick(draftConfigRef.current, requestId, { isStepEntry: true });
+      const result = await runPreviewTickRef.current(draftConfigRef.current, requestId, {
+        isStepEntry: true,
+      });
 
       if (requestId !== requestIdRef.current) {
         return;
@@ -335,7 +421,12 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     return () => {
       requestIdRef.current += 1; // INV-9
     };
-  }, [applyReadyResult, codegenService, computeGenerateKey, currentStepId, runPreviewTick]); // INV-7: step id only — not draftConfig
+    // INV-7: step entry is step identity and service identity only. Depending on
+    // `computeGenerateKey` / `runPreviewTick` put every generate input in here
+    // through their closures, so toggling identity support re-ran step entry,
+    // which clears the snapshot and re-baselines against the post-toggle tree,
+    // discarding the change marks the toggle was supposed to produce.
+  }, [applyReadyResult, codegenService, currentStepId]);
 
   useEffect(() => {
     if (!codegenService) {
@@ -389,6 +480,31 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     setOpen(!open);
   }, [open, setOpen]);
 
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const wasOpenRef = useRef(open);
+
+  useEffect(() => {
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = open;
+
+    if (!wasOpen || open) {
+      return;
+    }
+
+    // The sheet unmounts on close — via the trigger, the header button, or
+    // Escape — and the kit deliberately does not move focus, leaving it on
+    // `<body>`. Restore it to the trigger, which owns `aria-controls`.
+    // Skip when something else already holds focus: the close may have come
+    // from an interaction that legitimately moved focus elsewhere, and stealing
+    // it back would be worse than the drop.
+    const active = document.activeElement;
+    if (active !== null && active !== document.body) {
+      return;
+    }
+
+    triggerRef.current?.focus();
+  }, [open]);
+
   return {
     persistence: { open, height },
     setOpen,
@@ -401,8 +517,10 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
       'aria-expanded': open,
       'aria-controls': open ? sheetId : undefined, // INV-14
       onClick: handleTriggerClick,
+      ref: triggerRef,
     },
     sheetId,
     showTrigger,
+    sourceRevision,
   };
 }

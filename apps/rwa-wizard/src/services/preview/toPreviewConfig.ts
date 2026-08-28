@@ -1,6 +1,6 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
-import type { StructuralComplianceModuleOption } from '../../types/wizard';
+import type { StructuralModuleConfigFieldMeta } from '../../types/wizard';
 import {
   isMissingPreviewValue,
   PREVIEW_NUMBER_VALUE,
@@ -26,8 +26,23 @@ export interface PreviewConfigResult {
   readonly substitutedKeys: readonly string[];
 }
 
-/** Catalog slice the shim needs. Same shape `getAvailableModules()` already returns. */
-export type PreviewModuleCatalog = readonly StructuralComplianceModuleOption[];
+/**
+ * Catalog slice the shim reads: a module id and its config-field metadata.
+ *
+ * Deliberately narrower than `StructuralComplianceModuleOption`. Both the
+ * structural option and the copy-enriched `ComplianceModuleOption` satisfy it,
+ * so callers holding either can pass it directly. Typed as the structural
+ * option it excluded the enriched one — the two disagree on
+ * `runtimePrerequisites`, which the shim never reads — and the wizard papered
+ * over that with an `as unknown as` cast.
+ */
+export interface PreviewModuleEntry {
+  readonly id: string;
+  readonly configFields: readonly StructuralModuleConfigFieldMeta[];
+}
+
+/** Catalog slice the shim needs. `getAvailableModules()` output satisfies it. */
+export type PreviewModuleCatalog = readonly PreviewModuleEntry[];
 
 /**
  * Return a generate-ready config for live preview without touching the draft.
@@ -140,10 +155,8 @@ function fillActiveOwnershipAddress(
   }
 }
 
-function indexCatalogById(
-  modules: PreviewModuleCatalog
-): Map<string, StructuralComplianceModuleOption> {
-  const catalogById = new Map<string, StructuralComplianceModuleOption>();
+function indexCatalogById(modules: PreviewModuleCatalog): Map<string, PreviewModuleEntry> {
+  const catalogById = new Map<string, PreviewModuleEntry>();
   for (const option of modules) {
     if (!catalogById.has(option.id)) {
       catalogById.set(option.id, option);
@@ -153,7 +166,7 @@ function indexCatalogById(
 }
 
 function sentinelForRequiredField(
-  type: StructuralComplianceModuleOption['configFields'][number]['type']
+  type: StructuralModuleConfigFieldMeta['type']
 ): number | string | string[] | undefined {
   switch (type) {
     case 'number':

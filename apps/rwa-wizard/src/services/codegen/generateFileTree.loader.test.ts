@@ -63,6 +63,11 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   generateZip: generateZipMock,
   generateZipWithIdentitySupport: generateZipWithIdentitySupportMock,
   getEcosystemMetadata: vi.fn(() => undefined),
+  getUpstreamSourceRevision: vi.fn(() => ({
+    repoUrl: 'https://github.com/OpenZeppelin/stellar-contracts',
+    commitHash: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+    mode: 'git-revision' as const,
+  })),
   getCodegenInfoBlurb: vi.fn(() => ({ title: 'Mock', description: 'Mock blurb', links: [] })),
   getDeployGuidance: vi.fn(),
   getComplianceConfigWarnings: vi.fn(() => []),

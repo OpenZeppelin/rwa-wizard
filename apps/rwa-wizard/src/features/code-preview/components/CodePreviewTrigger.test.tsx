@@ -2,6 +2,9 @@ import '../code-preview.mocks';
 
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { createRef } from 'react';
+
+import { coreCopy } from '@openzeppelin/rwa-wizard-copy';
 
 import { CodePreviewTrigger } from './CodePreviewTrigger';
 
@@ -10,20 +13,29 @@ function triggerProps(expanded: boolean) {
     'aria-expanded': expanded,
     'aria-controls': expanded ? 'sheet-1' : undefined,
     onClick: vi.fn(),
+    ref: createRef<HTMLButtonElement>(),
   };
 }
 
 describe('CodePreviewTrigger label follows drawer state', () => {
-  it('reads "View generated code" while collapsed', () => {
+  it('takes the collapsed label from the copy package', () => {
     render(<CodePreviewTrigger show triggerProps={triggerProps(false)} />);
-    expect(screen.getByRole('button', { name: /view generated code/i })).toBeInTheDocument();
+    const label = coreCopy.notice('code-preview.trigger-show').description;
+    expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
   });
 
-  it('reads "Hide generated code" while expanded', () => {
+  it('takes the expanded label from the copy package', () => {
     render(<CodePreviewTrigger show triggerProps={triggerProps(true)} />);
-    const button = screen.getByRole('button', { name: /hide generated code/i });
+    const label = coreCopy.notice('code-preview.trigger-hide').description;
+    const button = screen.getByRole('button', { name: label });
     expect(button).toHaveAttribute('aria-expanded', 'true');
     expect(button).toHaveAttribute('aria-controls', 'sheet-1');
+  });
+
+  it('attaches the hook-owned ref so focus can return to it on close', () => {
+    const props = triggerProps(false);
+    render(<CodePreviewTrigger show triggerProps={props} />);
+    expect(props.ref.current).toBe(screen.getByRole('button'));
   });
 
   it('honours custom labels for both states', () => {
