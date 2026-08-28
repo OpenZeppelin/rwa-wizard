@@ -9,12 +9,14 @@ import {
   SAMPLE_IMPORT_LINKS,
   SAMPLE_USE_SOURCE,
 } from '../../../test/helpers/importLinkFixtures';
+import * as languageModule from '../languageForPath';
 import { PreviewCodePane } from './PreviewCodePane';
 
 const CONTRACT_PATH = 'rwa-token/src/contract.rs';
+const OTHER_PATH = 'README.md';
 
 function files(): Record<string, string> {
-  return { [CONTRACT_PATH]: SAMPLE_USE_SOURCE };
+  return { [CONTRACT_PATH]: SAMPLE_USE_SOURCE, [OTHER_PATH]: '# readme' };
 }
 
 describe('PreviewCodePane revision memo wiring (INV-8)', () => {
@@ -57,9 +59,14 @@ describe('PreviewCodePane revision memo wiring (INV-8)', () => {
   /**
    * The pane re-rendered on every drag `pointermove` even though none of its
    * props moved, re-reconciling the whole file through the per-leaf decorator.
+   *
+   * Counted through `languageForPath`, which the pane calls unmemoized in its
+   * JSX, so the count is renders of the pane itself. Counting decorator builds
+   * instead would prove nothing: that call was already inside a `useMemo` keyed
+   * on the revision before the pane was memoized, so it stayed flat either way.
    */
   it('does not re-render when the parent re-renders with identical props', () => {
-    const decoratorSpy = vi.spyOn(previewServices, 'createImportLinkDecorator');
+    const renderProbe = vi.spyOn(languageModule, 'languageForPath');
     const revision = gitModeRevision(FIXTURE_REV_A);
     const tree = files();
 
@@ -71,7 +78,8 @@ describe('PreviewCodePane revision memo wiring (INV-8)', () => {
         importLinks={SAMPLE_IMPORT_LINKS}
       />
     );
-    const callsAfterMount = decoratorSpy.mock.calls.length;
+    const rendersAfterMount = renderProbe.mock.calls.length;
+    expect(rendersAfterMount, 'probe must observe the mount render').toBeGreaterThan(0);
 
     rerender(
       <PreviewCodePane
@@ -82,11 +90,25 @@ describe('PreviewCodePane revision memo wiring (INV-8)', () => {
       />
     );
 
-    expect(decoratorSpy.mock.calls.length, 'memoised pane must skip identical renders').toBe(
-      callsAfterMount
+    expect(renderProbe.mock.calls.length, 'memoised pane must skip identical renders').toBe(
+      rendersAfterMount
     );
 
-    decoratorSpy.mockRestore();
+    rerender(
+      <PreviewCodePane
+        files={tree}
+        selectedPath={OTHER_PATH}
+        sourceRevision={revision}
+        importLinks={SAMPLE_IMPORT_LINKS}
+      />
+    );
+
+    expect(
+      renderProbe.mock.calls.length,
+      'and must still render when a prop actually changes'
+    ).toBeGreaterThan(rendersAfterMount);
+
+    renderProbe.mockRestore();
   });
 
   it('renders source from the selected path on the provided files object (INV-8, INV-1)', () => {
