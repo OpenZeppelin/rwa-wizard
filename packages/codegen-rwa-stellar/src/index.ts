@@ -40,7 +40,9 @@ export { STELLAR_VALIDATION_CONSTANTS } from './constants';
 export {
   GENERATED_STELLAR_SOURCE_REPO_URL,
   getContractsLibraryRepositoryUrl,
+  getUpstreamSourceRevision,
 } from './contracts-library-meta';
+export type { UpstreamDependencyMode, UpstreamSourceRevision } from './contracts-library-meta';
 
 export { getCodegenInfoBlurb, STELLAR_SEP_0057_CONTRACT_TYPES_URL } from './codegen-info-blurb';
 
