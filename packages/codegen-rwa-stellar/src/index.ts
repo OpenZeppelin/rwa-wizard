@@ -44,6 +44,9 @@ export {
 } from './contracts-library-meta';
 export type { UpstreamDependencyMode, UpstreamSourceRevision } from './contracts-library-meta';
 
+export { getUpstreamImportLinks } from './upstream-import-links';
+export type { UpstreamImportLinks, UpstreamImportTarget } from './upstream-import-links';
+
 export { getCodegenInfoBlurb, STELLAR_SEP_0057_CONTRACT_TYPES_URL } from './codegen-info-blurb';
 
 export {

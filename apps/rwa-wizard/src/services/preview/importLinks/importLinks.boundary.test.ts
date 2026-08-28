@@ -3,18 +3,20 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import { STELLAR_CRATE_REPO_PATHS } from './stellarCratePaths';
-
-const STELLAR_IMPORTS_DIR = dirname(fileURLToPath(import.meta.url));
+const IMPORT_LINKS_DIR = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Every non-test source in the directory, read from disk rather than listed by
  * hand: a hand-maintained list silently stops covering files added later.
  */
-function stellarImportsSources(): string[] {
-  return readdirSync(STELLAR_IMPORTS_DIR).filter(
+function importLinksSources(): string[] {
+  return readdirSync(IMPORT_LINKS_DIR).filter(
     (file) => /\.tsx?$/.test(file) && !file.includes('.test.')
   );
+}
+
+function readSource(file: string): string {
+  return readFileSync(join(IMPORT_LINKS_DIR, file), 'utf8');
 }
 
 const FORBIDDEN_CODEGEN_IMPORT =
@@ -33,26 +35,46 @@ const FORBIDDEN_REVISION_SYMBOLS = [
  */
 const FORBIDDEN_GENERATED_ARTIFACTS = ['Cargo.toml', 'README.md'] as const;
 
-describe('stellarImports package boundary (INV-11, INV-12, INV-13)', () => {
+/**
+ * Words that only make sense if this module knows which ecosystem it is
+ * decorating. Chain names and package-manager nouns are the obvious ones; the
+ * language name and its import keyword matter just as much, because both used
+ * to be written here — a `stellar_*` identifier pattern, a map of crate names
+ * to upstream directories, and a helper that knew a Rust import line starts
+ * with `use`. All three are now reported by the codegen package, so the module
+ * can be pointed at any generator's output. Constitution §I.
+ */
+const CHAIN_VOCABULARY = [
+  'stellar',
+  'soroban',
+  'crate',
+  'cargo',
+  'rust',
+  'solidity',
+  'evm',
+] as const;
+
+describe('importLinks package boundary (INV-11, INV-12, INV-13)', () => {
   it('does not import @openzeppelin/codegen-rwa-stellar (INV-11)', () => {
     const violations: string[] = [];
-    for (const file of stellarImportsSources()) {
-      const source = readFileSync(join(STELLAR_IMPORTS_DIR, file), 'utf8');
-      const hits = source.split('\n').filter((line) => FORBIDDEN_CODEGEN_IMPORT.test(line));
+    for (const file of importLinksSources()) {
+      const hits = readSource(file)
+        .split('\n')
+        .filter((line) => FORBIDDEN_CODEGEN_IMPORT.test(line));
       if (hits.length > 0) {
         violations.push(`${file}: ${hits.map((line) => line.trim()).join(' | ')}`);
       }
     }
     expect(
       violations,
-      'INV-11: the revision arrives through the codegen service seam, not a direct package import'
+      'INV-11: link targets arrive through the codegen service seam, not a direct package import'
     ).toEqual([]);
   });
 
   it('does not reference codegen revision snapshot symbols (INV-12)', () => {
     const violations: string[] = [];
-    for (const file of stellarImportsSources()) {
-      const source = readFileSync(join(STELLAR_IMPORTS_DIR, file), 'utf8');
+    for (const file of importLinksSources()) {
+      const source = readSource(file);
       for (const symbol of FORBIDDEN_REVISION_SYMBOLS) {
         if (source.includes(symbol)) {
           violations.push(`${file}: references forbidden symbol ${symbol}`);
@@ -67,8 +89,8 @@ describe('stellarImports package boundary (INV-11, INV-12, INV-13)', () => {
 
   it('does not read generated chain artifacts back (constitution §I)', () => {
     const violations: string[] = [];
-    for (const file of stellarImportsSources()) {
-      const source = readFileSync(join(STELLAR_IMPORTS_DIR, file), 'utf8');
+    for (const file of importLinksSources()) {
+      const source = readSource(file);
       for (const artifact of FORBIDDEN_GENERATED_ARTIFACTS) {
         if (source.includes(artifact)) {
           violations.push(`${file}: parses generated ${artifact}`);
@@ -81,16 +103,19 @@ describe('stellarImports package boundary (INV-11, INV-12, INV-13)', () => {
     ).toEqual([]);
   });
 
-  it('owns the four-crate map only in stellarCratePaths.ts (INV-13)', () => {
-    expect(Object.keys(STELLAR_CRATE_REPO_PATHS)).toEqual([
-      'stellar_access',
-      'stellar_tokens',
-      'stellar_macros',
-      'stellar_contract_utils',
-    ]);
-    expect(STELLAR_CRATE_REPO_PATHS.stellar_access).toBe('packages/access');
-    expect(STELLAR_CRATE_REPO_PATHS.stellar_tokens).toBe('packages/tokens');
-    expect(STELLAR_CRATE_REPO_PATHS.stellar_macros).toBe('packages/macros');
-    expect(STELLAR_CRATE_REPO_PATHS.stellar_contract_utils).toBe('packages/contract-utils');
+  it('carries no chain, language or package-manager vocabulary (INV-13, §I)', () => {
+    const violations: string[] = [];
+    for (const file of importLinksSources()) {
+      const source = readSource(file).toLowerCase();
+      for (const term of CHAIN_VOCABULARY) {
+        if (new RegExp(`\\b${term}`).test(source)) {
+          violations.push(`${file}: mentions "${term}"`);
+        }
+      }
+    }
+    expect(
+      violations,
+      '§I: identifiers, upstream paths and import syntax are the codegen package\u2019s to report'
+    ).toEqual([]);
   });
 });

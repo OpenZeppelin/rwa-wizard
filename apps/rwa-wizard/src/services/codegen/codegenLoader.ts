@@ -16,6 +16,7 @@ import type {
   GeneratedZipArtifact,
   StructuralComplianceModuleOption,
   StructuralEcosystemMetadata,
+  StructuralUpstreamImportLinks,
   StructuralUpstreamSourceRevision,
 } from '../../types/wizard';
 import { CodegenUnsupportedError, toCodegenError } from './errors';
@@ -58,6 +59,7 @@ interface CodegenPackageModule {
   generateWithIdentitySupport?: (config: RWAConfig, options?: GenerateOptions) => GenerationResult;
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
   getUpstreamSourceRevision?: (options?: GenerateOptions) => StructuralUpstreamSourceRevision;
+  getUpstreamImportLinks?: () => StructuralUpstreamImportLinks;
   getCodegenInfoBlurb?: () => CodegenInfoBlurb;
   generateZipWithIdentitySupport?: (
     config: RWAConfig,
@@ -187,6 +189,10 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
     // build reports the unpinned coordinates its manifest actually emits.
     getUpstreamSourceRevision: pkg.getUpstreamSourceRevision
       ? () => pkg.getUpstreamSourceRevision!(baseGenerateOptions)
+      : undefined,
+
+    getUpstreamImportLinks: pkg.getUpstreamImportLinks
+      ? () => pkg.getUpstreamImportLinks!()
       : undefined,
 
     getCodegenInfoBlurb: pkg.getCodegenInfoBlurb ? () => pkg.getCodegenInfoBlurb!() : undefined,

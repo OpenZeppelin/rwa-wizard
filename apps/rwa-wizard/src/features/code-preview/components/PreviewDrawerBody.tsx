@@ -4,7 +4,10 @@ import type { ReactElement } from 'react';
 import type { FileTree } from '@openzeppelin/codegen-core';
 
 import { useCopy } from '../../../app/providers/useCopy';
-import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
+import type {
+  StructuralUpstreamImportLinks,
+  StructuralUpstreamSourceRevision,
+} from '../../../types/wizard';
 import type { CodePreviewPhase } from '../hooks/useCodePreview';
 import { PreviewCodePane } from './PreviewCodePane';
 import { PreviewContentErrorBoundary } from './PreviewContentErrorBoundary';
@@ -26,6 +29,7 @@ export function PreviewDrawerBody(props: {
   boundaryResetKey: string;
   /** Upstream coordinates from the codegen service; `null` disables import links. */
   sourceRevision: StructuralUpstreamSourceRevision | null;
+  importLinks: StructuralUpstreamImportLinks | null;
   /** Show the file tree pane. Default true. */
   treeVisible?: boolean;
 }): ReactElement {
@@ -37,6 +41,7 @@ export function PreviewDrawerBody(props: {
     errorMessages,
     boundaryResetKey,
     sourceRevision,
+    importLinks,
     treeVisible = true,
   } = props;
 
@@ -79,6 +84,7 @@ export function PreviewDrawerBody(props: {
               files={phase.files}
               selectedPath={selectedPath}
               sourceRevision={sourceRevision}
+              importLinks={importLinks}
             />
           </div>
         </PreviewContentErrorBoundary>

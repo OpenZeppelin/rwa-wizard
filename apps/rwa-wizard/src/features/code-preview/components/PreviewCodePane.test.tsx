@@ -6,8 +6,9 @@ import {
   FIXTURE_REV_A,
   FIXTURE_REV_B,
   gitModeRevision,
+  SAMPLE_IMPORT_LINKS,
   SAMPLE_USE_SOURCE,
-} from '../../../test/helpers/stellarImportFixtures';
+} from '../../../test/helpers/importLinkFixtures';
 import { PreviewCodePane } from './PreviewCodePane';
 
 const CONTRACT_PATH = 'rwa-token/src/contract.rs';
@@ -18,23 +19,33 @@ function files(): Record<string, string> {
 
 describe('PreviewCodePane revision memo wiring (INV-8)', () => {
   it('rebuilds the decorator when the reported revision changes', () => {
-    const decoratorSpy = vi.spyOn(previewServices, 'createStellarImportDecorator');
+    const decoratorSpy = vi.spyOn(previewServices, 'createImportLinkDecorator');
     const revisionA = gitModeRevision(FIXTURE_REV_A);
     const revisionB = gitModeRevision(FIXTURE_REV_B);
     const tree = files();
 
     const { rerender } = render(
-      <PreviewCodePane files={tree} selectedPath={CONTRACT_PATH} sourceRevision={revisionA} />
+      <PreviewCodePane
+        files={tree}
+        selectedPath={CONTRACT_PATH}
+        sourceRevision={revisionA}
+        importLinks={SAMPLE_IMPORT_LINKS}
+      />
     );
 
-    expect(decoratorSpy).toHaveBeenCalledWith(revisionA);
+    expect(decoratorSpy).toHaveBeenCalledWith(revisionA, SAMPLE_IMPORT_LINKS);
     const callsAfterA = decoratorSpy.mock.calls.length;
 
     rerender(
-      <PreviewCodePane files={tree} selectedPath={CONTRACT_PATH} sourceRevision={revisionB} />
+      <PreviewCodePane
+        files={tree}
+        selectedPath={CONTRACT_PATH}
+        sourceRevision={revisionB}
+        importLinks={SAMPLE_IMPORT_LINKS}
+      />
     );
 
-    expect(decoratorSpy).toHaveBeenLastCalledWith(revisionB);
+    expect(decoratorSpy).toHaveBeenLastCalledWith(revisionB, SAMPLE_IMPORT_LINKS);
     expect(
       decoratorSpy.mock.calls.length,
       'INV-8: decorator memo must rebuild when the revision changes'
@@ -48,17 +59,27 @@ describe('PreviewCodePane revision memo wiring (INV-8)', () => {
    * props moved, re-reconciling the whole file through the per-leaf decorator.
    */
   it('does not re-render when the parent re-renders with identical props', () => {
-    const decoratorSpy = vi.spyOn(previewServices, 'createStellarImportDecorator');
+    const decoratorSpy = vi.spyOn(previewServices, 'createImportLinkDecorator');
     const revision = gitModeRevision(FIXTURE_REV_A);
     const tree = files();
 
     const { rerender } = render(
-      <PreviewCodePane files={tree} selectedPath={CONTRACT_PATH} sourceRevision={revision} />
+      <PreviewCodePane
+        files={tree}
+        selectedPath={CONTRACT_PATH}
+        sourceRevision={revision}
+        importLinks={SAMPLE_IMPORT_LINKS}
+      />
     );
     const callsAfterMount = decoratorSpy.mock.calls.length;
 
     rerender(
-      <PreviewCodePane files={tree} selectedPath={CONTRACT_PATH} sourceRevision={revision} />
+      <PreviewCodePane
+        files={tree}
+        selectedPath={CONTRACT_PATH}
+        sourceRevision={revision}
+        importLinks={SAMPLE_IMPORT_LINKS}
+      />
     );
 
     expect(decoratorSpy.mock.calls.length, 'memoised pane must skip identical renders').toBe(
@@ -74,6 +95,7 @@ describe('PreviewCodePane revision memo wiring (INV-8)', () => {
         files={files()}
         selectedPath={CONTRACT_PATH}
         sourceRevision={gitModeRevision(FIXTURE_REV_A)}
+        importLinks={SAMPLE_IMPORT_LINKS}
       />
     );
 

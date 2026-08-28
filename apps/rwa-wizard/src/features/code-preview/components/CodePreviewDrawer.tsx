@@ -4,7 +4,10 @@ import type { FileTree } from '@openzeppelin/codegen-core';
 import { BottomSheet } from '@openzeppelin/ui-components';
 
 import { useCopy } from '../../../app/providers/useCopy';
-import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
+import type {
+  StructuralUpstreamImportLinks,
+  StructuralUpstreamSourceRevision,
+} from '../../../types/wizard';
 import type { CodePreviewLayoutTools, CodePreviewPhase } from '../hooks/useCodePreview';
 import { PreviewDrawerBody } from './PreviewDrawerBody';
 import { previewDrawerHeader } from './PreviewDrawerHeader';
@@ -24,6 +27,8 @@ export function CodePreviewDrawer(props: {
   errorMessages: readonly string[] | undefined;
   /** Upstream coordinates from the codegen service; `null` disables import links. */
   sourceRevision: StructuralUpstreamSourceRevision | null;
+  /** Linkable import identifiers reported by the codegen service. */
+  importLinks?: StructuralUpstreamImportLinks | null;
   /** Tree / maximize toggles for the header. Omit to render the header without tools. */
   tools?: CodePreviewLayoutTools;
 }): ReactElement {
@@ -41,6 +46,7 @@ export function CodePreviewDrawer(props: {
     substitutedKeys,
     errorMessages,
     sourceRevision,
+    importLinks = null,
     tools,
   } = props;
 
@@ -51,13 +57,13 @@ export function CodePreviewDrawer(props: {
     <BottomSheet
       id={sheetId}
       aria-label={copy.notice('code-preview.sheet-label').description}
+      closeLabel={copy.notice('code-preview.close').description}
       open={open}
       onOpenChange={onOpenChange}
       height={height}
       onHeightChange={onHeightChange}
       header={previewDrawerHeader({ phase, substitutedKeys, tools })}
       layout="inset"
-      closeLabel={copy.notice('code-preview.close').description}
     >
       <PreviewDrawerBody
         phase={phase}
@@ -67,6 +73,7 @@ export function CodePreviewDrawer(props: {
         changedPaths={changedPaths}
         errorMessages={errorMessages}
         sourceRevision={sourceRevision}
+        importLinks={importLinks}
         treeVisible={tools?.treeVisible ?? true}
         boundaryResetKey={boundaryResetKey}
       />

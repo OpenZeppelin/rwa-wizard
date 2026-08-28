@@ -17,6 +17,7 @@ const {
   getCodegenRuntimeOptionsMock,
   getEcosystemMetadataMock,
   getUpstreamSourceRevisionMock,
+  getUpstreamImportLinksMock,
   getCodegenInfoBlurbMock,
   getDeployGuidanceMock,
   getComplianceConfigWarningsMock,
@@ -38,6 +39,11 @@ const {
     repoUrl: 'https://github.com/OpenZeppelin/stellar-contracts',
     commitHash: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
     mode: 'git-revision' as const,
+  })),
+  getUpstreamImportLinksMock: vi.fn(() => ({
+    language: 'rust',
+    importLinePrefix: 'use ',
+    targets: [{ identifier: 'stellar_access', path: 'packages/access' }],
   })),
   getCodegenInfoBlurbMock: vi.fn(() => ({
     title: 'Mock',
@@ -76,6 +82,7 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
   generateZipWithIdentitySupport: generateZipWithIdentitySupportMock,
   getEcosystemMetadata: getEcosystemMetadataMock,
   getUpstreamSourceRevision: getUpstreamSourceRevisionMock,
+  getUpstreamImportLinks: getUpstreamImportLinksMock,
   getCodegenInfoBlurb: getCodegenInfoBlurbMock,
   getDeployGuidance: getDeployGuidanceMock,
   getComplianceConfigWarnings: getComplianceConfigWarningsMock,
@@ -94,6 +101,7 @@ describe('loadCodegenService', () => {
     getCodegenRuntimeOptionsMock.mockReset();
     getEcosystemMetadataMock.mockClear();
     getUpstreamSourceRevisionMock.mockClear();
+    getUpstreamImportLinksMock.mockClear();
     getCodegenInfoBlurbMock.mockClear();
   });
 

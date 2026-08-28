@@ -58,6 +58,7 @@ describe('code-preview drawer composition', () => {
         substitutedKeys={ready.substitutedKeys}
         errorMessages={undefined}
         sourceRevision={null}
+        importLinks={null}
       />
     );
 
@@ -99,6 +100,7 @@ describe('code-preview drawer composition', () => {
         substitutedKeys={result.current.phase.substitutedKeys}
         errorMessages={result.current.phase.messages}
         sourceRevision={null}
+        importLinks={null}
       />
     );
 
@@ -139,6 +141,7 @@ describe('code-preview drawer composition', () => {
         errorMessages={undefined}
         boundaryResetKey="ready"
         sourceRevision={null}
+        importLinks={null}
       />
     );
 
@@ -198,6 +201,7 @@ describe('code-preview drawer composition', () => {
           errorMessages={undefined}
           boundaryResetKey="throw-case"
           sourceRevision={null}
+          importLinks={null}
         />
       </div>
     );
@@ -236,6 +240,7 @@ describe('code-preview drawer composition', () => {
           substitutedKeys={ready.substitutedKeys}
           errorMessages={undefined}
           sourceRevision={null}
+          importLinks={null}
         />
       </>
     );

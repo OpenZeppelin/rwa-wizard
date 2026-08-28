@@ -263,6 +263,7 @@ function WizardPageContent(): ReactElement {
               }
               errorMessages={preview.phase.kind === 'error' ? preview.phase.messages : undefined}
               sourceRevision={preview.sourceRevision}
+              importLinks={preview.importLinks}
               tools={preview.layout}
             />
           ) : null}

@@ -19,13 +19,12 @@ export type {
   PreviewModuleEntry,
 } from './toPreviewConfig';
 export {
-  buildStellarCrateUrl,
-  createStellarImportDecorator,
-  matchStellarCratesInText,
-  STELLAR_CRATE_REPO_PATHS,
-} from './stellarImports';
+  buildImportTargetUrl,
+  createImportLinkDecorator,
+  matchImportIdentifiers,
+} from './importLinks';
 export type {
-  StellarCrateMatch,
-  StellarImportDecoratorOptions,
-  StellarLinkDegradeMode,
-} from './stellarImports';
+  ImportIdentifierMatch,
+  ImportLinkDecoratorOptions,
+  ImportLinkDegradeMode,
+} from './importLinks';

@@ -206,6 +206,31 @@ export interface StructuralUpstreamSourceRevision {
   readonly mode: 'git-revision' | 'local-path';
 }
 
+/** One identifier the generated source imports, and where it lives upstream. */
+export interface StructuralUpstreamImportTarget {
+  /** Identifier exactly as it appears in generated source. */
+  readonly identifier: string;
+  /** Path of the imported code inside the upstream repository, no leading slash. */
+  readonly path: string;
+}
+
+/**
+ * Everything needed to turn imports in generated source into links to upstream,
+ * reported by the active codegen package.
+ *
+ * The wizard matches the identifiers it is given and knows nothing about which
+ * they are: the crate names, the repository layout and the import syntax are
+ * all the generator's, and keeping a copy of them here was chain-specific
+ * knowledge in the UI (constitution §I).
+ */
+export interface StructuralUpstreamImportLinks {
+  /** Language id of the files these identifiers appear in. */
+  readonly language: string;
+  /** A line imports only if it starts with this once leading whitespace is trimmed. */
+  readonly importLinePrefix: string;
+  readonly targets: readonly StructuralUpstreamImportTarget[];
+}
+
 /**
  * Structural compliance-module entry as emitted by the codegen package.
  * Copy (description, info tooltip) lives in `@openzeppelin/rwa-wizard-copy`.

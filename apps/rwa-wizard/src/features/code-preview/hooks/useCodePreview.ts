@@ -14,6 +14,7 @@ import {
 } from '../../../services/preview';
 import type {
   ComplianceModuleOption,
+  StructuralUpstreamImportLinks,
   StructuralUpstreamSourceRevision,
 } from '../../../types/wizard';
 import { defaultSelectedPath } from '../defaultSelectedPath';
@@ -92,6 +93,12 @@ export interface UseCodePreviewResult {
    * linking generated import paths. `null` when the target reports none.
    */
   readonly sourceRevision: StructuralUpstreamSourceRevision | null;
+  /**
+   * Import identifiers the loaded codegen service reports as linkable, with
+   * where they live upstream. `null` when the target reports none, which is
+   * what keeps the preview from decorating imports it knows nothing about.
+   */
+  readonly importLinks: StructuralUpstreamImportLinks | null;
 }
 
 /**
@@ -179,6 +186,10 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
   // stable for the life of the service, so it is memoised on service identity.
   const sourceRevision = useMemo(
     () => codegenService?.getUpstreamSourceRevision?.() ?? null,
+    [codegenService]
+  );
+  const importLinks = useMemo(
+    () => codegenService?.getUpstreamImportLinks?.() ?? null,
     [codegenService]
   );
 
@@ -550,5 +561,6 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     sheetId,
     showTrigger,
     sourceRevision,
+    importLinks,
   };
 }

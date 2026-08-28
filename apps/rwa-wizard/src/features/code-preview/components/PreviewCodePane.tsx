@@ -5,8 +5,11 @@ import { formatCopy } from '@openzeppelin/rwa-wizard-copy';
 import { CodeView } from '@openzeppelin/ui-components/code-view';
 
 import { useCopy } from '../../../app/providers/useCopy';
-import { createStellarImportDecorator } from '../../../services/preview';
-import type { StructuralUpstreamSourceRevision } from '../../../types/wizard';
+import { createImportLinkDecorator } from '../../../services/preview';
+import type {
+  StructuralUpstreamImportLinks,
+  StructuralUpstreamSourceRevision,
+} from '../../../types/wizard';
 import { languageForPath } from '../languageForPath';
 
 function fileContentToString(content: string | Uint8Array): string {
@@ -18,15 +21,17 @@ interface PreviewCodePaneProps {
   selectedPath: string | null;
   /** Upstream coordinates from the codegen service; `null` disables import links. */
   sourceRevision: StructuralUpstreamSourceRevision | null;
+  /** Linkable import identifiers from the codegen service; `null` disables import links. */
+  importLinks: StructuralUpstreamImportLinks | null;
 }
 
 function PreviewCodePaneImpl(props: PreviewCodePaneProps): ReactElement {
-  const { files, selectedPath, sourceRevision } = props;
+  const { files, selectedPath, sourceRevision, importLinks } = props;
   const copy = useCopy();
 
   const decorateToken = useMemo(
-    () => createStellarImportDecorator(sourceRevision),
-    [sourceRevision] // INV-8
+    () => createImportLinkDecorator(sourceRevision, importLinks),
+    [importLinks, sourceRevision] // INV-8
   );
 
   if (!files || !selectedPath || !(selectedPath in files)) {

@@ -68,6 +68,11 @@ vi.mock('@openzeppelin/codegen-rwa-stellar', () => ({
     commitHash: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
     mode: 'git-revision' as const,
   })),
+  getUpstreamImportLinks: vi.fn(() => ({
+    language: 'rust',
+    importLinePrefix: 'use ',
+    targets: [{ identifier: 'stellar_access', path: 'packages/access' }],
+  })),
   getCodegenInfoBlurb: vi.fn(() => ({ title: 'Mock', description: 'Mock blurb', links: [] })),
   getDeployGuidance: vi.fn(),
   getComplianceConfigWarnings: vi.fn(() => []),
