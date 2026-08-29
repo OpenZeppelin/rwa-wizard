@@ -1,0 +1,42 @@
+{
+  "token": {
+    "name": "[preview] Token name",
+    "symbol": "[preview]",
+    "decimals": 7,
+    "administrativeControls": {
+      "burnable": true,
+      "mintable": true,
+      "pausable": true
+    },
+    "documentManager": {
+      "enabled": false
+    }
+  },
+  "identityVerification": {
+    "claimTopics": [],
+    "trustedIssuers": [],
+    "controls": {
+      "addressFreezing": true,
+      "partialTokenFreezing": true,
+      "recovery": true,
+      "forcedTransfers": true
+    }
+  },
+  "compliance": {
+    "modules": []
+  },
+  "accessControl": {
+    "ownership": {
+      "type": "single-owner",
+      "ownerAddress": "[preview] owner address"
+    },
+    "roles": []
+  },
+  "deployment": {
+    "target": {
+      "kind": "preset",
+      "ecosystem": "stellar",
+      "networkId": "stellar-testnet"
+    }
+  }
+}
