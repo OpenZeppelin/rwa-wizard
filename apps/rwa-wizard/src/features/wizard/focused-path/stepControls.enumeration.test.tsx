@@ -12,7 +12,11 @@ import {
   renderStep,
   type EnumeratedStepId,
 } from '../../../test/helpers/focusedPathHarness';
-import { resolveConfigPath, isAbsentOptionalConfigPath, isPendingCollectionSlot } from '../config-path';
+import {
+  isAbsentOptionalConfigPath,
+  isPendingCollectionSlot,
+  resolveConfigPath,
+} from '../config-path';
 import { CONFIG_ANCHOR_ATTR, FIELD_ID_ATTR } from './configAnchor';
 import { resolveFocusedConfigPath } from './resolveFocusedConfigPath';
 
@@ -436,7 +440,9 @@ describe('INV-19 — resolved paths exist in the draft or are well-formed pendin
       if (isAbsentOptionalConfigPath(draft, path)) continue;
 
       if (!isPendingCollectionSlot(draft, path)) {
-        inadmissible.push(`${path} — does not resolve and is not a pending or absent-optional path`);
+        inadmissible.push(
+          `${path} — does not resolve and is not a pending or absent-optional path`
+        );
         continue;
       }
 
