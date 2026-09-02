@@ -1,15 +1,11 @@
-import { insertAfterExact, insertBeforeExact, replaceExact } from '@openzeppelin/codegen-core';
-import type { RWAConfig } from '@openzeppelin/rwa-config';
+import type { ConfigPath, PatchSink } from '@openzeppelin/codegen-core';
 
 import { rwaTokenMarkers } from './rwa-token-markers';
-import { buildDocumentManagerAccessAttribute } from './rwa-token-roles';
 
 /**
  * Generate the optional DocumentManager implementation block.
  */
-function buildDocumentManagerImpl(config: RWAConfig): string {
-  const documentManagerGuard = buildDocumentManagerAccessAttribute(config);
-
+function buildDocumentManagerImpl(documentManagerGuard: string): string {
   return `#[contractimpl]
 impl DocumentManager for RWATokenContract {
     fn get_document(e: &Env, name: BytesN<32>) -> Document {
@@ -42,27 +38,37 @@ ${documentManagerGuard}
 
 /**
  * Inject the DocumentManager extension imports and implementation.
+ *
+ * All three edits exist because the extension is enabled, so all three carry
+ * `enabledPaths`. The impl block additionally carries the paths of the role
+ * that produced its access guard — the guard attribute is observed by the
+ * caller and handed in, never recomputed here (INV-24).
  */
-export function addDocumentManagerSupport(source: string, config: RWAConfig): string {
-  let patched = replaceExact(
-    source,
+export function addDocumentManagerSupport(
+  sink: PatchSink,
+  documentManagerGuard: string,
+  enabledPaths: readonly ConfigPath[],
+  guardPaths: readonly ConfigPath[]
+): void {
+  sink.replaceExact(
     rwaTokenMarkers.sdkImportMembers,
-    '    contract, contractimpl, symbol_short, Address, BytesN, Env, MuxedAddress, String, Symbol, Vec,\n'
+    '    contract, contractimpl, symbol_short, Address, BytesN, Env, MuxedAddress, String, Symbol, Vec,\n',
+    enabledPaths
   );
 
-  patched = insertAfterExact(
-    patched,
+  sink.insertAfterExact(
     rwaTokenMarkers.tokenImport,
     `
 use stellar_tokens::rwa::extensions::doc_manager::{
     self as doc_manager, Document, DocumentManager,
 };
-`
+`,
+    enabledPaths
   );
 
-  return insertBeforeExact(
-    patched,
+  sink.insertBeforeExact(
     rwaTokenMarkers.accessControlImpl,
-    `\n${buildDocumentManagerImpl(config)}\n\n`
+    `\n${buildDocumentManagerImpl(documentManagerGuard)}\n\n`,
+    [...enabledPaths, ...guardPaths]
   );
 }

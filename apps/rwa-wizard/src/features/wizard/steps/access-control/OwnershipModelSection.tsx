@@ -12,6 +12,7 @@ import { useWizardStore } from '../../../../app/state/useWizardStore';
 import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 import { SelectableCard } from '../../../../components/shared/SelectableCard';
 import { useAddressing } from '../../../../services/runtime';
+import { OWNERSHIP_TYPE_ANCHOR } from '../../focused-path';
 
 interface OwnershipModelSectionProps {
   ownership: OwnershipModel;
@@ -95,6 +96,7 @@ export function OwnershipModelSection({ ownership, onUpdate }: OwnershipModelSec
             return (
               <SelectableCard
                 key={type}
+                configAnchor={ownership.type === type ? OWNERSHIP_TYPE_ANCHOR : undefined}
                 title={entry.title ?? ''}
                 description={entry.description}
                 isSelected={ownership.type === type}

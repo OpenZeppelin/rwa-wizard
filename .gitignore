@@ -108,3 +108,7 @@ $RECYCLE.BIN/
 
 # Local agent workspace
 /.maestri/
+
+# Temporary app-root fixture for the SF-15 supersede end-to-end test (N7).
+# Created by mkdtemp inside apps/rwa-wizard and removed in the test's finally block.
+apps/rwa-wizard/.supersede-e2e-*/

@@ -6,6 +6,7 @@ import { ReadOnlyFeatureCard } from '../../../../components/shared/ReadOnlyFeatu
 import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 import { SelectableCard } from '../../../../components/shared/SelectableCard';
 import type { FeatureControlMeta } from '../../../../types/wizard';
+import { identityControlAnchor } from '../../focused-path';
 
 interface IdentityControlsSectionProps {
   controls: IdentityControls;
@@ -43,6 +44,7 @@ export function IdentityControlsSection({
           return (
             <SelectableCard
               key={meta.id}
+              configAnchor={identityControlAnchor(meta.id)}
               title={meta.name}
               description={meta.description}
               isSelected={value}

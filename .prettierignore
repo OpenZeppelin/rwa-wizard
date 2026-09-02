@@ -26,3 +26,6 @@ exports/
 .husky/_/
 public/
 
+
+# Golden outputs are byte-exact fixtures; never reformat
+**/__goldens__/

@@ -36,6 +36,32 @@ export interface ClaimTopic {
   name: string;
   /** Whether this topic was added by the user (not predefined) */
   isCustom?: boolean;
+  /**
+   * Whether this topic is part of the configuration to be deployed.
+   *
+   * Absence and `true` both mean selected; only an explicit `false` means
+   * "defined but not selected". Ask through `isClaimTopicSelected` rather than
+   * testing this property inline, so the three input states are collapsed in
+   * exactly one place.
+   *
+   * Producers MUST omit the field when a topic is selected rather than writing
+   * `true`, and re-selecting MUST delete the key: `config.json` is
+   * `JSON.stringify` of this object, so an explicitly written `true` moves
+   * generated output on every draft that has topics, and ZIP output must be
+   * deterministic from a given `RWAConfig` — two drafts differing only in an
+   * unwritten default must produce identical bytes.
+   *
+   * The omit-when-true rule protects `config.json`'s BYTES. It says nothing
+   * about provenance output: a recording reader records a read of an absent key,
+   * so any selection walk records one path per topic whether the field is
+   * written or not.
+   *
+   * Selection is authoring state with no on-chain counterpart — ERC-3643's
+   * `ClaimTopicsRegistry` exposes only `addClaimTopic` / `removeClaimTopic` and
+   * has no inactive state. Generators project it away; they never persist it
+   * into an artefact the deployment reads.
+   */
+  selected?: boolean;
 }
 
 export interface TrustedIssuer {

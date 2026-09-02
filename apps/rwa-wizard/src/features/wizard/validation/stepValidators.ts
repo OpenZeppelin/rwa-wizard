@@ -1,4 +1,4 @@
-import type { RWAConfig } from '@openzeppelin/rwa-config';
+import { isClaimTopicSelected, type RWAConfig } from '@openzeppelin/rwa-config';
 import type { AddressingCapability } from '@openzeppelin/ui-types';
 
 import type { ComplianceModuleOption, WizardStepId } from '../../../types/wizard';
@@ -55,13 +55,81 @@ function isValidAssetStep(config: RWAConfig): boolean {
 }
 
 function isValidIdentityStep(config: RWAConfig, ctx: StepValidationContext): boolean {
-  // Identity is entirely optional from a config-shape standpoint. We only
-  // guard against stale issuer addresses that would fail the adapter check —
-  // the Add-issuer UI already prevents new invalid addresses, so this catches
-  // drift from imports or older drafts.
-  const { trustedIssuers } = config.identityVerification;
-  if (!ctx.addressing) return true;
-  return trustedIssuers.every((iss) => ctx.addressing!.isValidAddress(iss.address));
+  return isValidIdentityStepCore(config, ctx);
+}
+
+/**
+ * Whether any trusted issuer references only claim topics that are defined but
+ * not selected for deployment (codegen `UNSELECTED_REFERENCE`).
+ */
+export function identityStepHasUnselectedIssuerTopics(
+  identity: RWAConfig['identityVerification']
+): boolean {
+  const { trustedIssuers, claimTopics } = identity;
+  const validTopicIds = new Set(claimTopics.map((topic) => topic.id));
+  const selectedTopicIds = new Set(
+    claimTopics.filter(isClaimTopicSelected).map((topic) => topic.id)
+  );
+
+  for (const issuer of trustedIssuers) {
+    if (issuer.claimTopics.length === 0) continue;
+    if (issuer.claimTopics.some((id) => !validTopicIds.has(id))) continue;
+    if (!issuer.claimTopics.some((id) => selectedTopicIds.has(id))) return true;
+  }
+  return false;
+}
+
+/**
+ * Whether any trusted issuer references a claim-topic id absent from
+ * `claimTopics` (codegen `INVALID_REFERENCE`). Reachable via Import / pre-prune
+ * drafts — no pill exists for the orphan id, so the step must surface a banner.
+ */
+export function identityStepHasOrphanIssuerTopics(
+  identity: RWAConfig['identityVerification']
+): boolean {
+  const validTopicIds = new Set(identity.claimTopics.map((topic) => topic.id));
+  for (const issuer of identity.trustedIssuers) {
+    if (issuer.claimTopics.some((id) => !validTopicIds.has(id))) return true;
+  }
+  return false;
+}
+
+/** Copy notice ids for identity-step blockers surfaced in the UI. */
+export function getIdentityStepIssues(
+  identity: RWAConfig['identityVerification']
+): readonly string[] {
+  const issues: string[] = [];
+  if (identityStepHasOrphanIssuerTopics(identity)) {
+    issues.push('trusted-issuer.unknown-topics');
+  }
+  if (identityStepHasUnselectedIssuerTopics(identity)) {
+    issues.push('trusted-issuer.unselected-topics');
+  }
+  return issues;
+}
+
+function isValidIdentityStepCore(config: RWAConfig, ctx: StepValidationContext): boolean {
+  // Mirror codegen's issuer gates (empty address, empty/invalid topic refs,
+  // UNSELECTED_REFERENCE) so Next cannot leave a draft the preview already
+  // rejects. Selection meaning comes from `isClaimTopicSelected` — the same
+  // primitive codegen uses — rather than ad-hoc message strings.
+  const { trustedIssuers, claimTopics } = config.identityVerification;
+  const validTopicIds = new Set(claimTopics.map((topic) => topic.id));
+  const selectedTopicIds = new Set(
+    claimTopics.filter(isClaimTopicSelected).map((topic) => topic.id)
+  );
+
+  for (const issuer of trustedIssuers) {
+    const trimmed = issuer.address.trim();
+    if (!trimmed) return false;
+    if (ctx.addressing && !ctx.addressing.isValidAddress(trimmed)) return false;
+
+    if (issuer.claimTopics.length === 0) return false;
+    if (issuer.claimTopics.some((id) => !validTopicIds.has(id))) return false;
+    if (!issuer.claimTopics.some((id) => selectedTopicIds.has(id))) return false;
+  }
+
+  return true;
 }
 
 function isValidComplianceStep(config: RWAConfig, ctx: StepValidationContext): boolean {

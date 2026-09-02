@@ -5,11 +5,15 @@ import { PreviewDrawerTools } from './PreviewDrawerTools';
 import { PreviewSubstitutionsNotice } from './PreviewSubstitutionsNotice';
 
 /**
- * Content for the kit `BottomSheet` `header` slot: the placeholder notice (INV-2) and
- * the layout tools, sharing the row with the sheet's close button. The selected path is
- * shown in the code pane's status chip instead, so the notice never shifts with path
- * length. Returns `undefined` when there is nothing to show, so the sheet renders its
- * default chrome.
+ * Content for the kit `BottomSheet` `header` slot: the placeholder notice (INV-2)
+ * and the layout tools. The sheet's close button is kit-owned and sits beside
+ * this slot.
+ *
+ * Bottom / top: flex row — notice + tools share one band under the visible
+ * drag separator (kit column stack; see `code-preview.css`).
+ *
+ * Left / right: `code-preview.css` uses `display: contents` + a 2-row grid so
+ * the notice is alone on row 1 and tools align with Close on row 2.
  */
 export function previewDrawerHeader(props: {
   phase: CodePreviewPhase;
@@ -25,10 +29,16 @@ export function previewDrawerHeader(props: {
   }
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-2">
-      <div className="min-w-0 flex-1">
-        <PreviewSubstitutionsNotice substitutedKeys={keys} />
-      </div>
+    <div className="rwa-code-preview-sheet-header flex min-w-0 flex-1 items-center gap-2">
+      {keys.length > 0 ? (
+        <div className="rwa-code-preview-sheet-notice min-w-0 flex-1">
+          <PreviewSubstitutionsNotice substitutedKeys={keys} />
+        </div>
+      ) : (
+        // Bottom/top: keeps tools right-aligned in the flex row. Side docks hide
+        // this via CSS so it does not occupy a grid cell under display:contents.
+        <div className="rwa-code-preview-sheet-header-spacer min-w-0 flex-1" aria-hidden />
+      )}
       {tools ? <PreviewDrawerTools {...tools} /> : null}
     </div>
   );

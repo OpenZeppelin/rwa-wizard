@@ -1,0 +1,1274 @@
+{
+  "entries": [
+    {
+      "file": "src/components/shared/SelectableCard.tsx",
+      "kind": "replaces-baseline",
+      "authorisedBy": "SF-14",
+      "decidedOn": "2026-09-02",
+      "reason": "Anchored cards wire useIsInspected for the impact column: aria-current and an offset ring on inspection, separate from isSelected border fill. SC-011 is superseded for this file.",
+      "components": [
+        "SelectableCard"
+      ],
+      "anchorDelta": 0,
+      "introducesFirstAnchor": false,
+      "adopted": {
+        "elementsBefore": 6,
+        "elementsAfter": 6,
+        "tagsAdded": [],
+        "tagsRemoved": [],
+        "valuesChanged": 2
+      },
+      "fingerprint": [
+        {
+          "tag": "button",
+          "props": [
+            "aria-current",
+            "aria-describedby",
+            "className",
+            "data-config-anchor",
+            "disabled",
+            "onClick",
+            "type"
+          ],
+          "values": {
+            "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors\"),ConditionalExpression[Identifier(\"isSelected\"),QuestionToken(\"?\"),Str(\"border-primary bg-primary/5\"),ColonToken(\":\"),Str(\"border-border hover:border-primary/40\")],BinaryExpression[Identifier(\"disabled\"),AmpersandAmpersandToken(\"&&\"),Str(\"cursor-not-allowed opacity-50\")],BinaryExpression[Identifier(\"inspected\"),AmpersandAmpersandToken(\"&&\"),Str(\"ring-1 ring-primary ring-offset-1 ring-offset-background\")],Identifier(\"className\")]]"
+          },
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "props": [
+                "className"
+              ],
+              "values": {
+                "className": "Str(\"flex min-w-0 flex-1 flex-col items-start\")"
+              },
+              "via": [],
+              "children": [
+                {
+                  "tag": "span",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"inline-flex items-center gap-1.5 font-medium\")"
+                  },
+                  "via": [],
+                  "children": [
+                    {
+                      "tag": "span",
+                      "props": [
+                        "className"
+                      ],
+                      "values": {
+                        "className": "Str(\"inline-flex items-center text-muted-foreground\")"
+                      },
+                      "via": [
+                        "JsxExpression",
+                        "BinaryExpression"
+                      ],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "tag": "span",
+                  "props": [
+                    "className",
+                    "id"
+                  ],
+                  "values": {
+                    "className": "Str(\"mt-0.5 text-sm text-muted-foreground\")",
+                    "id": "JsxExpression[Identifier(\"descriptionId\")]"
+                  },
+                  "via": [
+                    "JsxExpression",
+                    "BinaryExpression"
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "props": [
+                "className"
+              ],
+              "values": {
+                "className": "Str(\"flex-shrink-0\")"
+              },
+              "via": [
+                "JsxExpression",
+                "BinaryExpression"
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/components/shared/TogglePill.tsx",
+      "kind": "replaces-baseline",
+      "authorisedBy": "SF-17",
+      "decidedOn": "2026-09-02",
+      "reason": "The chip splits into three affordances: body inspects only, a dedicated selection control toggles ClaimTopic.selected, and × deletes a custom topic. Inspected state stops being gated on selected so an unselected chip can show as inspected. SC-011 is superseded for this file; the other guarded files hold.",
+      "components": [
+        "TogglePill"
+      ],
+      "anchorDelta": 0,
+      "introducesFirstAnchor": false,
+      "adopted": {
+        "elementsBefore": 6,
+        "elementsAfter": 10,
+        "tagsAdded": [
+          "Check",
+          "Circle",
+          "button",
+          "span"
+        ],
+        "tagsRemoved": [],
+        "valuesChanged": 4
+      },
+      "fingerprint": [
+        {
+          "tag": "span",
+          "props": [
+            "aria-current",
+            "className",
+            "data-config-anchor"
+          ],
+          "values": {
+            "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"inline-flex items-center gap-1 rounded-full border text-xs font-medium transition-colors\"),ConditionalExpression[Identifier(\"selected\"),QuestionToken(\"?\"),Str(\"border-primary bg-primary/10 text-primary\"),ColonToken(\":\"),Str(\"border-dashed border-border text-muted-foreground hover:bg-muted\")],BinaryExpression[Identifier(\"disabled\"),AmpersandAmpersandToken(\"&&\"),Str(\"opacity-50\")],BinaryExpression[Identifier(\"inspected\"),AmpersandAmpersandToken(\"&&\"),Str(\"ring-1 ring-primary ring-offset-1 ring-offset-background\")],Identifier(\"className\")]]"
+          },
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "button",
+              "props": [
+                "aria-describedby",
+                "aria-label",
+                "className",
+                "disabled",
+                "onClick",
+                "type"
+              ],
+              "values": {
+                "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"inline-flex cursor-pointer items-center gap-1 py-1 pl-2.5\"),ConditionalExpression[Identifier(\"hasTrailingControl\"),QuestionToken(\"?\"),Str(\"pr-1\"),ColonToken(\":\"),Str(\"pr-2.5\")],BinaryExpression[Identifier(\"disabled\"),AmpersandAmpersandToken(\"&&\"),Str(\"cursor-not-allowed\")]]]"
+              },
+              "via": [],
+              "children": [
+                {
+                  "tag": "Check",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"size-3\")"
+                  },
+                  "via": [
+                    "JsxExpression",
+                    "BinaryExpression"
+                  ],
+                  "children": []
+                },
+                {
+                  "tag": "span",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"font-normal opacity-40\")"
+                  },
+                  "via": [
+                    "JsxExpression",
+                    "BinaryExpression"
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "span",
+              "props": [
+                "className",
+                "id"
+              ],
+              "values": {
+                "className": "Str(\"sr-only\")",
+                "id": "JsxExpression[Identifier(\"descriptionId\")]"
+              },
+              "via": [
+                "JsxExpression",
+                "ConditionalExpression"
+              ],
+              "children": []
+            },
+            {
+              "tag": "button",
+              "props": [
+                "aria-label",
+                "aria-pressed",
+                "className",
+                "disabled",
+                "onClick",
+                "type"
+              ],
+              "values": {
+                "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"inline-flex cursor-pointer items-center justify-center\"),ConditionalExpression[Identifier(\"onRemove\"),QuestionToken(\"?\"),Str(\"px-0.5\"),ColonToken(\":\"),Str(\"pr-1.5 pl-0.5\")],BinaryExpression[Identifier(\"disabled\"),AmpersandAmpersandToken(\"&&\"),Str(\"cursor-not-allowed\")],BinaryExpression[PrefixUnaryExpression[Identifier(\"selected\")],AmpersandAmpersandToken(\"&&\"),Str(\"text-muted-foreground\")]]]"
+              },
+              "via": [
+                "JsxExpression",
+                "BinaryExpression"
+              ],
+              "children": [
+                {
+                  "tag": "Check",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"size-3\")"
+                  },
+                  "via": [
+                    "JsxExpression",
+                    "ConditionalExpression"
+                  ],
+                  "children": []
+                },
+                {
+                  "tag": "Circle",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"size-3\")"
+                  },
+                  "via": [
+                    "JsxExpression",
+                    "ConditionalExpression"
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "props": [
+                "aria-label",
+                "className",
+                "onClick",
+                "type"
+              ],
+              "values": {
+                "className": "Str(\"inline-flex cursor-pointer items-center justify-center pr-1.5 hover:text-destructive\")"
+              },
+              "via": [
+                "JsxExpression",
+                "BinaryExpression"
+              ],
+              "children": [
+                {
+                  "tag": "X",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"size-3\")"
+                  },
+                  "via": [],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/components/shared/TopicToggleGroup.tsx",
+      "kind": "replaces-baseline",
+      "authorisedBy": "SF-17",
+      "decidedOn": "2026-09-02",
+      "reason": "Predefined and custom claim-topic chips both adopt the three-affordance TogglePill contract; body onClick membership toggles are removed; selection goes through onToggleSelection and isClaimTopicSelected. SC-011 is superseded for this file.",
+      "components": [
+        "TopicToggleGroup"
+      ],
+      "anchorDelta": 0,
+      "introducesFirstAnchor": false,
+      "adopted": {
+        "elementsBefore": 16,
+        "elementsAfter": 16,
+        "tagsAdded": [],
+        "tagsRemoved": [],
+        "valuesChanged": 0
+      },
+      "fingerprint": [
+        {
+          "tag": "div",
+          "props": [
+            "className"
+          ],
+          "values": {
+            "className": "Str(\"space-y-4\")"
+          },
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "props": [],
+              "values": {},
+              "via": [],
+              "children": [
+                {
+                  "tag": "Label",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"text-xs text-muted-foreground\")"
+                  },
+                  "via": [],
+                  "children": []
+                },
+                {
+                  "tag": "div",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"mt-1.5 flex flex-wrap gap-1.5\")"
+                  },
+                  "via": [],
+                  "children": [
+                    {
+                      "tag": "TogglePill",
+                      "props": [
+                        "configAnchor",
+                        "detail",
+                        "disabled",
+                        "key",
+                        "label",
+                        "onToggleSelection",
+                        "selected"
+                      ],
+                      "values": {},
+                      "via": [
+                        "JsxExpression",
+                        "CallExpression",
+                        "ArrowFunction",
+                        "Block",
+                        "ReturnStatement"
+                      ],
+                      "children": []
+                    },
+                    {
+                      "tag": "TogglePill",
+                      "props": [
+                        "configAnchor",
+                        "detail",
+                        "key",
+                        "label",
+                        "onRemove",
+                        "onToggleSelection",
+                        "selected"
+                      ],
+                      "values": {},
+                      "via": [
+                        "JsxExpression",
+                        "CallExpression",
+                        "ArrowFunction"
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "props": [
+                "className"
+              ],
+              "values": {
+                "className": "Str(\"flex items-start gap-2\")"
+              },
+              "via": [],
+              "children": [
+                {
+                  "tag": "div",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"min-w-0 flex-1\")"
+                  },
+                  "via": [],
+                  "children": [
+                    {
+                      "tag": "TextField",
+                      "props": [
+                        "control",
+                        "id",
+                        "label",
+                        "name",
+                        "placeholder",
+                        "validation"
+                      ],
+                      "values": {
+                        "id": "Str(\"custom-topic-name\")"
+                      },
+                      "via": [],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"w-36 shrink-0\")"
+                  },
+                  "via": [],
+                  "children": [
+                    {
+                      "tag": "NumberField",
+                      "props": [
+                        "control",
+                        "id",
+                        "label",
+                        "name",
+                        "placeholder",
+                        "validation"
+                      ],
+                      "values": {
+                        "id": "Str(\"custom-topic-id\")"
+                      },
+                      "via": [],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"flex flex-col gap-2\")"
+                  },
+                  "via": [],
+                  "children": [
+                    {
+                      "tag": "Label",
+                      "props": [
+                        "aria-hidden",
+                        "className"
+                      ],
+                      "values": {
+                        "className": "Str(\"invisible\")"
+                      },
+                      "via": [],
+                      "children": []
+                    },
+                    {
+                      "tag": "div",
+                      "props": [
+                        "className"
+                      ],
+                      "values": {
+                        "className": "Str(\"flex h-10 items-center\")"
+                      },
+                      "via": [],
+                      "children": [
+                        {
+                          "tag": "Button",
+                          "props": [
+                            "data-config-anchor",
+                            "disabled",
+                            "onClick",
+                            "size",
+                            "type",
+                            "variant"
+                          ],
+                          "values": {},
+                          "via": [],
+                          "children": [
+                            {
+                              "tag": "Plus",
+                              "props": [
+                                "className"
+                              ],
+                              "values": {
+                                "className": "Str(\"size-4\")"
+                              },
+                              "via": [],
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/features/wizard/steps/access-control/OperatorRolesSection.tsx",
+      "kind": "replaces-baseline",
+      "authorisedBy": "SF-14",
+      "decidedOn": "2026-09-02",
+      "reason": "Each operator role row gains inspected ring and aria-current via useIsInspected so click-to-inspect shows which role drives the impact column. SC-011 is superseded for this file.",
+      "components": [
+        "OperatorRolesSection",
+        "OperatorRoleRow"
+      ],
+      "anchorDelta": 0,
+      "introducesFirstAnchor": false,
+      "adopted": {
+        "elementsBefore": 8,
+        "elementsAfter": 9,
+        "tagsAdded": [
+          "OperatorRoleRow"
+        ],
+        "tagsRemoved": [],
+        "valuesChanged": 7
+      },
+      "fingerprint": [
+        {
+          "tag": "div",
+          "props": [
+            "aria-current",
+            "className",
+            "data-config-anchor"
+          ],
+          "values": {
+            "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"space-y-2 rounded-lg border border-border p-4\"),BinaryExpression[Identifier(\"inspected\"),AmpersandAmpersandToken(\"&&\"),Str(\"ring-1 ring-primary\")]]]"
+          },
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "props": [],
+              "values": {},
+              "via": [],
+              "children": [
+                {
+                  "tag": "Label",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"text-base font-medium\")"
+                  },
+                  "via": [],
+                  "children": []
+                },
+                {
+                  "tag": "p",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"text-sm text-muted-foreground\")"
+                  },
+                  "via": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "AddressListField",
+              "props": [
+                "addressing",
+                "bulkPlaceholder",
+                "formatHint",
+                "getExplorerUrl",
+                "onChange",
+                "placeholder",
+                "value"
+              ],
+              "values": {},
+              "via": [],
+              "children": []
+            }
+          ]
+        },
+        {
+          "tag": "Card",
+          "props": [],
+          "values": {},
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "SectionCardHeader",
+              "props": [
+                "..."
+              ],
+              "values": {
+                "...#0": "Identifier(\"sectionCopy\")"
+              },
+              "via": [],
+              "children": []
+            },
+            {
+              "tag": "CardContent",
+              "props": [
+                "className"
+              ],
+              "values": {
+                "className": "Str(\"space-y-6\")"
+              },
+              "via": [],
+              "children": [
+                {
+                  "tag": "OperatorRoleRow",
+                  "props": [
+                    "addresses",
+                    "addressing",
+                    "bulkPlaceholder",
+                    "formatHint",
+                    "getExplorerUrl",
+                    "key",
+                    "onSetAddresses",
+                    "placeholder",
+                    "roleDef"
+                  ],
+                  "values": {},
+                  "via": [
+                    "JsxExpression",
+                    "CallExpression",
+                    "ArrowFunction"
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/features/wizard/steps/asset/DocumentManagerSection.tsx",
+      "kind": "replaces-baseline",
+      "authorisedBy": "SF-14",
+      "decidedOn": "2026-09-02",
+      "reason": "The document-manager section anchors and rings the outer Card so inspection highlights the whole section including the header; CardContent stays plain. The field keeps id doc-manager-enabled for focus path. SC-011 is superseded for this file.",
+      "components": [
+        "DocumentManagerSection"
+      ],
+      "anchorDelta": 1,
+      "introducesFirstAnchor": true,
+      "adopted": {
+        "elementsBefore": 4,
+        "elementsAfter": 4,
+        "tagsAdded": [],
+        "tagsRemoved": [],
+        "valuesChanged": 1
+      },
+      "fingerprint": [
+        {
+          "tag": "Card",
+          "props": [
+            "aria-current",
+            "className",
+            "data-config-anchor"
+          ],
+          "values": {
+            "className": "JsxExpression[CallExpression[Identifier(\"cn\"),BinaryExpression[Identifier(\"inspected\"),AmpersandAmpersandToken(\"&&\"),Str(\"ring-1 ring-primary\")]]]"
+          },
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "SectionCardHeader",
+              "props": [
+                "..."
+              ],
+              "values": {
+                "...#0": "Identifier(\"sectionCopy\")"
+              },
+              "via": [],
+              "children": []
+            },
+            {
+              "tag": "CardContent",
+              "props": [],
+              "values": {},
+              "via": [],
+              "children": [
+                {
+                  "tag": "BooleanField",
+                  "props": [
+                    "control",
+                    "helperText",
+                    "id",
+                    "label",
+                    "name"
+                  ],
+                  "values": {
+                    "id": "Str(\"doc-manager-enabled\")"
+                  },
+                  "via": [],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/features/wizard/steps/compliance/ModuleConfigPanel.tsx",
+      "kind": "replaces-baseline",
+      "authorisedBy": "SF-14",
+      "decidedOn": "2026-09-02",
+      "reason": "Each address-list field is wrapped in a data-field-id root because the published kit no longer renders that attribute from a permitted AddressListField id alone; the permitted id stays on the field for markup inventory. SC-011 is superseded for this file.",
+      "components": [
+        "ModuleConfigPanel"
+      ],
+      "anchorDelta": 0,
+      "introducesFirstAnchor": false,
+      "adopted": {
+        "elementsBefore": 4,
+        "elementsAfter": 5,
+        "tagsAdded": [
+          "div"
+        ],
+        "tagsRemoved": [],
+        "valuesChanged": 2
+      },
+      "fingerprint": [
+        {
+          "tag": "div",
+          "props": [
+            "className",
+            "data-config-anchor",
+            "onBlurCapture"
+          ],
+          "values": {
+            "className": "Str(\"grid gap-3\")"
+          },
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "props": [
+                "data-field-id",
+                "key"
+              ],
+              "values": {},
+              "via": [
+                "JsxExpression",
+                "CallExpression",
+                "ArrowFunction",
+                "Block",
+                "IfStatement",
+                "Block",
+                "ReturnStatement"
+              ],
+              "children": [
+                {
+                  "tag": "AddressListField",
+                  "props": [
+                    "addressing",
+                    "bulkPlaceholder",
+                    "formatHint",
+                    "helperText",
+                    "id",
+                    "label",
+                    "onChange",
+                    "placeholder",
+                    "value"
+                  ],
+                  "values": {
+                    "id": "JsxExpression[Identifier(\"fieldId\")]"
+                  },
+                  "via": [],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "tag": "NumberField",
+              "props": [
+                "control",
+                "helperText",
+                "id",
+                "key",
+                "label",
+                "name",
+                "placeholder",
+                "validation"
+              ],
+              "values": {
+                "id": "JsxExpression[TemplateExpression[TemplateHead(\"`${\"),TemplateSpan[PropertyAccessExpression[Identifier(\"module\"),Identifier(\"id\")],TemplateMiddle(\"}-${\")],TemplateSpan[PropertyAccessExpression[Identifier(\"field\"),Identifier(\"key\")],LastTemplateToken(\"}`\")]]]"
+              },
+              "via": [
+                "JsxExpression",
+                "CallExpression",
+                "ArrowFunction",
+                "Block",
+                "IfStatement",
+                "Block",
+                "ReturnStatement"
+              ],
+              "children": []
+            },
+            {
+              "tag": "TextField",
+              "props": [
+                "control",
+                "helperText",
+                "id",
+                "key",
+                "label",
+                "name",
+                "placeholder",
+                "validation"
+              ],
+              "values": {
+                "id": "JsxExpression[TemplateExpression[TemplateHead(\"`${\"),TemplateSpan[PropertyAccessExpression[Identifier(\"module\"),Identifier(\"id\")],TemplateMiddle(\"}-${\")],TemplateSpan[PropertyAccessExpression[Identifier(\"field\"),Identifier(\"key\")],LastTemplateToken(\"}`\")]]]"
+              },
+              "via": [
+                "JsxExpression",
+                "CallExpression",
+                "ArrowFunction",
+                "Block",
+                "ReturnStatement"
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "src/features/wizard/steps/identity/TrustedIssuersSection.tsx",
+      "kind": "replaces-baseline",
+      "authorisedBy": "SF-14",
+      "decidedOn": "2026-09-02",
+      "reason": "The issuer row's `data-config-anchor` moves from its remove button onto the row, so a click anywhere in the row resolves outward to the same anchor the remove button resolves to and inspection cannot disagree with removal. The row also gains `aria-current` and a ring class, and the add handler inspects the created issuer. Moved rather than duplicated: two attributes could drift apart. SC-011 is superseded for this file.",
+      "components": [
+        "TrustedIssuersSection",
+        "IssuerRow"
+      ],
+      "anchorDelta": 0,
+      "introducesFirstAnchor": false,
+      "adopted": {
+        "elementsBefore": 25,
+        "elementsAfter": 28,
+        "tagsAdded": [
+          "AlertTriangle",
+          "div",
+          "span"
+        ],
+        "tagsRemoved": [],
+        "valuesChanged": 22
+      },
+      "fingerprint": [
+        {
+          "tag": "Card",
+          "props": [],
+          "values": {},
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "SectionCardHeader",
+              "props": [
+                "..."
+              ],
+              "values": {
+                "...#0": "Identifier(\"sectionCopy\")"
+              },
+              "via": [],
+              "children": []
+            },
+            {
+              "tag": "CardContent",
+              "props": [
+                "className"
+              ],
+              "values": {
+                "className": "Str(\"space-y-4\")"
+              },
+              "via": [],
+              "children": [
+                {
+                  "tag": "div",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/5 px-3 py-2 text-xs text-destructive\")"
+                  },
+                  "via": [
+                    "JsxExpression",
+                    "BinaryExpression"
+                  ],
+                  "children": [
+                    {
+                      "tag": "AlertTriangle",
+                      "props": [
+                        "className"
+                      ],
+                      "values": {
+                        "className": "Str(\"size-3.5 shrink-0\")"
+                      },
+                      "via": [],
+                      "children": []
+                    },
+                    {
+                      "tag": "span",
+                      "props": [],
+                      "values": {},
+                      "via": [],
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "tag": "IssuerRow",
+                  "props": [
+                    "availableTopics",
+                    "getExplorerUrl",
+                    "index",
+                    "issuer",
+                    "key",
+                    "noTopicsMessage",
+                    "onRemove",
+                    "onToggleTopic",
+                    "topicNotDeployedMessage"
+                  ],
+                  "values": {},
+                  "via": [
+                    "JsxExpression",
+                    "CallExpression",
+                    "ArrowFunction"
+                  ],
+                  "children": []
+                },
+                {
+                  "tag": "div",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"space-y-1\")"
+                  },
+                  "via": [],
+                  "children": [
+                    {
+                      "tag": "div",
+                      "props": [
+                        "className"
+                      ],
+                      "values": {
+                        "className": "Str(\"flex items-start gap-2\")"
+                      },
+                      "via": [],
+                      "children": [
+                        {
+                          "tag": "div",
+                          "props": [
+                            "className"
+                          ],
+                          "values": {
+                            "className": "Str(\"min-w-0 flex-1\")"
+                          },
+                          "via": [],
+                          "children": [
+                            {
+                              "tag": "AddressFieldWithResolvedPreview",
+                              "props": [
+                                "addressing",
+                                "control",
+                                "helperText",
+                                "id",
+                                "label",
+                                "name",
+                                "placeholder",
+                                "preview",
+                                "previewAddress",
+                                "previewNetworkId",
+                                "validation"
+                              ],
+                              "values": {
+                                "id": "Str(\"trusted-issuer-address\")"
+                              },
+                              "via": [],
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "props": [
+                            "className"
+                          ],
+                          "values": {
+                            "className": "Str(\"flex flex-col gap-2\")"
+                          },
+                          "via": [],
+                          "children": [
+                            {
+                              "tag": "Label",
+                              "props": [
+                                "aria-hidden",
+                                "className"
+                              ],
+                              "values": {
+                                "className": "Str(\"invisible\")"
+                              },
+                              "via": [],
+                              "children": []
+                            },
+                            {
+                              "tag": "div",
+                              "props": [
+                                "className"
+                              ],
+                              "values": {
+                                "className": "Str(\"flex h-10 items-center\")"
+                              },
+                              "via": [],
+                              "children": [
+                                {
+                                  "tag": "Button",
+                                  "props": [
+                                    "data-config-anchor",
+                                    "disabled",
+                                    "onClick",
+                                    "size",
+                                    "type"
+                                  ],
+                                  "values": {},
+                                  "via": [],
+                                  "children": [
+                                    {
+                                      "tag": "Plus",
+                                      "props": [
+                                        "className"
+                                      ],
+                                      "values": {
+                                        "className": "Str(\"mr-1 size-4\")"
+                                      },
+                                      "via": [],
+                                      "children": []
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "props": [
+            "aria-current",
+            "className",
+            "data-config-anchor"
+          ],
+          "values": {
+            "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"space-y-3 rounded-lg border p-3\"),ConditionalExpression[Identifier(\"hasNoTopics\"),QuestionToken(\"?\"),Str(\"border-destructive/50 bg-destructive/5\"),ColonToken(\":\"),Str(\"border-border\")],BinaryExpression[Identifier(\"inspected\"),AmpersandAmpersandToken(\"&&\"),Str(\"ring-1 ring-primary\")]]]"
+          },
+          "via": [
+            "FunctionDeclaration",
+            "Block",
+            "ReturnStatement"
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "props": [
+                "className"
+              ],
+              "values": {
+                "className": "Str(\"flex items-center justify-between gap-2\")"
+              },
+              "via": [],
+              "children": [
+                {
+                  "tag": "ResolvedAddressDisplay",
+                  "props": [
+                    "address",
+                    "explorerUrl",
+                    "showCopyButton",
+                    "truncateWhenLabeled",
+                    "variant"
+                  ],
+                  "values": {},
+                  "via": [],
+                  "children": []
+                },
+                {
+                  "tag": "Button",
+                  "props": [
+                    "className",
+                    "onClick",
+                    "size",
+                    "type",
+                    "variant"
+                  ],
+                  "values": {
+                    "className": "Str(\"size-7 shrink-0 text-muted-foreground hover:text-destructive\")"
+                  },
+                  "via": [],
+                  "children": [
+                    {
+                      "tag": "X",
+                      "props": [
+                        "className"
+                      ],
+                      "values": {
+                        "className": "Str(\"size-3.5\")"
+                      },
+                      "via": [],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "props": [
+                "className"
+              ],
+              "values": {
+                "className": "Str(\"space-y-1.5\")"
+              },
+              "via": [],
+              "children": [
+                {
+                  "tag": "Label",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"text-xs text-muted-foreground\")"
+                  },
+                  "via": [],
+                  "children": []
+                },
+                {
+                  "tag": "div",
+                  "props": [
+                    "className",
+                    "data-config-anchor"
+                  ],
+                  "values": {
+                    "className": "Str(\"flex flex-wrap gap-1.5\")"
+                  },
+                  "via": [],
+                  "children": [
+                    {
+                      "tag": "TogglePill",
+                      "props": [
+                        "ariaDescription",
+                        "className",
+                        "key",
+                        "label",
+                        "onClick",
+                        "selected"
+                      ],
+                      "values": {
+                        "className": "JsxExpression[ConditionalExpression[BinaryExpression[Identifier(\"issuerSelected\"),AmpersandAmpersandToken(\"&&\"),PrefixUnaryExpression[Identifier(\"deploySelected\")]],QuestionToken(\"?\"),Str(\"border-dashed border-muted-foreground/60 bg-muted/40 text-muted-foreground\"),ColonToken(\":\"),Identifier(\"undefined\")]]"
+                      },
+                      "via": [
+                        "JsxExpression",
+                        "CallExpression",
+                        "ArrowFunction",
+                        "Block",
+                        "ReturnStatement"
+                      ],
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "props": [
+                "className"
+              ],
+              "values": {
+                "className": "Str(\"flex items-center gap-1.5 text-xs text-destructive\")"
+              },
+              "via": [
+                "JsxExpression",
+                "BinaryExpression"
+              ],
+              "children": [
+                {
+                  "tag": "AlertTriangle",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"size-3.5 shrink-0\")"
+                  },
+                  "via": [],
+                  "children": []
+                },
+                {
+                  "tag": "span",
+                  "props": [],
+                  "values": {},
+                  "via": [],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

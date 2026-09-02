@@ -1,3 +1,5 @@
+import { isGeneratedFileKind } from '@openzeppelin/codegen-core';
+import type { GeneratedFileKind } from '@openzeppelin/codegen-core';
 import type {
   ComplianceModuleCategoryId,
   ComplianceModuleConfigValueKind,
@@ -239,26 +241,20 @@ export interface StructuralUpstreamImportLinks {
 }
 
 /**
- * Ranking kind for one generated path, as this app understands it.
+ * Ranking kind for one generated file, as the codegen service reports it.
  *
- * Owned here, not imported from a codegen package: the loader is the only
- * package seam (EVM will not share the stellar module). `unknown` is a
- * member so a missing service method and an unrecognized package string
- * both degrade to an explicit kind. Callers must not recover a kind from
- * a filename.
+ * The vocabulary is `@openzeppelin/codegen-core`'s `GeneratedFileKind`: one
+ * closed set shared by every chain generator and by this app, so an EVM
+ * generator adopts it without a wizard change. The loader is the only package
+ * seam; it narrows whatever string a package reports through
+ * `isStructuralGeneratedFileKind`, and a value outside the set degrades to
+ * `unknown`. Callers must not recover a kind from a filename.
  */
-export type StructuralGeneratedFileKind = 'contract' | 'script' | 'provenance-and-docs' | 'unknown';
+export type StructuralGeneratedFileKind = GeneratedFileKind;
 
-const STRUCTURAL_GENERATED_FILE_KINDS = [
-  'contract',
-  'script',
-  'provenance-and-docs',
-  'unknown',
-] as const satisfies readonly StructuralGeneratedFileKind[];
-
-/** True when `value` is one of the four ranking kinds this app will switch on. */
+/** True when `value` is one of the ranking kinds this app will switch on. */
 export function isStructuralGeneratedFileKind(value: string): value is StructuralGeneratedFileKind {
-  return (STRUCTURAL_GENERATED_FILE_KINDS as readonly string[]).includes(value);
+  return isGeneratedFileKind(value);
 }
 
 /**

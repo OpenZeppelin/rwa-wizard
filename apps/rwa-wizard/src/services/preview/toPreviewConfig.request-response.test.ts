@@ -62,10 +62,13 @@ describe('toPreviewConfig request/response (INV-1, INV-2, INV-3, INV-4, INV-5, I
       'spec 1: generate must not throw for the three default-draft holes the shim covers'
     ).not.toThrow();
 
+    // `error.field` crosses the codegen boundary as a plain string; widen the
+    // typed ConfigPath list rather than narrow the boundary.
+    const substituted: readonly string[] = result.substitutedKeys;
     const missingRequired = validate(result.config).errors.filter(
       (error) =>
         (error.code === 'REQUIRED_FIELD' || error.code === 'REQUIRED_MODULE_CONFIG') &&
-        result.substitutedKeys.includes(error.field)
+        substituted.includes(error.field)
     );
     expect(
       missingRequired,

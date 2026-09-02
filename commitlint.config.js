@@ -39,6 +39,11 @@ export default {
         'cli',
         'components',
         'hooks',
+        'codegen-core',
+        'codegen-rwa-common',
+        'codegen-rwa-stellar',
+        'rwa-config',
+        'rwa-wizard-copy',
         // Infrastructure scopes
         'deps',
         'config',

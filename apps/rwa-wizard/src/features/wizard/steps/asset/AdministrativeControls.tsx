@@ -6,6 +6,7 @@ import { ReadOnlyFeatureCard } from '../../../../components/shared/ReadOnlyFeatu
 import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 import { SelectableCard } from '../../../../components/shared/SelectableCard';
 import type { FeatureControlMeta } from '../../../../types/wizard';
+import { adminAnchor } from '../../focused-path';
 
 interface AdministrativeControlsProps {
   controls: AdminControlsType;
@@ -41,6 +42,7 @@ export function AdministrativeControls({
           return (
             <SelectableCard
               key={meta.id}
+              configAnchor={adminAnchor(meta.id)}
               title={meta.name}
               description={meta.description}
               isSelected={value}

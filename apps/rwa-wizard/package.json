@@ -8,6 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "baseline:step-markup": "vite-node scripts/generate-step-markup-baseline.mjs",
+    "supersede:step-markup": "vite-node scripts/supersede-step-markup.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --passWithNoTests",

@@ -1,4 +1,6 @@
+export { selectedClaimTopicIds, selectedClaimTopicIndices } from './claim-topics';
 export {
+  findRoleWithMembers,
   getAdditionalRoleAssignments,
   getAdminAddress,
   getManagerAddress,

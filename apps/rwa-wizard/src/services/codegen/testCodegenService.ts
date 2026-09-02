@@ -1,4 +1,4 @@
-import type { CodegenInfoBlurb } from '@openzeppelin/codegen-core';
+import type { CodegenInfoBlurb, ProvenanceResult } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
@@ -26,9 +26,18 @@ export interface TestCodegenServiceOptions {
   readonly fileTreeVariant?: string;
   /**
    * Ranking kinds this double reports. Paths not in the map are `unknown`.
-   * Do not put Stellar filenames here — tests inject the kinds they need.
+   * Do not put chain filenames here — tests inject the kinds they need.
    */
   readonly fileKinds?: Readonly<Record<string, StructuralGeneratedFileKind>>;
+  /**
+   * Provenance the double reports when `recordProvenance` is requested. Absent
+   * = a generator without the capability (results never carry the field). A
+   * function receives the config the double was asked to generate, so tests
+   * can make attribution depend on the input the way a real generator's does.
+   * Keys must be keys of the double's tree (`README.md` by default) or tests
+   * inject `fileKinds` and extra files as they need — never chain paths. SF-5 INV-6.
+   */
+  readonly provenance?: ProvenanceResult | ((config: RWAConfig) => ProvenanceResult);
 }
 
 /**
@@ -125,7 +134,7 @@ export function createTestCodegenService(options?: TestCodegenServiceOptions): R
       return { fileName, data: blob };
     },
 
-    async generateFileTree(config: RWAConfig, _fileTreeOptions?: GenerateArtifactOptions) {
+    async generateFileTree(config: RWAConfig, fileTreeOptions?: GenerateArtifactOptions) {
       // INV-10: opt-in typed failure; never a raw Error on this method.
       if (options?.failGenerateFileTree) {
         throw new CodegenInvalidConfigError([
@@ -134,7 +143,18 @@ export function createTestCodegenService(options?: TestCodegenServiceOptions): R
       }
 
       // INV-16: no packaging event. INV-22: README.md matches dummy ZIP payload text.
-      return { files: { 'README.md': dummyProjectText(config, options?.fileTreeVariant) } };
+      const files = { 'README.md': dummyProjectText(config, options?.fileTreeVariant) };
+
+      // SF-5 INV-6: the field is present iff asked AND configured, so "asked and
+      // not answered" stays distinguishable from "not asked".
+      const provenance = options?.provenance;
+      if (fileTreeOptions?.recordProvenance !== true || provenance === undefined) {
+        return { files };
+      }
+      return {
+        files,
+        provenance: typeof provenance === 'function' ? provenance(config) : provenance,
+      };
     },
   };
 }

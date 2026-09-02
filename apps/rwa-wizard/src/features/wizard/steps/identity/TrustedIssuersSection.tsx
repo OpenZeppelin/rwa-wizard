@@ -7,6 +7,7 @@ import type {
   IdentityVerificationConfig,
   TrustedIssuer,
 } from '@openzeppelin/rwa-config';
+import { isClaimTopicSelected } from '@openzeppelin/rwa-config';
 import {
   AddressFieldWithResolvedPreview,
   Button,
@@ -24,6 +25,9 @@ import { ResolvedAddressDisplay } from '../../../../components/shared/ResolvedAd
 import { SectionCardHeader } from '../../../../components/shared/SectionCardHeader';
 import { TogglePill } from '../../../../components/shared/TogglePill';
 import { useAddressing, useExplorer } from '../../../../services/runtime';
+import { ISSUER_DRAFT_ANCHOR, issuerAnchor, issuerTopicsAnchor } from '../../focused-path';
+import { useInspectAnchor, useIsInspected } from '../../inspected-anchor';
+import { getIdentityStepIssues } from '../../validation/stepValidators';
 
 interface IssuerDraftForm {
   address: string;
@@ -41,6 +45,7 @@ export function TrustedIssuersSection({
   onUpdate,
 }: TrustedIssuersSectionProps) {
   const addressing = useAddressing();
+  const inspect = useInspectAnchor();
   const previewNetworkId = useWizardStore((s) => s.activeNetworkId) ?? undefined;
   const explorer = useExplorer();
   const sectionCopy = useSectionCopy('trusted-issuers');
@@ -48,8 +53,15 @@ export function TrustedIssuersSection({
   const issuerAddressHelper = copy.fieldHelper('trusted-issuer.address').description;
   const duplicateMessage = copy.notice('trusted-issuer.duplicate').description;
   const noTopicsMessage = copy.notice('trusted-issuer.no-topics').description;
+  const unselectedTopicsMessage = copy.notice('trusted-issuer.unselected-topics').description;
+  const unknownTopicsMessage = copy.notice('trusted-issuer.unknown-topics').description;
+  const topicNotDeployedMessage = copy.notice('trusted-issuer.topic-not-deployed').description;
   const atLimit = identity.trustedIssuers.length >= maxTrustedIssuers;
   const availableTopics = identity.claimTopics;
+  const selectedTopics = availableTopics.filter(isClaimTopicSelected);
+  const identityIssues = getIdentityStepIssues(identity);
+  const showUnknownTopicsNotice = identityIssues.includes('trusted-issuer.unknown-topics');
+  const showUnselectedTopicsNotice = identityIssues.includes('trusted-issuer.unselected-topics');
 
   const { control, handleSubmit, reset, watch } = useForm<IssuerDraftForm>({
     defaultValues: { address: '' },
@@ -72,12 +84,34 @@ export function TrustedIssuersSection({
       if (addressing && !addressing.isValidAddress(address)) return;
       const newIssuer: TrustedIssuer = {
         address,
-        claimTopics: availableTopics.map((t) => t.id),
+        claimTopics: selectedTopics.map((t) => t.id),
       };
       onUpdate({ trustedIssuers: [...identity.trustedIssuers, newIssuer] });
+      // Written, not inferred from where focus went — the same reason as the
+      // custom-topic form, and here the ordering is genuinely different: this
+      // runs through `handleSubmit`, which is async, so it lands a microtask
+      // *after* the document click listener has already resolved the Add
+      // button. The direct write still wins, because the listener's competing
+      // write is to a draft anchor and `inspect` refuses those. It is the
+      // refusal doing the work, not the ordering — do not "fix" one by
+      // reordering the other. INV-19.
+      inspect(issuerAnchor(address));
       reset({ address: '' });
+      // Repeat entry: the next address goes in the same field. Safe for the
+      // same reason as above — the draft anchor this focus resolves to is not
+      // inspectable.
+      document.getElementById('trusted-issuer-address')?.focus();
     },
-    [atLimit, isDuplicate, addressing, availableTopics, identity.trustedIssuers, onUpdate, reset]
+    [
+      atLimit,
+      isDuplicate,
+      addressing,
+      selectedTopics,
+      identity.trustedIssuers,
+      onUpdate,
+      inspect,
+      reset,
+    ]
   );
 
   const handleRemove = useCallback(
@@ -111,6 +145,18 @@ export function TrustedIssuersSection({
     <Card>
       <SectionCardHeader {...sectionCopy} />
       <CardContent className="space-y-4">
+        {showUnknownTopicsNotice && (
+          <div className="flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <AlertTriangle className="size-3.5 shrink-0" />
+            <span>{unknownTopicsMessage}</span>
+          </div>
+        )}
+        {showUnselectedTopicsNotice && (
+          <div className="flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            <AlertTriangle className="size-3.5 shrink-0" />
+            <span>{unselectedTopicsMessage}</span>
+          </div>
+        )}
         {identity.trustedIssuers.map((issuer, index) => (
           <IssuerRow
             key={issuer.address}
@@ -121,6 +167,7 @@ export function TrustedIssuersSection({
             onToggleTopic={toggleIssuerTopic}
             getExplorerUrl={explorer ? (addr) => explorer.getExplorerUrl(addr) : undefined}
             noTopicsMessage={noTopicsMessage}
+            topicNotDeployedMessage={topicNotDeployedMessage}
           />
         ))}
 
@@ -161,6 +208,7 @@ export function TrustedIssuersSection({
               <div className="flex h-10 items-center">
                 <Button
                   type="button"
+                  data-config-anchor={ISSUER_DRAFT_ANCHOR}
                   onClick={handleSubmit(handleAdd)}
                   size="sm"
                   disabled={!trimmedDraft || atLimit || isDuplicate || !isValidAddress}
@@ -185,6 +233,7 @@ function IssuerRow({
   onToggleTopic,
   getExplorerUrl,
   noTopicsMessage,
+  topicNotDeployedMessage,
 }: {
   issuer: TrustedIssuer;
   index: number;
@@ -193,14 +242,30 @@ function IssuerRow({
   onToggleTopic: (issuerIndex: number, topicId: number) => void;
   getExplorerUrl?: (address: string) => string | null;
   noTopicsMessage: string;
+  topicNotDeployedMessage: string;
 }) {
   const hasNoTopics = issuer.claimTopics.length === 0;
+  const anchor = issuerAnchor(issuer.address);
+  const inspected = useIsInspected(anchor);
 
   return (
     <div
+      // Moved here from the remove button below, not duplicated. One attribute
+      // means the row and its `×` resolve to the same anchor by construction,
+      // so inspection and removal cannot disagree about which issuer is meant —
+      // two attributes could drift apart in a later edit and leave the user
+      // inspecting row 2 and deleting row 1. INV-6.
+      //
+      // No `role`, no `tabIndex`: the row is not interactive and gains no tab
+      // stop. The pointer path works through the document click listener and
+      // the keyboard path through the outward walk from the controls already
+      // inside it. INV-34.
+      data-config-anchor={anchor}
+      aria-current={inspected ? 'true' : undefined}
       className={cn(
         'space-y-3 rounded-lg border p-3',
-        hasNoTopics ? 'border-destructive/50 bg-destructive/5' : 'border-border'
+        hasNoTopics ? 'border-destructive/50 bg-destructive/5' : 'border-border',
+        inspected && 'ring-1 ring-primary'
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -224,15 +289,28 @@ function IssuerRow({
 
       <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground">Permitted Claim Topics</Label>
-        <div className="flex flex-wrap gap-1.5">
-          {availableTopics.map((topic) => (
-            <TogglePill
-              key={topic.id}
-              label={topic.name}
-              selected={issuer.claimTopics.includes(topic.id)}
-              onClick={() => onToggleTopic(index, topic.id)}
-            />
-          ))}
+        <div
+          data-config-anchor={issuerTopicsAnchor(issuer.address)}
+          className="flex flex-wrap gap-1.5"
+        >
+          {availableTopics.map((topic) => {
+            const issuerSelected = issuer.claimTopics.includes(topic.id);
+            const deploySelected = isClaimTopicSelected(topic);
+            return (
+              <TogglePill
+                key={topic.id}
+                label={topic.name}
+                selected={issuerSelected}
+                onClick={() => onToggleTopic(index, topic.id)}
+                className={
+                  issuerSelected && !deploySelected
+                    ? 'border-dashed border-muted-foreground/60 bg-muted/40 text-muted-foreground'
+                    : undefined
+                }
+                ariaDescription={!deploySelected ? topicNotDeployedMessage : undefined}
+              />
+            );
+          })}
         </div>
       </div>
 

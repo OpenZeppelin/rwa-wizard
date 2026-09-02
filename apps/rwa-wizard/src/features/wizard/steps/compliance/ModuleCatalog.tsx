@@ -13,6 +13,7 @@ import { Badge } from '../../../../components/shared/Badge';
 import { InfoTooltip } from '../../../../components/shared/InfoTooltip';
 import { enrichComplianceModuleCategoryGroup } from '../../../../registry/enrichEcosystemMetadata';
 import type { ComplianceModuleOption, TargetId } from '../../../../types/wizard';
+import { moduleAnchor } from '../../focused-path';
 import { ModuleConfigPanel } from './ModuleConfigPanel';
 
 interface ModuleCatalogProps {
@@ -156,6 +157,7 @@ function ModuleRow({
         role="checkbox"
         aria-checked={selected}
         tabIndex={0}
+        data-config-anchor={moduleAnchor(module.id)}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         className="flex cursor-pointer items-start gap-4 p-4"

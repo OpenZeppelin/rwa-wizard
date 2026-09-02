@@ -324,7 +324,7 @@ describe('generateFileTree loader dispatch', () => {
       } catch {
         threwSync = true;
       }
-      expect(threwSync, 'INV-23: SF-8 catches rejections, not sync throws').toBe(false);
+      expect(threwSync, 'INV-23: callers catch rejections, not sync throws').toBe(false);
       await expect(pending).rejects.toBeInstanceOf(CodegenGenerationError);
     });
   });

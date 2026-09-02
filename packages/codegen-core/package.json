@@ -62,5 +62,9 @@
   "license": "AGPL-3.0",
   "engines": {
     "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^8.53.0",
+    "eslint": "^9.39.2"
   }
 }

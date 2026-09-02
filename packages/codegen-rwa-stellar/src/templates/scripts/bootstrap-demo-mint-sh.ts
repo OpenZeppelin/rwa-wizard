@@ -1,8 +1,16 @@
-import { getAdminAddress, getUniqueModuleSelections } from '@openzeppelin/codegen-rwa-common';
+import type { ProvenanceScope } from '@openzeppelin/codegen-core';
+import { createLineBuilder } from '@openzeppelin/codegen-core';
+import {
+  getAdminAddress,
+  getUniqueModuleSelections,
+  selectedClaimTopicIds,
+  selectedClaimTopicIndices,
+} from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { resolveStellarDeploymentTarget } from '../../deployment/target';
 import { getOptionalScalarConfigValue } from '../../modules/descriptors/shared';
+import { renderDetached } from '../contracts/detached-scope';
 import {
   DEMO_COUNTRY_CODE,
   DEMO_ED25519_SCHEME,
@@ -21,6 +29,7 @@ import {
   buildInvokeCommand,
   buildRoleSignerPreflightChecks,
   buildViewCommand,
+  emitEcho,
   moduleVarName,
   shellBacktickLiteral,
   shellEcho,
@@ -28,6 +37,7 @@ import {
   shellSection,
   shellSingleQuoteLiteral,
   shellSubsection,
+  unionConfigPaths,
 } from './deploy-sh-helpers';
 
 function buildCountryProfileJson(countryCode: number): string {
@@ -251,17 +261,65 @@ function buildCompliancePreflightSection(config: RWAConfig, networkFlag: string)
  * that deploys example claim issuer + identity contracts, onboards Admin, and
  * mints the configured initial supply after `./scripts/deploy.sh`.
  */
-export function generateBootstrapDemoMintSh(config: RWAConfig): string {
-  if (!isDemoAutoMintEligible(config)) {
-    throw new Error('bootstrap-demo-mint.sh requires testnet target and configured initialSupply');
+export const BOOTSTRAP_DEMO_MINT_PATH = 'scripts/bootstrap-demo-mint.sh';
+
+export function generateBootstrapDemoMintShInScope(scope: ProvenanceScope<RWAConfig>): string {
+  // INV-17: the builder is created before ANY config read, so none of the eight
+  // values this script hoists can drain onto the shebang (INV-35).
+  const builder = createLineBuilder(scope, { separator: '\n' });
+
+  // Observed BEFORE the precondition assertion below, and both walks together.
+  //
+  // The order is the invariant, not a style choice. `bindScope.observe` stashes
+  // whatever was read before it into `pending`, and the first emission — the
+  // shebang — takes `pending`. So a claim-topic read made by the assertion
+  // itself would put `identityVerification.claimTopics[i].selected` on
+  // `#!/bin/bash`, and a user clicking a claim-topic chip would be shown the
+  // shebang as a line their selection shapes. Observing first, then deriving the
+  // assertion from `topics.value`, adds no read at all.
+  //
+  // BOTH walks, because the two emission shapes need different spaces: the
+  // aggregate lines (`--claim_topics`, `for DEMO_TOPIC in …`) need ids, and the
+  // `allow_key` loop needs INDICES. An id list cannot drive that loop —
+  // `topicIds.length` type-checks perfectly as a bound for indexing
+  // `claimTopics`, which is the same count/index conflation `deploy.sh` now
+  // makes a compile error, in a file with no interface to protect it.
+  const topics = builder.observe((config) => ({
+    indices: selectedClaimTopicIndices(config),
+    ids: selectedClaimTopicIds(config),
+  }));
+
+  // Equivalent to `shouldGenerateBootstrapDemoMintScript` minus the caller's
+  // identity-support flag, which this scope cannot see. The eligibility predicate
+  // is observed so its deployment-target / initialSupply reads attribute to
+  // nothing: a bare `isDemoAutoMintEligible(builder.config)` left those paths in
+  // the window, the next `observe` stashed them into `pending`, and the shebang
+  // took them — so focusing Initial Supply highlighted `#!/bin/bash`. Claim-topic
+  // emptiness still derives from the already-observed `topics` value (INV-21).
+  const eligible = builder.observe((config) => isDemoAutoMintEligible(config));
+  if (!eligible.value || topics.value.ids.length === 0) {
+    throw new Error(
+      'bootstrap-demo-mint.sh requires testnet target, configured initialSupply and at least one selected claim topic'
+    );
   }
 
-  const deployment = resolveStellarDeploymentTarget(config.deployment.target);
-  const networkFlag = deployment.networkFlag;
-  const adminAddress = getAdminAddress(config);
-  const initialSupply = config.token.initialSupply!;
-  const claimTopics = config.identityVerification.claimTopics;
-  const topicIds = claimTopics.map((topic) => topic.id);
+  // INV-24: observed once, paths carried to every emission that uses the value.
+  const deploymentTarget = builder.observe((config) =>
+    resolveStellarDeploymentTarget(config.deployment.target)
+  );
+  const admin = builder.observe((config) => getAdminAddress(config));
+  const supply = builder.observe((config) => config.token.initialSupply ?? '');
+  const moduleVarNames = builder.observe((config) =>
+    getUniqueModuleSelections(config.compliance.modules).map((selection) =>
+      moduleVarName(selection.moduleId)
+    )
+  );
+
+  const networkFlag = deploymentTarget.value.networkFlag;
+  const networkPaths = deploymentTarget.paths;
+  const adminAddress = admin.value;
+  const initialSupply = supply.value;
+  const topicIds = topics.value.ids;
   const topicsBashList = topicIds.join(' ');
   const topicsJson = `[${topicIds.join(', ')}]`;
   const countryProfileJson = buildCountryProfileJson(DEMO_COUNTRY_CODE);
@@ -270,83 +328,80 @@ export function generateBootstrapDemoMintSh(config: RWAConfig): string {
     'CTI_ADDRESS',
     'IRS_ADDRESS',
     'RWA_TOKEN_ADDRESS',
-    ...getUniqueModuleSelections(config.compliance.modules).map((selection) =>
-      moduleVarName(selection.moduleId)
-    ),
+    ...moduleVarNames.value,
   ];
 
-  const sections: string[] = [];
-  sections.push('#!/bin/bash');
-  sections.push('set -e');
-  sections.push('');
-  sections.push(...buildColorPreamble());
-  sections.push('');
-  sections.push(...buildArgumentParsing());
-  sections.push('');
-  sections.push(...shellSection('Demo Auto-Mint Bootstrap (TESTNET ONLY — NOT PRODUCTION KYC)'));
-  sections.push(
+  builder.line('#!/bin/bash');
+  builder.line('set -e');
+  builder.line('');
+  builder.lines(buildColorPreamble());
+  builder.line('');
+  builder.lines(buildArgumentParsing());
+  builder.line('');
+  builder.lines(shellSection('Demo Auto-Mint Bootstrap (TESTNET ONLY — NOT PRODUCTION KYC)'));
+  builder.line(
     shellEcho(
       '  Educational Scope A: deploy example claim issuer, onboard Admin with demo claims, mint initialSupply.'
     )
   );
-  sections.push(
+  builder.line(
     shellEcho('  Uses a hardcoded demo Ed25519 signing key — never use this flow in production.')
   );
-  sections.push(
+  builder.line(
     shellEcho(
       '  Flag: --preflight (compliance check only — run after deploy.sh, before onboarding/mint)'
     )
   );
-  sections.push('echo ""');
-  sections.push('');
-  sections.push(`DEMO_SIGNING_SECRET_HEX="${DEMO_SIGNING_SECRET_HEX}"`);
-  sections.push(`DEMO_SIGNING_PUBLIC_KEY_HEX="${DEMO_SIGNING_PUBLIC_KEY_HEX}"`);
-  sections.push(`DEMO_COUNTRY_CODE=${DEMO_COUNTRY_CODE}`);
-  sections.push(`ED25519_SCHEME=${DEMO_ED25519_SCHEME}`);
-  sections.push(`INITIAL_SUPPLY="${shellEscape(initialSupply)}"`);
-  sections.push(`MINT_RECIPIENT="${shellEscape(adminAddress)}"`);
-  sections.push(`ADMIN="${shellEscape(adminAddress)}"`);
-  sections.push('');
-  sections.push('SOURCE_ACCOUNT="${SOURCE_ACCOUNT:-${STELLAR_ACCOUNT:-}}"');
-  sections.push('ADMIN_SOURCE_ACCOUNT="${ADMIN_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
-  sections.push('MANAGER_SOURCE_ACCOUNT="${MANAGER_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
-  sections.push('');
-  sections.push('if [ -z "$SOURCE_ACCOUNT" ]; then');
-  sections.push('  echo "Missing Stellar source account."');
-  sections.push('  echo "Set SOURCE_ACCOUNT or STELLAR_ACCOUNT to a funded testnet CLI identity."');
-  sections.push('  exit 1');
-  sections.push('fi');
-  sections.push('');
-  sections.push(...buildManifestLoader(contractVarNames));
-  sections.push('');
-  sections.push(...buildRoleSignerPreflightChecks());
-  sections.push('');
-  sections.push('if ! echo "$MANIFEST_NETWORK" | grep -qi testnet; then');
-  sections.push(
+  builder.line('echo ""');
+  builder.line('');
+  builder.line(`DEMO_SIGNING_SECRET_HEX="${DEMO_SIGNING_SECRET_HEX}"`);
+  builder.line(`DEMO_SIGNING_PUBLIC_KEY_HEX="${DEMO_SIGNING_PUBLIC_KEY_HEX}"`);
+  builder.line(`DEMO_COUNTRY_CODE=${DEMO_COUNTRY_CODE}`);
+  builder.line(`ED25519_SCHEME=${DEMO_ED25519_SCHEME}`);
+  builder.line(`INITIAL_SUPPLY="${shellEscape(initialSupply)}"`, supply.paths);
+  builder.line(`MINT_RECIPIENT="${shellEscape(adminAddress)}"`, admin.paths);
+  builder.line(`ADMIN="${shellEscape(adminAddress)}"`, admin.paths);
+  builder.line('');
+  builder.line('SOURCE_ACCOUNT="${SOURCE_ACCOUNT:-${STELLAR_ACCOUNT:-}}"');
+  builder.line('ADMIN_SOURCE_ACCOUNT="${ADMIN_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
+  builder.line('MANAGER_SOURCE_ACCOUNT="${MANAGER_SOURCE_ACCOUNT:-$SOURCE_ACCOUNT}"');
+  builder.line('');
+  builder.line('if [ -z "$SOURCE_ACCOUNT" ]; then');
+  builder.line('  echo "Missing Stellar source account."');
+  builder.line('  echo "Set SOURCE_ACCOUNT or STELLAR_ACCOUNT to a funded testnet CLI identity."');
+  builder.line('  exit 1');
+  builder.line('fi');
+  builder.line('');
+  builder.lines(buildManifestLoader(contractVarNames), moduleVarNames.paths);
+  builder.line('');
+  builder.lines(buildRoleSignerPreflightChecks());
+  builder.line('');
+  builder.line('if ! echo "$MANIFEST_NETWORK" | grep -qi testnet; then');
+  builder.line(
     shellEcho(
       `${'${RED}'}  ✗ bootstrap-demo-mint.sh is testnet-only. Current manifest network: $MANIFEST_NETWORK${'${RST}'}`
     )
   );
-  sections.push('  exit 1');
-  sections.push('fi');
-  sections.push('');
-  sections.push(
+  builder.line('  exit 1');
+  builder.line('fi');
+  builder.line('');
+  builder.line(
     'if [ ! -f target/wasm32v1-none/release/rwa_claim_issuer_example.wasm ] || [ ! -f target/wasm32v1-none/release/rwa_identity_example.wasm ]; then'
   );
-  sections.push('  echo "Missing example WASM artifacts — run ./scripts/build.sh first."');
-  sections.push('  exit 1');
-  sections.push('fi');
-  sections.push('');
-  sections.push(...buildCompliancePreflightSection(config, networkFlag));
-  sections.push('');
-  sections.push('if [ "$COMPLIANCE_PREFLIGHT_ONLY" = true ]; then');
-  sections.push('  verify_compliance_for_demo_mint');
-  sections.push('  exit $?');
-  sections.push('fi');
-  sections.push('');
+  builder.line('  echo "Missing example WASM artifacts — run ./scripts/build.sh first."');
+  builder.line('  exit 1');
+  builder.line('fi');
+  builder.line('');
+  builder.lines(buildCompliancePreflightSection(builder.config, networkFlag), networkPaths);
+  builder.line('');
+  builder.line('if [ "$COMPLIANCE_PREFLIGHT_ONLY" = true ]; then');
+  builder.line('  verify_compliance_for_demo_mint');
+  builder.line('  exit $?');
+  builder.line('fi');
+  builder.line('');
 
-  sections.push(...shellSubsection('Deploy example claim issuer'));
-  sections.push(
+  builder.lines(shellSubsection('Deploy example claim issuer'));
+  builder.line(
     buildDeploySection(
       'CLAIM_ISSUER_ADDRESS',
       'Example Claim Issuer',
@@ -354,44 +409,57 @@ export function generateBootstrapDemoMintSh(config: RWAConfig): string {
       '--owner "$ADMIN"',
       networkFlag,
       undefined
-    )
+    ),
+    networkPaths
   );
-  sections.push('');
+  builder.line('');
 
-  sections.push(...shellSubsection('Register demo issuer in CTI'));
-  sections.push(
+  builder.lines(shellSubsection('Register demo issuer in CTI'));
+  builder.line(
     buildInvokeCommand(
       '$CTI_ADDRESS',
       'add_trusted_issuer',
       `--trusted_issuer "$CLAIM_ISSUER_ADDRESS" --claim_topics '${topicsJson}' --operator "$MANAGER"`,
       networkFlag
-    )
+    ),
+    unionConfigPaths(networkPaths, topics.paths)
   );
-  sections.push(
-    shellEcho(`${'${GREEN}'}  ✓ Registered demo issuer for claim topics ${topicsJson}${'${RST}'}`)
+  emitEcho(
+    builder,
+    `${'${GREEN}'}  ✓ Registered demo issuer for claim topics ${topicsJson}${'${RST}'}`,
+    topics.paths
   );
-  sections.push('');
+  builder.line('');
 
-  for (const topic of claimTopics) {
-    sections.push(
+  // Iterates the observed SELECTED INDICES. `topicIds.length` used to bound this
+  // loop, which conflated a count of ids with the index space of the array; that
+  // is correct only while every defined topic is selected. `for...of` over a
+  // plain local is safe where it is not over a config array: this array is not a
+  // recording view, so the iterator's final read after the last body emission
+  // records nothing and drains nothing onto the blank line that follows
+  // (INV-35). Each topic is still read inside the lines it shapes.
+  for (const index of topics.value.indices) {
+    const topic = builder.config.identityVerification.claimTopics[index];
+    if (topic === undefined) continue;
+    builder.line(
       buildInvokeCommand(
         '$CLAIM_ISSUER_ADDRESS',
         'allow_key',
         `--public_key ${DEMO_SIGNING_PUBLIC_KEY_HEX} --registry "$CTI_ADDRESS" --claim_topic ${topic.id}`,
         networkFlag,
         'admin'
-      )
+      ),
+      networkPaths
     );
-    sections.push(
-      shellEcho(
-        `${'${GREEN}'}  ✓ Allowed demo signing key for topic ${topic.id} (${shellEscape(topic.name)})${'${RST}'}`
-      )
+    emitEcho(
+      builder,
+      `${'${GREEN}'}  ✓ Allowed demo signing key for topic ${builder.config.identityVerification.claimTopics[index]?.id} (${shellEscape(builder.config.identityVerification.claimTopics[index]?.name ?? '')})${'${RST}'}`
     );
   }
-  sections.push('');
+  builder.line('');
 
-  sections.push(...shellSubsection('Deploy identity for Admin and register in IRS'));
-  sections.push(
+  builder.lines(shellSubsection('Deploy identity for Admin and register in IRS'));
+  builder.line(
     buildDeploySection(
       'IDENTITY_ADDRESS',
       'Example Identity',
@@ -399,97 +467,135 @@ export function generateBootstrapDemoMintSh(config: RWAConfig): string {
       '--owner "$ADMIN"',
       networkFlag,
       undefined
-    )
+    ),
+    networkPaths
   );
-  sections.push('');
+  builder.line('');
 
-  sections.push('sign_demo_claim() {');
-  sections.push('  local topic="$1"');
-  sections.push('  cargo run --manifest-path tools/sign-claim/Cargo.toml --quiet -- \\');
-  sections.push('    --secret-key "$DEMO_SIGNING_SECRET_HEX" \\');
-  sections.push('    --claim-issuer "$CLAIM_ISSUER_ADDRESS" \\');
-  sections.push('    --identity "$IDENTITY_ADDRESS" \\');
-  sections.push('    --claim-topic "$topic" \\');
-  sections.push('    --valid-for-days 7 \\');
-  sections.push(`    --network ${networkFlag.replace('--network ', '')}`);
-  sections.push('}');
-  sections.push('');
-  sections.push('parse_signed_claim() {');
-  sections.push('  local output="$1"');
-  sections.push(`  CLAIM_DATA=$(echo "$output" | awk '/--data/{print $2}')`);
-  sections.push(`  CLAIM_SIGNATURE=$(echo "$output" | awk '/--signature/{print $2}')`);
-  sections.push('  if [ -z "$CLAIM_DATA" ] || [ -z "$CLAIM_SIGNATURE" ]; then');
-  sections.push('    echo "Could not parse signed claim output:"');
-  sections.push('    echo "$output"');
-  sections.push('    exit 1');
-  sections.push('  fi');
-  sections.push('}');
-  sections.push('');
+  builder.line('sign_demo_claim() {');
+  builder.line('  local topic="$1"');
+  builder.line('  cargo run --manifest-path tools/sign-claim/Cargo.toml --quiet -- \\');
+  builder.line('    --secret-key "$DEMO_SIGNING_SECRET_HEX" \\');
+  builder.line('    --claim-issuer "$CLAIM_ISSUER_ADDRESS" \\');
+  builder.line('    --identity "$IDENTITY_ADDRESS" \\');
+  builder.line('    --claim-topic "$topic" \\');
+  builder.line('    --valid-for-days 7 \\');
+  builder.line(`    --network ${networkFlag.replace('--network ', '')}`, networkPaths);
+  builder.line('}');
+  builder.line('');
+  builder.line('parse_signed_claim() {');
+  builder.line('  local output="$1"');
+  builder.line(`  CLAIM_DATA=$(echo "$output" | awk '/--data/{print $2}')`);
+  builder.line(`  CLAIM_SIGNATURE=$(echo "$output" | awk '/--signature/{print $2}')`);
+  builder.line('  if [ -z "$CLAIM_DATA" ] || [ -z "$CLAIM_SIGNATURE" ]; then');
+  builder.line('    echo "Could not parse signed claim output:"');
+  builder.line('    echo "$output"');
+  builder.line('    exit 1');
+  builder.line('  fi');
+  builder.line('}');
+  builder.line('');
 
-  sections.push(`for DEMO_TOPIC in ${topicsBashList}; do`);
-  sections.push('  echo ""');
-  sections.push(shellEcho(`${'${BOLD}'}  Signing demo claim for topic $DEMO_TOPIC...${'${RST}'}`));
-  sections.push('  SIGN_OUTPUT="$(sign_demo_claim "$DEMO_TOPIC")"');
-  sections.push('  parse_signed_claim "$SIGN_OUTPUT"');
-  sections.push(
+  builder.line(`for DEMO_TOPIC in ${topicsBashList}; do`, topics.paths);
+  builder.line('  echo ""');
+  builder.line(shellEcho(`${'${BOLD}'}  Signing demo claim for topic $DEMO_TOPIC...${'${RST}'}`));
+  builder.line('  SIGN_OUTPUT="$(sign_demo_claim "$DEMO_TOPIC")"');
+  builder.line('  parse_signed_claim "$SIGN_OUTPUT"');
+  builder.line(
     buildInvokeCommand(
       '$IDENTITY_ADDRESS',
       'add_claim',
       '--topic "$DEMO_TOPIC" --scheme "$ED25519_SCHEME" --issuer "$CLAIM_ISSUER_ADDRESS" --signature "$CLAIM_SIGNATURE" --data "$CLAIM_DATA" --uri "demo://admin/kyc"',
       networkFlag,
       'admin'
-    )
+    ),
+    networkPaths
   );
-  sections.push(shellEcho(`${'${GREEN}'}  ✓ Added demo claim for topic $DEMO_TOPIC${'${RST}'}`));
-  sections.push('done');
-  sections.push('');
+  builder.line(shellEcho(`${'${GREEN}'}  ✓ Added demo claim for topic $DEMO_TOPIC${'${RST}'}`));
+  builder.line('done');
+  builder.line('');
 
-  sections.push(
+  builder.line(
     buildInvokeCommand(
       '$IRS_ADDRESS',
       'add_identity_country_data',
       `--account "$MINT_RECIPIENT" --identity "$IDENTITY_ADDRESS" --initial_profiles '${shellSingleQuoteLiteral(countryProfileJson)}' --operator "$MANAGER"`,
       networkFlag
-    )
+    ),
+    networkPaths
   );
-  sections.push(
+  builder.line(
     shellEcho(`${'${GREEN}'}  ✓ Registered Admin in IRS with demo country profile${'${RST}'}`)
   );
-  sections.push('');
+  builder.line('');
 
-  sections.push('verify_compliance_for_demo_mint || exit 1');
-  sections.push('');
+  builder.line('verify_compliance_for_demo_mint || exit 1');
+  builder.line('');
 
-  sections.push(...shellSubsection('Mint configured initial supply to Admin'));
-  sections.push(
+  builder.lines(shellSubsection('Mint configured initial supply to Admin'));
+  builder.line(
     buildInvokeCommand(
       '$RWA_TOKEN_ADDRESS',
       'mint',
       `--to "$MINT_RECIPIENT" --amount "$INITIAL_SUPPLY" --operator "$ADMIN"`,
       networkFlag,
       'admin'
-    )
+    ),
+    networkPaths
   );
-  sections.push(
+  builder.line(
     shellEcho(
       `${'${GREEN}'}  ✓ Minted $INITIAL_SUPPLY base units to Admin ($MINT_RECIPIENT)${'${RST}'}`
     )
   );
-  sections.push('');
-  sections.push(...shellSection('Demo Auto-Mint Complete'));
-  sections.push(shellEcho('  Recipient: $MINT_RECIPIENT'));
-  sections.push(shellEcho('  Amount:    $INITIAL_SUPPLY base units'));
-  sections.push(shellEcho('  Reminder: demo keys and example contracts — not production KYC.'));
-  sections.push('');
+  builder.line('');
+  builder.lines(shellSection('Demo Auto-Mint Complete'));
+  builder.line(shellEcho('  Recipient: $MINT_RECIPIENT'));
+  builder.line(shellEcho('  Amount:    $INITIAL_SUPPLY base units'));
+  builder.line(shellEcho('  Reminder: demo keys and example contracts — not production KYC.'));
+  builder.line('');
 
-  return sections.join('\n');
+  return builder.text();
 }
 
+export function generateBootstrapDemoMintSh(config: RWAConfig): string {
+  return renderDetached(config, BOOTSTRAP_DEMO_MINT_PATH, (scope) =>
+    generateBootstrapDemoMintShInScope(scope)
+  );
+}
+
+/**
+ * Whether `scripts/bootstrap-demo-mint.sh` is part of this generation.
+ *
+ * Four preconditions, and the set is COMPLETE in a falsifiable sense: every
+ * config-derived value the script interpolates into an unquoted shell word list
+ * or a JSON array is non-empty whenever this returns `true`. `topicsBashList`
+ * (`for DEMO_TOPIC in …`) and `topicsJson` (`--claim_topics '[…]'`) are covered
+ * by the selected-topic precondition; `initialSupply` by the supply
+ * precondition; `networkFlag` by the target precondition; the admin address by
+ * `REQUIRED_FIELD` plus `generate()` throwing on an invalid config. An empty
+ * module list is well-formed here.
+ *
+ * The selected-topic precondition also closes a defect that predates selection:
+ * a config with `claimTopics: []` is `valid: true` today and generates
+ * `for DEMO_TOPIC in ; do` — malformed shell, on a user's machine. The remedy is
+ * the gate rather than a validation error, because a config with no claim
+ * requirements is legitimate: the demo script signs claims for the configured
+ * topics, so with none selected it has no work to do and its absence is the
+ * truthful output.
+ *
+ * `isDemoAutoMintEligible` deliberately does NOT gain the claim-topic input —
+ * that lives on this gate alone. Inside the script scope the predicate is
+ * `observe`d so its reads attribute to nothing rather than draining onto the
+ * shebang (the compute-early/emit-late hazard).
+ */
 export function shouldGenerateBootstrapDemoMintScript(
   config: RWAConfig,
   includeIdentitySupport: boolean
 ): boolean {
   return (
-    includeIdentitySupport && isDemoAutoMintEligible(config) && hasConfiguredInitialSupply(config)
+    includeIdentitySupport &&
+    isDemoAutoMintEligible(config) &&
+    hasConfiguredInitialSupply(config) &&
+    selectedClaimTopicIds(config).length > 0
   );
 }

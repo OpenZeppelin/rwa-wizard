@@ -28,3 +28,12 @@ export type {
   ImportLinkDecoratorOptions,
   ImportLinkDegradeMode,
 } from './importLinks';
+export { groupFieldProvenance } from './provenance';
+export type {
+  FieldProvenanceResult,
+  FieldProvenanceRow,
+  FieldProvenanceSignificance,
+  FileProvenanceGroup,
+  PreviewGenerateKey,
+  PreviewProvenanceSource,
+} from './provenance';

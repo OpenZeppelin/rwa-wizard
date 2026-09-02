@@ -10,6 +10,7 @@ import { useCodePreview } from './hooks/useCodePreview';
 
 import { createTestCodegenService } from '../../services/codegen/testCodegenService';
 import { defaultPreviewHookOptions } from '../../test/helpers/codePreviewHarness';
+import { WIZARD_DOCK_MENU_POSITIONS } from './dockPosition';
 
 const CLOSE_LABEL = coreCopy.notice('code-preview.close').description;
 const TRIGGER_LABEL = coreCopy.notice('code-preview.trigger-show').description;
@@ -29,8 +30,10 @@ function PreviewHost(): ReactElement {
       <CodePreviewDrawer
         open={preview.persistence.open}
         onOpenChange={preview.setOpen}
-        height={preview.persistence.height}
-        onHeightChange={preview.setHeight}
+        dockPosition={preview.persistence.dockPosition}
+        size={preview.persistence.size}
+        maxSize={preview.persistence.maxSize}
+        onSizeChange={preview.setSize}
         sheetId={preview.sheetId}
         phase={preview.phase}
         selectedPath={preview.selectedPath}
@@ -45,7 +48,13 @@ function PreviewHost(): ReactElement {
         errorMessages={preview.phase.kind === 'error' ? preview.phase.messages : undefined}
         sourceRevision={preview.sourceRevision}
         importLinks={preview.importLinks}
-        tools={preview.layout}
+        tools={{
+          ...preview.layout,
+          dockMenuPositions: WIZARD_DOCK_MENU_POSITIONS,
+        }}
+        config={options.draftConfig}
+        provenance={preview.showTrigger ? preview.provenance : null}
+        onReveal={preview.showTrigger ? preview.revealInPreview : null}
       />
     </>
   );
