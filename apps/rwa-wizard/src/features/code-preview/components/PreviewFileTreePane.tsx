@@ -4,7 +4,6 @@ import type { FileTree } from '@openzeppelin/codegen-core';
 import { FileTree as KitFileTree } from '@openzeppelin/ui-components/file-tree';
 
 import { useCopy } from '../../../app/providers/useCopy';
-import { CODE_PREVIEW_TREE_PANE_WIDTH_PX } from '../codePreviewLayout';
 
 export function PreviewFileTreePane(props: {
   files: FileTree;
@@ -22,8 +21,7 @@ export function PreviewFileTreePane(props: {
   return (
     <KitFileTree
       aria-label={copy.notice('code-preview.file-tree-label').description}
-      className="rwa-code-preview-tree h-full min-h-0 shrink-0"
-      style={{ width: CODE_PREVIEW_TREE_PANE_WIDTH_PX }}
+      className="rwa-code-preview-tree h-full min-h-0 w-full shrink-0"
       paths={paths}
       selectedPath={selectedPath}
       onSelectedPathChange={onSelectedPathChange}
