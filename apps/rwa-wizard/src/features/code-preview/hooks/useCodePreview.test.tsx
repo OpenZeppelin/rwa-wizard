@@ -1,0 +1,537 @@
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+import type { RWAConfig } from '@openzeppelin/rwa-config';
+
+import { createTestCodegenService } from '../../../services/codegen';
+import type { RwaCodegenService } from '../../../services/codegen/types';
+import {
+  defaultPreviewHookOptions,
+  flushPreviewDebounce,
+  waitForPreviewReady,
+} from '../../../test/helpers/codePreviewHarness';
+import { completeDraft, stellarPreviewCatalog } from '../../../test/helpers/previewConfig';
+import { createDefaultRwaConfig } from '../../../utils/defaultRwaConfig';
+import { CODE_PREVIEW_OPEN_STORAGE_KEY } from '../previewPersistence';
+import type { UseCodePreviewOptions } from './useCodePreview';
+import { useCodePreview } from './useCodePreview';
+
+describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
+  it('hides trigger and closes drawer when codegenService is null (INV-4)', async () => {
+    const service = createTestCodegenService();
+    const stableDraft = createDefaultRwaConfig();
+    const base = defaultPreviewHookOptions({ codegenService: service, draftConfig: stableDraft });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+
+    await waitForPreviewReady(() => result.current);
+
+    act(() => {
+      result.current.setOpen(true);
+    });
+    expect(result.current.persistence.open).toBe(true);
+
+    rerender({ ...base, codegenService: null });
+
+    await waitFor(() => {
+      expect(result.current.showTrigger).toBe(false);
+      expect(result.current.persistence.open).toBe(false);
+      expect(result.current.phase.kind).toBe('idle');
+    });
+  });
+
+  it('calls generateFileTree with shimmed preview config on step entry (INV-6)', async () => {
+    const service = createTestCodegenService();
+    const generateSpy = vi.spyOn(service, 'generateFileTree');
+    const base = defaultPreviewHookOptions({ codegenService: service });
+
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+
+    await waitForPreviewReady(() => result.current);
+
+    expect(generateSpy).toHaveBeenCalled();
+    const lastCall = generateSpy.mock.calls[generateSpy.mock.calls.length - 1];
+    const [config, options] = lastCall!;
+    expect(options).toEqual({ includeIdentitySupport: false });
+    expect(config.token.name).not.toBe('');
+  });
+
+  it('clears change marks when currentStepId changes (INV-7)', async () => {
+    const service = createTestCodegenService();
+    const initialDraft = completeDraft();
+    const base = defaultPreviewHookOptions({
+      codegenService: service,
+      draftConfig: initialDraft,
+      currentStepId: 'asset',
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+
+    await waitForPreviewReady(() => result.current);
+
+    // Earn the marks first. Asserting they are empty after a step change is
+    // worth nothing while they were empty before it too, and this suite spent
+    // the whole initiative unable to tell "reset on step change" from "never
+    // set anything".
+    const edited = { ...initialDraft, token: { ...initialDraft.token, name: 'Renamed Token' } };
+    rerender({ ...base, draftConfig: edited });
+    await flushPreviewDebounce();
+    expect((await waitForPreviewReady(() => result.current)).changedPaths).toContain('README.md');
+
+    // Now vary the step and nothing else. Waiting on the marks rather than on
+    // `ready`: the phase is already ready from the edit above, so a wait for
+    // readiness returns the previous tick's result and reads whatever the
+    // assertion is looking for out of the wrong render.
+    rerender({ ...base, draftConfig: edited, currentStepId: 'identity' });
+
+    await waitFor(() => {
+      expect(
+        result.current.phase.kind === 'ready' && result.current.phase.changedPaths,
+        'INV-7: marks reset on step change until this step is edited'
+      ).toEqual([]);
+    });
+  });
+
+  it('re-baselines when the service under the step changes (INV-7)', async () => {
+    const initialDraft = completeDraft();
+    const base = defaultPreviewHookOptions({
+      codegenService: createTestCodegenService({ fileTreeVariant: ' (target A)' }),
+      draftConfig: initialDraft,
+      currentStepId: 'asset',
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+
+    await waitForPreviewReady(() => result.current);
+
+    const edited = { ...initialDraft, token: { ...initialDraft.token, name: 'Renamed Token' } };
+    rerender({ ...base, draftConfig: edited });
+    await flushPreviewDebounce();
+    expect((await waitForPreviewReady(() => result.current)).changedPaths).toContain('README.md');
+
+    // Now vary the service and nothing else. A second target generates a
+    // different tree from the same config, so every file would read as changed
+    // if it were measured against the previous target's baseline.
+    rerender({
+      ...base,
+      draftConfig: edited,
+      codegenService: createTestCodegenService({ fileTreeVariant: ' (target B)' }),
+    });
+    await flushPreviewDebounce();
+
+    await waitFor(() => {
+      const ready = result.current.phase;
+      expect(ready.kind === 'ready' && ready.files['README.md']).toContain('target B');
+      expect(
+        ready.kind === 'ready' && ready.changedPaths,
+        'INV-7: the marks describe edits within a step, not the switch of target'
+      ).toEqual([]);
+    });
+  });
+
+  it('accumulates change marks when draftConfig changes without step change (INV-7)', async () => {
+    const service = createTestCodegenService();
+    const initialDraft = completeDraft();
+    const base = defaultPreviewHookOptions({
+      codegenService: service,
+      draftConfig: initialDraft,
+      currentStepId: 'asset',
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+
+    await waitForPreviewReady(() => result.current);
+    expect(result.current.phase.kind === 'ready' && result.current.phase.changedPaths).toEqual([]);
+
+    rerender({
+      ...base,
+      draftConfig: {
+        ...initialDraft,
+        token: { ...initialDraft.token, name: 'Renamed Token' },
+      },
+    });
+    await flushPreviewDebounce();
+    const ready = await waitForPreviewReady(() => result.current);
+
+    expect(ready.changedPaths.length).toBeGreaterThan(0);
+    expect(ready.changedPaths).toContain('README.md');
+  });
+
+  it('maps CodegenInvalidConfigError to phase.error without throwing (INV-18)', async () => {
+    const service = createTestCodegenService({ failGenerateFileTree: true });
+    const base = defaultPreviewHookOptions({ codegenService: service });
+
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+
+    await waitFor(() => {
+      expect(result.current.phase.kind).toBe('error');
+    });
+
+    if (result.current.phase.kind === 'error') {
+      expect(result.current.phase.messages.join(' ')).toMatch(/Invalid configuration/i);
+      expect(result.current.phase.substitutedKeys).toEqual([
+        'token.name',
+        'token.symbol',
+        'accessControl.ownership.ownerAddress',
+      ]);
+    }
+  });
+
+  it('omits aria-controls when the drawer is closed (INV-14)', async () => {
+    const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+
+    await waitForPreviewReady(() => result.current);
+    expect(result.current.triggerProps['aria-controls']).toBeUndefined();
+
+    act(() => {
+      result.current.setOpen(true);
+    });
+
+    expect(result.current.triggerProps['aria-controls']).toBe(result.current.sheetId);
+  });
+
+  it('regenerates when only includeIdentitySupport changes (INV-1 cache key)', async () => {
+    // The cache key must cover every generate input, not just the config hash.
+    // This test varies ONLY the identity flag; the tree must change with it.
+    const base = createTestCodegenService();
+    const generateSpy = vi.fn(
+      async (config: RWAConfig, options?: { includeIdentitySupport?: boolean }) => {
+        const artifact = await base.generateFileTree(config);
+        return options?.includeIdentitySupport
+          ? { files: { ...artifact.files, 'identity/README.md': '# identity' } }
+          : artifact;
+      }
+    );
+    const service: RwaCodegenService = { ...base, generateFileTree: generateSpy };
+    const draft = completeDraft();
+    const options = defaultPreviewHookOptions({
+      codegenService: service,
+      draftConfig: draft,
+      includeIdentitySupport: false,
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: options }
+    );
+
+    const before = await waitForPreviewReady(() => result.current);
+    expect(Object.keys(before.files)).not.toContain('identity/README.md');
+
+    rerender({ ...options, includeIdentitySupport: true });
+    await flushPreviewDebounce();
+
+    await waitFor(() => {
+      expect(result.current.phase.kind === 'ready' && result.current.phase.files).toHaveProperty(
+        'identity/README.md'
+      );
+    });
+    expect(generateSpy).toHaveBeenLastCalledWith(expect.anything(), {
+      includeIdentitySupport: true,
+    });
+    // The tree changing is not enough: the step baseline is keyed the same way,
+    // so an omitted dimension there re-baselines on the post-toggle tree and
+    // silently reports no marks for a file that demonstrably appeared.
+    expect(
+      result.current.phase.kind === 'ready' && result.current.phase.changedPaths,
+      'INV-10: the file the toggle added must be marked as changed'
+    ).toContain('identity/README.md');
+  });
+
+  it('regenerates when only the codegen service changes (INV-1 cache key)', async () => {
+    // Same config, same generate options, different service. Keyed without
+    // service identity the cache returns the previous target's tree.
+    const base = createTestCodegenService();
+    const serviceFor = (marker: string): RwaCodegenService => ({
+      ...base,
+      async generateFileTree(
+        config: RWAConfig,
+        generateOptions?: { includeIdentitySupport?: boolean }
+      ) {
+        const artifact = await base.generateFileTree(config, generateOptions);
+        return { files: { ...artifact.files, [`${marker}/README.md`]: `# ${marker}` } };
+      },
+    });
+
+    const options = defaultPreviewHookOptions({
+      codegenService: serviceFor('alpha'),
+      draftConfig: completeDraft(),
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: options }
+    );
+
+    const before = await waitForPreviewReady(() => result.current);
+    expect(before.files).toHaveProperty('alpha/README.md');
+
+    rerender({ ...options, codegenService: serviceFor('beta') });
+    await flushPreviewDebounce();
+
+    await waitFor(() => {
+      expect(result.current.phase.kind === 'ready' && result.current.phase.files).toHaveProperty(
+        'beta/README.md'
+      );
+    });
+    expect(result.current.phase.kind === 'ready' && result.current.phase.files).not.toHaveProperty(
+      'alpha/README.md'
+    );
+  });
+
+  it('keeps the persisted open state while the codegen service is still loading (INV-12)', async () => {
+    // The runtime resolves its service asynchronously, so `null` at mount means
+    // "not loaded yet". Treating it as "no service" closed the drawer and
+    // persisted that, which made the stored open state unrestorable.
+    localStorage.setItem(CODE_PREVIEW_OPEN_STORAGE_KEY, 'true');
+
+    const base = defaultPreviewHookOptions({
+      codegenService: null,
+      isCodegenServiceLoading: true,
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+
+    expect(result.current.persistence.open).toBe(true);
+    expect(localStorage.getItem(CODE_PREVIEW_OPEN_STORAGE_KEY)).toBe('true');
+
+    rerender({
+      ...base,
+      codegenService: createTestCodegenService(),
+      isCodegenServiceLoading: false,
+    });
+
+    await waitForPreviewReady(() => result.current);
+    expect(result.current.persistence.open).toBe(true);
+    expect(result.current.showTrigger).toBe(true);
+    localStorage.removeItem(CODE_PREVIEW_OPEN_STORAGE_KEY);
+  });
+
+  // Focus restoration is covered by code-preview.focus-restore.integration.test.tsx,
+  // which closes the real sheet. Staging the condition here with a manual blur
+  // passed for the wrong reason: the real close paths never produce it.
+
+  it('baselines on the first success when the step-entry generate failed (INV-7)', async () => {
+    // The baseline had exactly one writer — the step-entry generate — and it is
+    // never retried. When that generate errored, the step kept a null snapshot
+    // for its whole lifetime, and a null snapshot reports no marks at all, so
+    // every later edit on that step went unmarked.
+    let shouldFail = true;
+    const base = createTestCodegenService();
+    const service: RwaCodegenService = {
+      ...base,
+      async generateFileTree(config: RWAConfig, generateOptions) {
+        if (shouldFail) {
+          throw new Error('entry generate failed');
+        }
+        return base.generateFileTree(config, generateOptions);
+      },
+    };
+
+    const initialDraft = completeDraft();
+    const options = defaultPreviewHookOptions({
+      codegenService: service,
+      draftConfig: initialDraft,
+      currentStepId: 'asset',
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: options }
+    );
+
+    await waitFor(() => {
+      expect(result.current.phase.kind).toBe('error');
+    });
+
+    // The user fixes whatever broke generation; the preview recovers.
+    shouldFail = false;
+    rerender({ ...options, draftConfig: { ...initialDraft } });
+    await flushPreviewDebounce();
+    const recovered = await waitForPreviewReady(() => result.current);
+    expect(recovered.changedPaths, 'the recovering generate is the new baseline').toEqual([]);
+
+    // ...and then edits something else on the same step.
+    rerender({
+      ...options,
+      draftConfig: { ...initialDraft, token: { ...initialDraft.token, name: 'Renamed Token' } },
+    });
+    await flushPreviewDebounce();
+    const edited = await waitForPreviewReady(() => result.current);
+
+    expect(
+      edited.changedPaths.length,
+      'INV-7: a step whose entry generate failed must still mark later edits'
+    ).toBeGreaterThan(0);
+  });
+
+  /**
+   * The baseline was blind to which draft it described. Cancel returns the
+   * store to `initialState`, whose step is `asset` — so cancelling on that step
+   * changes neither the step nor the service, and the same is true of
+   * hydrating a stored draft whose saved step is the current one. The
+   * abandoned draft's baseline survived, and the new draft's very first tree
+   * was diffed against it: a fresh draft with no edits arrived pre-marked.
+   *
+   * This case varies draft identity alone — same step, same service instance,
+   * a config that differs the way a discarded draft's would.
+   */
+  it('drops the baseline when the draft underneath it is replaced (INV-7)', async () => {
+    const service = createTestCodegenService();
+    const abandonedDraft = completeDraft();
+    const base = defaultPreviewHookOptions({
+      codegenService: service,
+      draftConfig: abandonedDraft,
+      currentStepId: 'asset',
+      draftEpoch: 0,
+    });
+
+    const { result, rerender } = renderHook(
+      (props: UseCodePreviewOptions) => useCodePreview(props),
+      { initialProps: base }
+    );
+    await waitForPreviewReady(() => result.current);
+
+    // Cancel: a new draft on the same step, generated by the same service.
+    rerender({
+      ...base,
+      draftConfig: createDefaultRwaConfig(),
+      draftEpoch: 1,
+    });
+    await flushPreviewDebounce();
+    const ready = await waitForPreviewReady(() => result.current);
+
+    expect(
+      ready.changedPaths,
+      'INV-7: a fresh draft has changed nothing; the marks must not describe the discarded one'
+    ).toEqual([]);
+  });
+
+  it('keeps the maximized height on the window as the window grows', async () => {
+    const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+    await waitForPreviewReady(() => result.current);
+
+    act(() => {
+      result.current.layout.onToggleMaximize();
+    });
+    expect(result.current.persistence.height).toBe(window.innerHeight);
+
+    const taller = window.innerHeight + 240;
+    act(() => {
+      window.innerHeight = taller;
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    expect(
+      result.current.persistence.height,
+      'maximized means as tall as the window, not as tall as the window once was'
+    ).toBe(taller);
+    expect(result.current.layout.maximized).toBe(true);
+  });
+
+  it('maximize uses the viewport height, keeps the stored height, and restores it', async () => {
+    const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+    await waitForPreviewReady(() => result.current);
+
+    act(() => {
+      result.current.setHeight(420);
+    });
+    expect(result.current.persistence.height).toBe(420);
+    expect(result.current.layout.maximized).toBe(false);
+
+    act(() => {
+      result.current.layout.onToggleMaximize();
+    });
+    expect(result.current.layout.maximized).toBe(true);
+    expect(result.current.persistence.height).toBe(window.innerHeight);
+
+    // A clamp report equal to the viewport keeps maximize.
+    act(() => {
+      result.current.setHeight(window.innerHeight);
+    });
+    expect(result.current.layout.maximized).toBe(true);
+
+    act(() => {
+      result.current.layout.onToggleMaximize();
+    });
+    expect(result.current.layout.maximized).toBe(false);
+    expect(result.current.persistence.height).toBe(420);
+  });
+
+  it('a drag below the viewport exits maximize and stores the dragged height', async () => {
+    const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+    await waitForPreviewReady(() => result.current);
+
+    act(() => {
+      result.current.layout.onToggleMaximize();
+    });
+    act(() => {
+      result.current.setHeight(300);
+    });
+    expect(result.current.layout.maximized).toBe(false);
+    expect(result.current.persistence.height).toBe(300);
+  });
+
+  it('tree visibility toggles and persists', async () => {
+    localStorage.removeItem('rwa-wizard:code-preview:tree');
+    const base = defaultPreviewHookOptions({ codegenService: createTestCodegenService() });
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+    await waitForPreviewReady(() => result.current);
+
+    expect(result.current.layout.treeVisible).toBe(true);
+    act(() => {
+      result.current.layout.onToggleTree();
+    });
+    expect(result.current.layout.treeVisible).toBe(false);
+    expect(localStorage.getItem('rwa-wizard:code-preview:tree')).toBe('false');
+    localStorage.removeItem('rwa-wizard:code-preview:tree');
+  });
+
+  it('shows no substitutions for a complete draft (INV-2 hook path)', async () => {
+    const base = defaultPreviewHookOptions({
+      draftConfig: completeDraft(),
+      moduleCatalog: stellarPreviewCatalog() as unknown as UseCodePreviewOptions['moduleCatalog'],
+    });
+    const { result } = renderHook((props: UseCodePreviewOptions) => useCodePreview(props), {
+      initialProps: base,
+    });
+
+    await waitForPreviewReady(() => result.current);
+    if (result.current.phase.kind === 'ready') {
+      expect(result.current.phase.substitutedKeys).toEqual([]);
+    }
+  });
+});

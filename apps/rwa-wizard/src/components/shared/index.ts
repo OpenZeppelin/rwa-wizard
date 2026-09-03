@@ -2,6 +2,7 @@ export { useAddressListFieldCopy } from './useAddressListFieldCopy';
 export { Badge } from './Badge';
 export { ErrorBanner } from './ErrorBanner';
 export type { ErrorBannerProps, ErrorBannerTone } from './ErrorBanner';
+export { errorBannerIconClassName } from './errorBannerTone';
 export { ErrorBannerStack } from './ErrorBannerStack';
 export type { ErrorBannerStackEntry, ErrorBannerStackProps } from './ErrorBannerStack';
 export { InfoNoticeBanner } from './InfoNoticeBanner';

@@ -7,6 +7,7 @@ import type {
 } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 import { CHAIN_IDS, isChainId, type ChainId } from '@openzeppelin/rwa-wizard-copy';
+import type { CodeViewLanguage } from '@openzeppelin/ui-components/code-view';
 
 /** Re-export canonical config for wizard and codegen boundaries. */
 export type { RWAConfig } from '@openzeppelin/rwa-config';
@@ -184,6 +185,80 @@ export interface ComplianceModuleSelectionWarningMeta {
   relatedModuleIds: readonly string[];
   /** When true, the warning blocks wizard progression until resolved. */
   blocking?: boolean;
+}
+
+/**
+ * Upstream coordinates of the library code a generator emits against, reported
+ * by the codegen package itself.
+ *
+ * Chain-neutral by construction: every field is a coordinate, not chain
+ * vocabulary, so any target able to point at its own upstream can supply it.
+ * The wizard consumes it to link generated import paths at the revision that
+ * produced them. It used to derive the same facts by running regexes over the
+ * generated `Cargo.toml` and README — chain-specific parsing in the UI, and
+ * brittle besides, since a template prose edit silently broke every link.
+ */
+export interface StructuralUpstreamSourceRevision {
+  /** Browser URL for the upstream repository, without a `.git` suffix. */
+  readonly repoUrl: string;
+  /** Commit the generated code is pinned to, or `null` when it pins none. */
+  readonly commitHash: string | null;
+  /** Whether the generated project pins a revision or points at a working copy. */
+  readonly mode: 'git-revision' | 'local-path';
+}
+
+/** One identifier the generated source imports, and where it lives upstream. */
+export interface StructuralUpstreamImportTarget {
+  /** Identifier exactly as it appears in generated source. */
+  readonly identifier: string;
+  /** Path of the imported code inside the upstream repository, no leading slash. */
+  readonly path: string;
+}
+
+/**
+ * Everything needed to turn imports in generated source into links to upstream,
+ * reported by the active codegen package.
+ *
+ * The wizard matches the identifiers it is given and knows nothing about which
+ * they are: the crate names, the repository layout and the import syntax are
+ * all the generator's, and keeping a copy of them here was chain-specific
+ * knowledge in the UI (constitution §I).
+ */
+export interface StructuralUpstreamImportLinks {
+  /**
+   * Language of the files these identifiers appear in, as one of the grammars
+   * the code pane renders. The decorator only acts on a file whose language
+   * matches, so a package reporting `Rust` or `rs` would disable every link and
+   * report nothing; narrowing here forces that mismatch to be caught where the
+   * package's value enters the app rather than discovered as missing links.
+   */
+  readonly language: CodeViewLanguage;
+  /** A line imports only if it starts with this once leading whitespace is trimmed. */
+  readonly importLinePrefix: string;
+  readonly targets: readonly StructuralUpstreamImportTarget[];
+}
+
+/**
+ * Ranking kind for one generated path, as this app understands it.
+ *
+ * Owned here, not imported from a codegen package: the loader is the only
+ * package seam (EVM will not share the stellar module). `unknown` is a
+ * member so a missing service method and an unrecognized package string
+ * both degrade to an explicit kind. Callers must not recover a kind from
+ * a filename.
+ */
+export type StructuralGeneratedFileKind = 'contract' | 'script' | 'provenance-and-docs' | 'unknown';
+
+const STRUCTURAL_GENERATED_FILE_KINDS = [
+  'contract',
+  'script',
+  'provenance-and-docs',
+  'unknown',
+] as const satisfies readonly StructuralGeneratedFileKind[];
+
+/** True when `value` is one of the four ranking kinds this app will switch on. */
+export function isStructuralGeneratedFileKind(value: string): value is StructuralGeneratedFileKind {
+  return (STRUCTURAL_GENERATED_FILE_KINDS as readonly string[]).includes(value);
 }
 
 /**

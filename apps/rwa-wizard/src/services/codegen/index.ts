@@ -27,5 +27,16 @@ export async function ensureCodegenLoaded(targetId: string): Promise<void> {
   if (service) serviceCache.set(targetId, service);
 }
 
-export type { RwaCodegenService, ValidationResultDTO } from './types';
+export type {
+  GeneratedFileTreeArtifact,
+  GenerateArtifactOptions,
+  RwaCodegenService,
+  ValidationResultDTO,
+} from './types';
+export {
+  CodegenGenerationError,
+  CodegenInvalidConfigError,
+  CodegenUnsupportedError,
+} from './errors';
 export { createTestCodegenService } from './testCodegenService';
+export type { TestCodegenServiceOptions } from './testCodegenService';

@@ -13,6 +13,12 @@ export interface TargetRuntimeState {
   adapterCaps: TargetAdapterCapabilities | null;
   /** Codegen service for the selected target, or `null` when generation is unavailable. */
   codegenService: RwaCodegenService | null;
+  /**
+   * `true` from mount until the load for the current target settles. Consumers
+   * must not read a `null` `codegenService` as "this target cannot generate"
+   * while this is set — it is also `null` before the async load resolves.
+   */
+  isRuntimeLoading: boolean;
   /** User-facing load error message; `null` once the runtime is ready. */
   targetLoadError: string | null;
   /** Imperatively clears the current error (e.g. after user dismisses the banner). */
@@ -37,6 +43,7 @@ export function useTargetRuntime(selectedTargetId: TargetId): TargetRuntimeState
   const [adapterCaps, setAdapterCaps] = useState<TargetAdapterCapabilities | null>(null);
   const [codegenService, setCodegenService] = useState<RwaCodegenService | null>(null);
   const [targetLoadError, setTargetLoadError] = useState<string | null>(null);
+  const [isRuntimeLoading, setIsRuntimeLoading] = useState(true);
 
   useEffect(() => {
     let isActive = true;
@@ -66,10 +73,15 @@ export function useTargetRuntime(selectedTargetId: TargetId): TargetRuntimeState
         setTargetLoadError(
           `Unable to load the ${selectedTargetId} target: ${getErrorMessage(err)}. Try reloading the page.`
         );
+      } finally {
+        if (isActive) {
+          setIsRuntimeLoading(false);
+        }
       }
     }
 
     setTargetLoadError(null);
+    setIsRuntimeLoading(true);
     void loadTarget();
 
     return () => {
@@ -81,6 +93,7 @@ export function useTargetRuntime(selectedTargetId: TargetId): TargetRuntimeState
     targetSnapshot,
     adapterCaps,
     codegenService,
+    isRuntimeLoading,
     targetLoadError,
     clearTargetLoadError: () => setTargetLoadError(null),
   };

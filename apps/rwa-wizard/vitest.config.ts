@@ -9,6 +9,8 @@ async function resolveViteConfig(mode: string): Promise<UserConfig> {
     : (viteConfig as UserConfig);
 }
 
+// Resolve kit modules from the published package (including `./code-view` and
+// `./file-tree`); do not alias those subpaths to local stand-ins.
 export default defineConfig(async ({ mode }) =>
   mergeConfig(await resolveViteConfig(mode), {
     test: {

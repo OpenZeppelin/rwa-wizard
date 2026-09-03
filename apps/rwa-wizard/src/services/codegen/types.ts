@@ -1,4 +1,4 @@
-import type { CodegenInfoBlurb } from '@openzeppelin/codegen-core';
+import type { CodegenInfoBlurb, FileTree } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
@@ -6,7 +6,28 @@ import type {
   GenerationStatus,
   StructuralComplianceModuleOption,
   StructuralEcosystemMetadata,
+  StructuralGeneratedFileKind,
+  StructuralUpstreamImportLinks,
+  StructuralUpstreamSourceRevision,
 } from '../../types/wizard';
+
+/**
+ * In-memory project returned by preview generation.
+ * Keys are the same relative paths as `GenerationResult.files`
+ * (e.g. `Cargo.toml`, `contracts/rwa-token/src/contract.rs`).
+ * They are not ZIP entry names. JSZip places each key under a
+ * single root directory named from the token symbol; that prefix
+ * is packaging, not generation.
+ */
+export interface GeneratedFileTreeArtifact {
+  readonly files: FileTree;
+}
+
+/** Shared options bag for `generateZip` and `generateFileTree` (INV-3). */
+export interface GenerateArtifactOptions {
+  readonly onStatus?: (status: GenerationStatus) => void;
+  readonly includeIdentitySupport?: boolean;
+}
 
 /** Normalized validation result for UI (field paths, codes, messages). */
 export interface ValidationResultDTO {
@@ -52,14 +73,50 @@ export interface RwaCodegenService {
    */
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
   /**
+   * Upstream coordinates for the library code this target's generated project
+   * depends on, resolved with the same generate options the service uses. Lets
+   * the UI link generated import paths at the exact revision behind them
+   * without reading the generated files back.
+   *
+   * Omitted by targets that do not vendor an external source library.
+   */
+  getUpstreamSourceRevision?: () => StructuralUpstreamSourceRevision;
+  /**
+   * Identifiers the generated source imports and where they live upstream, so
+   * the UI can link them without recognising this ecosystem's naming.
+   *
+   * Omitted by targets whose generated source imports nothing linkable, and
+   * `null` when the package reported links the UI cannot honour; the UI then
+   * renders no import links at all rather than guessing.
+   */
+  getUpstreamImportLinks?: () => StructuralUpstreamImportLinks | null;
+  /**
+   * Generator-owned ranking kind for a project-relative path.
+   * Omitted by targets that do not classify. Callers treat a missing
+   * method like `unknown` for every path. They do not inspect the path.
+   */
+  getGeneratedFileKind?: (path: string) => StructuralGeneratedFileKind;
+  /**
    * Optional introductory blurb: title, description, and reference links from
    * the ecosystem codegen package (same data can surface in CLI output or UI).
    */
   getCodegenInfoBlurb?: () => CodegenInfoBlurb;
-  generateZip(
+  generateZip(config: RWAConfig, options?: GenerateArtifactOptions): Promise<GeneratedZipArtifact>;
+  /**
+   * Generate the in-memory project for `config`.
+   * Uses the package `generate` / `generateWithIdentitySupport` toggle that
+   * mirrors ZIP identity dispatch, with the same `buildGenerateOptions` merge.
+   *
+   * Throws `CodegenInvalidConfigError` when the package refuses the config.
+   * Throws `CodegenGenerationError` for any other failure.
+   * Throws `CodegenUnsupportedError` when the loaded package has no `generate`.
+   *
+   * Never returns a partial tree.
+   */
+  generateFileTree(
     config: RWAConfig,
-    options?: { onStatus?: (status: GenerationStatus) => void; includeIdentitySupport?: boolean }
-  ): Promise<GeneratedZipArtifact>;
+    options?: GenerateArtifactOptions
+  ): Promise<GeneratedFileTreeArtifact>;
   /** Optional post-generation deploy guidance when the target exposes deploy semantics. */
   getDeployGuidance?: (config: RWAConfig) => DeployGuidanceDTO;
   /** Structural compliance config warnings (copy joined in the app enrichment seam). */

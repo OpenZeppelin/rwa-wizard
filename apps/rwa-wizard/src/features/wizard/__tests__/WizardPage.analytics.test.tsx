@@ -104,6 +104,18 @@ vi.mock('@openzeppelin/ui-components', () => ({
       </button>
     </>
   ),
+  defaultBottomSheetHeight: (viewportHeightPx: number, options?: { readonly ratio?: number }) =>
+    Math.round(viewportHeightPx * (options?.ratio ?? 0.5)),
+  BottomSheet: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+}));
+vi.mock('../../code-preview', () => ({
+  useCodePreview: () => ({
+    showTrigger: false,
+    triggerProps: {},
+    revealInPreview: null,
+  }),
+  CodePreviewTrigger: () => null,
+  CodePreviewDrawer: () => null,
 }));
 vi.mock('../../../app/providers/CopyProvider', () => ({
   CopyProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -114,6 +126,7 @@ vi.mock('../../../services/runtime', () => ({
 vi.mock('../../../components/shared', () => ({ ErrorBannerStack: () => null }));
 vi.mock('../../../services/codegen/deployReadiness', () => ({
   getDeployGuidanceFromService: () => null,
+  resolveIncludeIdentitySupport: () => false,
 }));
 vi.mock('../../../services/download/exportDraftAsJson', () => ({
   exportDraftAsJson: () => mockExportDraft(),

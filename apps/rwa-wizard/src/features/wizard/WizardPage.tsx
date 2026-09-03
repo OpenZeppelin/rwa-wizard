@@ -17,10 +17,14 @@ import { wizardStore } from '../../app/state/wizardStore';
 import { ErrorBannerStack } from '../../components/shared';
 import { useAnalyticsNetworkContext } from '../../hooks/useAnalyticsNetworkContext';
 import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
-import { getDeployGuidanceFromService } from '../../services/codegen/deployReadiness';
+import {
+  getDeployGuidanceFromService,
+  resolveIncludeIdentitySupport,
+} from '../../services/codegen/deployReadiness';
 import { exportDraftAsJson } from '../../services/download/exportDraftAsJson';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useWizardDraftStorage } from '../../storage';
+import { CodePreviewDrawer, CodePreviewTrigger, useCodePreview } from '../code-preview';
 import { GenerationDialog } from '../generation/components/GenerationDialog';
 
 /**
@@ -69,8 +73,14 @@ function WizardPageContent(): ReactElement {
     resetKey,
     resetSession,
   } = session;
-  const { targetSnapshot, adapterCaps, codegenService, targetLoadError, clearTargetLoadError } =
-    runtime;
+  const {
+    targetSnapshot,
+    adapterCaps,
+    codegenService,
+    isRuntimeLoading,
+    targetLoadError,
+    clearTargetLoadError,
+  } = runtime;
   const { generate, isGenerating, jobState: generationJobState, download, reset } = generation;
 
   const {
@@ -120,6 +130,23 @@ function WizardPageContent(): ReactElement {
     () => getDeployGuidanceFromService(codegenService, draftState.config),
     [codegenService, draftState.config]
   );
+
+  const resolvedIdentitySupport = useMemo(
+    () => resolveIncludeIdentitySupport(deployGuidance, includeIdentitySupport),
+    [deployGuidance, includeIdentitySupport]
+  );
+
+  const preview = useCodePreview({
+    codegenService,
+    isCodegenServiceLoading: isRuntimeLoading,
+    draftConfig: draftState.config,
+    moduleCatalog: targetSnapshot?.availableModules ?? [],
+    currentStepId: currentStep,
+    // `WizardLayout` is remounted on `resetKey`, but this hook lives above that
+    // boundary and would otherwise never learn the draft was replaced.
+    draftEpoch: resetKey,
+    includeIdentitySupport: resolvedIdentitySupport,
+  });
 
   const { steps, orderedStepIds } = useWizardSteps({
     selectedTargetId,
@@ -234,12 +261,38 @@ function WizardPageContent(): ReactElement {
             currentStepIndex={effectiveStepIndex}
             onStepChange={handleStepChange}
             onCancel={handleCancel}
+            navActions={
+              <CodePreviewTrigger show={preview.showTrigger} triggerProps={preview.triggerProps} />
+            }
             lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
             onLastStepPrimary={handleLastStepPrimary}
             lastStepSecondaryLabel="Export Configuration"
             onLastStepSecondary={handleLastStepSecondary}
             lastStepSecondaryDisabled={!activeDraftId}
           />
+          {preview.showTrigger ? (
+            <CodePreviewDrawer
+              open={preview.persistence.open}
+              onOpenChange={preview.setOpen}
+              height={preview.persistence.height}
+              onHeightChange={preview.setHeight}
+              sheetId={preview.sheetId}
+              phase={preview.phase}
+              selectedPath={preview.selectedPath}
+              onSelectedPathChange={preview.setSelectedPath}
+              files={preview.phase.kind === 'ready' ? preview.phase.files : null}
+              changedPaths={preview.phase.kind === 'ready' ? preview.phase.changedPaths : undefined}
+              substitutedKeys={
+                preview.phase.kind === 'ready' || preview.phase.kind === 'error'
+                  ? preview.phase.substitutedKeys
+                  : []
+              }
+              errorMessages={preview.phase.kind === 'error' ? preview.phase.messages : undefined}
+              sourceRevision={preview.sourceRevision}
+              importLinks={preview.importLinks}
+              tools={preview.layout}
+            />
+          ) : null}
           <GenerationDialog
             jobState={generationJobState}
             isGenerating={isGenerating}

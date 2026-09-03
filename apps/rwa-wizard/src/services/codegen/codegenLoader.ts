@@ -2,6 +2,7 @@ import { toSummaryPhase } from '@openzeppelin/codegen-core';
 import type {
   CodegenInfoBlurb,
   GenerateOptions,
+  GenerationResult,
   ProgressCallback,
 } from '@openzeppelin/codegen-core';
 import type {
@@ -10,15 +11,79 @@ import type {
   ComplianceModuleRuntimePrerequisiteId,
 } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
+import { isCodeViewLanguage } from '@openzeppelin/ui-components/code-view';
+import { logger } from '@openzeppelin/ui-utils';
 
-import type {
-  GeneratedZipArtifact,
-  GenerationStatus,
-  StructuralComplianceModuleOption,
-  StructuralEcosystemMetadata,
+import {
+  isStructuralGeneratedFileKind,
+  type GeneratedZipArtifact,
+  type StructuralComplianceModuleOption,
+  type StructuralEcosystemMetadata,
+  type StructuralGeneratedFileKind,
+  type StructuralUpstreamImportLinks,
+  type StructuralUpstreamImportTarget,
+  type StructuralUpstreamSourceRevision,
 } from '../../types/wizard';
+import { CodegenUnsupportedError, toCodegenError } from './errors';
 import { getCodegenRuntimeOptions, type RuntimeGenerateOptions } from './runtimeOptions';
-import type { DeployGuidanceDTO, RwaCodegenService, ValidationResultDTO } from './types';
+import type {
+  DeployGuidanceDTO,
+  GenerateArtifactOptions,
+  GeneratedFileTreeArtifact,
+  RwaCodegenService,
+  ValidationResultDTO,
+} from './types';
+
+/**
+ * Import links as a codegen package reports them, before this app has checked
+ * anything: the language is whatever string the package chose.
+ */
+interface ReportedImportLinks {
+  readonly language: string;
+  readonly importLinePrefix: string;
+  readonly targets: readonly StructuralUpstreamImportTarget[];
+}
+
+/**
+ * Narrows a package's reported links to what the code pane can act on.
+ *
+ * The decorator only links inside files whose language matches, so a package
+ * reporting `Rust` or `rs` produces a preview with no links and no complaint —
+ * a contract broken in one package and observable only as an absence in the
+ * other. Failing it here names the package and the value.
+ */
+function toImportLinks(reported: ReportedImportLinks): StructuralUpstreamImportLinks | null {
+  if (!isCodeViewLanguage(reported.language)) {
+    logger.warn(
+      'CodegenLoader',
+      `Ignoring upstream import links: language "${reported.language}" is not one the code preview can render.`
+    );
+    return null;
+  }
+
+  return {
+    language: reported.language,
+    importLinePrefix: reported.importLinePrefix,
+    targets: reported.targets,
+  };
+}
+
+/**
+ * Narrows a package's reported kind to the closed set this app ranks on.
+ *
+ * Unlike `toImportLinks`, a bad value degrades that path to `unknown` and
+ * leaves every other path alone. A file with an unknown kind is still a
+ * file the user needs to see; a link with an unrenderable language is not
+ * a link. Do not unify these two seams.
+ */
+function toGeneratedFileKind(reported: string): StructuralGeneratedFileKind {
+  if (isStructuralGeneratedFileKind(reported)) return reported;
+  logger.warn(
+    'CodegenLoader',
+    `Ignoring generated file kind "${reported}": not in the closed ranking set.`
+  );
+  return 'unknown';
+}
 
 /** Shape of a codegen package module (e.g. @openzeppelin/codegen-rwa-*). */
 interface CodegenPackageModule {
@@ -46,7 +111,12 @@ interface CodegenPackageModule {
     config: RWAConfig,
     options?: GenerateOptions
   ) => Promise<{ fileName: string; data: Blob }>;
+  generate?: (config: RWAConfig, options?: GenerateOptions) => GenerationResult;
+  generateWithIdentitySupport?: (config: RWAConfig, options?: GenerateOptions) => GenerationResult;
   getEcosystemMetadata?: () => StructuralEcosystemMetadata;
+  getUpstreamSourceRevision?: (options?: GenerateOptions) => StructuralUpstreamSourceRevision;
+  getUpstreamImportLinks?: () => ReportedImportLinks;
+  getGeneratedFileKind?: (path: string) => string;
   getCodegenInfoBlurb?: () => CodegenInfoBlurb;
   generateZipWithIdentitySupport?: (
     config: RWAConfig,
@@ -114,6 +184,19 @@ function buildGenerateOptions(
   };
 }
 
+function onProgressFrom(
+  onStatus: GenerateArtifactOptions['onStatus']
+): ProgressCallback | undefined {
+  return onStatus
+    ? (event) => {
+        onStatus({
+          phase: toSummaryPhase(event.phase),
+          message: event.message,
+        });
+      }
+    : undefined;
+}
+
 function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCodegenService {
   const baseGenerateOptions = resolveGenerateOptions(targetId);
 
@@ -159,6 +242,23 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
 
     getEcosystemMetadata: pkg.getEcosystemMetadata ? () => pkg.getEcosystemMetadata!() : undefined,
 
+    // Resolved with the same base options generation uses, so a local-checkout
+    // build reports the unpinned coordinates its manifest actually emits.
+    getUpstreamSourceRevision: pkg.getUpstreamSourceRevision
+      ? () => pkg.getUpstreamSourceRevision!(baseGenerateOptions)
+      : undefined,
+
+    getUpstreamImportLinks: pkg.getUpstreamImportLinks
+      ? () => toImportLinks(pkg.getUpstreamImportLinks!())
+      : undefined,
+
+    // INV-4: path only — kind is layout, not a generation. Do not forward
+    // baseGenerateOptions. INV-5: narrow per path; do not drop the file.
+    // INV-6: no try/catch; a throw here is a package bug.
+    getGeneratedFileKind: pkg.getGeneratedFileKind
+      ? (path) => toGeneratedFileKind(pkg.getGeneratedFileKind!(path))
+      : undefined,
+
     getCodegenInfoBlurb: pkg.getCodegenInfoBlurb ? () => pkg.getCodegenInfoBlurb!() : undefined,
 
     getDeployGuidance: pkg.getDeployGuidance
@@ -185,23 +285,50 @@ function wrapCodegenPackage(targetId: string, pkg: CodegenPackageModule): RwaCod
 
     async generateZip(
       config: RWAConfig,
-      options?: { onStatus?: (status: GenerationStatus) => void; includeIdentitySupport?: boolean }
+      options?: GenerateArtifactOptions
     ): Promise<GeneratedZipArtifact> {
-      const onProgress: ProgressCallback | undefined = options?.onStatus
-        ? (event) => {
-            options.onStatus?.({
-              phase: toSummaryPhase(event.phase),
-              message: event.message,
-            });
-          }
-        : undefined;
-      const generateOptions = buildGenerateOptions(baseGenerateOptions, onProgress);
+      const generateOptions = buildGenerateOptions(
+        baseGenerateOptions,
+        onProgressFrom(options?.onStatus)
+      );
       const zipFn =
         options?.includeIdentitySupport && pkg.generateZipWithIdentitySupport
           ? pkg.generateZipWithIdentitySupport.bind(pkg)
           : pkg.generateZip.bind(pkg);
       const result = await zipFn(config, generateOptions);
       return { fileName: result.fileName, data: result.data };
+    },
+
+    async generateFileTree(
+      config: RWAConfig,
+      options?: GenerateArtifactOptions
+    ): Promise<GeneratedFileTreeArtifact> {
+      // INV-7: do not call a missing generate, do not unzip ZIP as fallback.
+      if (typeof pkg.generate !== 'function') {
+        throw new CodegenUnsupportedError(targetId);
+      }
+
+      // INV-5 / INV-16: same options merge as ZIP; no invented packaging event.
+      const generateOptions = buildGenerateOptions(
+        baseGenerateOptions,
+        onProgressFrom(options?.onStatus)
+      );
+
+      // INV-4 / INV-9 / INV-15 / INV-19: one generate dispatch, never validate()
+      // and never generateZip.
+      const generateFn =
+        options?.includeIdentitySupport && pkg.generateWithIdentitySupport
+          ? pkg.generateWithIdentitySupport.bind(pkg)
+          : pkg.generate.bind(pkg);
+
+      try {
+        const result = generateFn(config, generateOptions);
+        // INV-1 / INV-2 / INV-20: return package files as-is, no prefix, no clone.
+        return { files: result.files };
+      } catch (err) {
+        // INV-8 / INV-18: typed rejection, never a partial tree.
+        toCodegenError(err);
+      }
     },
   };
 }

@@ -40,7 +40,15 @@ export { STELLAR_VALIDATION_CONSTANTS } from './constants';
 export {
   GENERATED_STELLAR_SOURCE_REPO_URL,
   getContractsLibraryRepositoryUrl,
+  getUpstreamSourceRevision,
 } from './contracts-library-meta';
+export type { UpstreamDependencyMode, UpstreamSourceRevision } from './contracts-library-meta';
+
+export { getUpstreamImportLinks } from './upstream-import-links';
+export type { UpstreamImportLinks, UpstreamImportTarget } from './upstream-import-links';
+
+export { GENERATED_FILE_KINDS, getGeneratedFileKind } from './generated-file-kinds';
+export type { GeneratedFileKind } from './generated-file-kinds';
 
 export { getCodegenInfoBlurb, STELLAR_SEP_0057_CONTRACT_TYPES_URL } from './codegen-info-blurb';
 
