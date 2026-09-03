@@ -117,7 +117,7 @@ export function createTestCodegenService(options?: TestCodegenServiceOptions): R
 
       const sanitized = config.token.symbol.replace(/\W+/g, '-').toLowerCase() || 'rwa';
       const fileName = `${sanitized}-rwa.zip`;
-      const blob = new Blob([dummyProjectText(config)], {
+      const blob = new Blob([dummyProjectText(config, options?.fileTreeVariant)], {
         type: 'application/zip',
       });
       onStatus?.({ phase: 'success', message: 'Done (test)' });

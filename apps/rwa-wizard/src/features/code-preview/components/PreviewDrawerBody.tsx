@@ -8,6 +8,7 @@ import type {
   StructuralUpstreamImportLinks,
   StructuralUpstreamSourceRevision,
 } from '../../../types/wizard';
+import { CODE_PREVIEW_TREE_PANE_WIDTH_PX } from '../codePreviewLayout';
 import type { CodePreviewPhase } from '../hooks/useCodePreview';
 import { PreviewCodePane } from './PreviewCodePane';
 import { PreviewContentErrorBoundary } from './PreviewContentErrorBoundary';
@@ -15,9 +16,6 @@ import { PreviewFileTreePane } from './PreviewFileTreePane';
 import { PreviewGenerateError } from './PreviewGenerateError';
 
 import '../code-preview.css';
-
-/** Width of the file tree pane; must match `PreviewFileTreePane`'s `w-[280px]`. */
-const TREE_PANE_WIDTH_PX = 280;
 
 export function PreviewDrawerBody(props: {
   phase: CodePreviewPhase;
@@ -69,7 +67,7 @@ export function PreviewDrawerBody(props: {
             {/* Kept mounted (preserves expansion state) and animated on width. */}
             <div
               className="shrink-0 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none"
-              style={{ width: treeVisible ? TREE_PANE_WIDTH_PX : 0 }}
+              style={{ width: treeVisible ? CODE_PREVIEW_TREE_PANE_WIDTH_PX : 0 }}
               aria-hidden={!treeVisible}
               inert={!treeVisible}
             >
