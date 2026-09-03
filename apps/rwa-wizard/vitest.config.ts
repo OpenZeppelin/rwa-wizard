@@ -9,10 +9,8 @@ async function resolveViteConfig(mode: string): Promise<UserConfig> {
     : (viteConfig as UserConfig);
 }
 
-// `@openzeppelin/ui-components/code-view` and `/file-tree` are deliberately NOT
-// aliased to local shims. Author-written stand-ins cannot diverge from the kit
-// without the suite staying green, which is how the stubs drifted from the real
-// `FileTreeProps` and `BottomSheetProps` unnoticed.
+// Resolve kit modules from the published package (including `./code-view` and
+// `./file-tree`); do not alias those subpaths to local stand-ins.
 export default defineConfig(async ({ mode }) =>
   mergeConfig(await resolveViteConfig(mode), {
     test: {
