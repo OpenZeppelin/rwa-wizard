@@ -112,7 +112,6 @@ export function ModuleConfigPanel({
           return (
             <div key={field.key} data-field-id={fieldId}>
               <AddressListField
-                // carries `data-field-id` as the backstop for a kit without it.
                 id={fieldId}
                 label={field.label}
                 placeholder={addressListCopy.placeholder}

@@ -13,7 +13,7 @@ import {
  * SF-23 absence / architecture guards:
  * INV-19 — no dock under impact/
  * INV-21 — no second pane / floating detach module
- * INV-7  — wizard BottomSheet side remains optional in the ambient types
+ * INV-7  — BottomSheet.side remains optional on published kit types
  */
 
 const IMPACT_DIR = join(APP_ROOT, 'src/features/code-preview/impact');
@@ -84,8 +84,12 @@ describe('SF-23 dock repo guards', () => {
     }
   });
 
-  it('keeps BottomSheet.side optional in the wizard ambient types (INV-7)', () => {
-    const dts = readFileSync(join(APP_ROOT, 'src/openzeppelin-ui-bottom-sheet.d.ts'), 'utf8');
+  it('keeps BottomSheet.side optional on the published kit types (INV-7)', () => {
+    // SF-9: ambient stubs are gone; assert against ui-components ^3.9.0 typings.
+    const dts = readFileSync(
+      join(APP_ROOT, '../../node_modules/@openzeppelin/ui-components/dist/index.d.mts'),
+      'utf8'
+    );
     expect(dts).toContain('side?: BottomSheetSide');
     expect(dts).toMatch(
       /type BottomSheetSide\s*=\s*'top'\s*\|\s*'right'\s*\|\s*'bottom'\s*\|\s*'left'/
