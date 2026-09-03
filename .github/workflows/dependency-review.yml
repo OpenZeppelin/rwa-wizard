@@ -39,4 +39,6 @@ jobs:
             pkg:npm/@openzeppelin/ui-styles,
             pkg:npm/@openzeppelin/ui-tailwind-utils,
             pkg:npm/@openzeppelin/ui-types,
-            pkg:npm/@openzeppelin/ui-utils
+            pkg:npm/@openzeppelin/ui-utils,
+            pkg:npm/@pierre/theming,
+            pkg:npm/@pierre/trees
