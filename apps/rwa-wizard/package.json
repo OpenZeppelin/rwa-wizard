@@ -18,6 +18,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@icons-pack/react-simple-icons": "^12.9.0",
     "@openzeppelin/adapter-evm": "^5.0.0",
     "@openzeppelin/adapter-stellar": "^4.0.1",
     "@openzeppelin/codegen-core": "workspace:*",

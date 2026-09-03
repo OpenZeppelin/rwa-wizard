@@ -1,6 +1,7 @@
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  BookOpenText,
   BookUser,
   ExternalLink,
   LayoutTemplate,
@@ -15,9 +16,11 @@ import { SidebarButton, SidebarLayout, SidebarSection } from '@openzeppelin/ui-c
 
 import ContractsWizardIconSvg from '../../assets/icons/contracts-wizard-icon.svg';
 import { AddressBookDialog } from '../../components/AddressBook/AddressBookDialog';
+import { SidebarNavIcons } from '../../components/sidebar/SidebarNavIcons';
 import { DraftImportDialog } from '../../features/draft-management/components/DraftImportDialog';
 import { DraftList } from '../../features/draft-management/components/DraftList';
 import { TargetSelectorSidebar } from '../../features/target-catalog/components/TargetSelectorSidebar';
+import { useAnalyticsNetworkResolver } from '../../hooks/useAnalyticsNetworkContext';
 import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
 import { listTargets } from '../../registry/targets';
 import { exportAllDraftsAsJson } from '../../services/download/exportDraftAsJson';
@@ -33,6 +36,8 @@ import {
   wizardPath,
 } from './wizardPaths';
 
+const RWA_WIZARD_DOCS_URL = 'https://docs.openzeppelin.com/rwa-wizard';
+
 interface AppSidebarProps {
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
@@ -46,6 +51,7 @@ interface AppSidebarProps {
  */
 export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps): ReactElement {
   const activeDraftId = useWizardStore((s) => s.activeDraftId);
+  const activeNetworkId = useWizardStore((s) => s.activeNetworkId);
   const selectedTargetId = useWizardStore((s) => s.targetId);
   const savingDraftId = useWizardStore((s) => s.savingDraftId);
   const draftListRefreshTick = useWizardStore((s) => s.draftListRefreshTick);
@@ -54,6 +60,7 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
   const draftList = useDraftList();
   const storage = useWizardDraftStorage();
   const { trackTargetSelected, trackDraftOpened, trackConfigExported } = useRwaWizardAnalytics();
+  const resolveAnalyticsNetwork = useAnalyticsNetworkResolver();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [addressBookOpen, setAddressBookOpen] = useState(false);
   const location = useLocation();
@@ -77,11 +84,12 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
       // entries so this branch is a belt-and-braces guard.
       const resolved = isTargetId(targetId) ? targetId : DEFAULT_TARGET_ID;
       wizardStore.setTargetId(resolved);
-      trackTargetSelected(resolved);
-      navigate(wizardPath(defaultWizardNetworkIdForTarget(resolved)));
+      const networkId = defaultWizardNetworkIdForTarget(resolved);
+      trackTargetSelected(resolved, resolveAnalyticsNetwork(networkId));
+      navigate(wizardPath(networkId));
       onMobileOpenChange(false);
     },
-    [navigate, onMobileOpenChange, trackTargetSelected]
+    [navigate, onMobileOpenChange, resolveAnalyticsNetwork, trackTargetSelected]
   );
 
   const handleLoadDraft = useCallback(
@@ -105,9 +113,11 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
   );
 
   const handleExportAllDrafts = useCallback(async () => {
-    trackConfigExported('all_drafts');
+    // `activeNetworkId` is only set while `/wizard/:networkId` is mounted; the
+    // export otherwise reports `'unknown'` rather than guessing a network.
+    trackConfigExported('all_drafts', resolveAnalyticsNetwork(activeNetworkId));
     await exportAllDraftsAsJson(storage);
-  }, [storage, trackConfigExported]);
+  }, [storage, activeNetworkId, resolveAnalyticsNetwork, trackConfigExported]);
 
   const headerContent = (
     <div className="mb-8">
@@ -118,41 +128,44 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
   const recentAssetsTitle = `Recent Assets${draftList.items.length > 0 ? `  ${draftList.items.length}` : ''}`;
 
   const footerContent = (
-    <SidebarSection title="Other Tools">
-      <SidebarButton
-        icon={<img src={ContractsWizardIconSvg} alt="Contracts Wizard" className="size-4" />}
-        href="https://wizard.openzeppelin.com"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="flex items-center gap-1.5">
-          Contracts Wizard <ExternalLink className="size-3 text-gray-400" />
-        </span>
-      </SidebarButton>
-      <SidebarButton icon={<Wallet className="size-4" />} disabled badge="Coming Soon">
-        Open Accounts
-      </SidebarButton>
-      <SidebarButton
-        icon={<ShieldCheck className="size-4" />}
-        href="https://rolemanager.openzeppelin.com"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="flex items-center gap-1.5">
-          Role Manager <ExternalLink className="size-3 text-gray-400" />
-        </span>
-      </SidebarButton>
-      <SidebarButton
-        icon={<LayoutTemplate className="size-4" />}
-        href="https://builder.openzeppelin.com"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="flex items-center gap-1.5">
-          UI Builder <ExternalLink className="size-3 text-gray-400" />
-        </span>
-      </SidebarButton>
-    </SidebarSection>
+    <div className="flex flex-col gap-6">
+      <SidebarSection title="Other Tools">
+        <SidebarButton
+          icon={<img src={ContractsWizardIconSvg} alt="Contracts Wizard" className="size-4" />}
+          href="https://wizard.openzeppelin.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span className="flex items-center gap-1.5">
+            Contracts Wizard <ExternalLink className="size-3 text-gray-400" />
+          </span>
+        </SidebarButton>
+        <SidebarButton icon={<Wallet className="size-4" />} disabled badge="Coming Soon">
+          Open Accounts
+        </SidebarButton>
+        <SidebarButton
+          icon={<ShieldCheck className="size-4" />}
+          href="https://rolemanager.openzeppelin.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span className="flex items-center gap-1.5">
+            Role Manager <ExternalLink className="size-3 text-gray-400" />
+          </span>
+        </SidebarButton>
+        <SidebarButton
+          icon={<LayoutTemplate className="size-4" />}
+          href="https://builder.openzeppelin.com"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span className="flex items-center gap-1.5">
+            UI Builder <ExternalLink className="size-3 text-gray-400" />
+          </span>
+        </SidebarButton>
+      </SidebarSection>
+      <SidebarNavIcons />
+    </div>
   );
 
   return (
@@ -191,6 +204,14 @@ export function AppSidebar({ mobileOpen, onMobileOpenChange }: AppSidebarProps):
             onClick={() => setAddressBookOpen(true)}
           >
             Address Book
+          </SidebarButton>
+          <SidebarButton
+            icon={<BookOpenText className="size-4" />}
+            href={RWA_WIZARD_DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Docs
           </SidebarButton>
         </SidebarSection>
 

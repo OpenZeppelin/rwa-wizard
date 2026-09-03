@@ -15,6 +15,7 @@ import { CopyProvider } from '../../app/providers/CopyProvider';
 import { DEFAULT_WIZARD_NETWORK_ID, wizardPath } from '../../app/routes/wizardPaths';
 import { wizardStore } from '../../app/state/wizardStore';
 import { ErrorBannerStack } from '../../components/shared';
+import { useAnalyticsNetworkContext } from '../../hooks/useAnalyticsNetworkContext';
 import { useRwaWizardAnalytics } from '../../hooks/useRwaWizardAnalytics';
 import {
   getDeployGuidanceFromService,
@@ -95,7 +96,15 @@ function WizardPageContent(): ReactElement {
 
   const deploymentTarget = draftState.config.deployment.target;
   const presetNetworkId = deploymentTarget.kind === 'preset' ? deploymentTarget.networkId : null;
+  const presetEcosystem = deploymentTarget.kind === 'preset' ? deploymentTarget.ecosystem : null;
   const { networkId: routeNetworkId } = useParams<{ networkId: string }>();
+
+  // Network dimensions for every wizard-flow analytics event. Same precedence
+  // as the context network below: preset deployment first, URL segment second.
+  const analyticsNetwork = useAnalyticsNetworkContext(
+    presetNetworkId ?? routeNetworkId,
+    presetEcosystem
+  );
 
   // Sync the wizard's "context network" used by `AliasLabelBridge` for alias
   // resolution and creation. Prefer the deployment preset network, but fall
@@ -166,21 +175,35 @@ function WizardPageContent(): ReactElement {
     generationOutcomeKeyRef.current = outcomeKey;
 
     if (generationJobState.phase === 'success') {
-      trackProjectGenerated(selectedTargetId, generationJobState.zipFileName ?? 'unknown');
+      trackProjectGenerated(
+        selectedTargetId,
+        generationJobState.zipFileName ?? 'unknown',
+        analyticsNetwork
+      );
     } else {
-      trackGenerationFailed(selectedTargetId, generationJobState.errorMessage ?? 'unknown');
+      trackGenerationFailed(
+        selectedTargetId,
+        generationJobState.errorMessage ?? 'unknown',
+        analyticsNetwork
+      );
     }
-  }, [generationJobState, selectedTargetId, trackProjectGenerated, trackGenerationFailed]);
+  }, [
+    generationJobState,
+    selectedTargetId,
+    analyticsNetwork,
+    trackProjectGenerated,
+    trackGenerationFailed,
+  ]);
 
   const handleStepChange = useCallback(
     (index: number) => {
       const stepId = orderedStepIds[index];
       if (stepId) {
         wizardStore.setCurrentStep(stepId);
-        trackWizardStep(index + 1, stepId);
+        trackWizardStep(index + 1, stepId, analyticsNetwork);
       }
     },
-    [orderedStepIds, trackWizardStep]
+    [orderedStepIds, analyticsNetwork, trackWizardStep]
   );
 
   const handleLastStepPrimary = useCallback(() => {
@@ -189,20 +212,20 @@ function WizardPageContent(): ReactElement {
 
   const handleLastStepSecondary = useCallback(async () => {
     if (!activeDraftId) return;
-    trackConfigExported('single_draft');
+    trackConfigExported('single_draft', analyticsNetwork);
     await exportDraftAsJson(activeDraftId, storage);
-  }, [storage, activeDraftId, trackConfigExported]);
+  }, [storage, activeDraftId, analyticsNetwork, trackConfigExported]);
 
   const handleCancel = useCallback(() => {
-    trackWizardCancelled(selectedTargetId);
+    trackWizardCancelled(selectedTargetId, analyticsNetwork);
     resetSession();
     navigate(wizardPath(DEFAULT_WIZARD_NETWORK_ID), { replace: true });
-  }, [resetSession, selectedTargetId, trackWizardCancelled, navigate]);
+  }, [resetSession, selectedTargetId, analyticsNetwork, trackWizardCancelled, navigate]);
 
   const handleDownload = useCallback(() => {
-    trackZipDownloadClicked(selectedTargetId);
+    trackZipDownloadClicked(selectedTargetId, analyticsNetwork);
     download();
-  }, [download, selectedTargetId, trackZipDownloadClicked]);
+  }, [download, selectedTargetId, analyticsNetwork, trackZipDownloadClicked]);
 
   // Use only `resetKey` (not `activeDraftId`) so that the layout does not
   // remount when autosave promotes a fresh form into a new draft id on the

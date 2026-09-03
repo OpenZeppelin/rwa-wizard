@@ -165,6 +165,9 @@ importers:
 
   apps/rwa-wizard:
     dependencies:
+      '@icons-pack/react-simple-icons':
+        specifier: ^12.9.0
+        version: 12.9.0(react@19.2.7)
       '@openzeppelin/adapter-evm':
         specifier: '>=5.0.0-0 <6.0.0'
         version: 5.0.0(983b72cfdffe65ec11efaada78e4552d)
@@ -973,6 +976,11 @@ packages:
         optional: true
       '@vue/compiler-sfc':
         optional: true
+
+  '@icons-pack/react-simple-icons@12.9.0':
+    resolution: {integrity: sha512-GLb2ayO78ZjjmI7GMpCDlXcELEr3DPO89nordI/JC8dMiJDMzuPb3qeOTt+SWcFOyJ+SAh9C/feUCpiBSM8ZLQ==}
+    peerDependencies:
+      react: ^16.13 || ^17 || ^18 || ^19
 
   '@inquirer/external-editor@1.0.3':
     resolution: {integrity: sha512-RWbSrDiYmO4LbejWY7ttpxczuwQyZLBUyygsA9Nsv95hpzUWwnNTVQmAq3xuh7vNwCp07UTmE5i11XAEExx4RA==}
@@ -7802,6 +7810,10 @@ snapshots:
       semver: 7.7.3
     transitivePeerDependencies:
       - supports-color
+
+  '@icons-pack/react-simple-icons@12.9.0(react@19.2.7)':
+    dependencies:
+      react: 19.2.7
 
   '@inquirer/external-editor@1.0.3(@types/node@24.10.4)':
     dependencies:
