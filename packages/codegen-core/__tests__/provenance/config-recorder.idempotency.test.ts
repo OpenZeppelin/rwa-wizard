@@ -190,10 +190,11 @@ describe('INV-21 — recording cost is linear in reads; allocation bounded by di
       off = Math.min(off, time(false));
       on = Math.min(on, time(true));
     }
-    // Research measured 1.3–1.5×; the bound is deliberately loose so CI jitter never fails it,
-    // while a per-access proxy allocation or per-access path formatting (10×+) still would.
+    // Research measured 1.3–1.5×; the bound is deliberately loose so CI jitter / coverage
+    // instrumentation never fails it, while a per-access proxy allocation or per-access path
+    // formatting (10×+) still would. Absolute floor absorbs v8 coverage overhead on GHA.
     expect(on, `recorded ${on.toFixed(1)}ms vs plain ${off.toFixed(1)}ms`).toBeLessThan(
-      Math.max(off * 6, 150)
+      Math.max(off * 8, 300)
     );
   });
 

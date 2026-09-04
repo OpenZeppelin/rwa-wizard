@@ -29,6 +29,7 @@ const ROLES_FILE = join(PACKAGE_ROOT, 'src', 'templates', 'contracts', 'rwa-toke
 const STELLAR_SRC = join(PACKAGE_ROOT, 'src');
 const STELLAR_INDEX = join(PACKAGE_ROOT, 'src', 'index.ts');
 const CHANGESET = join(REPO_ROOT, '.changeset', 'quieter-addresses-role-guard.md');
+const CHANGELOG = join(PACKAGE_ROOT, 'CHANGELOG.md');
 
 const CHILD: ConfigPath = 'accessControl.roles[0].addresses';
 const OTHER: ConfigPath = 'token.name';
@@ -198,11 +199,19 @@ describe('INV-5 / INV-11 — additionalRoles is not wrapped (whole-list honesty)
 });
 
 describe('INV-18 — additive internal surface; not on package barrel', () => {
-  it('changeset patch note exists for codegen-rwa-stellar', () => {
-    expect(existsSync(CHANGESET)).toBe(true);
-    const body = readFileSync(CHANGESET, 'utf8');
-    expect(body).toMatch(/codegen-rwa-stellar/);
-    expect(body.toLowerCase()).toMatch(/patch|provenance/);
+  it('patch note exists as unpublished changeset or in CHANGELOG after version', () => {
+    // Before release: unpublished changeset. After changesets consume it: CHANGELOG.
+    // Do not require the .md forever — that fails every version PR.
+    if (existsSync(CHANGESET)) {
+      const body = readFileSync(CHANGESET, 'utf8');
+      expect(body).toMatch(/codegen-rwa-stellar/);
+      expect(body.toLowerCase()).toMatch(/patch|provenance/);
+      return;
+    }
+    expect(existsSync(CHANGELOG)).toBe(true);
+    const changelog = readFileSync(CHANGELOG, 'utf8');
+    expect(changelog).toMatch(/Quieter Addresses provenance/);
+    expect(changelog).toMatch(/omitExactConfigPath/);
   });
 
   it('src/index.ts does not re-export withoutRolesListRoot or ACCESS_CONTROL_ROLES', () => {
