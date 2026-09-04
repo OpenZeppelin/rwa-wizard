@@ -383,18 +383,17 @@ describe('the layout probe gates in CI (INV-34)', () => {
     expect(probe).toBeGreaterThan(build);
   });
 
-  it('does not carry continue-on-error, unlike the Test step below it', () => {
-    // Load-bearing rather than decorative. The unit suite is advisory on `main`
-    // and on every pull request, and the drawer's three-region layout fails
-    // silently — nothing overflows, nothing throws, and happy-dom has no layout
-    // engine to see it. This step is the only enforcement that failure mode has.
+  it('does not carry continue-on-error (hard gate after #67)', () => {
+    // The drawer's three-region layout fails silently — nothing overflows,
+    // nothing throws, and happy-dom has no layout engine to see it. This step
+    // is the only enforcement that failure mode has, so it must never be
+    // advisory. After #67 the unit `Test` step is also a hard gate on main;
+    // keep both free of continue-on-error so a soft-fail cannot reappear here.
     const probe = steps().find((step) => step.name === 'Drawer layout probe')!;
     expect(probe.body).not.toContain('continue-on-error');
 
     const test = steps().find((step) => step.name === 'Test')!;
-    expect(test.body, 'the asymmetry this invariant exists to preserve is gone').toContain(
-      'continue-on-error'
-    );
+    expect(test.body).not.toContain('continue-on-error');
   });
 
   it('runs all three invocations — the checks, the self-check and the negative run', () => {
