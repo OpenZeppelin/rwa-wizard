@@ -1,5 +1,14 @@
 # @openzeppelin/rwa-wizard-cli
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [[`a173041`](https://github.com/OpenZeppelin/rwa-wizard/commit/a1730415d66eb557caa4ad773c36658a90b79719), [`a173041`](https://github.com/OpenZeppelin/rwa-wizard/commit/a1730415d66eb557caa4ad773c36658a90b79719), [`a173041`](https://github.com/OpenZeppelin/rwa-wizard/commit/a1730415d66eb557caa4ad773c36658a90b79719), [`a173041`](https://github.com/OpenZeppelin/rwa-wizard/commit/a1730415d66eb557caa4ad773c36658a90b79719), [`a173041`](https://github.com/OpenZeppelin/rwa-wizard/commit/a1730415d66eb557caa4ad773c36658a90b79719), [`a173041`](https://github.com/OpenZeppelin/rwa-wizard/commit/a1730415d66eb557caa4ad773c36658a90b79719), [`6d1bd35`](https://github.com/OpenZeppelin/rwa-wizard/commit/6d1bd35f119959d53bbd99f0b88e47db666aa149)]:
+  - @openzeppelin/rwa-config@0.2.0
+  - @openzeppelin/codegen-rwa-stellar@0.2.0
+  - @openzeppelin/codegen-core@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes
