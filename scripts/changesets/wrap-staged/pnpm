@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Shim that rewrites `pnpm publish ...` to `npm stage publish ...`
+# (https://docs.npmjs.com/staged-publishing) and forwards every other
+# invocation to the real pnpm unchanged.
+#
+# Changesets detects the pnpm lockfile and always runs `pnpm publish`; npm
+# staged publishing is not available as `pnpm stage publish` yet, so we
+# intercept at PATH lookup. Invoked with this directory prepended to PATH —
+# pop that entry to find the real pnpm / npm.
+set -euo pipefail
+
+export PATH="${PATH#*:}"
+
+if [ "${1:-}" = "publish" ]; then
+  shift
+  # Drop pnpm-only flags Changesets may append; npm stage publish mirrors
+  # `npm publish` flags (--json, --tag, --access, --otp, --provenance).
+  args=()
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --no-git-checks) shift ;;
+      *) args+=("$1"); shift ;;
+    esac
+  done
+  exec npm stage publish "${args[@]}"
+fi
+
+exec pnpm "$@"
