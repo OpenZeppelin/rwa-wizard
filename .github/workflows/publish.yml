@@ -1,10 +1,16 @@
 # Release workflow for RWA Wizard
 # =====================================
-# This workflow handles publishing to the public npm registry using Changesets
-# with npm OIDC trusted publishing (no NPM_TOKEN required).
-# Trusted publishing prerequisite: each package on npmjs.org must have this
-# repository + workflow added under Settings → Trusted Publishers. Without
-# that configuration the publish step fails with an auth error.
+# This workflow stages packages to the public npm registry using Changesets
+# with npm OIDC trusted publishing (no NPM_TOKEN required) and
+# `npm stage publish` (https://docs.npmjs.com/staged-publishing).
+#
+# Prerequisites on each package on npmjs.org:
+#   1. Settings → Trusted Publishers → this repository + workflow `publish.yml`
+#   2. Trusted publisher allowed actions include `npm stage publish`
+#      (stage-only is preferred; direct `npm publish` may be disabled org-wide)
+#
+# After CI succeeds, a maintainer must approve each staged version with 2FA
+# (npmjs.com Staged Packages tab, or `npm stage approve <pkg>@<version>`).
 
 name: Release
 
@@ -15,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Why this release run is being triggered (e.g. retry after trusted publisher setup)'
+        description: 'Why this release run is being triggered (e.g. retry after trusted publisher / stage-publish setup)'
         required: false
         type: string
 
@@ -126,11 +132,18 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
-      - name: Create Release Pull Request or Publish to npm
+      # `npm stage publish` requires npm >= 11.15.0. Node 24 currently ships an
+      # older bundling (e.g. 11.13.x), so upgrade the global CLI for this job.
+      - name: Upgrade npm for staged publishing
+        run: npm install -g npm@11.15.0
+
+      - name: Create Release Pull Request or stage packages on npm
         id: changesets
         uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
         with:
-          publish: pnpm changeset publish --no-git-checks
+          # PATH shim rewrites Changesets' `pnpm publish` → `npm stage publish`.
+          # Packages land in the npm stage queue until a maintainer approves with 2FA.
+          publish: pnpm release:stage
           # Use github-api commit mode for automatic commit signing via GitHub App
           commitMode: "github-api"
           # Use conventional commit format to satisfy commitlint

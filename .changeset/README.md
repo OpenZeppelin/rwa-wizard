@@ -26,6 +26,7 @@ This will prompt you to:
 When a PR with a changeset is merged to main:
 
 1. The changesets bot will create a "Version Packages" PR
-2. When that PR is merged, packages are published to npm with SLSA provenance
+2. When that PR is merged, CI **stages** the packages on npm (OIDC + `npm stage publish`) with SLSA provenance
+3. A maintainer **approves** each staged version with 2FA (npmjs.com → Staged Packages, or `npm stage approve <pkg>@<version>`) before it goes live
 
-Publishing uses **npm OIDC trusted publishing** from `.github/workflows/publish.yml` (no `NPM_TOKEN` secret). Each published package on npmjs.org must list this repository and workflow filename under **Settings → Trusted Publishers** before the first automated publish succeeds.
+Staging uses **npm OIDC trusted publishing** from `.github/workflows/publish.yml` (no `NPM_TOKEN` secret). Each package on npmjs.org must list this repository and workflow `publish.yml` under **Settings → Trusted Publishers**, with **`npm stage publish` allowed** (stage-only is preferred when the org disables direct publish).
