@@ -1565,10 +1565,11 @@ async function checkRevealAtNarrowPane(cdp, baseUrl, checks) {
 
 /**
  * SF-23 — wizard dock menu (bottom + left); assert side attrs, tools operable,
- * and overlay layer pointer-events (INV-3 / INV-10 / INV-12 / INV-13).
- * Product: always overlay — no host inset publication / no form↔sheet vacate.
- * Edge placement geometry stays out of happy-dom and is probe-owned (INV-24).
- * Top/right remain in the set API but are not offered in the wizard menu.
+ * and layer pointer-events (INV-3 / INV-10 / INV-12 / INV-13).
+ * Product (`dockLayout.ts`): bottom uses kit inset (host publishes side + inset);
+ * left stays overlay (no host side/inset attrs). Edge placement geometry stays
+ * out of happy-dom and is probe-owned (INV-24). Top/right remain in the set API
+ * but are not offered in the wizard menu.
  */
 async function checkDockCycle(cdp, checks) {
   const check = new Check(
@@ -1577,7 +1578,7 @@ async function checkDockCycle(cdp, checks) {
   );
   const geo = new Check(
     'SF23-DOCK-GEO',
-    'Desktop overlay docks: code readable; host not vacated (no inset attr)'
+    'Desktop: bottom inset + left overlay; code readable on both'
   );
 
   await setViewport(cdp, 1280, 900);
@@ -1596,8 +1597,8 @@ async function checkDockCycle(cdp, checks) {
   check.expect(chrome.previewPresent, 'preview row present before dock menu');
   check.expect(chrome.dataSide === 'bottom', `initial data-side is bottom, got ${chrome.dataSide}`);
   check.expect(
-    chrome.sideAttr === null || chrome.sideAttr === '',
-    `overlay: html must not publish data-bottom-sheet-side, got ${chrome.sideAttr}`
+    chrome.sideAttr === 'bottom',
+    `bottom inset: html publishes data-bottom-sheet-side=bottom, got ${chrome.sideAttr}`
   );
   check.expect(chrome.toolsOperable, 'tools operable on bottom dock');
   check.expect(
@@ -1647,10 +1648,17 @@ async function checkDockCycle(cdp, checks) {
       geometry.codeReadable,
       `code pane readable on ${side} dock (w=${geometry.sheet.width}, h=${geometry.sheet.height})`
     );
-    geo.expect(
-      geometry.insetAttr === false,
-      `desktop ${side} overlay must not publish inset (got insetAttr=${geometry.insetAttr})`
-    );
+    if (side === 'bottom') {
+      geo.expect(
+        geometry.insetAttr === true,
+        `desktop bottom inset must publish inset (got insetAttr=${geometry.insetAttr})`
+      );
+    } else {
+      geo.expect(
+        geometry.insetAttr === false,
+        `desktop ${side} overlay must not publish inset (got insetAttr=${geometry.insetAttr})`
+      );
+    }
   }
 
   // Return to bottom so later stages see the default dock.
