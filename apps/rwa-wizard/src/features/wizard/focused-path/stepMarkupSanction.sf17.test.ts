@@ -99,7 +99,7 @@ describe('SF-17 INV-25 — TrustedIssuersSection SF-14 supersession stays put', 
     );
     expect(entry).toBeDefined();
     expect(entry!.authorisedBy).toBe('SF-14');
-    expect(entry!.decidedOn).toBe('2026-09-02');
+    expect(entry!.decidedOn).toBe('2026-09-04');
   });
 
   it('SF-14 owns five entries (TrustedIssuers plus four post-core); SF-17 owns the other two', () => {

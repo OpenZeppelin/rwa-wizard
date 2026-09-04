@@ -119,14 +119,14 @@ export const MARKUP_SUPERSESSIONS: readonly MarkupSupersession[] = [
     file: 'src/features/wizard/steps/identity/TrustedIssuersSection.tsx',
     kind: 'replaces-baseline',
     authorisedBy: 'SF-14',
-    decidedOn: '2026-09-02',
+    decidedOn: '2026-09-04',
     reason:
       "The issuer row's `data-config-anchor` moves from its remove button onto the row, " +
       'so a click anywhere in the row resolves outward to the same anchor the remove ' +
       'button resolves to and inspection cannot disagree with removal. The row also ' +
       'gains `aria-current` and a ring class, and the add handler inspects the created ' +
-      'issuer. Moved rather than duplicated: two attributes could drift apart. SC-011 is ' +
-      'superseded for this file.',
+      'issuer. Post-rebase onto main, limit / empty-topic warning banners (AlertTriangle) ' +
+      'land in the same file; re-adopt the fingerprint. SC-011 remains superseded.',
     components: ['TrustedIssuersSection', 'IssuerRow'],
     anchorDelta: 0,
     introducesFirstAnchor: false,

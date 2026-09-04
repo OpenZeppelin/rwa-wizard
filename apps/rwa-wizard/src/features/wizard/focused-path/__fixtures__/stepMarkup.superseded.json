@@ -880,8 +880,8 @@
       "file": "src/features/wizard/steps/identity/TrustedIssuersSection.tsx",
       "kind": "replaces-baseline",
       "authorisedBy": "SF-14",
-      "decidedOn": "2026-09-02",
-      "reason": "The issuer row's `data-config-anchor` moves from its remove button onto the row, so a click anywhere in the row resolves outward to the same anchor the remove button resolves to and inspection cannot disagree with removal. The row also gains `aria-current` and a ring class, and the add handler inspects the created issuer. Moved rather than duplicated: two attributes could drift apart. SC-011 is superseded for this file.",
+      "decidedOn": "2026-09-04",
+      "reason": "The issuer row's `data-config-anchor` moves from its remove button onto the row, so a click anywhere in the row resolves outward to the same anchor the remove button resolves to and inspection cannot disagree with removal. The row also gains `aria-current` and a ring class, and the add handler inspects the created issuer. Post-rebase onto main, limit / empty-topic warning banners (AlertTriangle) land in the same file; re-adopt the fingerprint. SC-011 remains superseded.",
       "components": [
         "TrustedIssuersSection",
         "IssuerRow"
@@ -890,14 +890,17 @@
       "introducesFirstAnchor": false,
       "adopted": {
         "elementsBefore": 25,
-        "elementsAfter": 28,
+        "elementsAfter": 31,
         "tagsAdded": [
           "AlertTriangle",
+          "AlertTriangle",
           "div",
+          "div",
+          "span",
           "span"
         ],
         "tagsRemoved": [],
-        "valuesChanged": 22
+        "valuesChanged": 21
       },
       "fingerprint": [
         {
@@ -931,6 +934,39 @@
               },
               "via": [],
               "children": [
+                {
+                  "tag": "div",
+                  "props": [
+                    "className"
+                  ],
+                  "values": {
+                    "className": "Str(\"flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/5 px-3 py-2 text-xs text-destructive\")"
+                  },
+                  "via": [
+                    "JsxExpression",
+                    "BinaryExpression"
+                  ],
+                  "children": [
+                    {
+                      "tag": "AlertTriangle",
+                      "props": [
+                        "className"
+                      ],
+                      "values": {
+                        "className": "Str(\"size-3.5 shrink-0\")"
+                      },
+                      "via": [],
+                      "children": []
+                    },
+                    {
+                      "tag": "span",
+                      "props": [],
+                      "values": {},
+                      "via": [],
+                      "children": []
+                    }
+                  ]
+                },
                 {
                   "tag": "div",
                   "props": [

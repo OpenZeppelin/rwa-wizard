@@ -658,27 +658,44 @@ async function clickButtonByName(cdp, name, what) {
 }
 
 /**
+ * Real pointer click via CDP — Radix DropdownMenu often ignores synthetic
+ * `HTMLElement.click()` / pointerenter alone in headless Chrome.
+ */
+async function clickButtonByNameWithMouse(cdp, name, what) {
+  const box = await evaluate(
+    cdp,
+    `(() => {
+      const wanted = ${JSON.stringify(name)};
+      const nameOf = (b) => (b.getAttribute('aria-label') || b.textContent || '').trim();
+      const match = Array.from(document.querySelectorAll('button')).find(
+        (b) => nameOf(b) === wanted && !b.disabled
+      );
+      if (match === undefined) return null;
+      match.scrollIntoView({ block: 'center' });
+      const r = match.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    })()`
+  );
+  if (box === null || typeof box.x !== 'number') {
+    // Fall back to the synthetic path so the error message still lists buttons.
+    await clickButtonByName(cdp, name, what);
+    return;
+  }
+  const opts = { button: 'left', buttons: 1, clickCount: 1, x: box.x, y: box.y };
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...opts, buttons: 0 });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...opts });
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...opts, buttons: 0 });
+  await sleep(200);
+}
+
+/**
  * Open the dock-position hover/focus menu and pick a radio item by accessible name.
  * Wizard offers bottom + left only; other apps may pass a fuller menu.
  */
 async function setDockViaMenu(cdp, position, what) {
   const itemLabel = `Dock preview to ${position}`;
   // Prefer hover-open (product UX); fall back to click if the menu stays closed.
-  await evaluate(
-    cdp,
-    `(() => {
-      const nameOf = (b) => (b.getAttribute('aria-label') || b.textContent || '').trim();
-      const trigger = Array.from(document.querySelectorAll('button')).find(
-        (b) => nameOf(b) === 'Dock position' && !b.disabled
-      );
-      if (trigger === undefined) return false;
-      trigger.scrollIntoView({ block: 'center' });
-      trigger.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
-      trigger.focus();
-      return true;
-    })()`
-  );
-  await sleep(120);
+  await clickButtonByNameWithMouse(cdp, 'Dock position', `click-open dock menu (${what})`);
 
   let outcome = { ok: false, seen: [] };
   for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -706,7 +723,7 @@ async function setDockViaMenu(cdp, position, what) {
       break;
     }
     if (attempt === 2) {
-      await clickButtonByName(cdp, 'Dock position', `click-open dock menu (${what})`);
+      await clickButtonByNameWithMouse(cdp, 'Dock position', `retry click-open dock menu (${what})`);
     }
     await sleep(80);
   }
@@ -721,20 +738,7 @@ async function setDockViaMenu(cdp, position, what) {
 
 /** Accessible names currently listed in the open dock menu (empty if closed). */
 async function listDockMenuLabels(cdp) {
-  await evaluate(
-    cdp,
-    `(() => {
-      const nameOf = (b) => (b.getAttribute('aria-label') || b.textContent || '').trim();
-      const trigger = Array.from(document.querySelectorAll('button')).find(
-        (b) => nameOf(b) === 'Dock position' && !b.disabled
-      );
-      if (trigger === undefined) return false;
-      trigger.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
-      trigger.focus();
-      return true;
-    })()`
-  );
-  await sleep(120);
+  await clickButtonByNameWithMouse(cdp, 'Dock position', 'click-open dock menu to list entries');
   let labels = [];
   for (let attempt = 0; attempt < 8; attempt += 1) {
     labels = await evaluate(
@@ -752,7 +756,7 @@ async function listDockMenuLabels(cdp) {
       break;
     }
     if (attempt === 2) {
-      await clickButtonByName(cdp, 'Dock position', 'click-open dock menu to list entries');
+      await clickButtonByNameWithMouse(cdp, 'Dock position', 'retry click-open dock menu to list entries');
     }
     await sleep(80);
   }
@@ -972,6 +976,9 @@ async function focusRichFixture(cdp) {
   );
 }
 
+/** Well-known Stellar account used only to seed the tall Addresses fixture. */
+const TALL_FIXTURE_SEED_ADDRESS = 'GA5WUJ54Z23KILLCUOUNAKTPBVZWKMQVO4O6EQ5GHLAERIMLLHNCSKYH';
+
 /** Advance to Roles and focus the tall fixture — `accessControl.roles[0].addresses`. */
 async function focusTallFixture(cdp) {
   const alreadyThere = await evaluate(
@@ -988,11 +995,50 @@ async function focusTallFixture(cdp) {
     await waitForStable(cdp, SELECTOR.roleAddressInput, 'the Roles step address field');
     await freezeAnimations(cdp);
   }
-  await focusSelector(cdp, SELECTOR.roleAddressInput, 'an operator-role address field (tall fixture)');
-  const rowCount = await evaluate(
+
+  async function focusAndCount() {
+    await focusSelector(cdp, SELECTOR.roleAddressInput, 'an operator-role address field (tall fixture)');
+    // Impact binding is async after focusin; wait rather than sampling once.
+    try {
+      await waitFor(
+        cdp,
+        `document.querySelectorAll(${JSON.stringify(SELECTOR.columnRow)}).length >= ${TALL_FIXTURE_MIN_ROWS}`,
+        `the tall fixture to render at least ${TALL_FIXTURE_MIN_ROWS} impact rows`,
+        GENERATE_TIMEOUT_MS
+      );
+    } catch {
+      /* counted below */
+    }
+    return await evaluate(
+      cdp,
+      `document.querySelectorAll(${JSON.stringify(SELECTOR.columnRow)}).length`
+    );
+  }
+
+  let rowCount = await focusAndCount();
+  if (typeof rowCount === 'number' && rowCount >= TALL_FIXTURE_MIN_ROWS) {
+    return;
+  }
+
+  // Empty roles leave a pending Addresses path that can render blank after
+  // quieter role-guard omit. Seed one valid member so generation attributes the
+  // path, then re-focus.
+  await typeInto(cdp, SELECTOR.roleAddressInput, TALL_FIXTURE_SEED_ADDRESS, 'tall fixture role address');
+  await clickButtonByName(cdp, 'Add', 'Add tall fixture role address');
+  await waitFor(
     cdp,
-    `document.querySelectorAll(${JSON.stringify(SELECTOR.columnRow)}).length`
-  );
+    `document.querySelectorAll(${JSON.stringify(SELECTOR.columnRow)}).length >= ${TALL_FIXTURE_MIN_ROWS} || document.querySelector('[data-impact-stale="true"]') !== null`,
+    'preview to refresh after seeding the tall fixture address',
+    GENERATE_TIMEOUT_MS
+  ).catch(() => {});
+  await waitFor(
+    cdp,
+    `document.querySelector('[data-impact-stale="true"]') === null`,
+    'preview refresh after tall fixture seed to finish',
+    GENERATE_TIMEOUT_MS
+  ).catch(() => {});
+
+  rowCount = await focusAndCount();
   if (typeof rowCount !== 'number' || rowCount < TALL_FIXTURE_MIN_ROWS) {
     throw new ProbeError(
       `the tall fixture rendered ${rowCount} rows, expected at least ${TALL_FIXTURE_MIN_ROWS} ` +

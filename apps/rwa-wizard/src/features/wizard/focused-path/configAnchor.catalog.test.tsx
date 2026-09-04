@@ -356,20 +356,22 @@ describe('INV-11 clause 4 — cross-family identifier collisions', () => {
    *
    * The invariant says `OperatorRolesSection` passes no `id` so as to add "a
    * second identifier and a second collision surface for no gain". Rendered, the
-   * section produces eleven ids anyway — `address-list-single-_r_13_` and
-   * friends — because the kit falls back to `useId()` when it is given none.
-   * Passing no id does not remove an identifier; it substitutes a
-   * non-deterministic one for a deterministic one.
+   * section still produces focusable ids — React `useId()` values (`_r_…`) and
+   * Radix wrappers (`radix-_r_…`) — because the kit falls back to `useId()` when
+   * it is given none. Passing no id does not remove an identifier; it
+   * substitutes a non-deterministic one for a deterministic one.
    *
    * The *decision* still stands, on a different footing: the role row's anchor
    * already yields the exact path, and the kit's generated ids are namespaced
-   * (`address-list-single-…`), so they cannot be claimed by the module split.
-   * That namespacing is the property the decision actually depends on, so it is
-   * asserted here rather than assumed.
+   * outside `${moduleId}-${fieldKey}`, so they cannot be claimed by the module
+   * split. That namespacing is the property the decision actually depends on,
+   * so it is asserted here rather than assumed.
    */
   it('the kit generates its own ids where none is passed, and they are namespaced out of the module space', () => {
     const { focusableIds } = renderedIdentifiers();
-    const generated = [...focusableIds].filter((id) => id.startsWith('address-list-'));
+    const generated = [...focusableIds].filter(
+      (id) => id.startsWith('_r_') || id.startsWith('radix-_r_')
+    );
 
     expect(generated.length).toBeGreaterThan(0);
     expect(moduleShapedIds(generated)).toEqual([]);

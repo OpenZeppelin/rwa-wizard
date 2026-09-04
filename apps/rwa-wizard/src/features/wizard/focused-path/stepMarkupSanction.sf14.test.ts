@@ -68,7 +68,7 @@ describe('SF-14’s markup supersessions (INV-38), after SF-17', () => {
     expect(entry, `${SF14_RETAINED} is not declared`).toBeDefined();
     expect(entry!.kind).toBe('replaces-baseline');
     expect(entry!.authorisedBy).toBe('SF-14');
-    expect(entry!.decidedOn).toBe('2026-09-02');
+    expect(entry!.decidedOn).toBe('2026-09-04');
   });
 
   it('TogglePill and TopicToggleGroup are no longer authorised by SF-14', () => {
