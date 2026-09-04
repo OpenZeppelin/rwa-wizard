@@ -2,7 +2,7 @@ import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { SOROBAN_SDK_VERSION } from '../constants';
 import { resolveStellarDeploymentTarget } from '../deployment/target';
-import { getConfiguredAccessControlRows, getDeployGuidance } from './deploy-guidance';
+import { getConfiguredAccessControlRows, getDeploySignerGuidance } from './deploy-guidance';
 
 function renderConfiguredAccessControlTable(config: RWAConfig): string {
   const rows = getConfiguredAccessControlRows(config);
@@ -20,7 +20,7 @@ function renderConfiguredAccessControlTable(config: RWAConfig): string {
 }
 
 function renderQuickStart(config: RWAConfig, includeDemoAutoMint: boolean): string {
-  const guidance = getDeployGuidance(config);
+  const guidance = getDeploySignerGuidance(config);
   const managerEnv = guidance.adminEqualsManager
     ? ''
     : `\nexport ADMIN_SOURCE_ACCOUNT=<admin-identity>\nexport MANAGER_SOURCE_ACCOUNT=<manager-identity>`;
@@ -53,7 +53,7 @@ function renderDeploySignerSection(
   config: RWAConfig,
   includeDemoAutoMint: boolean = false
 ): string {
-  const guidance = getDeployGuidance(config);
+  const guidance = getDeploySignerGuidance(config);
   const splitRoleBlock = guidance.adminEqualsManager
     ? ''
     : `
@@ -92,7 +92,7 @@ function renderNetworkPrerequisite(config: RWAConfig): string {
 }
 
 function renderTroubleshooting(config: RWAConfig): string {
-  const guidance = getDeployGuidance(config);
+  const guidance = getDeploySignerGuidance(config);
 
   return `| Symptom | Likely cause | Fix |
 |---------|--------------|-----|

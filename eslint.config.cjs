@@ -15,6 +15,7 @@ const unusedImportsPlugin = require('eslint-plugin-unused-imports');
 const prettierPlugin = require('eslint-plugin-prettier');
 const prettierConfig = require('eslint-config-prettier');
 const jsdocPlugin = require('eslint-plugin-jsdoc');
+const provenancePlugin = require('./.eslint/plugin-provenance.cjs');
 
 // Extract rules from recommended configs
 const typescriptRecommendedRules = getPluginConfigs(typescriptPlugin, 'recommended');
@@ -223,6 +224,16 @@ const baseConfig = [
           },
         },
       ],
+    },
+  },
+
+  // Provenance guard: a config-derived value may not cross an emission boundary
+  // except through builder.observe(...). Inert in a file with no builder.
+  {
+    files: ['packages/codegen-*/src/**/*.ts'],
+    plugins: { provenance: provenancePlugin },
+    rules: {
+      'provenance/no-early-config-read': ['error', { configTypes: ['RWAConfig'] }],
     },
   },
 

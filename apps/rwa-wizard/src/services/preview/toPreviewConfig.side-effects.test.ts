@@ -19,7 +19,10 @@ describe('toPreviewConfig side effects (INV-13)', () => {
 
     toPreviewConfig(createDefaultRwaConfig(), supplyLimitCatalog);
 
-    expect(log, 'INV-13: shim must not log; SF-8 may log substitutedKeys').not.toHaveBeenCalled();
+    expect(
+      log,
+      'INV-13: shim must not log; the caller may log substitutedKeys'
+    ).not.toHaveBeenCalled();
     expect(info).not.toHaveBeenCalled();
     expect(warn).not.toHaveBeenCalled();
     expect(error).not.toHaveBeenCalled();

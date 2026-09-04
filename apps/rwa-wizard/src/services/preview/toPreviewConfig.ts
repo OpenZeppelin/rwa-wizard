@@ -1,5 +1,6 @@
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import type { ConfigPath } from '../../features/wizard/config-path';
 import type { StructuralModuleConfigFieldMeta } from '../../types/wizard';
 import {
   isMissingPreviewValue,
@@ -23,7 +24,7 @@ export interface PreviewConfigResult {
    * Dotted paths matching codegen validation field ids, in walk order.
    * Empty when the input already had every fillable required field set.
    */
-  readonly substitutedKeys: readonly string[];
+  readonly substitutedKeys: readonly ConfigPath[];
 }
 
 /**
@@ -57,7 +58,7 @@ export function toPreviewConfig(
 ): PreviewConfigResult {
   let working: RWAConfig = config;
   let cloned = false;
-  const substitutedKeys: string[] = [];
+  const substitutedKeys: ConfigPath[] = [];
 
   const writable = (): RWAConfig => {
     // INV-3 / INV-14: clone at most once, and only when a fill will run.
@@ -129,7 +130,7 @@ export function toPreviewConfig(
 function fillActiveOwnershipAddress(
   working: RWAConfig,
   writable: () => RWAConfig,
-  substitutedKeys: string[]
+  substitutedKeys: ConfigPath[]
 ): void {
   const ownership = working.accessControl.ownership;
 

@@ -4,6 +4,7 @@ import { extractFilesFromZip, findFileContent } from './utils/zip-inspector';
 
 import { createFile, mergeFileTrees } from '../src/file-tree';
 import { generateZip } from '../src/generator';
+import { hasProvenance } from '../src/provenance/provenance-result';
 import type {
   GenerateOptions,
   GenerationMetadata,
@@ -174,6 +175,15 @@ describe('Generator Extensibility (SC-008)', () => {
 
     it('should throw on invalid config', () => {
       expect(() => generator.generate({ message: '' })).toThrow('Invalid config');
+    });
+
+    it('ignores recordProvenance: the capability is optional and presence-detected (INV-9)', () => {
+      const flagged = generator.generate({ message: 'test' }, { recordProvenance: true });
+      const plain = generator.generate({ message: 'test' });
+
+      expect('provenance' in flagged).toBe(false);
+      expect(hasProvenance(flagged)).toBe(false);
+      expect(flagged.files).toEqual(plain.files);
     });
   });
 

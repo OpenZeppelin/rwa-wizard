@@ -159,6 +159,26 @@ export const NOTICES_COPY: ConceptDictionary = {
     id: 'notice.code-preview.restore-size',
     description: 'Restore preview size',
   },
+  'notice.code-preview.dock-position': {
+    id: 'notice.code-preview.dock-position',
+    description: 'Dock position',
+  },
+  'notice.code-preview.dock-to-top': {
+    id: 'notice.code-preview.dock-to-top',
+    description: 'Dock preview to top',
+  },
+  'notice.code-preview.dock-to-right': {
+    id: 'notice.code-preview.dock-to-right',
+    description: 'Dock preview to right',
+  },
+  'notice.code-preview.dock-to-bottom': {
+    id: 'notice.code-preview.dock-to-bottom',
+    description: 'Dock preview to bottom',
+  },
+  'notice.code-preview.dock-to-left': {
+    id: 'notice.code-preview.dock-to-left',
+    description: 'Dock preview to left',
+  },
   'notice.code-preview.file-tree-label': {
     id: 'notice.code-preview.file-tree-label',
     description: 'Generated project files',
@@ -171,10 +191,131 @@ export const NOTICES_COPY: ConceptDictionary = {
     id: 'notice.code-preview.close',
     description: 'Close generated code preview',
   },
+  // --- Code preview: field-impact column (SF-13) ---------------------------
+  //
+  // The two "nothing to show" states below carry deliberately NON-OVERLAPPING
+  // claims, and it is a correctness property rather than a wording preference.
+  // `not-a-field` speaks about the control and about attribution and never
+  // about effect, because it must be true both for the Next button (no effect
+  // on the generated tree) and for `include-identity-support` (a generation
+  // option that demonstrably changes the tree — it is part of the generate key
+  // — yet correctly resolves to no `ConfigPath`, because config paths span
+  // `RWAConfig` and generation options are not in it). `empty` is the only
+  // string here permitted to make a claim about the generated code, and it is
+  // shown only for a field that genuinely resolved. Merging them, or rewording
+  // `not-a-field` to the more natural "this field doesn't affect any generated
+  // code", makes the column confidently wrong about the one control in the
+  // wizard with that shape.
+  'notice.code-preview.impact.region': {
+    id: 'notice.code-preview.impact.region',
+    title: 'Field impact',
+    description: 'Generated files and lines determined by the selected configuration field.',
+  },
+  'notice.code-preview.impact.no-preview': {
+    id: 'notice.code-preview.impact.no-preview',
+    title: 'No code preview',
+    description: 'Generated code is not available for this target.',
+  },
+  'notice.code-preview.impact.unsupported': {
+    id: 'notice.code-preview.impact.unsupported',
+    title: 'Impact not reported',
+    description: 'This generator does not report field impact.',
+  },
+  'notice.code-preview.impact.no-focus': {
+    id: 'notice.code-preview.impact.no-focus',
+    title: 'No field selected',
+    description: 'Select a configuration field to see what it generates.',
+  },
+  'notice.code-preview.impact.not-a-field': {
+    id: 'notice.code-preview.impact.not-a-field',
+    title: 'Not a configuration field',
+    // Shortened, and the one clause that may NOT go is the one that survives:
+    // this speaks about attribution and never about effect, because it must
+    // also be true of `include-identity-support`, which changes the generated
+    // tree and still resolves to no config path.
+    description: 'Not part of the configuration, so no generated code is attributed to it.',
+  },
+  'notice.code-preview.impact.pending': {
+    id: 'notice.code-preview.impact.pending',
+    title: 'Regenerating',
+    description: 'The generated code is being rebuilt.',
+  },
+  'notice.code-preview.impact.uncreated': {
+    id: 'notice.code-preview.impact.uncreated',
+    title: 'Not added yet',
+    description:
+      'This configuration slot does not exist in your draft yet. Add the item to see what it changes in the generated project.',
+  },
+  'notice.code-preview.impact.empty': {
+    id: 'notice.code-preview.impact.empty',
+    title: 'Nothing generated from this field',
+    description: "No generated file depends on this field's value.",
+  },
+  // One word plus a glyph, with the sentence as its tooltip. "Also appears
+  // here" over "Lines that show this value without deciding it" was a heading
+  // and a sentence saying the same thing twice, two lines deep, in a 260px
+  // rail. The marker is still a WORD and not a colour (the distinction has to
+  // survive a render with no colour at all), and the description still exists —
+  // it is the glyph's title, so it costs no height.
+  'notice.code-preview.impact.secondary-group': {
+    id: 'notice.code-preview.impact.secondary-group',
+    title: 'Mentions',
+    description: 'Lines that show this value without deciding it.',
+  },
+  'notice.code-preview.impact.row-range': {
+    id: 'notice.code-preview.impact.row-range',
+    description: 'Lines {startLine}\u2013{endLine}',
+  },
+  'notice.code-preview.impact.row-line': {
+    id: 'notice.code-preview.impact.row-line',
+    description: 'Line {startLine}',
+  },
+  'notice.code-preview.impact.row-file': {
+    id: 'notice.code-preview.impact.row-file',
+    description: 'Whole file',
+  },
+  'notice.code-preview.impact.row-created': {
+    id: 'notice.code-preview.impact.row-created',
+    description: 'Creates this file',
+  },
+  'notice.code-preview.impact.row-label': {
+    id: 'notice.code-preview.impact.row-label',
+    description: '{detail} in {path}',
+  },
   'notice.review.demo-mint-compliance-blocked': {
     id: 'notice.review.demo-mint-compliance-blocked',
     title: 'Fix these before generating',
     description:
       'Demo auto-mint runs a compliance preflight on the `created` hook. Adjust module limits in the Compliance step, or disable identity scaffolding.',
+  },
+  'notice.claim-topics.chip.select': {
+    id: 'notice.claim-topics.chip.select',
+    description: 'Select {label}',
+  },
+  'notice.claim-topics.chip.deselect': {
+    id: 'notice.claim-topics.chip.deselect',
+    description: 'Deselect {label}',
+  },
+  'notice.claim-topics.chip.remove': {
+    id: 'notice.claim-topics.chip.remove',
+    description: 'Remove {label}',
+  },
+  'notice.claim-topics.selected-count': {
+    id: 'notice.claim-topics.selected-count',
+    description: '{selectedCount}/{maxTopics} selected',
+  },
+  'notice.trusted-issuer.unselected-topics': {
+    id: 'notice.trusted-issuer.unselected-topics',
+    description:
+      'One or more issuers reference claim topics that are not selected for deployment. Re-select a topic above, or remove the issuer.',
+  },
+  'notice.trusted-issuer.unknown-topics': {
+    id: 'notice.trusted-issuer.unknown-topics',
+    description:
+      'One or more issuers reference claim topic IDs that are not defined above. Remove the issuer, or add the missing topic.',
+  },
+  'notice.trusted-issuer.topic-not-deployed': {
+    id: 'notice.trusted-issuer.topic-not-deployed',
+    description: 'This claim topic is not selected for deployment',
   },
 } as const;

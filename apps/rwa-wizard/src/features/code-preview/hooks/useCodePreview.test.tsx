@@ -57,7 +57,8 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     expect(generateSpy).toHaveBeenCalled();
     const lastCall = generateSpy.mock.calls[generateSpy.mock.calls.length - 1];
     const [config, options] = lastCall!;
-    expect(options).toEqual({ includeIdentitySupport: false });
+    // SF-5 INV-4: the preview path always asks for provenance; it is not a key input.
+    expect(options).toEqual({ includeIdentitySupport: false, recordProvenance: true });
     expect(config.token.name).not.toBe('');
   });
 
@@ -247,6 +248,7 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     });
     expect(generateSpy).toHaveBeenLastCalledWith(expect.anything(), {
       includeIdentitySupport: true,
+      recordProvenance: true, // SF-5 INV-4
     });
     // The tree changing is not enough: the step baseline is keyed the same way,
     // so an omitted dimension there re-baselines on the post-toggle tree and
@@ -439,7 +441,7 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     act(() => {
       result.current.layout.onToggleMaximize();
     });
-    expect(result.current.persistence.height).toBe(window.innerHeight);
+    expect(result.current.persistence.size).toBe(window.innerHeight);
 
     const taller = window.innerHeight + 240;
     act(() => {
@@ -448,8 +450,8 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     });
 
     expect(
-      result.current.persistence.height,
-      'maximized means as tall as the window, not as tall as the window once was'
+      result.current.persistence.size,
+      'maximized means as tall as the dock axis allows, not as tall as the window once was'
     ).toBe(taller);
     expect(result.current.layout.maximized).toBe(true);
   });
@@ -462,20 +464,20 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
     await waitForPreviewReady(() => result.current);
 
     act(() => {
-      result.current.setHeight(420);
+      result.current.setSize(420);
     });
-    expect(result.current.persistence.height).toBe(420);
+    expect(result.current.persistence.size).toBe(420);
     expect(result.current.layout.maximized).toBe(false);
 
     act(() => {
       result.current.layout.onToggleMaximize();
     });
     expect(result.current.layout.maximized).toBe(true);
-    expect(result.current.persistence.height).toBe(window.innerHeight);
+    expect(result.current.persistence.size).toBe(window.innerHeight);
 
-    // A clamp report equal to the viewport keeps maximize.
+    // A clamp report equal to the axis max keeps maximize.
     act(() => {
-      result.current.setHeight(window.innerHeight);
+      result.current.setSize(window.innerHeight);
     });
     expect(result.current.layout.maximized).toBe(true);
 
@@ -483,7 +485,7 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
       result.current.layout.onToggleMaximize();
     });
     expect(result.current.layout.maximized).toBe(false);
-    expect(result.current.persistence.height).toBe(420);
+    expect(result.current.persistence.size).toBe(420);
   });
 
   it('a drag below the viewport exits maximize and stores the dragged height', async () => {
@@ -497,10 +499,10 @@ describe('useCodePreview (INV-4, INV-6, INV-7, INV-14, INV-18)', () => {
       result.current.layout.onToggleMaximize();
     });
     act(() => {
-      result.current.setHeight(300);
+      result.current.setSize(300);
     });
     expect(result.current.layout.maximized).toBe(false);
-    expect(result.current.persistence.height).toBe(300);
+    expect(result.current.persistence.size).toBe(300);
   });
 
   it('tree visibility toggles and persists', async () => {

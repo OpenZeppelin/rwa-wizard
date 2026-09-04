@@ -72,7 +72,11 @@ vi.mock('./runtimeOptions', () => ({
   getCodegenRuntimeOptions: getCodegenRuntimeOptionsMock,
 }));
 
-vi.mock('@openzeppelin/codegen-core', () => ({
+vi.mock('@openzeppelin/codegen-core', async (importOriginal) => ({
+  // Partial: the loader's kind narrowing (`isGeneratedFileKind`, via
+  // `types/wizard.ts`) and the provenance guards are core's real code, and the
+  // INV-5 pass-through tests below exercise that narrowing on purpose.
+  ...(await importOriginal<typeof import('@openzeppelin/codegen-core')>()),
   toSummaryPhase: (phase: string) => phase,
 }));
 

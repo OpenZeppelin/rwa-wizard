@@ -1,7 +1,22 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
 
-import { computeConfigHash, type FileTree } from '@openzeppelin/codegen-core';
+import {
+  computeConfigHash,
+  type FileTree,
+  type ProvenanceResult,
+} from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
+import type { CodeViewReveal } from '@openzeppelin/ui-components/code-view';
 
 import { useCopy } from '../../../app/providers/useCopy';
 import { CodegenInvalidConfigError } from '../../../services/codegen/errors';
@@ -10,14 +25,25 @@ import {
   createStepFileTreeSnapshot,
   listChangedPaths,
   toPreviewConfig,
+  type PreviewGenerateKey,
   type StepFileTreeSnapshot,
 } from '../../../services/preview';
 import type {
   ComplianceModuleOption,
+  StructuralGeneratedFileKind,
   StructuralUpstreamImportLinks,
   StructuralUpstreamSourceRevision,
 } from '../../../types/wizard';
 import { defaultSelectedPath } from '../defaultSelectedPath';
+import { dockAxisMaxSize, resolveDockSheetLayout } from '../dockLayout';
+import { isHorizontalDock, nextDockPosition, type CodePreviewDockPosition } from '../dockPosition';
+import { toPreviewProvenanceState, type CodePreviewProvenance } from '../provenanceState';
+import {
+  EMPTY_PREVIEW_SELECTION,
+  reducePreviewSelection,
+  toCodeViewReveal,
+  type CodePreviewRevealTarget,
+} from '../reveal';
 import { useCodePreviewPersistence } from './useCodePreviewPersistence';
 import { useDebouncedValue } from './useDebouncedValue';
 
@@ -30,6 +56,10 @@ export type CodePreviewPhase =
       readonly configHash: string;
       readonly substitutedKeys: readonly string[];
       readonly changedPaths: readonly string[];
+      /** From the same generate result as `files`. Absent = the generator did not record. SF-5 INV-1. */
+      readonly provenance?: ProvenanceResult;
+      /** Generate key of this tree, so every consumer stamps against one name. SF-5 INV-17. */
+      readonly generateKey: PreviewGenerateKey;
     }
   | {
       readonly kind: 'error';
@@ -69,24 +99,58 @@ export interface CodePreviewLayoutTools {
   /** File tree pane shown. Persisted. */
   readonly treeVisible: boolean;
   readonly onToggleTree: () => void;
-  /** Sheet at full viewport height. Not persisted; the stored height is kept for restore. */
+  /** Sheet at full dock-axis viewport span. Not persisted; the stored size is kept for restore. */
   readonly maximized: boolean;
   readonly onToggleMaximize: () => void;
+  /** Current dock edge. Persisted. INV-1 */
+  readonly dockPosition: CodePreviewDockPosition;
+  /** Set dock edge directly (dropdown / host). Persists. */
+  readonly onDockPositionChange: (position: CodePreviewDockPosition) => void;
+  /** Advance to `nextDockPosition(dockPosition)`. Persists. INV-3, INV-17 */
+  readonly onCycleDock: () => void;
+  /**
+   * Positions listed in the dock dropdown. Defaults to all four when omitted
+   * (`ALL_DOCK_MENU_POSITIONS`). Wizard passes `WIZARD_DOCK_MENU_POSITIONS`.
+   */
+  readonly dockMenuPositions?: readonly CodePreviewDockPosition[];
 }
 
 export interface UseCodePreviewResult {
   readonly persistence: {
     readonly open: boolean;
-    /** Height to render: the viewport while maximized, else the stored height. */
-    readonly height: number;
+    /**
+     * Size to render on the dock axis (maximize applied).
+     * Vertical dock → height; horizontal → width. Design D-5.
+     */
+    readonly size: number;
+    /**
+     * Axis clamp ceiling for the current dock/layout (`dockAxisMaxSize`).
+     * Passed through as BottomSheet `maxHeight` so the drawer never diverges
+     * from the size the hook applies when maximized.
+     */
+    readonly maxSize: number;
+    readonly dockPosition: CodePreviewDockPosition;
   };
   readonly setOpen: (open: boolean) => void;
-  /** Height reported by the sheet (drag, keyboard, clamp). Dragging exits maximize. */
-  readonly setHeight: (height: number) => void;
+  /**
+   * Sheet reports a new perpendicular size (drag / keyboard / clamp).
+   * Routes to height or width storage by current dock. Dragging exits maximize.
+   */
+  readonly setSize: (size: number) => void;
   readonly layout: CodePreviewLayoutTools;
   readonly phase: CodePreviewPhase;
   readonly selectedPath: string | null;
   readonly setSelectedPath: (path: string | null) => void;
+  /**
+   * Open the drawer on `target.path` and, when `target.range` is given, mark
+   * and scroll to it. One state update; the pane never receives a range for a
+   * different file. No-op (no open, no selection change) when the path is not
+   * in the tree currently on screen, no tree is on screen, or the target has
+   * no codegen service.
+   */
+  readonly revealInPreview: (target: CodePreviewRevealTarget) => void;
+  /** Value for `CodeView.reveal`. `undefined` when nothing is pending. Stable identity while unchanged. */
+  readonly reveal: CodeViewReveal | undefined;
   readonly triggerProps: {
     readonly 'aria-expanded': boolean;
     readonly 'aria-controls': string | undefined;
@@ -111,7 +175,22 @@ export interface UseCodePreviewResult {
    * what keeps the preview from decorating imports it knows nothing about.
    */
   readonly importLinks: StructuralUpstreamImportLinks | null;
+  /**
+   * Provenance for the tree on screen plus the live generate key of the
+   * undebounced draft. Consumers show a lookup result only while
+   * `result.identity === provenance.liveIdentity`. SF-5 INV-17 / INV-18.
+   */
+  readonly provenance: CodePreviewProvenance;
 }
+
+/** Cached pair from one successful tick: never re-paired with another tick's members. SF-5 INV-16. */
+interface CachedTree {
+  readonly files: FileTree;
+  readonly provenance?: ProvenanceResult;
+}
+
+/** `kindOf` for a service without `getGeneratedFileKind`: a missing method is `unknown`, never a guess. */
+const UNKNOWN_KIND = (): StructuralGeneratedFileKind => 'unknown';
 
 /**
  * Stable per-instance identity for a codegen service, so the generate key can
@@ -136,6 +215,19 @@ function serviceIdentity(service: RwaCodegenService | null): string {
 
 function readViewportHeight(): number {
   return typeof window !== 'undefined' ? window.innerHeight : 0;
+}
+
+function readViewportWidth(): number {
+  return typeof window !== 'undefined' ? window.innerWidth : 0;
+}
+
+function readAxisMax(
+  dockPosition: CodePreviewDockPosition,
+  viewportWidth: number,
+  viewportHeight: number
+): number {
+  const layout = resolveDockSheetLayout(dockPosition, viewportWidth, viewportHeight);
+  return dockAxisMaxSize(dockPosition, layout, viewportWidth, viewportHeight);
 }
 
 /**
@@ -177,7 +269,14 @@ function containsComposed(container: Element | null, node: Node | null): boolean
 interface PreviewTickSuccess {
   readonly kind: 'success';
   readonly files: FileTree;
+  /** From the same artifact as `files`. SF-5 INV-16. */
+  readonly provenance?: ProvenanceResult;
   readonly configHash: string;
+  /**
+   * The generate key this tree was produced under — the same string a pending
+   * reveal was stamped with, so the reducer compares like with like. SF-9 INV-8.
+   */
+  readonly generateKey: string;
   readonly substitutedKeys: readonly string[];
   readonly changedPaths: readonly string[];
 }
@@ -245,48 +344,69 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
   const {
     open,
     height: storedHeight,
+    width: storedWidth,
     treeVisible,
+    dockPosition,
     setOpen,
     setHeight: setStoredHeight,
+    setWidth: setStoredWidth,
     setTreeVisible,
+    setDockPosition,
   } = useCodePreviewPersistence();
   const [maximized, setMaximized] = useState(false);
 
   const [viewportHeight, setViewportHeight] = useState(readViewportHeight);
+  const [viewportWidth, setViewportWidth] = useState(readViewportWidth);
 
-  // Maximized means "as tall as the window", so the height has to track the
-  // window rather than the value captured when maximize was pressed. The kit
-  // only clamps on resize, and a taller window leaves the old value legal, so
-  // without this the sheet stayed short while still claiming to be maximized
-  // and the inset variable held a stale value.
-  useEffect(() => {
+  // Maximized means "as large as the dock-axis viewport span", so size tracks the
+  // window rather than the value captured when maximize was pressed. INV-8
+  // Layout effect: first maximized paint must already use a fresh axis span so
+  // BottomSheet never clamps the jump against a stale ceiling.
+  useLayoutEffect(() => {
     if (!maximized || typeof window === 'undefined') {
       return;
     }
 
-    const syncViewport = (): void => setViewportHeight(readViewportHeight());
-    syncViewport(); // the window may have changed size before maximize
+    const syncViewport = (): void => {
+      setViewportHeight(readViewportHeight());
+      setViewportWidth(readViewportWidth());
+    };
+    syncViewport();
     window.addEventListener('resize', syncViewport);
     return () => window.removeEventListener('resize', syncViewport);
   }, [maximized]);
 
-  const height = maximized ? viewportHeight : storedHeight;
+  const axisMax = readAxisMax(dockPosition, viewportWidth, viewportHeight);
+  const storedSize = isHorizontalDock(dockPosition) ? storedWidth : storedHeight;
+  const size = maximized ? axisMax : storedSize;
 
-  const setHeight = useCallback(
+  const setSize = useCallback(
     (next: number) => {
-      // A user-driven resize below the viewport ends maximize; the stored height then
-      // tracks the drag as usual. A clamp report equal to the viewport keeps it.
-      // Read the window here rather than the state above: a clamp report and the
-      // resize listener answer the same event, in no guaranteed order.
+      const vw = readViewportWidth();
+      const vh = readViewportHeight();
+      const max = readAxisMax(dockPosition, vw, vh);
+      const stored = isHorizontalDock(dockPosition) ? storedWidth : storedHeight;
+      // A user-driven resize below the axis max ends maximize. INV-8
       if (maximized) {
-        if (next >= readViewportHeight()) {
+        if (next >= max) {
+          return;
+        }
+        // Kit `onHeightChange` often re-reports the pre-maximize stored size when
+        // the host jumps to axis max (clamp / correction echo). Swallow that so
+        // we neither clear maximize nor rewrite the restore size with the ~50%
+        // default width/height.
+        if (next === stored) {
           return;
         }
         setMaximized(false);
       }
-      setStoredHeight(next);
+      if (isHorizontalDock(dockPosition)) {
+        setStoredWidth(next);
+      } else {
+        setStoredHeight(next);
+      }
     },
-    [maximized, setStoredHeight]
+    [dockPosition, maximized, setStoredHeight, setStoredWidth, storedHeight, storedWidth]
   );
 
   const onToggleMaximize = useCallback(() => {
@@ -296,10 +416,36 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
   const onToggleTree = useCallback(() => {
     setTreeVisible(!treeVisible);
   }, [setTreeVisible, treeVisible]);
+
+  // INV-16 / INV-17: set/cycle always persists; maximize stays on. INV-22: sheetId unchanged.
+  const onDockPositionChange = useCallback(
+    (position: CodePreviewDockPosition) => {
+      setDockPosition(position);
+    },
+    [setDockPosition]
+  );
+  const onCycleDock = useCallback(() => {
+    setDockPosition(nextDockPosition(dockPosition));
+  }, [dockPosition, setDockPosition]);
   const debouncedConfig = useDebouncedValue(draftConfig, debounceMs);
 
   const [phase, setPhase] = useState<CodePreviewPhase>({ kind: 'idle' });
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  // Path and pending reveal live in one reducer state so no render can pair a
+  // range with another file's source. SF-9 INV-1.
+  const [selection, dispatchSelection] = useReducer(
+    reducePreviewSelection,
+    EMPTY_PREVIEW_SELECTION
+  );
+  const selectedPath = selection.path;
+  const setSelectedPath = useCallback((path: string | null) => {
+    dispatchSelection({ type: 'select', path }); // SF-9 INV-5
+  }, []);
+  // Keyed on the whole selection: the reducer returns the same reference on
+  // every no-op, and no transition yields a new object carrying the previous
+  // reveal, so this identity moves exactly when the pending reveal does. SF-9 INV-13.
+  const reveal = useMemo(() => toCodeViewReveal(selection), [selection]);
+  /** Kit retrigger token. Distinct from `requestIdRef`, the generate staleness counter. SF-9 INV-10. */
+  const revealRequestIdRef = useRef(0);
 
   /**
    * Identity of what a step baseline describes: "the tree as *this draft*
@@ -320,18 +466,22 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     readonly snapshot: StepFileTreeSnapshot;
   } | null>(null);
   /**
-   * Cache key for `cachedFilesRef`. Must cover every input of
+   * Cache key for `cachedTreeRef`. Must cover every input of
    * `generateFileTree` — the preview config, the generate options, and the
    * service that runs them:
    *
-   * - preview config hash — `computeConfigHash` covers this dimension only;
+   * - preview config hash — `computeConfigHash` covers this dimension only; the
+   *   module catalog is carried through it, via the preview fill;
    * - `includeIdentitySupport` — a generate option, absent from the config, so
    *   keyed on the hash alone a toggle returned the previous tree;
    * - service identity — the same config generates a different tree per target,
    *   so a target switch would otherwise serve the previous target's files.
+   *
+   * Not an input: `recordProvenance`, constant `true` on this path and, by the
+   * SF-1 contract, never a change to bytes or hash. SF-5 INV-17.
    */
   const lastGenerateKeyRef = useRef<string | null>(null);
-  const cachedFilesRef = useRef<FileTree | null>(null);
+  const cachedTreeRef = useRef<CachedTree | null>(null);
   const requestIdRef = useRef(0);
   /**
    * Generate key the step-entry effect has just handled. The live-tick effect
@@ -367,14 +517,19 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
       const previewInput = toPreviewConfig(config, moduleCatalog); // INV-6
       const configHash = computeConfigHash(previewInput.config);
       const generateKey = computeGenerateKey(config);
-      let files = cachedFilesRef.current;
+      let tree = cachedTreeRef.current;
 
-      if (generateKey !== lastGenerateKeyRef.current || !files) {
+      if (generateKey !== lastGenerateKeyRef.current || !tree) {
         try {
           const artifact = await codegenService.generateFileTree(previewInput.config, {
             includeIdentitySupport, // INV-1
+            recordProvenance: true, // SF-5: always on for the tree on screen; not a key input
           });
-          files = artifact.files;
+          // SF-5 INV-16: one pair from one artifact; a key-absent `provenance` stays absent.
+          tree =
+            artifact.provenance === undefined
+              ? { files: artifact.files }
+              : { files: artifact.files, provenance: artifact.provenance };
         } catch (err) {
           if (requestId !== requestIdRef.current) {
             return {
@@ -396,7 +551,7 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
         };
       }
 
-      if (!files) {
+      if (!tree) {
         return {
           kind: 'error',
           substitutedKeys: previewInput.substitutedKeys,
@@ -404,8 +559,9 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
         };
       }
 
+      const { files } = tree;
       lastGenerateKeyRef.current = generateKey;
-      cachedFilesRef.current = files;
+      cachedTreeRef.current = tree; // SF-5 INV-16: the one write site
 
       // The first success of an epoch is that epoch's baseline, whichever
       // effect produced it, and it stands until the epoch changes. One rule
@@ -426,7 +582,9 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
       return {
         kind: 'success',
         files,
+        ...(tree.provenance === undefined ? {} : { provenance: tree.provenance }),
         configHash,
+        generateKey,
         substitutedKeys: previewInput.substitutedKeys,
         changedPaths,
       };
@@ -442,16 +600,23 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
   );
 
   const applyReadyResult = useCallback((result: PreviewTickSuccess) => {
-    setSelectedPath((prev) => {
-      if (prev !== null && prev in result.files) {
-        return prev;
-      }
-      return defaultSelectedPath(result.files);
+    // Dispatched in the same synchronous frame as `setPhase`, so the new tree
+    // and the reveal decision for it commit together. SF-9 INV-14. `paths` is built
+    // from own keys so a prototype name never counts as present. SF-9 INV-9.
+    dispatchSelection({
+      type: 'tree-ready',
+      paths: new Set(Object.keys(result.files)),
+      treeKey: result.generateKey,
+      fallbackPath: defaultSelectedPath(result.files),
     });
 
+    // SF-5 INV-21: files, provenance and identity commit in this one call from
+    // one tick; absence stays key-absence so `'provenance' in phase` is honest.
     setPhase({
       kind: 'ready',
       files: result.files,
+      ...(result.provenance === undefined ? {} : { provenance: result.provenance }),
+      generateKey: result.generateKey,
       configHash: result.configHash,
       substitutedKeys: result.substitutedKeys,
       changedPaths: result.changedPaths,
@@ -574,6 +739,66 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     // read the tick through the same ref for that reason.
   }, [applyReadyResult, codegenService, computeGenerateKey, debouncedConfig]);
 
+  /**
+   * Hiding is by generator-reported kind only; a service that does not classify
+   * hides nothing. Memoised on service identity so `provenanceState` below has
+   * exactly two inputs. SF-5 INV-13.
+   */
+  const kindOf = useMemo(
+    () => codegenService?.getGeneratedFileKind ?? UNKNOWN_KIND,
+    [codegenService]
+  );
+  // SF-5 INV-19: derived from the committed phase, so no render can pair a
+  // state identity with another tick's files or provenance.
+  const provenanceState = useMemo(() => toPreviewProvenanceState(phase, kindOf), [phase, kindOf]);
+  /**
+   * The generate key of the draft as it is *now*, not as debounced. An edit
+   * therefore invalidates a held result on the keystroke's own render, 150 ms
+   * before the tree catches up. Computed unconditionally — a focus or drawer
+   * gate would add a state input to enumerate. SF-5 INV-18.
+   */
+  const liveIdentity = useMemo(
+    () => (codegenService === null ? null : computeGenerateKey(draftConfig)),
+    [codegenService, computeGenerateKey, draftConfig]
+  );
+  const provenance = useMemo<CodePreviewProvenance>(
+    () => ({ state: provenanceState, liveIdentity }),
+    [provenanceState, liveIdentity]
+  );
+
+  const revealInPreview = useCallback(
+    (target: CodePreviewRevealTarget) => {
+      const files = cachedTreeRef.current?.files ?? null;
+      const treeKey = lastGenerateKeyRef.current;
+      // SF-9 INV-7: nothing to point at — no tree on screen, no service, or the path
+      // is not in the tree. SF-9 INV-9: own-key membership; `in` would admit
+      // `"constructor"` on an empty record. (`Object.hasOwn` is ES2022; `lib`
+      // is ES2020.)
+      if (
+        codegenService === null ||
+        files === null ||
+        treeKey === null ||
+        !Object.prototype.hasOwnProperty.call(files, target.path)
+      ) {
+        return;
+      }
+
+      if (target.range == null) {
+        dispatchSelection({ type: 'select', path: target.path });
+      } else {
+        dispatchSelection({
+          type: 'reveal',
+          path: target.path,
+          range: target.range,
+          requestId: (revealRequestIdRef.current += 1), // SF-9 INV-10: only an accepted reveal consumes an id
+          treeKey,
+        });
+      }
+      setOpen(true);
+    },
+    [codegenService, setOpen]
+  );
+
   const handleTriggerClick = useCallback(() => {
     setOpen(!open);
   }, [open, setOpen]);
@@ -588,6 +813,10 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     if (!wasOpen || open) {
       return;
     }
+
+    // A mark is a pointer to "what you just clicked"; it has no meaning on
+    // reopen. Fires on the true→false transition only. SF-9 INV-11.
+    dispatchSelection({ type: 'closed' });
 
     // The kit keeps the region mounted through its exit transition and never
     // moves focus, so at this point focus is still on whatever element inside
@@ -612,13 +841,23 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
   }, [open, sheetId]);
 
   return {
-    persistence: { open, height },
+    persistence: { open, size, maxSize: axisMax, dockPosition },
     setOpen,
-    setHeight,
-    layout: { treeVisible, onToggleTree, maximized, onToggleMaximize },
+    setSize,
+    layout: {
+      treeVisible,
+      onToggleTree,
+      maximized,
+      onToggleMaximize,
+      dockPosition,
+      onDockPositionChange,
+      onCycleDock,
+    },
     phase,
     selectedPath,
     setSelectedPath,
+    revealInPreview,
+    reveal,
     triggerProps: {
       'aria-expanded': open,
       'aria-controls': open ? sheetId : undefined, // INV-14
@@ -629,5 +868,6 @@ export function useCodePreview(options: UseCodePreviewOptions): UseCodePreviewRe
     showTrigger,
     sourceRevision,
     importLinks,
+    provenance,
   };
 }

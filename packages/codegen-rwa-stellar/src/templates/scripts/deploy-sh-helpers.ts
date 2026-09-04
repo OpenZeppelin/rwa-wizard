@@ -1,3 +1,10 @@
+import type { ConfigPath, LineSink } from '@openzeppelin/codegen-core';
+
+/** Union config paths for emissions that combine several observed reads. */
+export function unionConfigPaths(...groups: readonly (readonly ConfigPath[])[]): ConfigPath[] {
+  return [...new Set(groups.flat())].sort();
+}
+
 /**
  * Escape a string for safe embedding inside double-quoted shell strings.
  * Prevents shell injection via user-controlled config values.
@@ -93,6 +100,59 @@ export function shellSubsection(title: string): string[] {
     shellEcho(`${CLR.bold}  ${title}${CLR.rst}`),
     shellEcho(`${CLR.bold}${THIN_SEPARATOR}${CLR.rst}`),
   ];
+}
+
+/* ------------------------------------------------------------------ *
+ * Emitting display helpers — the ONLY place a secondary mark is written
+ *
+ * `shellEcho` / `shellSection` / `shellSubsection` above stay PURE FORMATTERS
+ * and gain nothing. That is the point: their ~95 nested call sites are
+ * co-emitted with deploy commands and must inherit that range's primary
+ * significance, and a mark that cannot be attached to a formatter cannot
+ * travel from one.
+ *
+ * Each emitter wraps one formatter call and one `sink` call into a single
+ * site, so the range, its paths and its mark reach one `addRange` in one call
+ * frame. `paths` is not optional decoration — six real sites carry an explicit
+ * attribution, and a sole-argument shape would push them back to a raw `sink`
+ * call, reintroducing the two-call split these emitters exist to close.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Emit already-formed display-only lines as ONE range, marked secondary.
+ *
+ * The single place in this package that writes a mark. It takes lines rather
+ * than a title because two display blocks — the initial-supply guidance and the
+ * deployment summary — are assembled by their own builders and were never
+ * formatter output; routing them through here keeps every mark on one code
+ * path instead of adding a second `{ secondary: true }` at a call site.
+ *
+ * `lines` must be display-only. That is not checked here and deliberately so:
+ * a generator that classified its own output would turn the AS-4 oracle into a
+ * comparison of the grammar against itself. The oracle is the check, and its
+ * reverse direction fails loudly on anything determining that reaches this.
+ */
+export function emitDisplay(
+  sink: LineSink,
+  lines: readonly string[],
+  paths?: readonly ConfigPath[]
+): void {
+  sink.lines(lines, paths, { secondary: true });
+}
+
+/** Emit a display-only `echo`. The formatter and the emission are one site. */
+export function emitEcho(sink: LineSink, msg: string, paths?: readonly ConfigPath[]): void {
+  emitDisplay(sink, [shellEcho(msg)], paths);
+}
+
+/** Emit a display-only section header. */
+export function emitSection(sink: LineSink, title: string, paths?: readonly ConfigPath[]): void {
+  emitDisplay(sink, shellSection(title), paths);
+}
+
+/** Emit a display-only subsection header. */
+export function emitSubsection(sink: LineSink, title: string, paths?: readonly ConfigPath[]): void {
+  emitDisplay(sink, shellSubsection(title), paths);
 }
 
 export function renderExplorerUrlForEcho(explorerUrlTemplate: string, varName: string): string {

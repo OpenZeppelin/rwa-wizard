@@ -1,3 +1,5 @@
+import type { ConfigPath } from '@openzeppelin/codegen-core';
+
 import {
   SOROBAN_SDK_VERSION,
   STELLAR_CONTRACTS_AUTHORS,
@@ -28,6 +30,63 @@ function toRepositoryMetadataUrl(sourceRepoUrl: string): string {
 }
 
 /**
+ * One member group and the config paths that produced it.
+ *
+ * Groups exist so the module-derived members can carry their own range without
+ * that range covering the fixed core members (design Open Question 2). Their
+ * concatenation, in order, must equal `WorkspaceTomlConfig.members`.
+ */
+export interface WorkspaceMemberGroup {
+  readonly members: readonly string[];
+  readonly paths: readonly ConfigPath[];
+}
+
+/** One element of the split literal, with whatever config shaped it. */
+export interface WorkspaceTomlBlock {
+  readonly text: string;
+  readonly paths: readonly ConfigPath[];
+}
+
+/**
+ * The workspace manifest as the ordered blocks that `'\n'` joins into it.
+ *
+ * This is the ONLY source of the manifest's bytes: `generateWorkspaceToml` is
+ * `blocks.join('\n')`, and a line builder emitting the same blocks with
+ * separator `'\n'` produces the identical string, because `LineBuilder.text()`
+ * *is* `elements.join(separator)`. So the split's join identity (INV-6) holds
+ * by construction rather than by inspection — there is no second emitter to
+ * drift (INV-30).
+ *
+ * Split legality (INV-6): both cut points are newlines written literally in the
+ * template source, outside every interpolation — the one ending `members = [`
+ * and the one before `]`. The `${excludeBlock}[workspace.package]` adjacency is
+ * NOT cut: no newline separates them, so a cut there would invent one.
+ *
+ * Empty groups are dropped, which is what keeps the grouping byte-exact:
+ * joining the surviving group blocks with `'\n'` reproduces
+ * `members.map(...).join('\n')` for any number of empty groups, including all
+ * of them (INV-38).
+ */
+export function workspaceTomlBlocks(
+  config: WorkspaceTomlConfig,
+  memberGroups?: readonly WorkspaceMemberGroup[]
+): readonly WorkspaceTomlBlock[] {
+  const memberLine = (member: string): string => `    "${member}",`;
+  const groups: readonly WorkspaceMemberGroup[] = memberGroups ?? [
+    { members: config.members, paths: [] },
+  ];
+  const memberBlocks: WorkspaceTomlBlock[] = groups
+    .filter((group) => group.members.length > 0)
+    .map((group) => ({ text: group.members.map(memberLine).join('\n'), paths: group.paths }));
+  // An entirely empty members list is still one (empty) element: that is exactly
+  // the blank line the original literal produced between `[` and `]`.
+  if (memberBlocks.length === 0) memberBlocks.push({ text: '', paths: [] });
+
+  const { head, tail } = workspaceTomlFrame(config);
+  return [{ text: head, paths: [] }, ...memberBlocks, { text: tail, paths: [] }];
+}
+
+/**
  * Generates the root workspace `Cargo.toml`.
  *
  * By default, stellar-contracts crates are pinned to a git revision.
@@ -36,7 +95,13 @@ function toRepositoryMetadataUrl(sourceRepoUrl: string): string {
  * unmerged branch of stellar-contracts.
  */
 export function generateWorkspaceToml(config: WorkspaceTomlConfig): string {
-  const membersBlock = config.members.map((m) => `    "${m}",`).join('\n');
+  return workspaceTomlBlocks(config)
+    .map((block) => block.text)
+    .join('\n');
+}
+
+/** The head and tail of the split literal — everything that is not a member line. */
+function workspaceTomlFrame(config: WorkspaceTomlConfig): { head: string; tail: string } {
   const excludeBlock =
     config.exclude && config.exclude.length > 0
       ? `exclude = [
@@ -65,11 +130,11 @@ ${config.exclude.map((m) => `    "${m}",`).join('\n')}
     ).join('\n');
   }
 
-  return `[workspace]
+  const head = `[workspace]
 resolver = "2"
-members = [
-${membersBlock}
-]
+members = [`;
+
+  const tail = `]
 
 ${excludeBlock}[workspace.package]
 authors = ["${STELLAR_CONTRACTS_AUTHORS.join('", "')}"]
@@ -96,4 +161,6 @@ lto = true
 inherits = "release"
 debug-assertions = true
 `;
+
+  return { head, tail };
 }

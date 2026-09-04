@@ -62,6 +62,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
+    "test:goldens:update": "vitest run __tests__/golden -u",
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "lint": "eslint \"src/**/*.ts\" --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",

@@ -1,0 +1,75 @@
+{
+  "token": {
+    "name": "Acme Real Estate Token",
+    "symbol": "ACME",
+    "decimals": 18,
+    "initialSupply": "1000000000000000000000000",
+    "administrativeControls": {
+      "burnable": true,
+      "mintable": true,
+      "pausable": true
+    },
+    "documentManager": {
+      "enabled": true
+    }
+  },
+  "identityVerification": {
+    "claimTopics": [
+      {
+        "id": 1,
+        "name": "KYC"
+      },
+      {
+        "id": 2,
+        "name": "AML"
+      }
+    ],
+    "trustedIssuers": [
+      {
+        "address": "GCEXAMPLEISSUER1",
+        "claimTopics": [
+          1,
+          2
+        ]
+      }
+    ],
+    "controls": {
+      "addressFreezing": true,
+      "partialTokenFreezing": true,
+      "recovery": true,
+      "forcedTransfers": true
+    }
+  },
+  "compliance": {
+    "modules": []
+  },
+  "accessControl": {
+    "ownership": {
+      "type": "single-owner",
+      "ownerAddress": "GCEXAMPLEOWNER"
+    },
+    "roles": [
+      {
+        "name": "Manager",
+        "symbol": "manager",
+        "addresses": [
+          "GCEXAMPLEMGR"
+        ]
+      },
+      {
+        "name": "Agent",
+        "symbol": "agent",
+        "addresses": [
+          "GCEXAMPLEAGNT"
+        ]
+      }
+    ]
+  },
+  "deployment": {
+    "target": {
+      "kind": "preset",
+      "ecosystem": "stellar",
+      "networkId": "stellar-public"
+    }
+  }
+}

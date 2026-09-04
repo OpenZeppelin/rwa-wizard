@@ -5,6 +5,7 @@ import {
   createPresetDeploymentTarget,
   createValidConfig,
 } from './helpers/config';
+
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../src/constants';
 import { StellarRwaGenerator } from '../src/stellar-rwa-generator';
 
@@ -530,6 +531,197 @@ describe('RWA Config Validation (US5)', () => {
           code: 'REQUIRED_FIELD',
         })
       );
+    });
+
+    /**
+     * SF-16 INV-36 fixture 2 — an issuer whose every referenced topic is
+     * unselected.
+     *
+     * It lives here rather than in `GOLDEN_FIXTURES` because it PROVABLY cannot
+     * be a golden fixture: it is invalid by the rule this sub-feature adds, so
+     * `golden-matrix-rule.test.ts`'s "every fixture passes validation" fails by
+     * name — and worse, `generate()` throws on an invalid config, so every suite
+     * that maps `GOLDEN_FIXTURES` through `generate` at module scope would die at
+     * collection.
+     */
+    const issuerAllTopicsUnselectedConfig = () =>
+      createValidConfig({
+        identityVerification: {
+          claimTopics: [
+            { id: 1, name: 'KYC', selected: false },
+            { id: 2, name: 'AML', selected: false },
+          ],
+          trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1, 2] }],
+        },
+      });
+
+    /**
+     * INV-8 — seven branch / boundary cases, one test each.
+     *
+     * `REQUIRED_FIELD` / `INVALID_REFERENCE` / `UNSELECTED_REFERENCE` are
+     * branches of one `if / else if / else if`, never independent checks. A
+     * suite that spot-checks the new branch alone cannot tell a branch from an
+     * extra check that fires beside `INVALID_REFERENCE`.
+     */
+    const BRANCH_CASES = [
+      {
+        label: '1 — no topics named → REQUIRED_FIELD',
+        config: () =>
+          createValidConfig({
+            identityVerification: {
+              claimTopics: [{ id: 1, name: 'KYC' }],
+              trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [] }],
+            },
+          }),
+        code: 'REQUIRED_FIELD' as const,
+        valid: false,
+      },
+      {
+        label: '2 — one named topic that does not exist → INVALID_REFERENCE',
+        config: () =>
+          createValidConfig({
+            identityVerification: {
+              claimTopics: [{ id: 1, name: 'KYC' }],
+              trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [99] }],
+            },
+          }),
+        code: 'INVALID_REFERENCE' as const,
+        valid: false,
+      },
+      {
+        label: '3 — one named topic that exists and is selected → valid',
+        config: () =>
+          createValidConfig({
+            identityVerification: {
+              claimTopics: [{ id: 1, name: 'KYC' }],
+              trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1] }],
+            },
+          }),
+        code: null,
+        valid: true,
+      },
+      {
+        label: '4 — one named topic that exists and is unselected → UNSELECTED_REFERENCE',
+        config: () =>
+          createValidConfig({
+            identityVerification: {
+              claimTopics: [{ id: 1, name: 'KYC', selected: false }],
+              trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1] }],
+            },
+          }),
+        code: 'UNSELECTED_REFERENCE' as const,
+        valid: false,
+      },
+      {
+        label: '5 — two named topics, one selected → valid',
+        config: () =>
+          createValidConfig({
+            identityVerification: {
+              claimTopics: [
+                { id: 1, name: 'KYC', selected: false },
+                { id: 2, name: 'AML' },
+              ],
+              trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1, 2] }],
+            },
+          }),
+        code: null,
+        valid: true,
+      },
+      {
+        label: '6 — two named topics, both unselected → UNSELECTED_REFERENCE',
+        config: issuerAllTopicsUnselectedConfig,
+        code: 'UNSELECTED_REFERENCE' as const,
+        valid: false,
+      },
+      {
+        label:
+          '7 — nonexistent AND unselected together → INVALID_REFERENCE wins; UNSELECTED_REFERENCE does not also fire',
+        config: () =>
+          createValidConfig({
+            identityVerification: {
+              claimTopics: [
+                { id: 1, name: 'KYC', selected: false },
+                { id: 2, name: 'AML' },
+              ],
+              trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1, 99] }],
+            },
+          }),
+        code: 'INVALID_REFERENCE' as const,
+        valid: false,
+      },
+    ] as const;
+
+    it('INV-8 enumerates seven branch cases, and the count is asserted so a trim is visible', () => {
+      expect(BRANCH_CASES).toHaveLength(7);
+    });
+
+    it.each(BRANCH_CASES)('INV-8 $label', (branch) => {
+      const result = generator.validate(branch.config());
+      expect(result.valid).toBe(branch.valid);
+
+      const onTopics = result.errors.filter(
+        (error) => error.field === 'identityVerification.trustedIssuers[0].claimTopics'
+      );
+
+      if (branch.code === null) {
+        expect(onTopics).toEqual([]);
+        return;
+      }
+
+      expect(onTopics).toHaveLength(1);
+      expect(onTopics[0]?.code).toBe(branch.code);
+      // Branch 7's load-bearing half: INVALID_REFERENCE wins and the new code
+      // does not also fire. Asserted on every erroring row so an independent
+      // second check cannot hide behind the happy-path cases.
+      expect(onTopics.map((error) => error.code)).toEqual([branch.code]);
+    });
+
+    it('should error with UNSELECTED_REFERENCE when every referenced topic is unselected', () => {
+      const result = generator.validate(issuerAllTopicsUnselectedConfig());
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          field: 'identityVerification.trustedIssuers[0].claimTopics',
+          code: 'UNSELECTED_REFERENCE',
+        })
+      );
+    });
+
+    it('should not double-report: UNSELECTED_REFERENCE is a branch, not an extra check', () => {
+      // One issuer, one problem, one error. `REQUIRED_FIELD`,
+      // `INVALID_REFERENCE` and `UNSELECTED_REFERENCE` are branches of one
+      // `if / else if / else if` chain over the same field.
+      const result = generator.validate(issuerAllTopicsUnselectedConfig());
+      const onTopics = result.errors.filter(
+        (error) => error.field === 'identityVerification.trustedIssuers[0].claimTopics'
+      );
+
+      expect(onTopics).toHaveLength(1);
+    });
+
+    it('stays valid when the issuer still references one selected topic', () => {
+      // Unselection must never invalidate a draft that was valid — that is what
+      // makes it non-destructive rather than merely reversible.
+      const result = generator.validate(
+        createValidConfig({
+          identityVerification: {
+            claimTopics: [
+              { id: 1, name: 'KYC', selected: false },
+              { id: 2, name: 'AML' },
+            ],
+            trustedIssuers: [{ address: 'GCEXAMPLEISSUER1', claimTopics: [1, 2] }],
+          },
+        })
+      );
+
+      expect(result.valid).toBe(true);
+    });
+
+    it('resolves references against DEFINED topics, so unselection is never INVALID_REFERENCE', () => {
+      const result = generator.validate(issuerAllTopicsUnselectedConfig());
+
+      expect(result.errors.map((error) => error.code)).not.toContain('INVALID_REFERENCE');
     });
   });
 

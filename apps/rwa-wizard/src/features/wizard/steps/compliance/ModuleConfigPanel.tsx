@@ -7,6 +7,7 @@ import type { AddressingCapability } from '@openzeppelin/ui-types';
 
 import { useAddressListFieldCopy } from '../../../../components/shared/useAddressListFieldCopy';
 import type { ComplianceModuleOption } from '../../../../types/wizard';
+import { moduleAnchor } from '../../focused-path';
 import { fromFormValues, hasPendingStringArrayInput, toFormValues } from './moduleConfigFormValues';
 
 interface ModuleConfigPanelProps {
@@ -97,6 +98,7 @@ export function ModuleConfigPanel({
 
   return (
     <div
+      data-config-anchor={moduleAnchor(module.id)}
       className="grid gap-3"
       onBlurCapture={(e) => {
         if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
@@ -106,18 +108,21 @@ export function ModuleConfigPanel({
       {module.configFields.map((field) => {
         if (field.valueKind === 'address-list') {
           const addresses = readStringArray(config[field.key]);
+          const fieldId = `${module.id}-${field.key}`;
           return (
-            <AddressListField
-              key={field.key}
-              label={field.label}
-              placeholder={addressListCopy.placeholder}
-              bulkPlaceholder={addressListCopy.bulkPlaceholder}
-              formatHint={addressListCopy.formatHint}
-              helperText={field.hint}
-              value={addresses}
-              addressing={addressing}
-              onChange={(next) => handleAddressListChange(field.key, next)}
-            />
+            <div key={field.key} data-field-id={fieldId}>
+              <AddressListField
+                id={fieldId}
+                label={field.label}
+                placeholder={addressListCopy.placeholder}
+                bulkPlaceholder={addressListCopy.bulkPlaceholder}
+                formatHint={addressListCopy.formatHint}
+                helperText={field.hint}
+                value={addresses}
+                addressing={addressing}
+                onChange={(next) => handleAddressListChange(field.key, next)}
+              />
+            </div>
           );
         }
 

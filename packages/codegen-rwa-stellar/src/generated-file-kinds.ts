@@ -1,16 +1,14 @@
+import { GENERATED_FILE_KINDS } from '@openzeppelin/codegen-core';
+import type { GeneratedFileKind } from '@openzeppelin/codegen-core';
+
 import { getAvailableModules } from './modules/registry';
 import { IDENTITY_SUPPORT_CONTRACTS } from './templates/identity-support-contracts';
 
 import { CRATE_NAMES } from './constants';
 
-export const GENERATED_FILE_KINDS = [
-  'contract',
-  'script',
-  'provenance-and-docs',
-  'unknown',
-] as const;
-
-export type GeneratedFileKind = (typeof GENERATED_FILE_KINDS)[number];
+// The vocabulary is core's; this generator only classifies its own paths against it.
+export { GENERATED_FILE_KINDS };
+export type { GeneratedFileKind };
 
 type RankedGeneratedFileKind = Exclude<GeneratedFileKind, 'unknown'>;
 

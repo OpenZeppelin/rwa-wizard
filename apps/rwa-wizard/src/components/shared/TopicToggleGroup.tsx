@@ -3,9 +3,13 @@ import { useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
 import type { ClaimTopic } from '@openzeppelin/rwa-config';
-import { MIN_CUSTOM_CLAIM_TOPIC_ID } from '@openzeppelin/rwa-config';
+import { isClaimTopicSelected, MIN_CUSTOM_CLAIM_TOPIC_ID } from '@openzeppelin/rwa-config';
+import { formatCopy } from '@openzeppelin/rwa-wizard-copy';
 import { Button, Label, NumberField, TextField } from '@openzeppelin/ui-components';
 
+import { useCopy } from '../../app/providers/useCopy';
+import { CLAIM_TOPIC_DRAFT_ANCHOR, claimTopicAnchor } from '../../features/wizard/focused-path';
+import { useInspectAnchor } from '../../features/wizard/inspected-anchor';
 import { TogglePill } from './TogglePill';
 
 interface CustomTopicForm {
@@ -30,6 +34,9 @@ export function TopicToggleGroup({
   onRemove,
   maxTopics = 15,
 }: TopicToggleGroupProps) {
+  const copy = useCopy();
+  const inspect = useInspectAnchor();
+
   const { control, reset, watch } = useForm<CustomTopicForm>({
     defaultValues: { name: '', id: '' },
     mode: 'onChange',
@@ -42,7 +49,10 @@ export function TopicToggleGroup({
     () => new Set(selectedTopics.map((topic) => topic.id)),
     [selectedTopics]
   );
+  // Cap is over *defined* topics (SF-16 D-11 / INV-11) — unselected still occupy a slot.
   const atLimit = selectedTopics.length >= maxTopics;
+  // Counter is over *selected* topics (INV-11).
+  const selectedCount = selectedTopics.filter(isClaimTopicSelected).length;
 
   const predefinedIds = useMemo(
     () => new Set(predefinedTopics.map((t) => t.id)),
@@ -70,36 +80,56 @@ export function TopicToggleGroup({
     if (!name || isNaN(parsedId) || parsedId < MIN_CUSTOM_CLAIM_TOPIC_ID) return;
     if (selectedIds.has(parsedId) || predefinedIds.has(parsedId)) return;
     onAddCustom({ id: parsedId, name, isCustom: true });
+    // Written, not inferred from where focus went. The Add button disables
+    // itself the moment the form resets, so on some browsers focus ends up on
+    // nothing at all — which is exactly why the subject cannot be read off
+    // focus. This handler is the code that knows what was created. INV-19.
+    inspect(claimTopicAnchor(parsedId));
     reset({ name: '', id: '' });
-  }, [watchedName, parsedId, selectedIds, predefinedIds, onAddCustom, reset]);
+    // Repeat entry: the next topic name goes in the same field. Independent of
+    // the line above — the draft anchor this focus resolves to is refused by
+    // `inspect`, so the `focusin` it fires cannot overwrite the subject.
+    document.getElementById('custom-topic-name')?.focus();
+  }, [watchedName, parsedId, selectedIds, predefinedIds, onAddCustom, inspect, reset]);
 
   return (
     <div className="space-y-4">
       <div>
         <Label className="text-xs text-muted-foreground">
-          {selectedTopics.length}/{maxTopics} selected
+          {formatCopy(copy.notice('claim-topics.selected-count').description, {
+            selectedCount,
+            maxTopics,
+          })}
         </Label>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {predefinedTopics.map((topic) => {
-            const isSelected = selectedIds.has(topic.id);
+            const fromDraft = selectedTopics.find((t) => t.id === topic.id);
+            // Absent catalogue topics render unselected; present ones route
+            // through isClaimTopicSelected — never a literal or inline
+            // `selected !== false`. INV-8.
+            const isSelected = fromDraft ? isClaimTopicSelected(fromDraft) : false;
             return (
               <TogglePill
                 key={topic.id}
+                configAnchor={claimTopicAnchor(topic.id)}
                 label={topic.name}
                 detail={topic.id}
                 selected={isSelected}
-                onClick={() => onToggle(topic)}
-                disabled={!isSelected && atLimit}
+                onToggleSelection={() => onToggle(topic)}
+                disabled={fromDraft === undefined && atLimit}
               />
             );
           })}
           {customTopics.map((topic) => (
+            // Three-affordance: body inspects only; selection control toggles
+            // ClaimTopic.selected; × is the sole delete path. INV-5, INV-16.
             <TogglePill
               key={topic.id}
+              configAnchor={claimTopicAnchor(topic.id)}
               label={topic.name}
               detail={topic.id}
-              selected={true}
-              onClick={() => onRemove(topic.id)}
+              selected={isClaimTopicSelected(topic)}
+              onToggleSelection={() => onToggle(topic)}
               onRemove={() => onRemove(topic.id)}
             />
           ))}
@@ -134,6 +164,7 @@ export function TopicToggleGroup({
           <div className="flex h-10 items-center">
             <Button
               type="button"
+              data-config-anchor={CLAIM_TOPIC_DRAFT_ANCHOR}
               variant="outline"
               size="icon"
               onClick={handleAddCustom}

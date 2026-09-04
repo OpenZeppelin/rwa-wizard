@@ -5,6 +5,7 @@ import {
   getModuleById,
   getModuleDescriptorById,
 } from '../../src/modules/registry';
+import { shellSingleQuoteLiteral } from '../../src/templates/scripts/deploy-sh-helpers';
 
 describe('Compliance Module Descriptors', () => {
   it('keeps internal deployment behavior out of the public registry surface', () => {
@@ -19,9 +20,9 @@ describe('Compliance Module Descriptors', () => {
     expect(getModuleDescriptorById('max-balance')?.deployment.requiresIdentityRegistryStorage).toBe(
       true
     );
-    expect(getModuleDescriptorById('supply-limit')?.deployment.requiresIdentityRegistryStorage).toBe(
-      false
-    );
+    expect(
+      getModuleDescriptorById('supply-limit')?.deployment.requiresIdentityRegistryStorage
+    ).toBe(false);
   });
 
   it('builds supply limit invocations from the module descriptor', () => {
@@ -86,6 +87,23 @@ describe('Compliance Module Descriptors', () => {
         args: `--token "$RWA_TOKEN_ADDRESS" --users '["GCALLOW1", "GCALLOW2"]' --operator "$MANAGER"`,
       },
     ]);
+  });
+
+  it('escapes single quotes in transfer allow-list users for shell-safe deploy.sh', () => {
+    const malicious = "GC', echo PWNED; :'";
+    const invocations = getModuleDescriptorById(
+      'transfer-allow'
+    )?.deployment.getConfigurationInvocations({
+      moduleId: 'transfer-allow',
+      config: { allowedUsers: [malicious] },
+    });
+
+    expect(invocations).toHaveLength(1);
+    const args = invocations?.[0]?.args ?? '';
+    const safeUsers = `'${shellSingleQuoteLiteral(`[${JSON.stringify(malicious)}]`)}'`;
+    expect(args).toBe(`--token "$RWA_TOKEN_ADDRESS" --users ${safeUsers} --operator "$MANAGER"`);
+    // Unescaped form would close the single-quoted --users argument mid-value.
+    expect(args.includes(`--users '["GC', echo`)).toBe(false);
   });
 
   it('does not emit removed hook-wiring verification invocations', () => {

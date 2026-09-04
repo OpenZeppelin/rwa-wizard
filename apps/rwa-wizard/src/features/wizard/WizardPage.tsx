@@ -24,8 +24,16 @@ import {
 import { exportDraftAsJson } from '../../services/download/exportDraftAsJson';
 import { AdapterCapabilitiesProvider } from '../../services/runtime';
 import { useWizardDraftStorage } from '../../storage';
-import { CodePreviewDrawer, CodePreviewTrigger, useCodePreview } from '../code-preview';
+import {
+  CodePreviewDrawer,
+  CodePreviewProvenanceProvider,
+  CodePreviewRevealProvider,
+  CodePreviewTrigger,
+  useCodePreview,
+  WIZARD_DOCK_MENU_POSITIONS,
+} from '../code-preview';
 import { GenerationDialog } from '../generation/components/GenerationDialog';
+import { InspectedAnchorProvider } from './inspected-anchor';
 
 /**
  * Wizard page shell at `/wizard/:networkId`. Network id matches adapter
@@ -239,69 +247,113 @@ function WizardPageContent(): ReactElement {
       <ResetDeployReadinessOnDraftChange token={`${resetKey}-${activeDraftId ?? 'none'}`} />
       {deployGuidance && <SyncDeployReadinessToConfig guidance={deployGuidance} />}
       <AdapterCapabilitiesProvider value={adapterCaps}>
-        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <ErrorBannerStack
-            entries={[
-              targetLoadError && {
-                id: 'target-load',
-                message: targetLoadError,
-                onDismiss: clearTargetLoadError,
-              },
-              persistError && {
-                id: 'persist',
-                message: persistError,
-                onDismiss: clearPersistError,
-              },
-            ]}
-          />
-          <WizardLayout
-            key={layoutKey}
-            variant="vertical"
-            steps={steps}
-            currentStepIndex={effectiveStepIndex}
-            onStepChange={handleStepChange}
-            onCancel={handleCancel}
-            navActions={
-              <CodePreviewTrigger show={preview.showTrigger} triggerProps={preview.triggerProps} />
-            }
-            lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
-            onLastStepPrimary={handleLastStepPrimary}
-            lastStepSecondaryLabel="Export Configuration"
-            onLastStepSecondary={handleLastStepSecondary}
-            lastStepSecondaryDisabled={!activeDraftId}
-          />
-          {preview.showTrigger ? (
-            <CodePreviewDrawer
-              open={preview.persistence.open}
-              onOpenChange={preview.setOpen}
-              height={preview.persistence.height}
-              onHeightChange={preview.setHeight}
-              sheetId={preview.sheetId}
-              phase={preview.phase}
-              selectedPath={preview.selectedPath}
-              onSelectedPathChange={preview.setSelectedPath}
-              files={preview.phase.kind === 'ready' ? preview.phase.files : null}
-              changedPaths={preview.phase.kind === 'ready' ? preview.phase.changedPaths : undefined}
-              substitutedKeys={
-                preview.phase.kind === 'ready' || preview.phase.kind === 'error'
-                  ? preview.phase.substitutedKeys
-                  : []
-              }
-              errorMessages={preview.phase.kind === 'error' ? preview.phase.messages : undefined}
-              sourceRevision={preview.sourceRevision}
-              importLinks={preview.importLinks}
-              tools={preview.layout}
+        {/*
+          Above BOTH the layout (which holds the writers) and the drawer (the
+          only reader) — they are siblings, which is why the subject lives in a
+          store rather than in state up here: state this high would re-render
+          the whole form on every focus change. Inside `<main>` and not outside
+          it, because the provider is not layout. INV-13, INV-26.
+
+          The scope token drops the subject whenever the reset key, the active
+          draft or the step changes. The step half is a genuine third input, not
+          a redundancy: a claim topic still exists in the draft while the user is
+          on the Compliance step, so the existence check alone would leave the
+          column describing an item that is nowhere on screen. INV-23.
+        */}
+        <InspectedAnchorProvider
+          scopeToken={`${resetKey}-${activeDraftId ?? 'none'}-${currentStep}`}
+          modules={draftState.config.compliance.modules}
+        >
+          <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <ErrorBannerStack
+              entries={[
+                targetLoadError && {
+                  id: 'target-load',
+                  message: targetLoadError,
+                  onDismiss: clearTargetLoadError,
+                },
+                persistError && {
+                  id: 'persist',
+                  message: persistError,
+                  onDismiss: clearPersistError,
+                },
+              ]}
             />
-          ) : null}
-          <GenerationDialog
-            jobState={generationJobState}
-            isGenerating={isGenerating}
-            onDownload={handleDownload}
-            onRetry={handleLastStepPrimary}
-            onReset={reset}
-            showPostDownloadSteps={deployGuidance != null}
-          />
-        </main>
+            <CodePreviewRevealProvider
+              revealInPreview={preview.showTrigger ? preview.revealInPreview : null} // SF-9 INV-12
+            >
+              <CodePreviewProvenanceProvider
+                value={preview.showTrigger ? preview.provenance : null} // SF-5 INV-20
+              >
+                <WizardLayout
+                  key={layoutKey}
+                  variant="vertical"
+                  steps={steps}
+                  currentStepIndex={effectiveStepIndex}
+                  onStepChange={handleStepChange}
+                  onCancel={handleCancel}
+                  navActions={
+                    <CodePreviewTrigger
+                      show={preview.showTrigger}
+                      triggerProps={preview.triggerProps}
+                    />
+                  }
+                  lastStepLabel={isGenerating ? 'Generating…' : 'Generate Project'}
+                  onLastStepPrimary={handleLastStepPrimary}
+                  lastStepSecondaryLabel="Export Configuration"
+                  onLastStepSecondary={handleLastStepSecondary}
+                  lastStepSecondaryDisabled={!activeDraftId}
+                />
+              </CodePreviewProvenanceProvider>
+            </CodePreviewRevealProvider>
+            {preview.showTrigger ? (
+              <CodePreviewDrawer
+                open={preview.persistence.open}
+                onOpenChange={preview.setOpen}
+                dockPosition={preview.persistence.dockPosition}
+                size={preview.persistence.size}
+                maxSize={preview.persistence.maxSize}
+                onSizeChange={preview.setSize}
+                sheetId={preview.sheetId}
+                phase={preview.phase}
+                selectedPath={preview.selectedPath}
+                onSelectedPathChange={preview.setSelectedPath}
+                files={preview.phase.kind === 'ready' ? preview.phase.files : null}
+                changedPaths={
+                  preview.phase.kind === 'ready' ? preview.phase.changedPaths : undefined
+                }
+                substitutedKeys={
+                  preview.phase.kind === 'ready' || preview.phase.kind === 'error'
+                    ? preview.phase.substitutedKeys
+                    : []
+                }
+                errorMessages={preview.phase.kind === 'error' ? preview.phase.messages : undefined}
+                sourceRevision={preview.sourceRevision}
+                importLinks={preview.importLinks}
+                tools={{
+                  ...preview.layout,
+                  // Wizard chrome: bottom + left only (top/right stay settable via API).
+                  dockMenuPositions: WIZARD_DOCK_MENU_POSITIONS,
+                }}
+                reveal={preview.reveal}
+                config={draftState.config}
+                // The same expressions the two providers above carry, so the
+                // drawer and the providers can never disagree about whether there
+                // is a preview to ask about. INV-14.
+                provenance={preview.showTrigger ? preview.provenance : null} // SF-5 INV-20
+                onReveal={preview.showTrigger ? preview.revealInPreview : null} // SF-9 INV-12
+              />
+            ) : null}
+            <GenerationDialog
+              jobState={generationJobState}
+              isGenerating={isGenerating}
+              onDownload={handleDownload}
+              onRetry={handleLastStepPrimary}
+              onReset={reset}
+              showPostDownloadSteps={deployGuidance != null}
+            />
+          </main>
+        </InspectedAnchorProvider>
       </AdapterCapabilitiesProvider>
     </CopyProvider>
   );

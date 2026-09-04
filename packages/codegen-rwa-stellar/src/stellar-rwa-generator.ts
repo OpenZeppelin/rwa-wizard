@@ -1,15 +1,19 @@
 import type {
+  ConfigPath,
   FileTree,
   GenerateOptions,
   GenerationResult,
   Generator,
+  ProvenanceCollector,
+  ProvenanceScope,
   ValidationError,
   ValidationResult,
 } from '@openzeppelin/codegen-core';
 import {
   computeConfigHash,
-  createFile,
+  createLineBuilder,
   createProgressEvent,
+  createProvenanceCollector,
   getFileCount,
   mergeFileTrees,
   resolveProgressCallback,
@@ -17,23 +21,24 @@ import {
 } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
+import type { ComplianceModuleRegistryEntry } from './modules/registry';
 import { getModuleById } from './modules/registry';
 import { generateCrateToml } from './templates/cargo/crate-toml';
-import { generateWorkspaceToml } from './templates/cargo/workspace-toml';
+import { workspaceTomlBlocks } from './templates/cargo/workspace-toml';
 import { generateClaimTopicsIssuersContract } from './templates/contracts/claim-topics-issuers';
 import { generateComplianceContract } from './templates/contracts/compliance';
 import {
   generateComplianceModuleCargoToml,
   generateComplianceModuleContract,
 } from './templates/contracts/compliance-module';
-import { generateIdentityRegistryStorageContract } from './templates/contracts/identity-registry-storage';
+import { generateIdentityRegistryStorageContractInScope } from './templates/contracts/identity-registry-storage';
 import { generateIdentityVerifierContract } from './templates/contracts/identity-verifier';
-import { generateRwaTokenContract } from './templates/contracts/rwa-token';
+import { generateRwaTokenContractInScope } from './templates/contracts/rwa-token';
 import { generateLibRs } from './templates/lib-rs';
-import { generateReadme } from './templates/readme';
+import { generateReadmeInScope } from './templates/readme';
 import { generateRustfmtToml } from './templates/rustfmt-toml';
 import { generateBuildSh } from './templates/scripts/build-sh';
-import { generateDeploySh } from './templates/scripts/deploy-sh';
+import { generateDeployShInScope } from './templates/scripts/deploy-sh';
 import { generateUnderReviewModulesMd } from './templates/under-review-modules-md';
 import { resolveUpstreamTemplateSource } from './upstream/source';
 import type { UpstreamTemplateSource } from './upstream/types';
@@ -52,7 +57,15 @@ interface ContractCrate {
   dirPath: string;
   dependencies: string[];
   includeRlib?: boolean;
-  generateContract: (config: RWAConfig, templateSource: UpstreamTemplateSource) => string;
+  /**
+   * Produces `contract.rs` inside the file's own recording scope. Contracts that
+   * read no config ignore the scope and return upstream text; only `rwa-token`
+   * and the IRS build a patch builder over it.
+   */
+  generateContract: (
+    scope: ProvenanceScope<RWAConfig>,
+    templateSource: UpstreamTemplateSource
+  ) => string;
 }
 
 /**
@@ -70,56 +83,108 @@ function getCoreContractCrates(): ContractCrate[] {
         'stellar-macros',
         'stellar-tokens',
       ],
-      generateContract: generateRwaTokenContract,
+      generateContract: generateRwaTokenContractInScope,
     },
     {
       name: CRATE_NAMES.compliance,
       dirPath: `contracts/${CRATE_NAMES.compliance}`,
       dependencies: ['soroban-sdk', 'stellar-access', 'stellar-macros', 'stellar-tokens'],
-      generateContract: generateComplianceContract,
+      generateContract: (_scope, templateSource) => generateComplianceContract(templateSource),
     },
     {
       name: CRATE_NAMES.identityVerifier,
       dirPath: `contracts/${CRATE_NAMES.identityVerifier}`,
       dependencies: ['soroban-sdk', 'stellar-access', 'stellar-macros', 'stellar-tokens'],
-      generateContract: generateIdentityVerifierContract,
+      generateContract: (_scope, templateSource) =>
+        generateIdentityVerifierContract(templateSource),
     },
     {
       name: CRATE_NAMES.claimTopicsIssuers,
       dirPath: `contracts/${CRATE_NAMES.claimTopicsIssuers}`,
       dependencies: ['soroban-sdk', 'stellar-access', 'stellar-macros', 'stellar-tokens'],
-      generateContract: generateClaimTopicsIssuersContract,
+      generateContract: (_scope, templateSource) =>
+        generateClaimTopicsIssuersContract(templateSource),
     },
     {
       name: CRATE_NAMES.identityRegistryStorage,
       dirPath: `contracts/${CRATE_NAMES.identityRegistryStorage}`,
       dependencies: ['soroban-sdk', 'stellar-access', 'stellar-macros', 'stellar-tokens'],
-      generateContract: generateIdentityRegistryStorageContract,
+      generateContract: generateIdentityRegistryStorageContractInScope,
     },
   ];
 }
 
 /**
  * Generate the standard file set for one contract crate.
+ *
+ * Each of the three files gets its OWN scope (INV-16): `lib.rs` and the crate
+ * `Cargo.toml` read no config, and sharing the contract's scope would attribute
+ * every field the contract read to two static files.
  */
 function generateContractCrateFiles(
   crate: ContractCrate,
-  config: RWAConfig,
+  collector: ProvenanceCollector<RWAConfig>,
   templateSource: UpstreamTemplateSource
 ): FileTree {
-  const contractRs = crate.generateContract(config, templateSource);
-  const libRs = generateLibRs();
-  const cargoToml = generateCrateToml({
-    name: crate.name,
-    dependencies: crate.dependencies,
-    includeRlib: crate.includeRlib,
-  });
-
   return mergeFileTrees(
-    createFile(`${crate.dirPath}/src/contract.rs`, contractRs),
-    createFile(`${crate.dirPath}/src/lib.rs`, libRs),
-    createFile(`${crate.dirPath}/Cargo.toml`, cargoToml)
+    collector.createFile(`${crate.dirPath}/src/contract.rs`, (scope) =>
+      crate.generateContract(scope, templateSource)
+    ),
+    collector.createFile(`${crate.dirPath}/src/lib.rs`, () => generateLibRs()),
+    collector.createFile(`${crate.dirPath}/Cargo.toml`, () =>
+      generateCrateToml({
+        name: crate.name,
+        dependencies: crate.dependencies,
+        includeRlib: crate.includeRlib,
+      })
+    )
   );
+}
+
+/**
+ * One selected module, with the config paths of every occurrence that selected it.
+ *
+ * Grouping is by module id in first-seen order, which is the order the module
+ * loop already used, so the generated file order does not move. Duplicate
+ * selections of one id collapse to a single group whose paths union both
+ * indices (D9) — a sibling module's index never enters another group, which is
+ * what stops one tick from claiming another module's crate (INV-19).
+ */
+interface SelectedModuleGroup {
+  readonly entry: ComplianceModuleRegistryEntry;
+  readonly createdBy: readonly ConfigPath[];
+}
+
+/**
+ * Observe each `compliance.modules[i].moduleId` individually, so every group
+ * carries per-occurrence paths rather than the whole array. Runs at the
+ * composition root, outside every file scope, so the reads land on no file's
+ * content (INV-23).
+ */
+function observeSelectedModuleGroups(
+  collector: ProvenanceCollector<RWAConfig>
+): readonly SelectedModuleGroup[] {
+  const moduleCount = collector.observe((config) => config.compliance.modules.length).value;
+
+  const groups = new Map<string, { entry: ComplianceModuleRegistryEntry; paths: ConfigPath[] }>();
+  for (let index = 0; index < moduleCount; index += 1) {
+    const occurrence = collector.observe((config) => config.compliance.modules[index]?.moduleId);
+    const moduleId = occurrence.value;
+    if (moduleId === undefined) continue;
+
+    const existing = groups.get(moduleId);
+    if (existing !== undefined) {
+      existing.paths.push(...occurrence.paths);
+      continue;
+    }
+    const entry = getModuleById(moduleId);
+    // Unknown ids are rejected by validation before generation; skipping here
+    // preserves the pre-migration loop's behaviour exactly.
+    if (!entry) continue;
+    groups.set(moduleId, { entry, paths: [...occurrence.paths] });
+  }
+
+  return [...groups.values()].map((group) => ({ entry: group.entry, createdBy: group.paths }));
 }
 
 /**
@@ -183,68 +248,134 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
 
     progress(createProgressEvent(StellarRwaProgressPhase.generatingContracts, 30));
 
+    // INV-15: created AFTER validation, so validation's reads of locked fields
+    // never enter a file scope. One collector per composition root.
+    const collector = createProvenanceCollector(config, {
+      enabled: options?.recordProvenance === true,
+    });
+
     const crates = getCoreContractCrates();
-    const members = crates.map((c) => c.dirPath);
+    const coreMembers = crates.map((c) => c.dirPath);
 
     let files: FileTree = {};
 
     for (const crate of crates) {
-      files = mergeFileTrees(files, generateContractCrateFiles(crate, config, templateSource));
+      files = mergeFileTrees(files, generateContractCrateFiles(crate, collector, templateSource));
     }
 
-    const uniqueModuleIds = [...new Set(config.compliance.modules.map((m) => m.moduleId))];
-    for (const moduleId of uniqueModuleIds) {
-      const entry = getModuleById(moduleId);
-      if (!entry) continue;
+    const moduleGroups = observeSelectedModuleGroups(collector);
+    const moduleMembers = moduleGroups.map((group) => `contracts/modules/${group.entry.crateName}`);
 
-      const moduleDirPath = `contracts/modules/${entry.crateName}`;
-      members.push(moduleDirPath);
+    for (const group of moduleGroups) {
+      const moduleDirPath = `contracts/modules/${group.entry.crateName}`;
 
-      const contractRs = generateComplianceModuleContract(entry, templateSource);
-      const libRs = generateLibRs();
-      const cargoToml = generateComplianceModuleCargoToml(entry, templateSource);
+      // INV-19 / INV-23: these three files exist BECAUSE this module was
+      // selected, so the selecting paths are a `created` entry — never content
+      // paths, and never a sibling module's index. Duplicate selections of one
+      // id union their indices onto the single file set they produce (D9).
+      const createdBy = group.createdBy;
 
       files = mergeFileTrees(
         files,
-        createFile(`${moduleDirPath}/src/contract.rs`, contractRs),
-        createFile(`${moduleDirPath}/src/lib.rs`, libRs),
-        createFile(`${moduleDirPath}/Cargo.toml`, cargoToml)
+        collector.createFile(
+          `${moduleDirPath}/src/contract.rs`,
+          () => generateComplianceModuleContract(group.entry, templateSource),
+          { createdBy }
+        ),
+        collector.createFile(`${moduleDirPath}/src/lib.rs`, () => generateLibRs(), { createdBy }),
+        collector.createFile(
+          `${moduleDirPath}/Cargo.toml`,
+          () => generateComplianceModuleCargoToml(group.entry, templateSource),
+          { createdBy }
+        )
       );
     }
 
     progress(createProgressEvent(StellarRwaProgressPhase.generatingScripts, 60));
 
-    const workspaceToml = generateWorkspaceToml({
-      members,
-      contractsLibraryPath: options?.contractsLibraryPath,
-      repositoryUrl: templateSource.metadata.sourceRepoUrl,
-    });
-    files = mergeFileTrees(files, createFile('Cargo.toml', workspaceToml));
-
-    const rustfmtToml = generateRustfmtToml();
-    files = mergeFileTrees(files, createFile('rustfmt.toml', rustfmtToml));
-
-    files = mergeFileTrees(files, createFile('scripts/build.sh', generateBuildSh(config)));
-    files = mergeFileTrees(files, createFile('scripts/deploy.sh', generateDeploySh(config)));
-    files = mergeFileTrees(files, createFile('config.json', generateConfigJson(config)));
     files = mergeFileTrees(
       files,
-      createFile(
-        'README.md',
-        generateReadme(config, {
+      collector.createFile('Cargo.toml', (scope) => {
+        // INV-17: the builder is the first thing that touches the scope. Every
+        // member value was resolved at the composition root, so nothing is read
+        // through this scope at all — the member range carries exactly the
+        // observed module paths and nothing else.
+        const builder = createLineBuilder(scope, { separator: '\n' });
+        const blocks = workspaceTomlBlocks(
+          {
+            members: [...coreMembers, ...moduleMembers],
+            contractsLibraryPath: options?.contractsLibraryPath,
+            repositoryUrl: templateSource.metadata.sourceRepoUrl,
+          },
+          [
+            { members: coreMembers, paths: [] },
+            {
+              members: moduleMembers,
+              paths: moduleGroups.flatMap((group) => group.createdBy),
+            },
+          ]
+        );
+        for (const block of blocks) builder.block(block.text, block.paths);
+        return builder.text();
+      })
+    );
+
+    files = mergeFileTrees(
+      files,
+      collector.createFile('rustfmt.toml', () => generateRustfmtToml())
+    );
+
+    files = mergeFileTrees(
+      files,
+      collector.createFile('scripts/build.sh', (scope) => generateBuildSh(scope.config))
+    );
+    files = mergeFileTrees(
+      files,
+      collector.createFile('scripts/deploy.sh', (scope) => generateDeployShInScope(scope))
+    );
+    files = mergeFileTrees(
+      files,
+      collector.createFile('config.json', (scope) => generateConfigJson(scope.config))
+    );
+    files = mergeFileTrees(
+      files,
+      collector.createFile('README.md', (scope) =>
+        generateReadmeInScope(scope, {
           templateSourceMetadata: templateSource.metadata,
         })
       )
     );
 
-    const underReviewMd = generateUnderReviewModulesMd(config);
-    if (underReviewMd) {
-      files = mergeFileTrees(files, createFile('UNDER_REVIEW_MODULES.md', underReviewMd));
+    // INV-23: the existence decision is observed BEFORE it is taken, so its
+    // paths become the file's `created` entry instead of landing on whatever
+    // the content emits first.
+    const underReviewMd = collector.observe((c) => generateUnderReviewModulesMd(c));
+    if (underReviewMd.value !== null) {
+      files = mergeFileTrees(
+        files,
+        collector.createFile(
+          'UNDER_REVIEW_MODULES.md',
+          (scope) => {
+            const content = generateUnderReviewModulesMd(scope.config);
+            if (content === null) {
+              // Unreachable: the template is pure and the config has not moved.
+              throw new Error(
+                'UNDER_REVIEW_MODULES.md content disagreed with its existence decision'
+              );
+            }
+            return content;
+          },
+          { createdBy: underReviewMd.paths }
+        )
+      );
     }
 
+    // INV-15: hashing reads the raw config, outside every scope.
     const configHash = computeConfigHash(config);
 
     progress(createProgressEvent(StellarRwaProgressPhase.complete, 100));
+
+    const provenance = collector.result();
 
     return {
       files,
@@ -255,6 +386,8 @@ export class StellarRwaGenerator implements Generator<RWAConfig> {
         fileCount: getFileCount(files),
         configHash,
       },
+      // INV-2 / D14: a conditional spread, never `provenance: undefined`.
+      ...(provenance === undefined ? {} : { provenance }),
     };
   }
 }

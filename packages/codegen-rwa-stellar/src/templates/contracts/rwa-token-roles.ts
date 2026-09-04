@@ -1,11 +1,37 @@
+import type { ConfigPath, Observed } from '@openzeppelin/codegen-core';
+import { omitExactConfigPath } from '@openzeppelin/codegen-core';
 import {
+  findRoleWithMembers,
   getAdditionalRoleAssignments,
-  getResolvedRoleAssignments,
 } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { roleSymbolToRustIdentifier } from '../../access-control';
 import { generateRoleSymbol } from '../../constants';
+
+/**
+ * Exact list-root path left by walking `config.accessControl.roles`.
+ * Used only for hazard-5 omit on role-guard scans — never a matching demotion.
+ */
+export const ACCESS_CONTROL_ROLES: ConfigPath = 'accessControl.roles';
+
+/**
+ * Drop the roles-list root from an Observed produced by a name-match role-guard
+ * scan. Value unchanged. Paths cleaned with `omitExactConfigPath` (exact only).
+ *
+ * Use for pause / method / document-manager guards. Do not use for
+ * `getAdditionalRoles` or other whole-list reads.
+ *
+ * @see docs/codegen-core/provenance/attribution-hazards.md — hazard 5 (list scan)
+ */
+export function withoutRolesListRoot<T>(observed: Observed<T>): Observed<T> {
+  // INV-1 / INV-2 / INV-3 / INV-6 / INV-14 / INV-15 / INV-22: delegate to
+  // omitExactConfigPath; value by Object.is; no I/O; no module state.
+  return {
+    value: observed.value,
+    paths: omitExactConfigPath(observed.paths, ACCESS_CONTROL_ROLES),
+  };
+}
 
 const roleResolutionOptions = { generateRoleSymbol };
 
@@ -92,13 +118,21 @@ function normalizeRoleName(name: string): string {
 
 /**
  * Resolve the configured symbol for one semantic role when that role is assigned.
+ *
+ * The alias test reads names only, so a method guard that matches no configured
+ * role depends on the role names and nothing else. Resolving the whole assignment
+ * list here instead would read every role's symbol and every member address, and
+ * attribute them to a guard those values cannot move — the descriptor over-read
+ * of `docs/codegen-core/provenance/attribution-hazards.md` §3.
  */
 function getConfiguredRoleSymbol(
   config: RWAConfig,
   aliases: readonly string[]
 ): string | undefined {
-  return getResolvedRoleAssignments(config, roleResolutionOptions).find((role) =>
-    aliases.includes(normalizeRoleName(role.name))
+  return findRoleWithMembers(
+    config,
+    (role) => aliases.includes(normalizeRoleName(role.name)),
+    roleResolutionOptions
   )?.symbol;
 }
 

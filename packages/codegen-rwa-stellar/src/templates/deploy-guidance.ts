@@ -33,8 +33,29 @@ export interface DeployGuidance {
   demoMintComplianceIssues: DemoMintComplianceIssueSummary[];
 }
 
-/** Resolve deployment signer requirements from the project config. */
-export function getDeployGuidance(config: RWAConfig): DeployGuidance {
+/**
+ * The signer-facing half of `DeployGuidance`: who deploys, and where.
+ *
+ * Separated from the demo-mint half because most callers want only this, and
+ * the whole descriptor costs far more than it looks. Computing
+ * `demoAutoMintEligible` and `demoMintComplianceIssues` reads
+ * `token.initialSupply` and every selected module's config — so a caller that
+ * wanted an admin address got those as dependencies too, and the README's
+ * 78-line deploy section claimed an initial supply and a module's allow-list
+ * that cannot move a line inside it. See
+ * `docs/codegen-core/provenance/attribution-hazards.md` §3.
+ */
+export type DeploySignerGuidance = Pick<
+  DeployGuidance,
+  | 'adminAddress'
+  | 'managerAddress'
+  | 'adminEqualsManager'
+  | 'networkDisplayName'
+  | 'networkIsTestnet'
+>;
+
+/** Resolve deployment signer requirements, reading nothing about demo minting. */
+export function getDeploySignerGuidance(config: RWAConfig): DeploySignerGuidance {
   const deployment = resolveStellarDeploymentTarget(config.deployment.target);
   const adminAddress = getAdminAddress(config);
   const managerAddress = getManagerDeploymentAddress(config);
@@ -45,6 +66,13 @@ export function getDeployGuidance(config: RWAConfig): DeployGuidance {
     adminEqualsManager: adminAddress === managerAddress,
     networkDisplayName: deployment.displayName,
     networkIsTestnet: deployment.networkFlag.includes('testnet'),
+  };
+}
+
+/** Resolve deployment signer requirements from the project config. */
+export function getDeployGuidance(config: RWAConfig): DeployGuidance {
+  return {
+    ...getDeploySignerGuidance(config),
     demoAutoMintEligible: isDemoAutoMintEligible(config),
     demoMintComplianceIssues: isDemoAutoMintEligible(config)
       ? getDemoMintCompliancePreflightIssues(config).map(
@@ -122,7 +150,10 @@ export function getConfiguredAccessControlRows(config: RWAConfig): Array<{
   deploySignerEnvVar: string;
   note?: string;
 }> {
-  const guidance = getDeployGuidance(config);
+  // Signer half only: this table renders addresses, and reading the demo-mint
+  // half here would make it depend on the initial supply and every module's
+  // config, neither of which appears in a single row.
+  const guidance = getDeploySignerGuidance(config);
   const rows: Array<{
     role: string;
     address: string;

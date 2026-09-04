@@ -43,10 +43,34 @@ jobs:
       - name: Build all packages
         run: pnpm build
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Type check all packages
         run: pnpm typecheck
+
+      - name: Lint all packages
+        # Formatting and the provenance rules (`provenance/no-early-config-read`,
+        # the SF-2 compute-early/emit-late guard) are enforced here, not only by
+        # the pre-commit hook a contributor can skip.
+        run: pnpm lint
+
+      - name: Package tests
+        # The headless packages have no kit dependency, so their suites — the
+        # golden byte-identity guard, the provenance suites, the config schema —
+        # are a hard gate. Kept separate from `Test` below on purpose.
+        run: pnpm -r --filter '!@openzeppelin/rwa-wizard-app' test
+
+      # Three invocations, each expected to exit 0: the checks themselves; the
+      # self-check, which forces the column visible at every width and requires
+      # V1 and V3 to FAIL, each for its own named reason; and a negative run
+      # against a page that never rendered the drawer, which requires the probe
+      # to fail closed naming the missing precondition. The last two exist
+      # because a guard that has never been watched failing is not evidence.
+      - name: Drawer layout probe
+        run: |
+          node apps/rwa-wizard/scripts/layout-probe.mjs
+          PROBE_SELF_CHECK=1 node apps/rwa-wizard/scripts/layout-probe.mjs
+          PROBE_NEGATIVE=1 node apps/rwa-wizard/scripts/layout-probe.mjs
 
       - name: Test
         run: pnpm test

@@ -1,0 +1,2 @@
+# Golden outputs are byte-exact fixtures; no EOL conversion
+**/__goldens__/** -text

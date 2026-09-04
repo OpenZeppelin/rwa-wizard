@@ -2,20 +2,27 @@ import { Loader2 } from 'lucide-react';
 import type { ReactElement } from 'react';
 
 import type { FileTree } from '@openzeppelin/codegen-core';
+import type { RWAConfig } from '@openzeppelin/rwa-config';
+import type { CodeViewReveal } from '@openzeppelin/ui-components/code-view';
 
 import { useCopy } from '../../../app/providers/useCopy';
 import type {
   StructuralUpstreamImportLinks,
   StructuralUpstreamSourceRevision,
 } from '../../../types/wizard';
-import { CODE_PREVIEW_TREE_PANE_WIDTH_PX } from '../codePreviewLayout';
+import type { RevealInPreview } from '../CodePreviewRevealContext';
+import type { CodePreviewDockPosition } from '../dockPosition';
 import type { CodePreviewPhase } from '../hooks/useCodePreview';
+import type { CodePreviewProvenance } from '../provenanceState';
 import { PreviewCodePane } from './PreviewCodePane';
 import { PreviewContentErrorBoundary } from './PreviewContentErrorBoundary';
 import { PreviewFileTreePane } from './PreviewFileTreePane';
 import { PreviewGenerateError } from './PreviewGenerateError';
+import { PreviewImpactColumn } from './PreviewImpactColumn';
 
 import '../code-preview.css';
+
+const TREE_PANE_WIDTH_PX = 280;
 
 export function PreviewDrawerBody(props: {
   phase: CodePreviewPhase;
@@ -30,6 +37,24 @@ export function PreviewDrawerBody(props: {
   importLinks: StructuralUpstreamImportLinks | null;
   /** Show the file tree pane. Default true. */
   treeVisible?: boolean;
+  /** Pending reveal for the selected file; threaded to the code pane untouched. */
+  reveal?: CodeViewReveal;
+  /** The live draft, for resolving which config path the focused control writes. */
+  config: RWAConfig;
+  /** Provenance for the tree on screen; `null` when there is no preview to ask about. */
+  provenance: CodePreviewProvenance | null;
+  /** Reveal callback; `null` disables activation in the impact column. */
+  onReveal: RevealInPreview | null;
+  /**
+   * Whether the preview sheet is open. Threaded to the impact column so
+   * auto-select runs only while the drawer is visible (SF-21 AS-2).
+   */
+  drawerOpen: boolean;
+  /**
+   * Current dock edge. Stamped as `data-dock` so CSS can stack the impact band
+   * above tree+code on left/right without importing dock under `impact/`.
+   */
+  dockPosition: CodePreviewDockPosition;
 }): ReactElement {
   const {
     phase,
@@ -41,6 +66,12 @@ export function PreviewDrawerBody(props: {
     sourceRevision,
     importLinks,
     treeVisible = true,
+    reveal,
+    config,
+    provenance,
+    onReveal,
+    drawerOpen,
+    dockPosition,
   } = props;
 
   const copy = useCopy();
@@ -63,11 +94,26 @@ export function PreviewDrawerBody(props: {
           resetKey={boundaryResetKey}
           message={copy.notice('code-preview.render-failed').description}
         >
-          <div className="rwa-code-preview flex min-h-0 flex-1 overflow-hidden rounded-md">
+          {/*
+            `data-tree-visible` is the ENTIRE seam between React's knowledge and
+            the container query, which matches on the literal string "true".
+            React stringifies `data-*` values including `false`, so this renders
+            "true" / "false" and never an empty string or an absent attribute.
+            The idiomatic boolean-attribute refactor (`treeVisible ? '' :
+            undefined`) is correct for a presence-tested attribute and wrong
+            here: the selector stops matching, the column is shown at every
+            width, and at 900x700 with the tree open the code pane silently
+            becomes 328px with nothing throwing and nothing overflowing. INV-15.
+          */}
+          <div
+            className="rwa-code-preview flex min-h-0 flex-1 overflow-hidden rounded-md"
+            data-tree-visible={treeVisible}
+            data-dock={dockPosition}
+          >
             {/* Kept mounted (preserves expansion state) and animated on width. */}
             <div
-              className="shrink-0 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none"
-              style={{ width: treeVisible ? CODE_PREVIEW_TREE_PANE_WIDTH_PX : 0 }}
+              className="rwa-code-preview-tree-slot shrink-0 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none"
+              style={{ width: treeVisible ? TREE_PANE_WIDTH_PX : 0 }}
               aria-hidden={!treeVisible}
               inert={!treeVisible}
             >
@@ -83,6 +129,21 @@ export function PreviewDrawerBody(props: {
               selectedPath={selectedPath}
               sourceRevision={sourceRevision}
               importLinks={importLinks}
+              reveal={reveal}
+            />
+            {/*
+              Mounted UNCONDITIONALLY — no `treeVisible` test, no width test, no
+              row-count test. Whether it is visible is decided by CSS alone.
+              Matching the container query in JS would state the rule twice; the
+              two would disagree above the threshold, the column would disappear
+              at 1280 for every user with the tree shown, and no test in the unit
+              suite could see it. INV-1.
+            */}
+            <PreviewImpactColumn
+              config={config}
+              provenance={provenance}
+              onReveal={onReveal}
+              drawerOpen={drawerOpen}
             />
           </div>
         </PreviewContentErrorBoundary>

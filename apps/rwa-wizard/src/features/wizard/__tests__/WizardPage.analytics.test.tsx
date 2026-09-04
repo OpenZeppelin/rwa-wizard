@@ -42,6 +42,9 @@ function buildSession(overrides: SessionOverrides = {}) {
             networkId: 'stellar-testnet',
           },
         },
+        compliance: {
+          modules: [],
+        },
       },
     },
     runtime: {
@@ -113,9 +116,12 @@ vi.mock('../../code-preview', () => ({
     showTrigger: false,
     triggerProps: {},
     revealInPreview: null,
+    provenance: null,
   }),
   CodePreviewTrigger: () => null,
   CodePreviewDrawer: () => null,
+  CodePreviewRevealProvider: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  CodePreviewProvenanceProvider: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock('../../../app/providers/CopyProvider', () => ({
   CopyProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,

@@ -1,5 +1,6 @@
 import countriesModule from 'i18n-iso-countries';
 
+import { shellSingleQuoteLiteral } from '../../templates/scripts/deploy-sh-helpers';
 import type {
   ComplianceModuleDescriptor,
   ComplianceModuleSelection,
@@ -124,9 +125,14 @@ export function serializeNumericArray(values: readonly string[]): string {
 
 /**
  * Serialize string values as a Stellar CLI vector literal.
+ *
+ * The outer single quotes are shell syntax; escape any `'` inside the JSON
+ * vector with {@link shellSingleQuoteLiteral} so a user-controlled address
+ * cannot break out of the quoted argument in generated `deploy.sh`.
  */
 export function serializeStringArray(values: readonly string[]): string {
-  return `'[${values.map((value) => JSON.stringify(value)).join(', ')}]'`;
+  const vector = `[${values.map((value) => JSON.stringify(value)).join(', ')}]`;
+  return `'${shellSingleQuoteLiteral(vector)}'`;
 }
 
 /**

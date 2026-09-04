@@ -12,6 +12,7 @@ import { useCodePreview } from './hooks/useCodePreview';
 
 import { createTestCodegenService } from '../../services/codegen/testCodegenService';
 import type { RwaCodegenService } from '../../services/codegen/types';
+import { makeConfig } from '../../test/fixtures/wizardFixtures';
 import {
   defaultPreviewHookOptions,
   waitForPreviewReady,
@@ -45,8 +46,10 @@ describe('code-preview drawer composition', () => {
       <CodePreviewDrawer
         open
         onOpenChange={() => {}}
-        height={480}
-        onHeightChange={() => {}}
+        dockPosition="bottom"
+        size={480}
+        maxSize={900}
+        onSizeChange={() => {}}
         sheetId={result.current.sheetId}
         phase={ready}
         selectedPath={result.current.selectedPath}
@@ -57,6 +60,9 @@ describe('code-preview drawer composition', () => {
         errorMessages={undefined}
         sourceRevision={null}
         importLinks={null}
+        config={makeConfig()}
+        provenance={null}
+        onReveal={null}
       />
     );
 
@@ -87,8 +93,10 @@ describe('code-preview drawer composition', () => {
       <CodePreviewDrawer
         open
         onOpenChange={() => {}}
-        height={480}
-        onHeightChange={() => {}}
+        dockPosition="bottom"
+        size={480}
+        maxSize={900}
+        onSizeChange={() => {}}
         sheetId={result.current.sheetId}
         phase={result.current.phase}
         selectedPath={null}
@@ -99,6 +107,9 @@ describe('code-preview drawer composition', () => {
         errorMessages={result.current.phase.messages}
         sourceRevision={null}
         importLinks={null}
+        config={makeConfig()}
+        provenance={null}
+        onReveal={null}
       />
     );
 
@@ -142,6 +153,11 @@ describe('code-preview drawer composition', () => {
         boundaryResetKey="ready"
         sourceRevision={null}
         importLinks={null}
+        config={makeConfig()}
+        provenance={null}
+        onReveal={null}
+        drawerOpen
+        dockPosition="bottom"
       />
     );
 
@@ -193,6 +209,7 @@ describe('code-preview drawer composition', () => {
             configHash: 'hash',
             substitutedKeys: [],
             changedPaths: [],
+            generateKey: 'hash|identity:0|service:test',
           }}
           selectedPath="README.md"
           onSelectedPathChange={() => {}}
@@ -202,6 +219,11 @@ describe('code-preview drawer composition', () => {
           boundaryResetKey="throw-case"
           sourceRevision={null}
           importLinks={null}
+          config={makeConfig()}
+          provenance={null}
+          onReveal={null}
+          drawerOpen
+          dockPosition="bottom"
         />
       </div>
     );

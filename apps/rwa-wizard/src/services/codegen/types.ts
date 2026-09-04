@@ -1,4 +1,4 @@
-import type { CodegenInfoBlurb, FileTree } from '@openzeppelin/codegen-core';
+import type { CodegenInfoBlurb, FileTree, ProvenanceResult } from '@openzeppelin/codegen-core';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import type {
@@ -21,12 +21,29 @@ import type {
  */
 export interface GeneratedFileTreeArtifact {
   readonly files: FileTree;
+  /**
+   * Present iff `recordProvenance` was requested AND the package's result
+   * carried a readable `provenance` field. Absence is key-absence (never
+   * `undefined`-valued) and is a plain absence: the package does not record,
+   * or was not asked. Entries the loader could not read have been dropped
+   * (drop-per-entry, one warning per generation); keys are project-relative
+   * paths from the same result object as `files`, so the two always describe
+   * one generation. SF-5 INV-1.
+   */
+  readonly provenance?: ProvenanceResult;
 }
 
 /** Shared options bag for `generateZip` and `generateFileTree` (INV-3). */
 export interface GenerateArtifactOptions {
   readonly onStatus?: (status: GenerationStatus) => void;
   readonly includeIdentitySupport?: boolean;
+  /**
+   * Ask the package to record which config paths each file read. Forwarded
+   * verbatim as `GenerateOptions.recordProvenance`. Honoured only by
+   * `generateFileTree`; `generateZip` ignores it (nothing consumes provenance
+   * on the download path). Default `false`. SF-5 INV-2 / INV-4.
+   */
+  readonly recordProvenance?: boolean;
 }
 
 /** Normalized validation result for UI (field paths, codes, messages). */

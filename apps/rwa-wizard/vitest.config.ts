@@ -25,6 +25,21 @@ export default defineConfig(async ({ mode }) =>
             // Ensures `vi.mock('@openzeppelin/ui-utils')` applies to the same module instance
             // `@openzeppelin/ui-react` resolves for `AnalyticsProvider` (avoids split bundles in tests).
             '@openzeppelin/ui-react',
+            // Required by SF-12's step-control enumeration (INV-1), which renders
+            // the real step tree: `ResolvedAddressDisplay` reaches `ui-renderer`,
+            // which imports a `.css` file Node cannot load while the dep stays
+            // externalized. Inlining lets Vite transform it.
+            //
+            // Do NOT "tidy" this by mocking `ui-renderer` instead, the way
+            // `AliasLabelBridge.test.tsx` does. The enumeration's whole claim is
+            // that it measures the wizard's *actual* focusable-control surface
+            // and partitions it exhaustively; mocking the renderer deletes
+            // controls from that population, so the partition would balance over
+            // a surface the users never see. A test that mocks away part of its
+            // own population is the vacuous-pass shape this initiative has hit
+            // repeatedly — see INV-1's pinned per-cell totals, which exist for
+            // exactly this reason.
+            '@openzeppelin/ui-renderer',
             '@openzeppelin/ui-utils',
             '@uiw/react-textarea-code-editor',
             '@openzeppelin/codegen-rwa-stellar',

@@ -20,6 +20,129 @@
   specificity.
 */
 
+/*
+  Sheet chrome (Revision 16 / overlay docks).
+
+  Bottom / top: keep the kit's natural column stack so the horizontal drag
+  separator (`min-h-11` grip) stays visible above/below the header. Do not
+  overlay the separator under the header — that hid the resize indicator.
+
+  Left / right: kit flex already puts the vertical separator on the inner edge
+  (INV-28). Header chrome is a 2-row grid — substitutions notice on its own
+  row; tools + kit Close share the second row and align vertically.
+
+  Size animation (width/height) stays with the kit BottomSheet transitions.
+  Maximize feedback loops are guarded in `useCodePreview.setSize` (ignore
+  stored-size echoes while maximized), not by stripping size transitions.
+
+  Do not override the sheet region's `bg-background` — light chrome is
+  intentional; only `.rwa-code-preview` (inner panes) is Atom One Dark.
+*/
+
+/* Match kit Close hit/hover area to PreviewDrawerTools (`size-9`, not size-11). */
+[data-slot='bottom-sheet'].rwa-code-preview-sheet [data-slot='bottom-sheet-close'] {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+
+/*
+  Bottom / top: kit chrome row is `items-start`, so Close parks at the top while
+  tools sit lower inside the header's `py-1`. Force one vertical center line.
+*/
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='bottom']
+  > [data-slot='bottom-sheet-chrome']
+  > div:first-child,
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='top']
+  > [data-slot='bottom-sheet-chrome']
+  > div:first-child {
+  align-items: center;
+}
+
+/* Side docks: notice full-width on row 1; tools + close on row 2, aligned. */
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='left']
+  > [data-slot='bottom-sheet-chrome']
+  > div:first-child,
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='right']
+  > [data-slot='bottom-sheet-chrome']
+  > div:first-child {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.5rem;
+}
+
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='left']
+  > [data-slot='bottom-sheet-chrome']
+  > div:first-child
+  > [data-slot='bottom-sheet-header'],
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='right']
+  > [data-slot='bottom-sheet-chrome']
+  > div:first-child
+  > [data-slot='bottom-sheet-header'],
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='left'] .rwa-code-preview-sheet-header,
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='right']
+  .rwa-code-preview-sheet-header {
+  display: contents;
+}
+
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='left'] .rwa-code-preview-sheet-notice,
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='right']
+  .rwa-code-preview-sheet-notice {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  min-width: 0;
+  /* Keep banner off the sheet's top edge (kit chrome bar is flush). */
+  margin-top: 0.5rem;
+}
+
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='left']
+  .rwa-code-preview-sheet-header-spacer,
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='right']
+  .rwa-code-preview-sheet-header-spacer {
+  display: none;
+}
+
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='left']
+  .rwa-code-preview-sheet-header
+  > [role='group'],
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='right']
+  .rwa-code-preview-sheet-header
+  > [role='group'] {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: end;
+}
+
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='left']
+  > [data-slot='bottom-sheet-chrome']
+  > div:first-child
+  > [data-slot='bottom-sheet-close'],
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='right']
+  > [data-slot='bottom-sheet-chrome']
+  > div:first-child
+  > [data-slot='bottom-sheet-close'] {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+}
+
+/* Side docks: separator stays on the inner edge via kit flex (INV-28). */
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='left']
+  > [data-slot='bottom-sheet-separator'],
+[data-slot='bottom-sheet'].rwa-code-preview-sheet[data-side='right']
+  > [data-slot='bottom-sheet-separator'] {
+  z-index: 0;
+}
+
 .rwa-code-preview {
   --rwa-code-preview-font:
     ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
@@ -30,10 +153,55 @@
   --rwa-code-preview-selected-bg: #2c313a;
   --rwa-code-preview-ui-border: #181a1f;
   --rwa-code-preview-accent: #528bff;
+  /*
+    Shared vertical rhythm for sidebar rails (file tree + impact column).
+    Matches @pierre/trees default density (itemHeight 30px / --trees-item-height).
+  */
+  --rwa-code-preview-sidebar-item-height: 30px;
+  --rwa-code-preview-sidebar-row-padding: calc(
+    (var(--rwa-code-preview-sidebar-item-height) - 1rem) / 2
+  );
+  --rwa-code-preview-sidebar-field-padding: calc(
+    (var(--rwa-code-preview-sidebar-item-height) - 1.25rem) / 2
+  );
+  /*
+    Atom One Dark's own gutter foreground, which this copy had no use for until
+    the kit's `CodeView` gained line numbers. Themed here because unset the
+    gutter inherits the kit's `--muted-foreground`, which is the light UI's.
+
+    NOT `--rwa-code-preview-fg-dim`, and the difference is measured rather than
+    aesthetic: the dim token sits at 2.32:1 on the editor ground, which clears
+    neither the 4.5:1 small-text bar nor the 3:1 non-text one, and line numbers
+    are small text a reader is expected to actually read. #7f848e is 3.73:1 —
+    still the theme's grey, one step out of the hole. The shared dim token is
+    untouched; this is a new use, not a redefinition.
+  */
+  --rwa-code-preview-gutter: #7f848e;
 
   color-scheme: dark;
   background: var(--rwa-code-preview-editor-bg);
   color: var(--rwa-code-preview-fg);
+
+  /*
+    The kit's `--muted` GROUND, remapped for this one dark surface.
+
+    It is the light UI's near-white (`oklch(0.97 0 0)`), and any kit component
+    rendered inside the drawer paints with it — `EmptyState`'s icon chip is a
+    white disc on a #21252b rail, and it is the brightest thing in the
+    composition. Remapping the token, rather than reaching into the kit's markup
+    with a `.rounded-full` selector, fixes every such component at once and
+    couples to nothing structural. The value is the existing selected-row
+    ground, so this adds no colour to the palette.
+
+    `--muted-foreground` is deliberately NOT remapped, and that is the whole
+    reason this pair is split. The kit's value (`oklch(0.556 0 0)`) sits at
+    roughly 3.8:1 on this ground; `--rwa-code-preview-fg-dim` sits at 2.55:1.
+    Pulling the text down to match the chrome would have made the resting
+    states — the column's only explanation of itself — measurably harder to
+    read, on exactly the axis this round was asked to relieve.
+  */
+  --muted: var(--rwa-code-preview-selected-bg);
+  --color-muted: var(--rwa-code-preview-selected-bg);
 }
 
 /* Empty state ("Select a file…") sits on the editor background. */
@@ -44,16 +212,91 @@
 
 /* ---- Code pane ------------------------------------------------------------ */
 
+/*
+  Pane chrome around `CodeView` (SF-20). The kit pre is `overflow-auto` and its
+  sticky gutter sits at the tree/code join. The inspected-chip ring is untouched.
+*/
+.rwa-code-preview-code-pane {
+  background: var(--rwa-code-preview-editor-bg);
+  overflow: hidden;
+  /*
+    Separator on the code side of the join (SF-20 / SC-017) — not on the tree —
+    so the tree's measured 280px rail (layout-probe V3) is unchanged. Matches
+    the impact column's `border-left` token.
+  */
+  border-left: 1px solid var(--rwa-code-preview-ui-border);
+}
+
 .rwa-code-preview-code {
   background: var(--rwa-code-preview-editor-bg);
   color: var(--rwa-code-preview-fg);
   border-color: transparent;
+  /*
+    Kit ships `border` + `p-3`. A transparent left border and the left pad sit
+    *left of* the sticky gutter's in-flow box; under horizontal scroll the
+    `<code>` sibling paints glyphs into that strip (gap-ring-still-transparent).
+    Zero them so the gutter is the leftmost chrome. Numbers keep their inset via
+    the gutter's own padding-left below.
+  */
+  border-left-width: 0;
+  padding-left: 0;
   border-radius: 0;
+  /* Stacking context so the gutter's z-index beats scrolling source paint. */
+  isolation: isolate;
+}
+
+/*
+  Kit gutter ships `bg-inherit` + `sticky left-0` with no z-index. On this
+  surface inherit was not enough (pass 1), and a solid background-color alone
+  was still not enough (pass 2): scrolled `<code>` painted *over* the gutter's
+  left edge, so line-start glyphs showed between the tree and the digits.
+  Paint the editor ground, raise the gutter above the source, and reclaim the
+  kit's left inset on the number column (SF-20 / SC-017).
+*/
+.rwa-code-preview-code [data-code-view-gutter] {
+  background: var(--rwa-code-preview-editor-bg);
+  background-color: var(--rwa-code-preview-editor-bg);
+  padding-left: 0.75rem;
+  z-index: 1;
+  /* Subpixel hairline under the pane's border-left. */
+  box-shadow: -1px 0 0 0 var(--rwa-code-preview-editor-bg);
 }
 
 .rwa-code-preview-code,
-.rwa-code-preview-code .hljs {
+.rwa-code-preview-code .hljs,
+.rwa-code-preview-code code {
   font-family: var(--rwa-code-preview-font);
+  /*
+    12px, down from the kit's 14px, and the line box scaled with it (14/22.75 →
+    12/19.2, the same 1.6 ratio) so the reveal's scroll arithmetic sees a
+    proportional change rather than a squeezed one.
+
+    Measured against the column beside it, which sets its own text at 11px: at
+    14px the code overpowered a 260px rail of 11px labels; at 12px the pane is
+    still plainly the dominant surface and the two read as one composition. It
+    also buys back roughly two characters of width per line — worth having, with
+    a line-number gutter arriving in the kit's `CodeView`.
+  */
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/*
+  The kit's line-number gutter, themed for this surface.
+
+  Set unconditionally: the property is inert until `CodeView` is given
+  `showLineNumbers`, and having the theme ready is what keeps the gutter from
+  appearing in the kit's light-UI grey on the day the prop is turned on.
+
+  The pane's `<code>` is deliberately NOT given a wrapping rule anywhere in this
+  file. The gutter is a sticky sibling column aligned to unwrapped line boxes,
+  and it does not survive soft wrap — a 400-char line under `pre-wrap` occupies
+  ten line boxes against its one gutter row. `CodeView` ships `whitespace-pre`
+  and exposes no wrapping prop, so the only way the two could disagree is a
+  consumer stylesheet forcing wrap. This is that consumer stylesheet.
+*/
+.rwa-code-preview-code {
+  --code-view-line-number-color: var(--rwa-code-preview-gutter);
 }
 
 /* Stellar import hyperlinks (SF-11) render as underlined anchors; use Atom's link hue. */
@@ -62,6 +305,15 @@
 }
 
 /* ---- File tree ------------------------------------------------------------ */
+
+/*
+  Width-animating slot around the kit tree (SF-20). Fills with the sidebar
+  ground so a collapsing width never opens a transparent hole at the join;
+  overflow stays clipped so the 280px tree cannot paint outside the slot.
+*/
+.rwa-code-preview-tree-slot {
+  background: var(--rwa-code-preview-sidebar-bg);
+}
 
 /*
   The kit `FileTree` wraps `@pierre/trees`, which renders in a shadow root and is
@@ -82,14 +334,386 @@
   color: var(--rwa-code-preview-fg);
   /* Breathing room so the first and last rows do not touch the pane edges. */
   padding-block: 0.375rem;
+  /*
+    Keep the rail above any sticky-gutter bleed from the pane beside it (SF-20).
+    The join separator lives on `.rwa-code-preview-code-pane` so this rail's
+    measured width stays 280px. The chip ring is not involved.
+  */
+  position: relative;
+  z-index: 1;
 }
 
-/* ---- Selected-file status chip (bottom-right of the code pane, VS Code style) ---- */
+/* ---- Selected-file status bar (below the code pane, VS Code style) ---- */
 
 .rwa-code-preview-status {
-  background: color-mix(in srgb, var(--rwa-code-preview-sidebar-bg) 92%, transparent);
+  background: var(--rwa-code-preview-sidebar-bg);
+  color: var(--rwa-code-preview-fg-dim);
+  font-family: var(--rwa-code-preview-font);
+  border-top: 1px solid var(--rwa-code-preview-ui-border);
+}
+
+/* ---- Three-region row: the width budget --------------------------------- */
+
+/*
+  The one responsive rule in this app, and the only piece of layout it decides.
+
+    threshold = tree (280) + column (260) + code-pane floor (586) = 1126px
+
+  586px is the code pane's measured width at 900x700 in the shipped drawer --
+  the narrowest it is usable at today. The threshold is that floor plus the two
+  rails, not a chosen breakpoint, so if any of the three moves the threshold
+  moves with it. `scripts/layout-probe.mjs` (V3) asserts that identity against
+  the MEASURED rail widths read off the page, so this comment cannot drift from
+  the number, and the literal below appears in no assertion.
+
+  The query is on the CONTAINER, not the viewport: `.rwa-code-preview` is inset
+  by the drawer body's `px-4`, so container width is viewport - 32. Written
+  against the equivalent viewport figure (1158) this rule would fire 32px early,
+  showing the column where the code pane is 554px -- below the floor the whole
+  design exists to defend.
+
+  The selector looks wrong at a glance and is not: `@container` rules match
+  against the subject's nearest ancestor container, and the subject here is
+  `.rwa-code-preview-impact`, whose nearest named container is
+  `.rwa-code-preview` itself. The compound appearing as an ancestor is fine.
+*/
+.rwa-code-preview {
+  container-type: inline-size;
+  container-name: rwa-preview;
+}
+
+@container rwa-preview (width < 1126px) {
+  /*
+    The column yields to the file tree -- never the other way round. Nothing the
+    user already had is taken by this rule; the only region it can remove is the
+    one this sub-feature adds, and it leaves either because the user pressed the
+    tree toggle or because the user resized the window.
+
+    `display: none`, not width 0: it must also leave the tab order and the
+    accessibility tree, and CSS cannot set `inert`. A `visibility: hidden` or
+    width-0 implementation would leave a keyboard user tabbing through 26
+    invisible buttons announcing line ranges they cannot see.
+
+    Left/right docks stack the impact band above tree+code, so horizontal
+    competition does not apply — keep the band visible on those edges.
+  */
+  .rwa-code-preview[data-tree-visible='true']:not([data-dock='left']):not([data-dock='right'])
+    .rwa-code-preview-impact {
+    display: none;
+  }
+}
+
+/*
+  Left / right docks: impact as a full-width band on top; tree + code side by
+  side below. Bottom / top keep the three-region horizontal row (default flex).
+*/
+.rwa-code-preview[data-dock='left'],
+.rwa-code-preview[data-dock='right'] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.rwa-code-preview[data-dock='left'] .rwa-code-preview-impact,
+.rwa-code-preview[data-dock='right'] .rwa-code-preview-impact {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: auto;
+  /* Fixed px — percentage max-height fights auto row sizing and leaves a gap. */
+  max-height: 240px;
+  align-self: start;
+  border-left: none;
+  border-bottom: 1px solid var(--rwa-code-preview-ui-border);
+}
+
+.rwa-code-preview[data-dock='left'] .rwa-code-preview-tree-slot,
+.rwa-code-preview[data-dock='right'] .rwa-code-preview-tree-slot {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 0;
+}
+
+.rwa-code-preview[data-dock='left'] .rwa-code-preview-code-pane,
+.rwa-code-preview[data-dock='right'] .rwa-code-preview-code-pane,
+.rwa-code-preview[data-dock='left'] .rwa-code-preview-empty,
+.rwa-code-preview[data-dock='right'] .rwa-code-preview-empty {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 0;
+}
+
+/* ---- Field-impact column ------------------------------------------------ */
+
+.rwa-code-preview-impact {
+  width: 260px;
+  background: var(--rwa-code-preview-sidebar-bg);
+  color: var(--rwa-code-preview-fg);
+  border-left: 1px solid var(--rwa-code-preview-ui-border);
+}
+
+/*
+  The resting states, sized for a 260px rail.
+
+  `EmptyState` is the kit's, and it is kept rather than hand-rolled because it
+  requires BOTH a title and a description — which is what makes "no state ships
+  with half its copy" a compile error rather than a review note (INV-36). What
+  it is not is sized for this rail: its heading lands at 16px beside a column
+  whose own text is 11px, and reads as a different application.
+
+  Selectors are `h3` / `p` — the semantic elements, not the kit's utility class
+  names — so this survives a restyle upstream and breaks only on a change of
+  markup, which is the coupling worth having.
+*/
+.rwa-code-preview-impact-resting h3 {
+  font-size: 12px;
+  line-height: 1rem;
+}
+
+.rwa-code-preview-impact-resting p {
+  font-size: 11px;
+  line-height: 1rem;
+}
+
+/*
+  The column is a tab stop (INV-42), so landing on it must be visible — a
+  reachable control with no focus indicator trades one accessibility failure for
+  another. `--ring` is the light UI's token and would be near-invisible against
+  the Atom One Dark ground, so the accent is used instead, inset so it is not
+  clipped by the row overflow: hidden.
+*/
+.rwa-code-preview-impact:focus-visible {
+  outline: 2px solid var(--rwa-code-preview-accent);
+  outline-offset: -2px;
+}
+
+/*
+  Sidebar row rhythm — one token, tree-default height. Impact rows, the field
+  header, file headings, and the secondary band share the same min hit/target
+  height so the rail reads at the same density as the file tree beside it.
+*/
+.rwa-code-preview-impact-field,
+.rwa-code-preview-impact-row,
+.rwa-code-preview-impact-secondary {
+  min-height: var(--rwa-code-preview-sidebar-item-height);
+}
+
+.rwa-code-preview-impact-field {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  padding-inline: 0.5rem;
+  padding-block: var(--rwa-code-preview-sidebar-field-padding);
+  font-size: 11px;
+  line-height: 1.25rem;
+}
+
+.rwa-code-preview-impact-subject {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Opaque, or scrolled rows show through the pinned heading. */
+.rwa-code-preview-impact-file {
+  background: var(--rwa-code-preview-sidebar-bg);
+  color: var(--rwa-code-preview-fg-dim);
+  font-family: var(--rwa-code-preview-font);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.125rem;
+  min-height: var(--rwa-code-preview-sidebar-item-height);
+  padding-inline: 0.5rem;
+  padding-block: 0.375rem;
+}
+
+.rwa-code-preview-impact-dir {
+  display: flex;
+  font-size: 10px;
+  line-height: 0.875rem;
+}
+
+.rwa-code-preview-impact-leaf {
+  font-size: 11px;
+  line-height: 1rem;
+}
+
+.rwa-code-preview-impact-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-inline: 0.5rem;
+  padding-block: var(--rwa-code-preview-sidebar-row-padding);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1rem;
+}
+
+.rwa-code-preview-impact-field,
+.rwa-code-preview-impact-dir,
+.rwa-code-preview-impact-secondary {
+  color: var(--rwa-code-preview-fg-dim);
+  font-family: var(--rwa-code-preview-font);
+}
+
+/*
+  The header glyph. Dim, like the context beside it — and it replaced two
+  words at the same tone, so the column leans on the dim token for one small
+  square instead of ~70px of small-caps.
+*/
+.rwa-code-preview-impact-caption {
+  color: var(--rwa-code-preview-fg-dim);
+}
+
+/*
+  ---- Shrink priority ----------------------------------------------------
+
+  ONE rule, used in both two-part strings this column renders: the header
+  `context · field`, and the file heading `head` + `/tail`. The part that
+  merely locates the answer yields its width first; the part that IS the answer
+  yields only once the first is down to an ellipsis. Both halves carry `min-w-0`
+  and `truncate`, so neither can overflow the 260px rail — the previous rule
+  gave the answer `flex-shrink: 0`, which does not degrade under pressure, it
+  overflows.
+
+  999 rather than a tuned ratio: flex distributes shrinkage in proportion to
+  these numbers, and the intent is not "mostly the first" but "the first,
+  entirely, before the second loses a character". A three-order-of-magnitude gap
+  says that plainly and needs no arithmetic to read.
+*/
+.rwa-code-preview-impact-context,
+.rwa-code-preview-impact-dir-head {
+  flex-shrink: 999;
+}
+
+.rwa-code-preview-impact-field-name,
+.rwa-code-preview-impact-dir-tail {
+  flex-shrink: 1;
+}
+
+/*
+  `white-space: pre`, not truncate nowrap, and it is not a nicety: the
+  context string carries its separator as trailing text (` · `), and a flex item
+  trims trailing whitespace at the end of its line — so `nowrap` renders
+  "Token ·Name". `pre` preserves it and still does not wrap, so the ellipsis
+  behaviour is unchanged.
+*/
+.rwa-code-preview-impact-context {
+  color: var(--rwa-code-preview-fg-dim);
+  white-space: pre;
+}
+
+.rwa-code-preview-impact-field-name {
+  color: var(--rwa-code-preview-fg);
+  font-weight: 500;
+}
+
+/*
+  The filename carries the emphasis; the directory above it is the prefix, and
+  the separator is layout punctuation rather than DOM text (see the heading
+  comment in `PreviewImpactColumn`).
+*/
+.rwa-code-preview-impact-leaf {
+  color: var(--rwa-code-preview-fg);
+  font-weight: 500;
+}
+
+.rwa-code-preview-impact-dir::after {
+  content: '/';
+}
+
+.rwa-code-preview-impact-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding-inline: 0.5rem;
+  padding-block: var(--rwa-code-preview-sidebar-row-padding);
+  font-size: 11px;
+  line-height: 1rem;
+  text-align: left;
   color: var(--rwa-code-preview-fg);
   font-family: var(--rwa-code-preview-font);
+}
+
+/* Decoration on top of the heading word, never the axis itself. */
+.rwa-code-preview-impact-row-secondary {
+  color: var(--rwa-code-preview-fg-dim);
+}
+
+.rwa-code-preview-impact-row:not(:disabled) {
+  cursor: pointer;
+}
+
+.rwa-code-preview-impact-row:hover:not(:disabled) {
+  background: var(--rwa-code-preview-selected-bg);
+}
+
+/*
+  Active site chrome (SF-21). Same token as hover / tree selection so the mark
+  reads as "this is the site the pane is showing" without a second accent.
+  Colour accompanies `aria-current="true"` — it is never the sole signal (INV-21).
+*/
+.rwa-code-preview-impact-row-active:not(:disabled) {
+  background: var(--rwa-code-preview-selected-bg);
+}
+
+/*
+  A row is a control and must look focused when it is. The column root already
+  carries this treatment for the same reason (INV-42); without it the Tab walk
+  the invariant guarantees is invisible from the first row onward.
+*/
+.rwa-code-preview-impact-row:focus-visible {
+  outline: 2px solid var(--rwa-code-preview-accent);
+  outline-offset: -2px;
+}
+
+/* Present at rest so the affordance is not hover-only; brightens on approach. */
+.rwa-code-preview-impact-go {
+  color: var(--rwa-code-preview-fg-dim);
+}
+
+.rwa-code-preview-impact-row:hover:not(:disabled) .rwa-code-preview-impact-go,
+.rwa-code-preview-impact-row:focus-visible .rwa-code-preview-impact-go {
+  color: var(--rwa-code-preview-fg);
+}
+
+/*
+  Regeneration in flight.
+
+  Regeneration is debounced per keystroke, so this flag flips on every character
+  typed into the field the column is describing. The signal therefore has to
+  cost nothing when it is short: a 400ms delay means an ordinary rebuild
+  completes before anything on screen changes at all, and only a rebuild the
+  user would otherwise wonder about ever surfaces.
+
+  Opacity on the scroller only — never height, never content, never the header.
+  A signal that reflowed the column would be the flicker it is meant to replace.
+
+  `both` fill against a `to`-only keyframe holds the pre-delay value (opacity 1)
+  through the delay, so the fade starts from the rendered state rather than
+  snapping to it.
+*/
+@keyframes rwa-code-preview-impact-refresh {
+  to {
+    opacity: 0.5;
+  }
+}
+
+.rwa-code-preview-impact[data-impact-stale='true'] .rwa-code-preview-impact-scroll {
+  animation: rwa-code-preview-impact-refresh 140ms ease-out 400ms both;
+}
+
+/*
+  Reduced motion gets no fade rather than an instant dim: an un-animated opacity
+  swap on every keystroke is precisely the blink this whole change removes, and
+  `aria-busy` already carries the fact for anyone who needs it announced.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .rwa-code-preview-impact[data-impact-stale='true'] .rwa-code-preview-impact-scroll {
+    animation: none;
+  }
 }
 
 /* ---- highlight.js/styles/atom-one-dark.css, scoped ------------------------ */

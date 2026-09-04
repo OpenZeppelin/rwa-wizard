@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import {
+  findRoleWithMembers,
   getAdditionalRoleAssignments,
   getAdminAddress,
   getManagerAddress,
@@ -99,6 +100,71 @@ describe('RWA Access Control Helpers', () => {
           })
         )
       ).toEqual([{ name: 'Minter', symbol: 'minter', addresses: ['GMINTER1', 'GMINTER2'] }]);
+    });
+  });
+
+  describe('findRoleWithMembers', () => {
+    it('returns the first matching role that has at least one member address', () => {
+      expect(
+        findRoleWithMembers(
+          createConfig({
+            roles: [
+              { name: 'Minter', symbol: 'minter', addresses: ['   '] },
+              { name: 'Operator', symbol: 'ops', addresses: ['GOPS'] },
+            ],
+          }),
+          (role) => role.symbol === 'ops'
+        )
+      ).toEqual({ name: 'Operator', symbol: 'ops', addresses: ['GOPS'] });
+    });
+
+    it('skips name matches with empty address lists and returns the first role with members', () => {
+      expect(
+        findRoleWithMembers(
+          createConfig({
+            roles: [
+              { name: 'Manager', addresses: ['   '] },
+              { name: 'Manager', addresses: ['GMANAGER'] },
+            ],
+          }),
+          (role) => role.name.toLowerCase() === 'manager'
+        )
+      ).toEqual({ name: 'Manager', symbol: 'manager', addresses: ['GMANAGER'] });
+    });
+
+    it('returns undefined when no role matches or every match has no members', () => {
+      expect(
+        findRoleWithMembers(
+          createConfig({
+            roles: [{ name: 'Operator', symbol: 'ops', addresses: ['   '] }],
+          }),
+          (role) => role.symbol === 'ops'
+        )
+      ).toBeUndefined();
+    });
+
+    it('uses only the matched role’s first address for manager resolution', () => {
+      expect(
+        getManagerAddress(
+          createConfig({
+            roles: [
+              { name: 'Operator', symbol: 'ops', addresses: ['GOPS'] },
+              { name: 'Manager', addresses: ['GMANAGER1', 'GMANAGER2'] },
+            ],
+          })
+        )
+      ).toBe('GMANAGER1');
+    });
+
+    it('throws when a reached role lacks a symbol and no generator is supplied', () => {
+      expect(() =>
+        findRoleWithMembers(
+          createConfig({
+            roles: [{ name: 'Compliance Officer', addresses: ['GCO'] }],
+          }),
+          () => true
+        )
+      ).toThrow('Role "Compliance Officer" is missing a symbol');
     });
   });
 

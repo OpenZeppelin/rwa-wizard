@@ -5,7 +5,7 @@ import type { AddressingCapability } from '@openzeppelin/ui-types';
 
 import type { ComplianceModuleOption } from '../../../types/wizard';
 import { createDefaultRwaConfig } from '../../../utils/defaultRwaConfig';
-import { isStepValid } from './stepValidators';
+import { getIdentityStepIssues, isStepValid } from './stepValidators';
 
 const stellarAddressing: AddressingCapability = {
   isValidAddress: (addr) => /^G[A-Z0-9]{55}$/.test(addr) || /^C[A-Z0-9]{55}$/.test(addr),
@@ -126,6 +126,7 @@ describe('isStepValid', () => {
 
     it('is valid when all trusted issuer addresses pass the adapter check', () => {
       const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [{ id: 1, name: 'KYC' }];
         c.identityVerification.trustedIssuers = [
           { address: VALID_STELLAR_ADDRESS, claimTopics: [1] },
         ];
@@ -135,16 +136,112 @@ describe('isStepValid', () => {
 
     it('rejects config with a stale invalid trusted issuer address', () => {
       const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [{ id: 1, name: 'KYC' }];
         c.identityVerification.trustedIssuers = [{ address: INVALID_ADDRESS, claimTopics: [1] }];
       });
       expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(false);
     });
 
-    it('degrades to pass-through when no addressing adapter is available', () => {
+    it('rejects an empty trusted issuer address even without an addressing adapter', () => {
       const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [{ id: 1, name: 'KYC' }];
+        c.identityVerification.trustedIssuers = [{ address: '   ', claimTopics: [1] }];
+      });
+      expect(isStepValid('identity', cfg)).toBe(false);
+    });
+
+    it('degrades address format to pass-through when no addressing adapter is available', () => {
+      const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [{ id: 1, name: 'KYC' }];
         c.identityVerification.trustedIssuers = [{ address: INVALID_ADDRESS, claimTopics: [1] }];
       });
       expect(isStepValid('identity', cfg)).toBe(true);
+    });
+
+    it('rejects an issuer that references only unselected claim topics (UNSELECTED_REFERENCE)', () => {
+      const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [
+          { id: 1, name: 'KYC', selected: false },
+          { id: 2, name: 'AML', selected: false },
+        ];
+        c.identityVerification.trustedIssuers = [
+          { address: VALID_STELLAR_ADDRESS, claimTopics: [1, 2] },
+        ];
+      });
+      expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(false);
+    });
+
+    it('accepts that issuer again once one referenced topic is selected', () => {
+      const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [
+          { id: 1, name: 'KYC', selected: false },
+          { id: 2, name: 'AML', selected: false },
+        ];
+        c.identityVerification.trustedIssuers = [
+          { address: VALID_STELLAR_ADDRESS, claimTopics: [1, 2] },
+        ];
+      });
+      expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(false);
+
+      cfg.identityVerification.claimTopics[0] = { id: 1, name: 'KYC' };
+      expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(true);
+    });
+
+    it('accepts again when the unselected-only issuer is removed', () => {
+      const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [{ id: 1, name: 'KYC', selected: false }];
+        c.identityVerification.trustedIssuers = [
+          { address: VALID_STELLAR_ADDRESS, claimTopics: [1] },
+        ];
+      });
+      expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(false);
+
+      cfg.identityVerification.trustedIssuers = [];
+      expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(true);
+    });
+
+    it('surfaces the unselected-topics notice id for UNSELECTED_REFERENCE', () => {
+      const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [{ id: 1, name: 'KYC', selected: false }];
+        c.identityVerification.trustedIssuers = [
+          { address: VALID_STELLAR_ADDRESS, claimTopics: [1] },
+        ];
+      });
+      expect(getIdentityStepIssues(cfg.identityVerification)).toEqual([
+        'trusted-issuer.unselected-topics',
+      ]);
+    });
+
+    it('rejects an issuer that references a claim-topic id absent from claimTopics', () => {
+      const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [{ id: 1, name: 'KYC' }];
+        c.identityVerification.trustedIssuers = [
+          { address: VALID_STELLAR_ADDRESS, claimTopics: [1, 99] },
+        ];
+      });
+      expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(false);
+    });
+
+    it('surfaces the unknown-topics notice id for INVALID_REFERENCE (orphan topic id)', () => {
+      const cfg = baseConfig((c) => {
+        c.identityVerification.claimTopics = [{ id: 1, name: 'KYC' }];
+        c.identityVerification.trustedIssuers = [
+          { address: VALID_STELLAR_ADDRESS, claimTopics: [99] },
+        ];
+      });
+      expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(false);
+      expect(getIdentityStepIssues(cfg.identityVerification)).toEqual([
+        'trusted-issuer.unknown-topics',
+      ]);
+    });
+
+    it('rejects an issuer with no claim-topic references', () => {
+      const cfg = baseConfig((c) => {
+        c.identityVerification.trustedIssuers = [
+          { address: VALID_STELLAR_ADDRESS, claimTopics: [] },
+        ];
+      });
+      expect(isStepValid('identity', cfg, { addressing: stellarAddressing })).toBe(false);
     });
   });
 

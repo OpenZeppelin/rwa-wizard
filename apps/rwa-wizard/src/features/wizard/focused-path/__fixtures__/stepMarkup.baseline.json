@@ -1,0 +1,2907 @@
+{
+  "globs": [
+    "src/features/wizard/steps/**/*.tsx",
+    "src/components/shared/SelectableCard.tsx",
+    "src/components/shared/TogglePill.tsx",
+    "src/components/shared/TopicToggleGroup.tsx"
+  ],
+  "fileCount": 25,
+  "files": {
+    "src/components/shared/SelectableCard.tsx": [
+      {
+        "tag": "button",
+        "props": [
+          "className",
+          "data-config-anchor",
+          "disabled",
+          "onClick",
+          "type"
+        ],
+        "values": {
+          "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 p-4 text-left transition-colors\"),ConditionalExpression[Identifier(\"isSelected\"),QuestionToken(\"?\"),Str(\"border-primary bg-primary/5\"),ColonToken(\":\"),Str(\"border-border hover:border-primary/40\")],BinaryExpression[Identifier(\"disabled\"),AmpersandAmpersandToken(\"&&\"),Str(\"cursor-not-allowed opacity-50\")],Identifier(\"className\")]]"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"flex min-w-0 flex-1 flex-col items-start\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "span",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"inline-flex items-center gap-1.5 font-medium\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "span",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"inline-flex items-center text-muted-foreground\")"
+                    },
+                    "via": [
+                      "JsxExpression",
+                      "BinaryExpression"
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "span",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"mt-0.5 text-sm text-muted-foreground\")"
+                },
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"flex-shrink-0\")"
+            },
+            "via": [
+              "JsxExpression",
+              "BinaryExpression"
+            ],
+            "children": []
+          }
+        ]
+      }
+    ],
+    "src/components/shared/TogglePill.tsx": [
+      {
+        "tag": "span",
+        "props": [
+          "className",
+          "data-config-anchor"
+        ],
+        "values": {
+          "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"inline-flex items-center gap-1 rounded-full border text-xs font-medium transition-colors\"),ConditionalExpression[Identifier(\"selected\"),QuestionToken(\"?\"),Str(\"border-primary bg-primary/10 text-primary\"),ColonToken(\":\"),Str(\"border-dashed border-border text-muted-foreground hover:bg-muted\")],BinaryExpression[Identifier(\"disabled\"),AmpersandAmpersandToken(\"&&\"),Str(\"opacity-50\")],Identifier(\"className\")]]"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "button",
+            "props": [
+              "className",
+              "disabled",
+              "onClick",
+              "type"
+            ],
+            "values": {
+              "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"inline-flex cursor-pointer items-center gap-1 py-1 pl-2.5\"),ConditionalExpression[Identifier(\"onRemove\"),QuestionToken(\"?\"),Str(\"pr-1\"),ColonToken(\":\"),Str(\"pr-2.5\")],BinaryExpression[Identifier(\"disabled\"),AmpersandAmpersandToken(\"&&\"),Str(\"cursor-not-allowed\")]]]"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "Check",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"size-3\")"
+                },
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": []
+              },
+              {
+                "tag": "span",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"font-normal opacity-40\")"
+                },
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "button",
+            "props": [
+              "aria-label",
+              "className",
+              "onClick",
+              "type"
+            ],
+            "values": {
+              "className": "Str(\"inline-flex cursor-pointer items-center justify-center pr-1.5 hover:text-destructive\")"
+            },
+            "via": [
+              "JsxExpression",
+              "BinaryExpression"
+            ],
+            "children": [
+              {
+                "tag": "X",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"size-3\")"
+                },
+                "via": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/components/shared/TopicToggleGroup.tsx": [
+      {
+        "tag": "div",
+        "props": [
+          "className"
+        ],
+        "values": {
+          "className": "Str(\"space-y-4\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "div",
+            "props": [],
+            "values": {},
+            "via": [],
+            "children": [
+              {
+                "tag": "Label",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"text-xs text-muted-foreground\")"
+                },
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"mt-1.5 flex flex-wrap gap-1.5\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "TogglePill",
+                    "props": [
+                      "configAnchor",
+                      "detail",
+                      "disabled",
+                      "key",
+                      "label",
+                      "onClick",
+                      "selected"
+                    ],
+                    "values": {},
+                    "via": [
+                      "JsxExpression",
+                      "CallExpression",
+                      "ArrowFunction",
+                      "Block",
+                      "ReturnStatement"
+                    ],
+                    "children": []
+                  },
+                  {
+                    "tag": "TogglePill",
+                    "props": [
+                      "configAnchor",
+                      "detail",
+                      "key",
+                      "label",
+                      "onClick",
+                      "onRemove",
+                      "selected"
+                    ],
+                    "values": {},
+                    "via": [
+                      "JsxExpression",
+                      "CallExpression",
+                      "ArrowFunction"
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"flex items-start gap-2\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"min-w-0 flex-1\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "TextField",
+                    "props": [
+                      "control",
+                      "id",
+                      "label",
+                      "name",
+                      "placeholder",
+                      "validation"
+                    ],
+                    "values": {
+                      "id": "Str(\"custom-topic-name\")"
+                    },
+                    "via": [],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"w-36 shrink-0\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "NumberField",
+                    "props": [
+                      "control",
+                      "id",
+                      "label",
+                      "name",
+                      "placeholder",
+                      "validation"
+                    ],
+                    "values": {
+                      "id": "Str(\"custom-topic-id\")"
+                    },
+                    "via": [],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"flex flex-col gap-2\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "Label",
+                    "props": [
+                      "aria-hidden",
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"invisible\")"
+                    },
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "div",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"flex h-10 items-center\")"
+                    },
+                    "via": [],
+                    "children": [
+                      {
+                        "tag": "Button",
+                        "props": [
+                          "data-config-anchor",
+                          "disabled",
+                          "onClick",
+                          "size",
+                          "type",
+                          "variant"
+                        ],
+                        "values": {},
+                        "via": [],
+                        "children": [
+                          {
+                            "tag": "Plus",
+                            "props": [
+                              "className"
+                            ],
+                            "values": {
+                              "className": "Str(\"size-4\")"
+                            },
+                            "via": [],
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/access-control/AccessControlStep.tsx": [
+      {
+        "tag": "WizardFrame",
+        "props": [
+          "..."
+        ],
+        "values": {
+          "...#0": "Identifier(\"stepCopy\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "OwnershipModelSection",
+            "props": [
+              "onUpdate",
+              "ownership"
+            ],
+            "values": {},
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "OperatorRolesSection",
+            "props": [
+              "accessControl",
+              "documentManagerEnabled",
+              "onUpdate",
+              "operatorRoles"
+            ],
+            "values": {},
+            "via": [],
+            "children": []
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/access-control/OperatorRolesSection.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-6\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "div",
+                "props": [
+                  "className",
+                  "data-config-anchor",
+                  "key"
+                ],
+                "values": {
+                  "className": "Str(\"space-y-2 rounded-lg border border-border p-4\")"
+                },
+                "via": [
+                  "JsxExpression",
+                  "CallExpression",
+                  "ArrowFunction",
+                  "Block",
+                  "ReturnStatement"
+                ],
+                "children": [
+                  {
+                    "tag": "div",
+                    "props": [],
+                    "values": {},
+                    "via": [],
+                    "children": [
+                      {
+                        "tag": "Label",
+                        "props": [
+                          "className"
+                        ],
+                        "values": {
+                          "className": "Str(\"text-base font-medium\")"
+                        },
+                        "via": [],
+                        "children": []
+                      },
+                      {
+                        "tag": "p",
+                        "props": [
+                          "className"
+                        ],
+                        "values": {
+                          "className": "Str(\"text-sm text-muted-foreground\")"
+                        },
+                        "via": [],
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "AddressListField",
+                    "props": [
+                      "addressing",
+                      "bulkPlaceholder",
+                      "formatHint",
+                      "getExplorerUrl",
+                      "onChange",
+                      "placeholder",
+                      "value"
+                    ],
+                    "values": {},
+                    "via": [],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/access-control/OwnershipModelSection.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-4\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"grid gap-4 sm:grid-cols-3\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "SelectableCard",
+                    "props": [
+                      "configAnchor",
+                      "description",
+                      "isSelected",
+                      "key",
+                      "onClick",
+                      "title"
+                    ],
+                    "values": {},
+                    "via": [
+                      "JsxExpression",
+                      "CallExpression",
+                      "ArrowFunction",
+                      "Block",
+                      "ReturnStatement"
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "AddressFieldWithResolvedPreview",
+                "props": [
+                  "addressing",
+                  "control",
+                  "helperText",
+                  "id",
+                  "label",
+                  "name",
+                  "placeholder",
+                  "preview",
+                  "previewAddress",
+                  "previewNetworkId"
+                ],
+                "values": {
+                  "id": "Str(\"owner-address\")"
+                },
+                "via": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/asset/AdministrativeControls.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-3\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "ReadOnlyFeatureCard",
+                "props": [
+                  "description",
+                  "enabled",
+                  "infoTooltip",
+                  "key",
+                  "title"
+                ],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "CallExpression",
+                  "ArrowFunction",
+                  "Block",
+                  "IfStatement",
+                  "Block",
+                  "ReturnStatement"
+                ],
+                "children": []
+              },
+              {
+                "tag": "SelectableCard",
+                "props": [
+                  "configAnchor",
+                  "description",
+                  "isSelected",
+                  "key",
+                  "onClick",
+                  "title"
+                ],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "CallExpression",
+                  "ArrowFunction",
+                  "Block",
+                  "ReturnStatement"
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/asset/AssetStep.tsx": [
+      {
+        "tag": "Form",
+        "props": [
+          "..."
+        ],
+        "values": {
+          "...#0": "Identifier(\"form\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "WizardFrame",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"stepCopy\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "CodegenInfoBlurbPanel",
+                "props": [
+                  "blurb"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "TokenBasics",
+                "props": [
+                  "control"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "AdministrativeControls",
+                "props": [
+                  "adminControlsMeta",
+                  "controls",
+                  "onToggle"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "DocumentManagerSection",
+                "props": [
+                  "control"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/asset/CodegenInfoBlurbPanel.tsx": [
+      {
+        "tag": "Banner",
+        "props": [
+          "dismissible",
+          "icon",
+          "title",
+          "variant"
+        ],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-3\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "p",
+                "props": [],
+                "values": {},
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "ul",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"flex flex-col gap-2\")"
+                },
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": [
+                  {
+                    "tag": "li",
+                    "props": [
+                      "key"
+                    ],
+                    "values": {},
+                    "via": [
+                      "JsxExpression",
+                      "CallExpression",
+                      "ArrowFunction"
+                    ],
+                    "children": [
+                      {
+                        "tag": "ExternalLink",
+                        "props": [
+                          "href"
+                        ],
+                        "values": {},
+                        "via": [],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/asset/DocumentManagerSection.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [],
+            "values": {},
+            "via": [],
+            "children": [
+              {
+                "tag": "BooleanField",
+                "props": [
+                  "control",
+                  "helperText",
+                  "id",
+                  "label",
+                  "name"
+                ],
+                "values": {
+                  "id": "Str(\"doc-manager-enabled\")"
+                },
+                "via": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/asset/TokenBasics.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [],
+            "values": {},
+            "via": [],
+            "children": [
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"grid gap-4 sm:grid-cols-2\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "TextField",
+                    "props": [
+                      "control",
+                      "helperText",
+                      "id",
+                      "label",
+                      "name",
+                      "placeholder",
+                      "validation"
+                    ],
+                    "values": {
+                      "id": "Str(\"token-name\")"
+                    },
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "TextField",
+                    "props": [
+                      "control",
+                      "helperText",
+                      "id",
+                      "label",
+                      "name",
+                      "placeholder",
+                      "validation"
+                    ],
+                    "values": {
+                      "id": "Str(\"token-symbol\")"
+                    },
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "NumberField",
+                    "props": [
+                      "control",
+                      "helperText",
+                      "id",
+                      "label",
+                      "name",
+                      "validation"
+                    ],
+                    "values": {
+                      "id": "Str(\"token-decimals\")"
+                    },
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "TextField",
+                    "props": [
+                      "control",
+                      "helperText",
+                      "id",
+                      "label",
+                      "name",
+                      "placeholder"
+                    ],
+                    "values": {
+                      "id": "Str(\"token-initial-supply\")"
+                    },
+                    "via": [],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/compliance/ComplianceSelectionWarnings.tsx": [
+      {
+        "tag": "div",
+        "props": [
+          "className"
+        ],
+        "values": {
+          "className": "Str(\"space-y-2\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "ErrorBanner",
+            "props": [
+              "key",
+              "message",
+              "tone"
+            ],
+            "values": {},
+            "via": [
+              "JsxExpression",
+              "CallExpression",
+              "ArrowFunction"
+            ],
+            "children": []
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/compliance/ComplianceStep.tsx": [
+      {
+        "tag": "WizardFrame",
+        "props": [
+          "...",
+          "spacing"
+        ],
+        "values": {
+          "...#0": "Identifier(\"stepCopy\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "ModuleCatalog",
+            "props": [
+              "addressing",
+              "availableModules",
+              "moduleCategories",
+              "onConfigChange",
+              "onToggleModule",
+              "selectedModuleIds",
+              "selectedModules",
+              "targetId"
+            ],
+            "values": {},
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "ComplianceSelectionWarnings",
+            "props": [
+              "warnings"
+            ],
+            "values": {},
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "HookWiringPreview",
+            "props": [
+              "availableModules",
+              "complianceHooks",
+              "hookRegistrations"
+            ],
+            "values": {},
+            "via": [
+              "JsxExpression",
+              "BinaryExpression"
+            ],
+            "children": []
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/compliance/HookWiringPreview.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "CardHeader",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"pb-3\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "CardTitle",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"text-sm\")"
+                },
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "CardDescription",
+                "props": [],
+                "values": {},
+                "via": [],
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "CardContent",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"p-0\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"overflow-hidden border-t border-border\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "Table",
+                    "props": [],
+                    "values": {},
+                    "via": [],
+                    "children": [
+                      {
+                        "tag": "TableHeader",
+                        "props": [],
+                        "values": {},
+                        "via": [],
+                        "children": [
+                          {
+                            "tag": "TableRow",
+                            "props": [],
+                            "values": {},
+                            "via": [],
+                            "children": [
+                              {
+                                "tag": "TableHead",
+                                "props": [],
+                                "values": {},
+                                "via": [],
+                                "children": []
+                              },
+                              {
+                                "tag": "TableHead",
+                                "props": [],
+                                "values": {},
+                                "via": [],
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "TableBody",
+                        "props": [],
+                        "values": {},
+                        "via": [],
+                        "children": [
+                          {
+                            "tag": "TableRow",
+                            "props": [
+                              "key"
+                            ],
+                            "values": {},
+                            "via": [
+                              "JsxExpression",
+                              "CallExpression",
+                              "ArrowFunction",
+                              "Block",
+                              "ReturnStatement"
+                            ],
+                            "children": [
+                              {
+                                "tag": "TableCell",
+                                "props": [
+                                  "className"
+                                ],
+                                "values": {
+                                  "className": "Str(\"px-4 py-2.5 align-top\")"
+                                },
+                                "via": [],
+                                "children": [
+                                  {
+                                    "tag": "div",
+                                    "props": [
+                                      "className"
+                                    ],
+                                    "values": {
+                                      "className": "Str(\"flex items-center gap-1.5\")"
+                                    },
+                                    "via": [],
+                                    "children": [
+                                      {
+                                        "tag": "div",
+                                        "props": [
+                                          "className"
+                                        ],
+                                        "values": {
+                                          "className": "Str(\"font-medium text-foreground\")"
+                                        },
+                                        "via": [],
+                                        "children": []
+                                      },
+                                      {
+                                        "tag": "InfoTooltip",
+                                        "props": [
+                                          "label"
+                                        ],
+                                        "values": {},
+                                        "via": [
+                                          "JsxExpression",
+                                          "BinaryExpression"
+                                        ],
+                                        "children": []
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "div",
+                                    "props": [
+                                      "className"
+                                    ],
+                                    "values": {
+                                      "className": "Str(\"mt-0.5 text-xs text-muted-foreground\")"
+                                    },
+                                    "via": [],
+                                    "children": []
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "TableCell",
+                                "props": [
+                                  "className"
+                                ],
+                                "values": {
+                                  "className": "Str(\"px-4 py-2.5\")"
+                                },
+                                "via": [],
+                                "children": [
+                                  {
+                                    "tag": "div",
+                                    "props": [
+                                      "className"
+                                    ],
+                                    "values": {
+                                      "className": "Str(\"flex flex-wrap gap-1.5\")"
+                                    },
+                                    "via": [
+                                      "JsxExpression",
+                                      "ConditionalExpression"
+                                    ],
+                                    "children": [
+                                      {
+                                        "tag": "Badge",
+                                        "props": [
+                                          "key",
+                                          "variant"
+                                        ],
+                                        "values": {},
+                                        "via": [
+                                          "JsxExpression",
+                                          "CallExpression",
+                                          "ArrowFunction"
+                                        ],
+                                        "children": []
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "span",
+                                    "props": [
+                                      "className"
+                                    ],
+                                    "values": {
+                                      "className": "Str(\"text-xs text-muted-foreground\")"
+                                    },
+                                    "via": [
+                                      "JsxExpression",
+                                      "ConditionalExpression"
+                                    ],
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/compliance/ModuleCatalog.tsx": [
+      {
+        "tag": "EmptyModuleCatalog",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "IfStatement",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": []
+      },
+      {
+        "tag": "div",
+        "props": [
+          "className"
+        ],
+        "values": {
+          "className": "Str(\"space-y-8\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "section",
+            "props": [
+              "className",
+              "key"
+            ],
+            "values": {
+              "className": "Str(\"space-y-3\")"
+            },
+            "via": [
+              "JsxExpression",
+              "CallExpression",
+              "ArrowFunction",
+              "Block",
+              "ReturnStatement"
+            ],
+            "children": [
+              {
+                "tag": "div",
+                "props": [],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": [
+                  {
+                    "tag": "h3",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"text-sm font-medium text-foreground\")"
+                    },
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "p",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"mt-0.5 text-xs text-muted-foreground\")"
+                    },
+                    "via": [],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"space-y-3\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "ModuleRow",
+                    "props": [
+                      "addressing",
+                      "config",
+                      "key",
+                      "module",
+                      "onConfigChange",
+                      "onToggle",
+                      "selected"
+                    ],
+                    "values": {},
+                    "via": [
+                      "JsxExpression",
+                      "CallExpression",
+                      "ArrowFunction",
+                      "Block",
+                      "ReturnStatement"
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "EmptyState",
+        "props": [
+          "className",
+          "description",
+          "size",
+          "title"
+        ],
+        "values": {
+          "className": "Str(\"rounded-lg border border-dashed border-border\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": []
+      },
+      {
+        "tag": "div",
+        "props": [
+          "className"
+        ],
+        "values": {
+          "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"group rounded-lg border-2 transition-colors\"),ConditionalExpression[Identifier(\"selected\"),QuestionToken(\"?\"),Str(\"border-primary bg-primary/5\"),ColonToken(\":\"),Str(\"border-border hover:border-primary/40 hover:bg-muted/30\")]]]"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "div",
+            "props": [
+              "aria-checked",
+              "className",
+              "data-config-anchor",
+              "onClick",
+              "onKeyDown",
+              "role",
+              "tabIndex"
+            ],
+            "values": {
+              "className": "Str(\"flex cursor-pointer items-start gap-4 p-4\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border transition-colors\"),ConditionalExpression[Identifier(\"selected\"),QuestionToken(\"?\"),Str(\"border-primary bg-primary text-primary-foreground\"),ColonToken(\":\"),Str(\"border-border\")]]]"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "Check",
+                    "props": [
+                      "className",
+                      "strokeWidth"
+                    ],
+                    "values": {
+                      "className": "Str(\"size-3.5\")"
+                    },
+                    "via": [
+                      "JsxExpression",
+                      "BinaryExpression"
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"min-w-0 flex-1\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "div",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"flex flex-wrap items-center gap-2\")"
+                    },
+                    "via": [],
+                    "children": [
+                      {
+                        "tag": "p",
+                        "props": [
+                          "className"
+                        ],
+                        "values": {
+                          "className": "Str(\"text-sm font-medium text-foreground\")"
+                        },
+                        "via": [],
+                        "children": []
+                      },
+                      {
+                        "tag": "span",
+                        "props": [
+                          "className",
+                          "onClick",
+                          "onKeyDown"
+                        ],
+                        "values": {
+                          "className": "Str(\"inline-flex items-center\")"
+                        },
+                        "via": [
+                          "JsxExpression",
+                          "BinaryExpression"
+                        ],
+                        "children": [
+                          {
+                            "tag": "InfoTooltip",
+                            "props": [
+                              "label"
+                            ],
+                            "values": {},
+                            "via": [],
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "span",
+                        "props": [
+                          "className",
+                          "onClick",
+                          "onKeyDown"
+                        ],
+                        "values": {
+                          "className": "Str(\"inline-flex items-center gap-1\")"
+                        },
+                        "via": [
+                          "JsxExpression",
+                          "BinaryExpression"
+                        ],
+                        "children": [
+                          {
+                            "tag": "Badge",
+                            "props": [
+                              "className",
+                              "variant"
+                            ],
+                            "values": {
+                              "className": "Str(\"border-amber-500/40 text-[10px] text-amber-600\")"
+                            },
+                            "via": [],
+                            "children": []
+                          },
+                          {
+                            "tag": "InfoTooltip",
+                            "props": [
+                              "label"
+                            ],
+                            "values": {},
+                            "via": [],
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "p",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"mt-0.5 text-sm text-muted-foreground\")"
+                    },
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "a",
+                    "props": [
+                      "className",
+                      "href",
+                      "onClick",
+                      "rel",
+                      "target"
+                    ],
+                    "values": {
+                      "className": "Str(\"mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground\")"
+                    },
+                    "via": [
+                      "JsxExpression",
+                      "BinaryExpression"
+                    ],
+                    "children": [
+                      {
+                        "tag": "ExternalLink",
+                        "props": [
+                          "className"
+                        ],
+                        "values": {
+                          "className": "Str(\"size-3\")"
+                        },
+                        "via": [],
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"mt-2 flex flex-wrap gap-1.5\")"
+                    },
+                    "via": [
+                      "JsxExpression",
+                      "BinaryExpression"
+                    ],
+                    "children": [
+                      {
+                        "tag": "span",
+                        "props": [
+                          "className",
+                          "key",
+                          "onClick",
+                          "onKeyDown"
+                        ],
+                        "values": {
+                          "className": "Str(\"inline-flex items-center gap-1\")"
+                        },
+                        "via": [
+                          "JsxExpression",
+                          "CallExpression",
+                          "ArrowFunction"
+                        ],
+                        "children": [
+                          {
+                            "tag": "Badge",
+                            "props": [
+                              "className",
+                              "variant"
+                            ],
+                            "values": {
+                              "className": "Str(\"text-[11px]\")"
+                            },
+                            "via": [],
+                            "children": []
+                          },
+                          {
+                            "tag": "InfoTooltip",
+                            "props": [
+                              "label"
+                            ],
+                            "values": {},
+                            "via": [
+                              "JsxExpression",
+                              "BinaryExpression"
+                            ],
+                            "children": []
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"mt-2 flex flex-wrap gap-1.5\")"
+                    },
+                    "via": [],
+                    "children": [
+                      {
+                        "tag": "Badge",
+                        "props": [
+                          "className",
+                          "key",
+                          "variant"
+                        ],
+                        "values": {
+                          "className": "Str(\"text-[11px]\")"
+                        },
+                        "via": [
+                          "JsxExpression",
+                          "CallExpression",
+                          "ArrowFunction"
+                        ],
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "props": [
+              "className",
+              "onClick",
+              "onKeyDown"
+            ],
+            "values": {
+              "className": "Str(\"border-t border-border/60 px-4 pb-4 pt-3\")"
+            },
+            "via": [
+              "JsxExpression",
+              "BinaryExpression"
+            ],
+            "children": [
+              {
+                "tag": "p",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"mb-2 text-xs font-medium text-muted-foreground\")"
+                },
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "ModuleConfigPanel",
+                "props": [
+                  "addressing",
+                  "config",
+                  "module",
+                  "onChange"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/compliance/ModuleConfigPanel.tsx": [
+      {
+        "tag": "div",
+        "props": [
+          "className",
+          "data-config-anchor",
+          "onBlurCapture"
+        ],
+        "values": {
+          "className": "Str(\"grid gap-3\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "AddressListField",
+            "props": [
+              "addressing",
+              "bulkPlaceholder",
+              "formatHint",
+              "helperText",
+              "id",
+              "key",
+              "label",
+              "onChange",
+              "placeholder",
+              "value"
+            ],
+            "values": {
+              "id": "JsxExpression[TemplateExpression[TemplateHead(\"`${\"),TemplateSpan[PropertyAccessExpression[Identifier(\"module\"),Identifier(\"id\")],TemplateMiddle(\"}-${\")],TemplateSpan[PropertyAccessExpression[Identifier(\"field\"),Identifier(\"key\")],LastTemplateToken(\"}`\")]]]"
+            },
+            "via": [
+              "JsxExpression",
+              "CallExpression",
+              "ArrowFunction",
+              "Block",
+              "IfStatement",
+              "Block",
+              "ReturnStatement"
+            ],
+            "children": []
+          },
+          {
+            "tag": "NumberField",
+            "props": [
+              "control",
+              "helperText",
+              "id",
+              "key",
+              "label",
+              "name",
+              "placeholder",
+              "validation"
+            ],
+            "values": {
+              "id": "JsxExpression[TemplateExpression[TemplateHead(\"`${\"),TemplateSpan[PropertyAccessExpression[Identifier(\"module\"),Identifier(\"id\")],TemplateMiddle(\"}-${\")],TemplateSpan[PropertyAccessExpression[Identifier(\"field\"),Identifier(\"key\")],LastTemplateToken(\"}`\")]]]"
+            },
+            "via": [
+              "JsxExpression",
+              "CallExpression",
+              "ArrowFunction",
+              "Block",
+              "IfStatement",
+              "Block",
+              "ReturnStatement"
+            ],
+            "children": []
+          },
+          {
+            "tag": "TextField",
+            "props": [
+              "control",
+              "helperText",
+              "id",
+              "key",
+              "label",
+              "name",
+              "placeholder",
+              "validation"
+            ],
+            "values": {
+              "id": "JsxExpression[TemplateExpression[TemplateHead(\"`${\"),TemplateSpan[PropertyAccessExpression[Identifier(\"module\"),Identifier(\"id\")],TemplateMiddle(\"}-${\")],TemplateSpan[PropertyAccessExpression[Identifier(\"field\"),Identifier(\"key\")],LastTemplateToken(\"}`\")]]]"
+            },
+            "via": [
+              "JsxExpression",
+              "CallExpression",
+              "ArrowFunction",
+              "Block",
+              "ReturnStatement"
+            ],
+            "children": []
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/deployment/DeploymentPlaceholder.tsx": [
+      {
+        "tag": "div",
+        "props": [
+          "className"
+        ],
+        "values": {
+          "className": "Str(\"space-y-4\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "h2",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"text-lg font-semibold text-foreground\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "p",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"text-sm text-muted-foreground\")"
+            },
+            "via": [],
+            "children": []
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/identity/ClaimTopicsSection.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [],
+            "values": {},
+            "via": [],
+            "children": [
+              {
+                "tag": "TopicToggleGroup",
+                "props": [
+                  "maxTopics",
+                  "onAddCustom",
+                  "onRemove",
+                  "onToggle",
+                  "predefinedTopics",
+                  "selectedTopics"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/identity/IdentityControlsSection.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-3\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "ReadOnlyFeatureCard",
+                "props": [
+                  "description",
+                  "enabled",
+                  "infoTooltip",
+                  "key",
+                  "title"
+                ],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "CallExpression",
+                  "ArrowFunction",
+                  "Block",
+                  "IfStatement",
+                  "Block",
+                  "ReturnStatement"
+                ],
+                "children": []
+              },
+              {
+                "tag": "SelectableCard",
+                "props": [
+                  "configAnchor",
+                  "description",
+                  "isSelected",
+                  "key",
+                  "onClick",
+                  "title"
+                ],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "CallExpression",
+                  "ArrowFunction",
+                  "Block",
+                  "ReturnStatement"
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/identity/IdentityPrivacyNotice.tsx": [
+      {
+        "tag": "Banner",
+        "props": [
+          "dismissible",
+          "icon",
+          "title",
+          "variant"
+        ],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": []
+      }
+    ],
+    "src/features/wizard/steps/identity/IdentityStep.tsx": [
+      {
+        "tag": "WizardFrame",
+        "props": [
+          "..."
+        ],
+        "values": {
+          "...#0": "Identifier(\"stepCopy\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "IdentityPrivacyNotice",
+            "props": [],
+            "values": {},
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "ImplementationApproach",
+            "props": [],
+            "values": {},
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "ClaimTopicsSection",
+            "props": [
+              "identity",
+              "onUpdate"
+            ],
+            "values": {},
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "TrustedIssuersSection",
+            "props": [
+              "identity",
+              "maxTrustedIssuers",
+              "onUpdate"
+            ],
+            "values": {},
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "IdentityControlsSection",
+            "props": [
+              "controls",
+              "identityControlsMeta",
+              "onToggle"
+            ],
+            "values": {},
+            "via": [],
+            "children": []
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/identity/ImplementationApproach.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [],
+            "values": {},
+            "via": [],
+            "children": [
+              {
+                "tag": "SelectableCard",
+                "props": [
+                  "badge",
+                  "description",
+                  "icon",
+                  "isSelected",
+                  "onClick",
+                  "title"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/identity/TrustedIssuersSection.tsx": [
+      {
+        "tag": "Card",
+        "props": [],
+        "values": {},
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "SectionCardHeader",
+            "props": [
+              "..."
+            ],
+            "values": {
+              "...#0": "Identifier(\"sectionCopy\")"
+            },
+            "via": [],
+            "children": []
+          },
+          {
+            "tag": "CardContent",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-4\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "IssuerRow",
+                "props": [
+                  "availableTopics",
+                  "getExplorerUrl",
+                  "index",
+                  "issuer",
+                  "key",
+                  "noTopicsMessage",
+                  "onRemove",
+                  "onToggleTopic"
+                ],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "CallExpression",
+                  "ArrowFunction"
+                ],
+                "children": []
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"space-y-1\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "div",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"flex items-start gap-2\")"
+                    },
+                    "via": [],
+                    "children": [
+                      {
+                        "tag": "div",
+                        "props": [
+                          "className"
+                        ],
+                        "values": {
+                          "className": "Str(\"min-w-0 flex-1\")"
+                        },
+                        "via": [],
+                        "children": [
+                          {
+                            "tag": "AddressFieldWithResolvedPreview",
+                            "props": [
+                              "addressing",
+                              "control",
+                              "helperText",
+                              "id",
+                              "label",
+                              "name",
+                              "placeholder",
+                              "preview",
+                              "previewAddress",
+                              "previewNetworkId",
+                              "validation"
+                            ],
+                            "values": {
+                              "id": "Str(\"trusted-issuer-address\")"
+                            },
+                            "via": [],
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "div",
+                        "props": [
+                          "className"
+                        ],
+                        "values": {
+                          "className": "Str(\"flex flex-col gap-2\")"
+                        },
+                        "via": [],
+                        "children": [
+                          {
+                            "tag": "Label",
+                            "props": [
+                              "aria-hidden",
+                              "className"
+                            ],
+                            "values": {
+                              "className": "Str(\"invisible\")"
+                            },
+                            "via": [],
+                            "children": []
+                          },
+                          {
+                            "tag": "div",
+                            "props": [
+                              "className"
+                            ],
+                            "values": {
+                              "className": "Str(\"flex h-10 items-center\")"
+                            },
+                            "via": [],
+                            "children": [
+                              {
+                                "tag": "Button",
+                                "props": [
+                                  "data-config-anchor",
+                                  "disabled",
+                                  "onClick",
+                                  "size",
+                                  "type"
+                                ],
+                                "values": {},
+                                "via": [],
+                                "children": [
+                                  {
+                                    "tag": "Plus",
+                                    "props": [
+                                      "className"
+                                    ],
+                                    "values": {
+                                      "className": "Str(\"mr-1 size-4\")"
+                                    },
+                                    "via": [],
+                                    "children": []
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "props": [
+          "className"
+        ],
+        "values": {
+          "className": "JsxExpression[CallExpression[Identifier(\"cn\"),Str(\"space-y-3 rounded-lg border p-3\"),ConditionalExpression[Identifier(\"hasNoTopics\"),QuestionToken(\"?\"),Str(\"border-destructive/50 bg-destructive/5\"),ColonToken(\":\"),Str(\"border-border\")]]]"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"flex items-center justify-between gap-2\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "ResolvedAddressDisplay",
+                "props": [
+                  "address",
+                  "explorerUrl",
+                  "showCopyButton",
+                  "truncateWhenLabeled",
+                  "variant"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "Button",
+                "props": [
+                  "className",
+                  "data-config-anchor",
+                  "onClick",
+                  "size",
+                  "type",
+                  "variant"
+                ],
+                "values": {
+                  "className": "Str(\"size-7 shrink-0 text-muted-foreground hover:text-destructive\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "X",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"size-3.5\")"
+                    },
+                    "via": [],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-1.5\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "Label",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"text-xs text-muted-foreground\")"
+                },
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className",
+                  "data-config-anchor"
+                ],
+                "values": {
+                  "className": "Str(\"flex flex-wrap gap-1.5\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "TogglePill",
+                    "props": [
+                      "key",
+                      "label",
+                      "onClick",
+                      "selected"
+                    ],
+                    "values": {},
+                    "via": [
+                      "JsxExpression",
+                      "CallExpression",
+                      "ArrowFunction"
+                    ],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"flex items-center gap-1.5 text-xs text-destructive\")"
+            },
+            "via": [
+              "JsxExpression",
+              "BinaryExpression"
+            ],
+            "children": [
+              {
+                "tag": "AlertTriangle",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"size-3.5 shrink-0\")"
+                },
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "span",
+                "props": [],
+                "values": {},
+                "via": [],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/review/DeployReadinessPanel.tsx": [
+      {
+        "tag": "InfoNoticeBanner",
+        "props": [
+          "className",
+          "title"
+        ],
+        "values": {
+          "className": "Str(\"min-w-0\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-2\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "div",
+                "props": [],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": []
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"flex flex-wrap items-center gap-x-2 gap-y-1\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "span",
+                    "props": [],
+                    "values": {},
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "ResolvedAddressDisplay",
+                    "props": [
+                      "address",
+                      "className",
+                      "disableLabel",
+                      "explorerUrl",
+                      "showCopyButton",
+                      "truncate",
+                      "variant"
+                    ],
+                    "values": {
+                      "className": "Str(\"min-w-0 max-w-full break-all font-mono text-xs\")"
+                    },
+                    "via": [],
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"mt-3 space-y-3 border-t border-current/15 pt-3\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"flex items-start gap-2\")"
+                },
+                "via": [],
+                "children": [
+                  {
+                    "tag": "Checkbox",
+                    "props": [
+                      "checked",
+                      "id",
+                      "onCheckedChange"
+                    ],
+                    "values": {
+                      "id": "Str(\"deploy-signer-ack\")"
+                    },
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "Label",
+                    "props": [
+                      "className",
+                      "htmlFor"
+                    ],
+                    "values": {
+                      "className": "Str(\"text-sm font-normal leading-snug\")"
+                    },
+                    "via": [],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "props": [
+                  "className"
+                ],
+                "values": {
+                  "className": "Str(\"flex items-start gap-2\")"
+                },
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": [
+                  {
+                    "tag": "Checkbox",
+                    "props": [
+                      "checked",
+                      "id",
+                      "onCheckedChange"
+                    ],
+                    "values": {
+                      "id": "Str(\"include-identity-support\")"
+                    },
+                    "via": [],
+                    "children": []
+                  },
+                  {
+                    "tag": "div",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"flex min-w-0 flex-1 items-start gap-1.5\")"
+                    },
+                    "via": [],
+                    "children": [
+                      {
+                        "tag": "Label",
+                        "props": [
+                          "className",
+                          "htmlFor"
+                        ],
+                        "values": {
+                          "className": "Str(\"text-sm font-normal leading-snug\")"
+                        },
+                        "via": [],
+                        "children": []
+                      },
+                      {
+                        "tag": "InfoTooltip",
+                        "props": [
+                          "className",
+                          "label",
+                          "maxWidthClassName",
+                          "side"
+                        ],
+                        "values": {
+                          "className": "Str(\"mt-0.5 shrink-0\")"
+                        },
+                        "via": [
+                          "JsxExpression",
+                          "BinaryExpression"
+                        ],
+                        "children": [
+                          {
+                            "tag": "div",
+                            "props": [
+                              "className"
+                            ],
+                            "values": {
+                              "className": "Str(\"space-y-2\")"
+                            },
+                            "via": [],
+                            "children": [
+                              {
+                                "tag": "p",
+                                "props": [
+                                  "key"
+                                ],
+                                "values": {},
+                                "via": [
+                                  "JsxExpression",
+                                  "CallExpression",
+                                  "ArrowFunction"
+                                ],
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "Banner",
+                "props": [
+                  "dismissible",
+                  "size",
+                  "title",
+                  "variant"
+                ],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": []
+              },
+              {
+                "tag": "Banner",
+                "props": [
+                  "dismissible",
+                  "size",
+                  "title",
+                  "variant"
+                ],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": [
+                  {
+                    "tag": "div",
+                    "props": [
+                      "className"
+                    ],
+                    "values": {
+                      "className": "Str(\"space-y-2\")"
+                    },
+                    "via": [],
+                    "children": [
+                      {
+                        "tag": "p",
+                        "props": [],
+                        "values": {},
+                        "via": [
+                          "JsxExpression",
+                          "BinaryExpression"
+                        ],
+                        "children": []
+                      },
+                      {
+                        "tag": "ul",
+                        "props": [
+                          "className"
+                        ],
+                        "values": {
+                          "className": "Str(\"list-disc space-y-1 pl-4\")"
+                        },
+                        "via": [],
+                        "children": [
+                          {
+                            "tag": "li",
+                            "props": [
+                              "key"
+                            ],
+                            "values": {},
+                            "via": [
+                              "JsxExpression",
+                              "CallExpression",
+                              "ArrowFunction",
+                              "Block",
+                              "ReturnStatement"
+                            ],
+                            "children": [
+                              {
+                                "tag": "span",
+                                "props": [
+                                  "className"
+                                ],
+                                "values": {
+                                  "className": "Str(\"font-medium\")"
+                                },
+                                "via": [],
+                                "children": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "src/features/wizard/steps/review/ReviewStep.tsx": [
+      {
+        "tag": "WizardFrame",
+        "props": [
+          "..."
+        ],
+        "values": {
+          "...#0": "Identifier(\"stepCopy\")"
+        },
+        "via": [
+          "FunctionDeclaration",
+          "Block",
+          "ReturnStatement"
+        ],
+        "children": [
+          {
+            "tag": "div",
+            "props": [
+              "className"
+            ],
+            "values": {
+              "className": "Str(\"space-y-6\")"
+            },
+            "via": [],
+            "children": [
+              {
+                "tag": "ConfigSummary",
+                "props": [
+                  "availableModules",
+                  "config",
+                  "getExplorerUrl"
+                ],
+                "values": {},
+                "via": [],
+                "children": []
+              },
+              {
+                "tag": "DeployReadinessPanel",
+                "props": [
+                  "guidance",
+                  "hasInitialSupply",
+                  "supportsIdentitySupport",
+                  "targetId"
+                ],
+                "values": {},
+                "via": [
+                  "JsxExpression",
+                  "BinaryExpression"
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

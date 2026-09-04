@@ -1,4 +1,5 @@
 import type { ValidationRule } from '@openzeppelin/codegen-core';
+import { selectedClaimTopicIds } from '@openzeppelin/codegen-rwa-common';
 import type { RWAConfig } from '@openzeppelin/rwa-config';
 
 import { generateRoleSymbol, STELLAR_VALIDATION_CONSTANTS } from '../constants';
@@ -172,7 +173,13 @@ export const validateClaimTopics: ValidationRule<RWAConfig> = (config) => {
 export const validateTrustedIssuers: ValidationRule<RWAConfig> = (config) => {
   const errors = [];
   const { claimTopics, trustedIssuers } = config.identityVerification;
+  // References resolve against DEFINED topics, and that is what makes
+  // unselection non-destructive rather than merely reversible: narrowing this to
+  // selected ids would report a reference to a switched-off topic as
+  // non-existent, invalidate the draft, and make `generate()` throw on a gesture
+  // the user believes they can undo.
   const validTopicIds = new Set(claimTopics.map((t) => t.id));
+  const selectedTopicIds = new Set(selectedClaimTopicIds(config));
 
   for (let i = 0; i < trustedIssuers.length; i++) {
     const issuer = trustedIssuers[i];
@@ -204,6 +211,28 @@ export const validateTrustedIssuers: ValidationRule<RWAConfig> = (config) => {
           field: `identityVerification.trustedIssuers[${i}].claimTopics`,
           code: 'INVALID_REFERENCE',
           message: `Trusted issuer at index ${i} references non-existent claim topic IDs: ${invalidRefs.join(', ')}`,
+        });
+      } else if (!issuer.claimTopics.some((id) => selectedTopicIds.has(id))) {
+        // A branch of the same `if` chain, never an independent check: an issuer
+        // naming one non-existent and one unselected topic has ONE problem and
+        // must produce one error.
+        //
+        // A distinct code rather than `REQUIRED_FIELD`, because the two states
+        // have different remedies. `REQUIRED_FIELD` means "this issuer names no
+        // topics — add one"; this means "its topics all exist but are switched
+        // off — switch one back on, or remove the issuer". The wizard's whole job
+        // is telling the user what to do next, and a consumer that cannot tell
+        // these apart shows an instruction that does not apply.
+        //
+        // This is output safety, not presentation. `generate()` throws on an
+        // invalid config, so this rule is the only thing preventing `deploy.sh`
+        // from running `add_trusted_issuer … --claim_topics '[]'` on a real
+        // network. The demo-mint gate closes the other file and neither closes
+        // the other's.
+        errors.push({
+          field: `identityVerification.trustedIssuers[${i}].claimTopics`,
+          code: 'UNSELECTED_REFERENCE',
+          message: `Trusted issuer at index ${i} references only unselected claim topics: ${issuer.claimTopics.join(', ')}`,
         });
       }
     }
