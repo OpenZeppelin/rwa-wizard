@@ -83,7 +83,11 @@ function requireBuiltinModule<TModule>(id: string): TModule {
  * Normalize a checkout root so relative file joins do not double up slashes.
  */
 function trimTrailingSlashes(path: string): string {
-  return path.replace(/\/+$/, '');
+  let end = path.length;
+  while (end > 0 && path.charCodeAt(end - 1) === 47 /* '/' */) {
+    end -= 1;
+  }
+  return end === path.length ? path : path.slice(0, end);
 }
 
 /**
